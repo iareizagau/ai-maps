@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-02 18:26+0200\n"
+"POT-Creation-Date: 2026-05-02 18:33+0200\n"
 "PO-Revision-Date: 2026-04-27 23:15+0200\n"
 "Last-Translator: Antigravity AI\n"
 "Language-Team: Basque\n"
@@ -1268,6 +1268,10 @@ msgstr "Igo fitxategi bat"
 msgid "o arrastra y suelta"
 msgstr "edo arrastatu eta jaregin"
 
+#: templates/sbk/pages/home/map.html:345
+msgid "PNG, JPG, GIF hasta 5MB"
+msgstr ""
+
 #: templates/sbk/pages/home/map.html:354 templates/sbk/passport.html:121
 #: templates/sbk/passport.html:311
 msgid "Cancelar"
@@ -1276,6 +1280,10 @@ msgstr "Utzi"
 #: templates/sbk/pages/home/map.html:356
 msgid "Publicar Evento"
 msgstr "Argitaratu Ekitaldia"
+
+#: templates/sbk/pages/home/map.html:369
+msgid "Vibe Check"
+msgstr ""
 
 #: templates/sbk/pages/home/map.html:381
 msgid "¿Cómo está la música?"
@@ -1308,6 +1316,20 @@ msgstr "Banoa"
 #: templates/sbk/pages/home/map.html:801
 msgid "¡Voy!"
 msgstr "Banoa!"
+
+#: templates/sbk/pages/home/map.html:913
+msgid "Nadie apuntado aún."
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:921
+msgid "Contactar"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:931
+#, fuzzy
+#| msgid "La comanda está vacía."
+msgid "El tablón está vacío."
+msgstr "Komanda hutsik dago."
 
 #: templates/sbk/passport.html:2
 msgid "Mi Pasaporte Bailador"

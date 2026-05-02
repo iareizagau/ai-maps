@@ -342,7 +342,7 @@
                                         <span class="relative cursor-pointer font-medium text-rose-600 hover:text-rose-500">{% translate "Subir un archivo" %}</span>
                                         <p class="pl-1">{% translate "o arrastra y suelta" %}</p>
                                     </div>
-                                    <p class="text-xs text-slate-500">PNG, JPG, GIF hasta 5MB</p>
+                                    <p class="text-xs text-slate-500">{% translate "PNG, JPG, GIF hasta 5MB" %}</p>
                                 </div>
                                 <img id="poster-preview" class="absolute inset-0 w-full h-full object-contain hidden rounded-lg bg-slate-100 dark:bg-slate-900">
                                 <input id="social-poster" name="poster" type="file" class="sr-only" accept="image/*" onchange="previewPoster(this)">
@@ -366,7 +366,7 @@
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-95 opacity-0" id="vibe-modal-content">
             <div class="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-rose-50 dark:bg-rose-900/10">
                 <div>
-                    <h3 class="text-xl font-bold text-rose-900 dark:text-rose-100 flex items-center gap-2">🔥 Vibe Check</h3>
+                    <h3 class="text-xl font-bold text-rose-900 dark:text-rose-100 flex items-center gap-2">🔥 {% translate "Vibe Check" %}</h3>
                     <p class="text-sm text-rose-700 dark:text-rose-400 font-medium" id="vibe-modal-title"></p>
                 </div>
                 <button onclick="closeVibeModal()" class="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
@@ -910,7 +910,7 @@
                 const listContainer = document.getElementById('community-modal-list');
                 const data = window.communityData;
                 if (!data.community || data.community.length === 0) {
-                    listContainer.innerHTML = `<div class="text-center py-8"><p class="text-slate-500">Nadie apuntado aún.</p></div>`;
+                    listContainer.innerHTML = `<div class="text-center py-8"><p class="text-slate-500">{% translate "Nadie apuntado aún." %}</p></div>`;
                     return;
                 }
                 let html = '<div class="space-y-4">';
@@ -918,7 +918,7 @@
                     html += `<div class="flex items-center gap-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                         <img src="${user.avatar_url}" class="w-12 h-12 rounded-full">
                         <div class="flex-1 min-w-0"><h4 class="font-bold">@${user.username}</h4><p class="text-[10px] uppercase font-black text-slate-400">${user.rank}</p></div>
-                        <button class="px-3 py-1.5 text-xs font-bold text-white bg-slate-900 dark:bg-white dark:text-slate-900 rounded-lg" onclick="alert('Instagram: @${user.username}')">Contactar</button>
+                        <button class="px-3 py-1.5 text-xs font-bold text-white bg-slate-900 dark:bg-white dark:text-slate-900 rounded-lg" onclick="alert('Instagram: @${user.username}')">{% translate "Contactar" %}</button>
                     </div>`;
                 });
                 listContainer.innerHTML = html + '</div>';
@@ -928,7 +928,7 @@
                 const boardContainer = document.getElementById('community-modal-board');
                 const data = window.communityData;
                 if (!data.notices || data.notices.length === 0) {
-                    boardContainer.innerHTML = `<div class="text-center py-8"><p class="text-slate-500">El tablón está vacío.</p></div>`;
+                    boardContainer.innerHTML = `<div class="text-center py-8"><p class="text-slate-500">{% translate "El tablón está vacío." %}</p></div>`;
                     return;
                 }
                 let html = '';

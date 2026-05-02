@@ -1270,7 +1270,7 @@ msgstr "edo arrastatu eta jaregin"
 
 #: templates/sbk/pages/home/map.html:345
 msgid "PNG, JPG, GIF hasta 5MB"
-msgstr ""
+msgstr "PNG, JPG, GIF 5MB arte"
 
 #: templates/sbk/pages/home/map.html:354 templates/sbk/passport.html:121
 #: templates/sbk/passport.html:311
@@ -1283,7 +1283,7 @@ msgstr "Argitaratu Ekitaldia"
 
 #: templates/sbk/pages/home/map.html:369
 msgid "Vibe Check"
-msgstr ""
+msgstr "Giroa Egiaztatu"
 
 #: templates/sbk/pages/home/map.html:381
 msgid "¿Cómo está la música?"
@@ -1319,17 +1319,15 @@ msgstr "Banoa!"
 
 #: templates/sbk/pages/home/map.html:913
 msgid "Nadie apuntado aún."
-msgstr ""
+msgstr "Inor ez da apuntatu oraindik."
 
 #: templates/sbk/pages/home/map.html:921
 msgid "Contactar"
-msgstr ""
+msgstr "Harremanetan jarri"
 
 #: templates/sbk/pages/home/map.html:931
-#, fuzzy
-#| msgid "La comanda está vacía."
 msgid "El tablón está vacío."
-msgstr "Komanda hutsik dago."
+msgstr "Iragarki-taula hutsik dago."
 
 #: templates/sbk/passport.html:2
 msgid "Mi Pasaporte Bailador"

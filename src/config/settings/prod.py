@@ -1,6 +1,7 @@
 from .base import *
 
 DEBUG = False
+DEFAULT_HOST = 'www'
 
 # Coolify / Production settings
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
@@ -12,5 +13,4 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
 # Static files
-MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

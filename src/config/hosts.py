@@ -12,7 +12,7 @@ else:
     # Production: use subdomain-based routing
     host_patterns = patterns(
         '',
-        host(r'www', settings.ROOT_URLCONF, name='www'),
+        host(r'ai', settings.ROOT_URLCONF, name='ai'),
         host(r'bidaiak', 'apps.bidaiak.urls', name='bidaiak'),
         host(r'pintxos', 'apps.pintxos.urls', name='pintxos'),
         host(r'sbk', 'apps.sbk.urls', name='sbk'),

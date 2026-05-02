@@ -1,4 +1,5 @@
-<c-layouts.main title="Mi Pasaporte Bailador">
+{% load i18n %}
+<c-layouts.main title="{% translate 'Mi Pasaporte Bailador' %}">
     <div class="max-w-5xl mx-auto px-4 py-8">
         
         <!-- Header Profile -->
@@ -11,7 +12,7 @@
                     </div>
                     <div>
                         <a href="{% url 'sbk:map' %}" class="bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300 font-bold px-4 py-2 rounded-full text-sm hover:bg-rose-200 dark:hover:bg-rose-800 transition-colors shadow-sm">
-                            🗺️ Buscar Eventos
+                            🗺️ {% translate "Buscar Eventos" %}
                         </a>
                     </div>
                 </div>
@@ -19,7 +20,7 @@
                 <div class="flex items-center gap-3 mb-1">
                     <h1 class="text-3xl font-bold text-slate-900 dark:text-white">{{ request.user.username|title }}</h1>
                     <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm">
-                        <span class="text-[10px] font-black uppercase tracking-tighter">NIVEL</span>
+                        <span class="text-[10px] font-black uppercase tracking-tighter">{% translate "NIVEL" %}</span>
                         <span class="text-lg font-black leading-none">{{ profile.level }}</span>
                     </div>
                 </div>
@@ -39,24 +40,24 @@
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-4 pt-4 border-t border-slate-100 dark:border-slate-700">
                     <div class="text-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50">
                         <span class="block text-2xl font-bold text-slate-900 dark:text-white">{{ stats_total_events }}</span>
-                        <span class="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Festivales</span>
+                        <span class="text-[10px] text-slate-500 uppercase tracking-wider font-bold">{% translate "Festivales" %}</span>
                     </div>
                     <div class="text-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50">
                         <span class="block text-2xl font-bold text-slate-900 dark:text-white">{{ stats_countries }}</span>
-                        <span class="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Países</span>
+                        <span class="text-[10px] text-slate-500 uppercase tracking-wider font-bold">{% translate "Países" %}</span>
                     </div>
                     <div class="text-center p-3 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 relative group overflow-hidden">
                         <div class="absolute -right-2 -top-2 text-4xl opacity-10 group-hover:scale-110 transition-transform">🔥</div>
                         <span class="block text-2xl font-bold text-rose-600 dark:text-rose-400">{{ profile.current_streak }}</span>
-                        <span class="text-[10px] text-rose-600 dark:text-rose-500 uppercase tracking-wider font-bold">Racha Días</span>
+                        <span class="text-[10px] text-rose-600 dark:text-rose-500 uppercase tracking-wider font-bold">{% translate "Racha Días" %}</span>
                     </div>
                     <div class="text-center p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800">
                         <span class="block text-2xl font-bold text-emerald-600 dark:text-emerald-400">{{ going_events|length }}</span>
-                        <span class="text-[10px] text-emerald-600 dark:text-emerald-500 uppercase tracking-wider font-bold">Próximos</span>
+                        <span class="text-[10px] text-emerald-600 dark:text-emerald-500 uppercase tracking-wider font-bold">{% translate "Próximos" %}</span>
                     </div>
                     <div class="text-center p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800">
                         <span class="block text-2xl font-bold text-amber-600 dark:text-amber-400">{{ interested_events|length }}</span>
-                        <span class="text-[10px] text-amber-600 dark:text-amber-500 uppercase tracking-wider font-bold">Radar</span>
+                        <span class="text-[10px] text-amber-600 dark:text-amber-500 uppercase tracking-wider font-bold">{% translate "Radar" %}</span>
                     </div>
                 </div>
             </div>
@@ -70,13 +71,13 @@
                 <section>
                     <div class="flex items-center gap-3 mb-4">
                         <span class="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg text-emerald-600 dark:text-emerald-400">🎟️</span>
-                        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Próximos Destinos</h2>
+                        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">{% translate "Próximos Destinos" %}</h2>
                     </div>
                     
                     {% if not going_events %}
                     <div class="bg-white dark:bg-slate-800 rounded-xl p-8 text-center border border-dashed border-slate-300 dark:border-slate-700">
-                        <p class="text-slate-500 dark:text-slate-400 mb-4">Aún no tienes confirmada tu asistencia a ningún evento.</p>
-                        <a href="{% url 'sbk:map' %}" class="text-rose-500 font-bold hover:underline">Explorar el mapa</a>
+                        <p class="text-slate-500 dark:text-slate-400 mb-4">{% translate "Aún no tienes confirmada tu asistencia a ningún evento." %}</p>
+                        <a href="{% url 'sbk:map' %}" class="text-rose-500 font-bold hover:underline">{% translate "Explorar el mapa" %}</a>
                     </div>
                     {% else %}
                         <div class="space-y-4">
@@ -92,7 +93,7 @@
                                     <div>
                                         <div class="flex justify-between items-start mb-1">
                                             <span class="text-xs font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                                Confirmado
+                                                {% translate "Confirmado" %}
                                             </span>
                                             <span class="text-xs text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md font-medium">
                                                 Faltan {{ ue.event.start_date|timeuntil }}
@@ -111,13 +112,13 @@
                                     <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex flex-wrap gap-2 items-center justify-between">
                                         <div class="flex gap-2">
                                             <button class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border {% if ue.looking_for_roommate %}border-indigo-500 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 dark:text-indigo-400{% else %}border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800{% endif %} transition-colors" onclick="toggleMatchmaking('{{ ue.event.id }}', 'roommate', this)">
-                                                🛏️ Busco Habitación
+                                                🛏️ {% translate "Busco Habitación" %}
                                             </button>
                                             <button class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border {% if ue.looking_for_dance_partner %}border-rose-500 text-rose-600 bg-rose-50 dark:bg-rose-900/20 dark:text-rose-400{% else %}border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800{% endif %} transition-colors" onclick="toggleMatchmaking('{{ ue.event.id }}', 'partner', this)">
-                                                💃 Busco Pareja
+                                                💃 {% translate "Busco Pareja" %}
                                             </button>
                                         </div>
-                                        <button class="text-xs font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline decoration-dashed" onclick="cancelAssistance('{{ ue.event.id }}')">Cancelar</button>
+                                        <button class="text-xs font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline decoration-dashed" onclick="cancelAssistance('{{ ue.event.id }}')">{% translate "Cancelar" %}</button>
                                     </div>
                                 </div>
                             </div>
@@ -130,11 +131,11 @@
                 <section>
                     <div class="flex items-center gap-3 mb-4 mt-8">
                         <span class="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-lg text-amber-600 dark:text-amber-400">⭐</span>
-                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">En el radar</h2>
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">{% translate "En el radar" %}</h2>
                     </div>
                     
                     {% if not interested_events %}
-                        <p class="text-sm text-slate-500 italic">No tienes eventos en seguimiento.</p>
+                        <p class="text-sm text-slate-500 italic">{% translate "No tienes eventos en seguimiento." %}</p>
                     {% else %}
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {% for ue in interested_events %}
@@ -156,7 +157,7 @@
                                             body: JSON.stringify({ status: 'going' })
                                         }).then(() => window.location.reload());
                                     ">
-                                        ¡Voy a ir!
+                                        {% translate "¡Voy a ir!" %}
                                     </button>
                                 </div>
                             </div>
@@ -170,11 +171,11 @@
             <div class="lg:col-span-1">
                 <div class="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 sticky top-8">
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                        <span>🛂</span> Sellos del Pasaporte
+                        <span>🛂</span> {% translate "Sellos del Pasaporte" %}
                     </h3>
                     
                     {% if not went_events %}
-                        <p class="text-sm text-slate-500 dark:text-slate-400 text-center py-8">Tu pasaporte está vacío. ¡Es hora de empezar a viajar!</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 text-center py-8">{% translate "Tu pasaporte está vacío. ¡Es hora de empezar a viajar!" %}</p>
                     {% else %}
                         <div class="space-y-4">
                             {% for ue in went_events %}
@@ -190,7 +191,7 @@
                                 </div>
                                 <div class="mt-1 flex justify-end">
                                     <button class="text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-800/60 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1" onclick="openReviewModal('{{ ue.event.id }}', '{{ ue.event.name|escapejs }}')">
-                                        ⭐ Valorar
+                                        ⭐ {% translate "Valorar" %}
                                     </button>
                                 </div>
                             </div>
@@ -200,7 +201,7 @@
                     {% if went_events %}
                         <div class="mt-6 flex justify-center">
                             <div class="px-4 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-500">
-                                Racha Máxima: {{ profile.max_streak }} días 🔥
+                                {% translate "Racha Máxima" %}: {{ profile.max_streak }} {% translate "días" %} 🔥
                             </div>
                         </div>
                     {% endif %}
@@ -209,7 +210,7 @@
                 <!-- Leaderboard Section -->
                 <div class="mt-8 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-100 dark:border-slate-700">
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                        <span>🏆</span> Top Embajadores
+                        <span>🏆</span> {% translate "Top Embajadores" %}
                     </h3>
                     <div class="space-y-4">
                         {% for entry in leaderboard %}
@@ -242,7 +243,7 @@
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-95 opacity-0" id="review-modal-content">
             <div class="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-amber-50 dark:bg-amber-900/10">
                 <div>
-                    <h3 class="text-xl font-bold text-amber-900 dark:text-amber-100 flex items-center gap-2">⭐ Evaluar Evento</h3>
+                    <h3 class="text-xl font-bold text-amber-900 dark:text-amber-100 flex items-center gap-2">⭐ {% translate "Evaluar Evento" %}</h3>
                     <p class="text-sm text-amber-700 dark:text-amber-400 font-medium" id="review-modal-title"></p>
                 </div>
                 <button onclick="closeReviewModal()" class="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
@@ -256,60 +257,60 @@
                     <div class="space-y-5">
                         <!-- Overall -->
                         <div>
-                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Valoración General</label>
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{% translate "Valoración General" %}</label>
                             <input type="range" id="overall_rating" min="1" max="5" value="3" class="w-full accent-amber-500">
                             <div class="flex justify-between text-xs text-slate-500 font-medium px-1">
-                                <span>Pobre</span><span>Regular</span><span>Top</span>
+                                <span>{% translate "Pobre" %}</span><span>{% translate "Regular" %}</span><span>{% translate "Top" %}</span>
                             </div>
                         </div>
                         
                         <!-- Floor -->
                         <div>
-                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Calidad del Suelo</label>
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{% translate "Calidad del Suelo" %}</label>
                             <input type="range" id="floor_quality" min="1" max="5" value="3" class="w-full accent-emerald-500">
                             <div class="flex justify-between text-xs text-slate-500 font-medium px-1">
-                                <span>Resbala/Pega</span><span>Decente</span><span>Parquet 10/10</span>
+                                <span>{% translate "Resbala/Pega" %}</span><span>{% translate "Decente" %}</span><span>{% translate "Parquet 10/10" %}</span>
                             </div>
                         </div>
                         
                         <!-- AC -->
                         <div>
-                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Climatización (AC)</label>
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{% translate "Climatización (AC)" %}</label>
                             <input type="range" id="ac_ventilation" min="1" max="5" value="3" class="w-full accent-cyan-500">
                             <div class="flex justify-between text-xs text-slate-500 font-medium px-1">
-                                <span>Sauna</span><span>Bien</span><span>Fresco</span>
+                                <span>{% translate "Sauna" %}</span><span>{% translate "Bien" %}</span><span>{% translate "Fresco" %}</span>
                             </div>
                         </div>
 
                         <!-- Gender Ratio -->
                         <div>
-                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Balance Lider/Follower</label>
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{% translate "Balance Lider/Follower" %}</label>
                             <input type="range" id="gender_ratio" min="1" max="5" value="3" class="w-full accent-indigo-500">
                             <div class="flex justify-between text-xs text-slate-500 font-medium px-1">
-                                <span>Desbalanceado</span><span>Ok</span><span>Perfecto 50/50</span>
+                                <span>{% translate "Desbalanceado" %}</span><span>{% translate "Ok" %}</span><span>{% translate "Perfecto 50/50" %}</span>
                             </div>
                         </div>
                         
                         <!-- Music -->
                         <div>
-                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Calidad de la Música / DJs</label>
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{% translate "Calidad de la Música / DJs" %}</label>
                             <input type="range" id="music_quality" min="1" max="5" value="3" class="w-full accent-fuchsia-500">
                             <div class="flex justify-between text-xs text-slate-500 font-medium px-1">
-                                <span>Aburrida</span><span>Buena</span><span>Temazos</span>
+                                <span>{% translate "Aburrida" %}</span><span>{% translate "Buena" %}</span><span>{% translate "Temazos" %}</span>
                             </div>
                         </div>
                         
                         <!-- Comment -->
                         <div>
-                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Comentario adicional</label>
-                            <textarea id="review_comment" rows="2" class="w-full border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 dark:text-white p-2 text-sm focus:ring-amber-500 focus:border-amber-500" placeholder="¿Qué fue lo mejor y lo peor?"></textarea>
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{% translate "Comentario adicional" %}</label>
+                            <textarea id="review_comment" rows="2" class="w-full border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 dark:text-white p-2 text-sm focus:ring-amber-500 focus:border-amber-500" placeholder="{% translate '¿Qué fue lo mejor y lo peor?' %}"></textarea>
                         </div>
                     </div>
                     
                     <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-end">
-                        <button type="button" onclick="closeReviewModal()" class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 mr-2">Cancelar</button>
+                        <button type="button" onclick="closeReviewModal()" class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 mr-2">{% translate "Cancelar" %}</button>
                         <button type="submit" id="btn-submit-review" class="px-6 py-2 text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-lg shadow-md transition-colors">
-                            Guardar Reseña
+                            {% translate "Guardar Reseña" %}
                         </button>
                     </div>
                 </form>
@@ -373,7 +374,7 @@
             }
             
             function cancelAssistance(eventId) {
-                if (!confirm('¿Seguro que quieres cancelar tu asistencia?')) return;
+                if (!confirm('{% translate "¿Seguro que quieres cancelar tu asistencia?" %}')) return;
                 
                 const csrftoken = getCookie('csrftoken');
                 fetch(`/sbk/api/events/${eventId}/status/`, {
@@ -445,7 +446,7 @@
                     if (res.error) {
                         alert("Error: " + res.error);
                     } else {
-                        alert("¡Gracias por tu valoración! Ayudará a otros bailarines.");
+                        alert("{% translate '¡Gracias por tu valoración! Ayudará a otros bailarines.' %}");
                         closeReviewModal();
                     }
                 })

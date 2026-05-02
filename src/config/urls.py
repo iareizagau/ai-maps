@@ -12,16 +12,15 @@ urlpatterns = [
     path('api/', api.urls),
 ]
 
-from django.conf.urls.static import static
-
-# Development: path-based routing (localhost/pintxos/, localhost/bidaiak/, etc.)
+urlpatterns += [
+    path('pintxos/', include('apps.pintxos.urls')),
+    path('bidaiak/', include('apps.bidaiak.urls')),
+    path('sbk/', include('apps.sbk.urls')),
+    path('kultur/', include('apps.kultur.urls')),
+    path('inguru/', include('apps.inguru.urls')),
+]
 if settings.DEBUG:
-    urlpatterns += [
-        path('pintxos/', include('apps.pintxos.urls')),
-        path('bidaiak/', include('apps.bidaiak.urls')),
-        path('sbk/', include('apps.sbk.urls')),
-        path('kultur/', include('apps.kultur.urls')),
-        path('inguru/', include('apps.inguru.urls')),
-    ]
+    from django.conf.urls.static import static
+
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -1,38 +1,98 @@
 {% load i18n %}
 <!-- Sidebar -->
-<div class="hidden md:flex flex-col w-full md:w-[400px] lg:w-[450px] h-full bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-xl z-10 flex-shrink-0" id="sidebar">
-    <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
-        <h2 class="text-2xl font-bold mb-1 text-slate-900 dark:text-slate-100">{% trans "Cultura Local" %}</h2>
-        <p class="text-slate-600 dark:text-slate-400 mb-4 text-sm leading-tight">{% trans "Mueve el mapa para ver los eventos en esa zona." %}</p>
-        
-        <!-- Filters -->
-        <div class="space-y-3">
-            <!-- Categories -->
-            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" id="category-filters">
-                <button class="filter-btn active flex items-center gap-2" data-filter="all" onclick="setCategory('all')">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                    {% trans "Todas" %}
-                </button>
+<div class="hidden md:flex flex-col w-full md:w-3/5 lg:w-[60%] xl:w-[65%] h-full bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-xl z-10 flex-shrink-0" id="sidebar">
+    <div class="p-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex flex-col gap-3">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100">{% trans "Cultura Local" %}</h2>
+                <div class="flex items-center gap-2">
+                    <div id="view-mode-toggle" class="flex p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <button onclick="setViewMode('map')" id="view-map" class="p-1 rounded-md transition-all bg-white dark:bg-slate-700 shadow-sm text-primary">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+                        </button>
+                        <button onclick="setViewMode('list')" id="view-list" class="p-1 rounded-md transition-all text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                        </button>
+                    </div>
+                    <div id="weather-widget" class="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 rounded-full border border-indigo-100 dark:border-indigo-800/50">
+                        <span class="text-[10px] font-bold text-indigo-700 dark:text-indigo-300" id="weather-temp">14°C</span>
+                        <span id="weather-icon" class="text-xs">🌧️</span>
+                    </div>
+                </div>
             </div>
-            <!-- Dates -->
-            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" id="date-filters">
-                <button class="filter-btn active flex items-center gap-2" data-filter="all" onclick="setDate('all')">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    {% trans "Cualquier fecha" %}
-                </button>
-                <button class="filter-btn inactive flex items-center gap-2" data-filter="today" onclick="setDate('today')">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.364 17.636l-.707.707M6.364 6.364l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
-                    {% trans "Hoy" %}
-                </button>
-                <button class="filter-btn inactive flex items-center gap-2" data-filter="weekend" onclick="setDate('weekend')">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
-                    {% trans "Este finde" %}
+            
+            <div class="flex gap-2">
+                <!-- Hybrid Search Bar -->
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </div>
+                    <input type="text" id="event-search" oninput="updateSearch()" placeholder="{% trans 'Busca eventos o ciudades...' %}" class="block w-full pl-9 pr-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl leading-5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-xs transition-all shadow-sm">
+                </div>
+                <button onclick="toggleFilters()" id="filters-toggle-btn" class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-500 hover:text-primary transition-colors">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
                 </button>
             </div>
         </div>
     </div>
+
+    <!-- Collapsible Filter Strip -->
+    <div id="filter-strip" class="bg-white dark:bg-slate-900 transition-all duration-300 overflow-hidden max-h-0 p-0 border-0">
+        <div class="p-3 space-y-3">
+            <!-- Moods -->
+            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide items-center no-scrollbar" id="mood-filters">
+                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-1">{% trans "Experiencias" %}:</div>
+                <button onclick="toggleMood('hot')" data-mood="hot" class="mood-btn opacity-60 flex-shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border border-orange-200 dark:border-orange-800/30 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 hover:bg-orange-100 transition-all cursor-pointer">
+                    <span>✨</span> {% trans "Imperdibles" %}
+                </button>
+                <button onclick="toggleMood('free')" data-mood="free" class="mood-btn opacity-60 flex-shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border border-emerald-200 dark:border-emerald-800/30 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 transition-all cursor-pointer">
+                    <span>🏷️</span> {% trans "Gratis" %}
+                </button>
+                <button onclick="toggleMood('family')" data-mood="family" class="mood-btn opacity-60 flex-shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border border-blue-200 dark:border-blue-800/30 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-100 transition-all cursor-pointer">
+                    <span>👨‍👩‍👧‍👦</span> {% trans "Familiar" %}
+                </button>
+                <button onclick="toggleMood('night')" data-mood="night" class="mood-btn opacity-60 flex-shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border border-purple-200 dark:border-purple-800/30 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 hover:bg-purple-100 transition-all cursor-pointer">
+                    <span>🌙</span> {% trans "Noche" %}
+                </button>
+                <button onclick="toggleMood('rain')" data-mood="rain" class="mood-btn opacity-60 flex-shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border border-indigo-200 dark:border-indigo-800/30 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 transition-all cursor-pointer">
+                    <span>☂️</span> {% trans "Lluvia" %}
+                </button>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <!-- Categories Dropdown/Scroll -->
+                <div class="flex-1 overflow-x-auto no-scrollbar" id="category-filters">
+                    <div class="flex gap-2">
+                        <button class="filter-btn active flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap transition-all shadow-sm" data-filter="all" onclick="setCategory('all')">
+                            {% trans "Todas" %}
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+
+                <!-- Date Filters -->
+                <div class="flex gap-2" id="date-filters">
+                    <button class="filter-btn active text-[10px] font-bold px-2 py-1" data-filter="all" onclick="setDate('all')">{% trans "Siempre" %}</button>
+                    <button class="filter-btn inactive text-[10px] font-bold px-2 py-1" data-filter="today" onclick="setDate('today')">{% trans "Hoy" %}</button>
+                    <button class="filter-btn inactive text-[10px] font-bold px-2 py-1" data-filter="weekend" onclick="setDate('weekend')">{% trans "Finde" %}</button>
+                    <button class="text-[10px] font-bold text-primary px-2 py-1 border border-primary/20 rounded-lg hover:bg-primary/10 transition-all relative" id="custom-date-btn">
+                        {% trans "Fecha..." %}
+                        <input type="text" id="date-range-picker" class="absolute inset-0 opacity-0 cursor-pointer">
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     
-    <div id="events-list" class="flex-1 overflow-y-auto p-4 space-y-4">
-        <p class="text-slate-500 italic">{% trans "Cargando eventos en el mapa..." %}</p>
+    <div id="events-list" class="flex-1 overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-max">
+        <p class="text-slate-500 italic col-span-full">{% trans "Cargando eventos en el mapa..." %}</p>
+    </div>
+
+    <!-- Discovery Mode -->
+    <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+        <button onclick="surpriseMe()" class="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold shadow-lg hover:shadow-purple-500/30 transition-all active:scale-95 flex items-center justify-center gap-2">
+            <span>✨</span> {% trans "¡Sorpréndeme!" %}
+        </button>
     </div>
 </div>

@@ -166,9 +166,13 @@
                     let icon = icons[condition] || "⛅";
                     let isRainy = ['Rain', 'Drizzle', 'Thunderstorm', 'Snow'].includes(condition);
 
-                    document.getElementById('weather-temp').innerText = `${temp}°`;
-                    document.getElementById('weather-icon').innerText = icon;
-                    document.getElementById('weather-location').innerText = data.name || nearestMuni;
+                    // Update ALL weather elements (could be multiple in sidebar and map)
+                    document.querySelectorAll('[id="weather-temp"]').forEach(el => el.innerText = `${temp}°`);
+                    document.querySelectorAll('[id="weather-icon"]').forEach(el => el.innerText = icon);
+                    document.querySelectorAll('[id="weather-location"]').forEach(el => el.innerText = data.name || nearestMuni);
+                    
+                    // Show widgets
+                    document.querySelectorAll('#weather-widget').forEach(el => el.classList.remove('hidden'));
                     
                     // 3. Proactive Suggestion: Highlight Rainy Plan if it's raining
                     const rainBtn = document.querySelector('[data-mood="rain"]');

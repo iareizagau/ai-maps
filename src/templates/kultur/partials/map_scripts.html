@@ -141,29 +141,34 @@
             document.getElementById('weather-location').innerText = nearestMuni;
         }
 
-        // 2. Fetch Real Weather (Open-Meteo)
-        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${center.lat}&longitude=${center.lng}&current_weather=true`)
+        // 2. Fetch Real Weather (OpenWeatherMap)
+        const API_KEY = '{{ OPENWEATHERMAP_API_KEY }}';
+        if (!API_KEY) return;
+
+        fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${center.lat}&lon=${center.lng}&units=metric&appid=${API_KEY}`)
             .then(r => r.json())
             .then(data => {
-                const weather = data.current_weather;
-                if (weather) {
-                    const temp = Math.round(weather.temperature);
-                    const code = weather.weathercode;
+                if (data.main && data.weather && data.weather[0]) {
+                    const temp = Math.round(data.main.temp);
+                    const condition = data.weather[0].main;
                     
-                    // WMO Weather interpretation
-                    // 0: Clear, 1-3: Partly Cloudy, 45-48: Fog, 51-67: Drizzle/Rain, 71-77: Snow, 80-82: Showers, 95-99: Thunderstorm
-                    let icon = "☀️";
-                    let isRainy = false;
-                    
-                    if (code >= 1 && code <= 3) icon = "⛅";
-                    else if (code >= 45 && code <= 48) icon = "🌫️";
-                    else if (code >= 51 && code <= 67) { icon = "🌧️"; isRainy = true; }
-                    else if (code >= 71 && code <= 77) { icon = "❄️"; isRainy = true; }
-                    else if (code >= 80 && code <= 82) { icon = "🌦️"; isRainy = true; }
-                    else if (code >= 95) { icon = "⛈️"; isRainy = true; }
+                    // Icon mapping
+                    const icons = { 
+                        'Clear': '☀️', 
+                        'Clouds': '☁️', 
+                        'Rain': '🌧️', 
+                        'Drizzle': '🌦️',
+                        'Snow': '❄️', 
+                        'Thunderstorm': '⛈️',
+                        'Mist': '🌫️',
+                        'Fog': '🌫️'
+                    };
+                    let icon = icons[condition] || "⛅";
+                    let isRainy = ['Rain', 'Drizzle', 'Thunderstorm', 'Snow'].includes(condition);
 
                     document.getElementById('weather-temp').innerText = `${temp}°`;
                     document.getElementById('weather-icon').innerText = icon;
+                    document.getElementById('weather-location').innerText = data.name || nearestMuni;
                     
                     // 3. Proactive Suggestion: Highlight Rainy Plan if it's raining
                     const rainBtn = document.querySelector('[data-mood="rain"]');

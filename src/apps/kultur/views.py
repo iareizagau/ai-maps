@@ -3,11 +3,16 @@ from django.http import JsonResponse
 from django.core.serializers import serialize
 from .models import CulturalEvent
 
+from django.conf import settings
+
 def map_view(request):
     """
     Main view that renders the Leaflet map.
     """
-    return render(request, 'kultur/map.html')
+    context = {
+        'OPENWEATHERMAP_API_KEY': settings.OPENWEATHERMAP_API_KEY
+    }
+    return render(request, 'kultur/map.html', context)
 
 def events_geojson(request):
     """

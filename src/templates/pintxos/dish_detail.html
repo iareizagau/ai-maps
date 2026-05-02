@@ -1,0 +1,301 @@
+{% load i18n %}
+
+<c-layouts.main title="{{ dish.name }}">
+    <div x-data="{
+        showRateModal: false,
+        isSubmitting: false,
+        rateSuccess: false,
+        rating: 5,
+        comment: '',
+        price: null,
+        isFav: false,
+        favCount: 0,
+        favLoading: false,
+
+        async initFav() {
+            try {
+                const res = await fetch('/pintxos/api/dishes/{{ dish.id }}/favourite/');
+                if (res.ok) {
+                    const d = await res.json();
+                    this.isFav = d.favourited;
+                    this.favCount = d.count;
+                }
+            } catch(e) {}
+        },
+
+        async toggleFav() {
+            if (this.favLoading) return;
+            this.favLoading = true;
+            try {
+                const res = await fetch('/pintxos/api/dishes/{{ dish.id }}/favourite/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+                });
+                if (res.ok) {
+                    const d = await res.json();
+                    this.isFav = d.favourited;
+                    this.favCount = d.count;
+                }
+            } catch(e) {}
+            this.favLoading = false;
+        },
+
+        sharedish() {
+            if (navigator.share) {
+                navigator.share({ title: '{{ dish.name }}', url: window.location.href });
+            } else {
+                navigator.clipboard.writeText(window.location.href);
+                alert('¡Enlace copiado al portapapeles!');
+            }
+        },
+        
+        async submitRating() {
+            this.isSubmitting = true;
+            try {
+                const res = await fetch('/pintxos/api/dishes/{{ dish.id }}/rate/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        rating: this.rating,
+                        comment: this.comment,
+                        price: this.price ? parseFloat(this.price) : null
+                    })
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || '{% trans "Error submitting rating" %}');
+                }
+                this.showRateModal = false;
+                this.rateSuccess = true;
+                setTimeout(() => { this.rateSuccess = false; window.location.reload(); }, 2000);
+            } catch(e) {
+                alert(e.message);
+            } finally {
+                this.isSubmitting = false;
+            }
+        }
+    }" x-init="initFav()" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {% csrf_token %}
+
+        <div class="mb-8">
+            <a href="{% url 'pintxos:restaurant_detail' dish.restaurant.id %}" class="text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-2 text-sm font-bold uppercase tracking-widest">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                {{ dish.restaurant.name }}
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
+            {# Image #}
+            <div>
+                <c-atoms.card variant="glass" class="p-0 overflow-hidden aspect-video sm:aspect-square">
+                    {% if dish.image_url %}
+                        <img src="{{ dish.image_url }}" alt="{{ dish.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                        <div class="w-full h-full bg-gradient-to-br from-indigo-900/40 to-purple-900/40 flex items-center justify-center">
+                            <span class="text-6xl">🍴</span>
+                        </div>
+                    {% endif %}
+                </c-atoms.card>
+            </div>
+
+            {# Details #}
+            <div class="space-y-8">
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-1 rounded-full bg-indigo-600/20 text-indigo-400 text-[10px] font-bold uppercase tracking-widest border border-indigo-500/20">
+                            {{ dish.get_category_display }}
+                        </span>
+                        <div class="flex items-center gap-1 text-yellow-500 text-sm font-bold">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            {{ dish.avg_rating|floatformat:1 }}
+                        </div>
+                    </div>
+                    <h1 class="text-3xl sm:text-4xl font-bold text-white leading-tight">{{ dish.name }}</h1>
+                    <p class="text-xl sm:text-2xl font-bold text-indigo-400">{{ dish.price }}€</p>
+                </div>
+
+                {% if dish.description %}
+                    <p class="text-gray-400 leading-relaxed">{{ dish.description }}</p>
+                {% endif %}
+
+                <div class="pt-6 border-t border-white/5 space-y-3">
+                    {% if user.is_authenticated %}
+                        <button
+                            @click="showRateModal = true"
+                            class="w-full py-4 px-6 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white text-sm font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-indigo-500/20"
+                        >
+                            ⭐ {% trans "Rate this dish" %}
+                        </button>
+                        {# Fav + Share row #}
+                        <div class="flex gap-3">
+                            <button @click="toggleFav()"
+                                    :disabled="favLoading"
+                                    :class="isFav ? 'bg-red-500/20 border-red-500/30 text-red-400' : 'bg-white/5 border-white/10 text-gray-400 hover:text-red-400 hover:border-red-500/30'"
+                                    class="flex-1 flex items-center justify-center gap-2 py-3 border rounded-xl text-sm font-bold transition-all active:scale-[0.97]">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform" :class="isFav ? 'scale-110 fill-current' : 'stroke-current fill-transparent'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                                <span x-text="isFav ? 'Guardado' : 'Guardar'"></span>
+                                <span x-show="favCount > 0" class="text-xs opacity-60" x-text="'(' + favCount + ')'"></span>
+                            </button>
+                            <button @click="sharedish()"
+                                    class="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl text-sm font-bold transition-all active:scale-[0.97]">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                </svg>
+                                Compartir
+                            </button>
+                        </div>
+                    {% else %}
+                        <c-atoms.card variant="glass" class="p-4 text-center">
+                            <p class="text-sm text-gray-400">
+                                <a href="/accounts/login/?next={{ request.path }}" class="text-indigo-400 hover:text-indigo-300 font-bold">{% trans "Login" %}</a> {% trans "to rate this dish" %}
+                            </p>
+                        </c-atoms.card>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# Reviews Section #}
+        <div class="space-y-8">
+            <h2 class="text-2xl font-bold text-white">{% trans "Community Reviews" %} ({{ dish.rating_count|default:0 }})</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for rating in ratings %}
+                    <c-atoms.card variant="glass" class="p-6 space-y-4">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold">
+                                    {{ rating.user.username|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <p class="text-sm font-bold text-white">{{ rating.user.username }}</p>
+                                        {% if user.is_authenticated and rating.user != user %}
+                                            <button hx-post="/api/follow/{{ rating.user.id }}/pintxos" hx-swap="none" 
+                                                    @click="$el.innerText = ($el.innerText.includes('+') ? '✓' : '+')"
+                                                    class="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 w-5 h-5 flex items-center justify-center rounded-full border border-indigo-500/20 hover:bg-indigo-600 hover:text-white transition-all">
+                                                +
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                    <p class="text-[10px] text-gray-500">{{ rating.created_at|date:"d/m/Y H:i" }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 text-yellow-500 text-xs">
+                                <c-atoms.star_rating :rating="rating.rating" />
+                            </div>
+                        </div>
+                        {% if rating.comment %}
+                            <p class="text-sm text-gray-300 italic leading-relaxed">"{{ rating.comment }}"</p>
+                        {% endif %}
+                    </c-atoms.card>
+                {% empty %}
+                    <div class="col-span-full py-12 text-center">
+                        <p class="text-gray-500 italic">{% trans "No reviews yet. Be the first to rate this dish!" %}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# ── Rating Modal ────────────────────────────────────────────── #}
+        {% if user.is_authenticated %}
+        <template x-if="showRateModal">
+            <div class="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showRateModal = false"></div>
+
+                <div class="relative w-full max-w-md bg-gray-900 border border-white/10 rounded-3xl p-8 shadow-2xl space-y-6">
+                    {# Close button #}
+                    <button @click="showRateModal = false" class="absolute top-4 right-4 bg-white/5 hover:bg-white/10 rounded-full p-2 text-gray-400 hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+
+                    <div class="space-y-1">
+                        <h3 class="text-xl font-bold text-white">⭐ {% trans "Rate this dish" %}</h3>
+                        <p class="text-xs text-gray-400">{{ dish.name }} · {{ dish.restaurant.name }}</p>
+                    </div>
+
+                    {# Star selector #}
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "Your Rating" %}</label>
+                        <div class="flex gap-2 items-center justify-center bg-white/5 rounded-2xl p-4">
+                            <template x-for="i in 5" :key="i">
+                                <svg @click="rating = i"
+                                     :class="rating >= i ? 'text-yellow-400 scale-110' : 'text-gray-600'"
+                                     class="w-10 h-10 cursor-pointer hover:scale-125 transition-transform"
+                                     xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                            </template>
+                        </div>
+                        <p class="text-center text-xs text-gray-500">
+                            <span x-text="['', '{% trans "Terrible" %}', '{% trans "Bad" %}', '{% trans "OK" %}', '{% trans "Good" %}', '{% trans "Excellent!" %}'][rating]"></span>
+                        </p>
+                    </div>
+
+                    {# Comment #}
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "Review (Optional)" %}</label>
+                        <textarea x-model="comment" rows="3"
+                                  placeholder="{% trans 'What made it special?' %}"
+                                  class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none"></textarea>
+                    </div>
+
+                    {# Price #}
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "Price paid (Optional)" %}</label>
+                        <div class="relative">
+                            <input type="number" step="0.10" min="0" x-model="price" placeholder="0.00"
+                                   class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-8 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all">
+                            <span class="absolute right-3 top-3.5 text-xs text-gray-500">€</span>
+                        </div>
+                    </div>
+
+                    {# Submit #}
+                    <button @click="submitRating()" :disabled="isSubmitting"
+                            class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-indigo-500/20 active:scale-[0.98]">
+                        <span x-show="!isSubmitting">✓ {% trans "Submit Rating" %}</span>
+                        <span x-show="isSubmitting" class="flex items-center justify-center gap-2">
+                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            {% trans "Submitting..." %}
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </template>
+
+        {# Success Toast #}
+        <div x-show="rateSuccess"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             class="fixed bottom-8 right-8 z-[3000]">
+            <div class="flex items-center gap-3 bg-green-500/10 border border-green-500/20 backdrop-blur-md rounded-2xl px-6 py-4 shadow-xl">
+                <div class="bg-green-500 rounded-full p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-white">{% trans "Rating submitted!" %}</p>
+                    <p class="text-xs text-gray-400">{% trans "Thanks for your contribution." %}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</c-layouts.main>

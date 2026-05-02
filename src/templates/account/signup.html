@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load account socialaccount %}
+
+{% block title %}{% trans "Sign Up" %} - Maps.eus{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center px-4 py-12">
+    <c-atoms.card variant="glass" class="w-full max-w-md p-8 space-y-8">
+        <div class="text-center space-y-2">
+            <h1 class="text-3xl font-bold tracking-tight text-white">{% trans "Create Account" %}</h1>
+            <p class="text-gray-400 text-sm">{% trans "Join the Euskal Herriko GIS ecosystem" %}</p>
+        </div>
+
+        <div class="space-y-4">
+            {% include "socialaccount/snippets/provider_list.html" with process="signup" %}
+            
+            <div class="relative flex items-center">
+                <div class="flex-grow border-t border-white/10"></div>
+                <span class="flex-shrink mx-4 text-xs text-gray-500 uppercase tracking-widest">{% trans "Or register with" %}</span>
+                <div class="flex-grow border-t border-white/10"></div>
+            </div>
+        </div>
+
+        <form class="space-y-6" method="POST" action="{% url 'account_signup' %}">
+            {% csrf_token %}
+            
+            <div class="space-y-4">
+                {% for field in form %}
+                <div class="space-y-1">
+                    <label for="{{ field.id_for_label }}" class="block text-xs font-medium text-gray-400 ml-1">
+                        {{ field.label }}
+                    </label>
+                    <c-atoms.input 
+                        type="{{ field.field.widget.input_type|default:'text' }}" 
+                        name="{{ field.name }}" 
+                        id="{{ field.id_for_label }}"
+                        value="{{ field.value|default:'' }}"
+                        required
+                    />
+                    {% if field.errors %}
+                        {% for error in field.errors %}
+                        <p class="text-red-400 text-[10px] mt-1 ml-1">{{ error }}</p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+
+            <c-atoms.button type="submit" variant="primary" class="w-full">
+                {% trans "Create Account" %}
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewbox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+            </c-atoms.button>
+        </form>
+
+        <div class="text-center pt-4">
+            <p class="text-sm text-gray-400">
+                {% trans "Already have an account?" %} 
+                <a href="{{ login_url }}" class="text-indigo-400 hover:text-indigo-300 font-bold transition-colors">
+                    {% trans "Sign In" %}
+                </a>
+            </p>
+        </div>
+    </c-atoms.card>
+</div>
+{% endblock %}

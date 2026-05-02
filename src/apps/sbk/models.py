@@ -1,0 +1,175 @@
+from django.db import models
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+import uuid
+
+class DanceStyle(models.TextChoices):
+    SALSA = 'salsa', 'Salsa'
+    BACHATA = 'bachata', 'Bachata'
+    KIZOMBA = 'kizomba', 'Kizomba'
+    URBAN_KIZ = 'urbankiz', 'Urban Kiz'
+    ZOUK = 'zouk', 'Zouk'
+    MIXED = 'mixed', 'SBK / Mixed'
+
+class EventType(models.TextChoices):
+    FESTIVAL = 'festival', 'Festival / Congress'
+    PARTY = 'party', 'Party / Social'
+    WORKSHOP = 'workshop', 'Workshop / Bootcamp'
+
+class Artist(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    role = models.CharField(max_length=100, help_text="e.g., Dancer, DJ, Singer")
+    instagram_handle = models.CharField(max_length=100, blank=True, null=True)
+    country = models.CharField(max_length=100, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+class Event(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    goandance_id = models.UUIDField(unique=True, null=True, blank=True)
+    name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, blank=True, null=True)
+    description = models.TextField(blank=True)
+    short_description = models.TextField(blank=True)
+    
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    
+    event_type = models.CharField(max_length=50, choices=EventType.choices, default=EventType.FESTIVAL)
+    primary_style = models.CharField(max_length=50, choices=DanceStyle.choices, default=DanceStyle.MIXED)
+    
+    # Location
+    address = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    country = models.CharField(max_length=100, blank=True, null=True)
+    lat = models.DecimalField(max_digits=12, decimal_places=8, null=True, blank=True)
+    lng = models.DecimalField(max_digits=12, decimal_places=8, null=True, blank=True)
+    
+    # Media & Links
+    image_url = models.URLField(max_length=500, blank=True, null=True)
+    poster = models.ImageField(upload_to='sbk/posters/', blank=True, null=True)
+    ticket_url = models.URLField(max_length=500, blank=True, null=True)
+    
+    # Trust & Info (Waze approach)
+    price_info = models.CharField(max_length=100, blank=True, null=True, help_text="e.g. 10€ with drink")
+    atmosphere = models.CharField(max_length=100, blank=True, null=True, help_text="e.g. Chill, Pure Social, Training")
+    
+    # Cost Estimation
+    estimated_pass_price = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    
+    artists = models.ManyToManyField(Artist, related_name='events', blank=True)
+    
+    # User Submissions (Waze approach)
+    is_user_submitted = models.BooleanField(default=False)
+    submitted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='submitted_sbk_events')
+    
+    # Moderation & Trust
+    MODERATION_CHOICES = [
+        ('pending', 'Pending'),
+        ('verified', 'Verified'),
+        ('rejected', 'Rejected'),
+    ]
+    moderation_status = models.CharField(max_length=20, choices=MODERATION_CHOICES, default='pending')
+    is_verified = models.BooleanField(default=False)
+    report_count = models.IntegerField(default=0)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.city})"
+
+class EventReview(models.Model):
+    RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]
+    
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    
+    overall_rating = models.IntegerField(choices=RATING_CHOICES)
+    floor_quality = models.IntegerField(choices=RATING_CHOICES, help_text="1: Slippery/Sticky, 5: Perfect wood")
+    ac_ventilation = models.IntegerField(choices=RATING_CHOICES, help_text="1: Sauna, 5: Perfect AC")
+    gender_ratio = models.IntegerField(choices=RATING_CHOICES, help_text="1: Bad balance, 5: Perfect 50/50")
+    music_quality = models.IntegerField(choices=RATING_CHOICES)
+    
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('event', 'user')
+
+class UserEventStatus(models.TextChoices):
+    INTERESTED = 'interested', 'Interested'
+    GOING = 'going', 'Going'
+    WENT = 'went', 'Went (Past)'
+
+class UserEvent(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sbk_events')
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    status = models.CharField(max_length=50, choices=UserEventStatus.choices, default=UserEventStatus.INTERESTED)
+    
+    # For Matchmaking/Social
+    looking_for_roommate = models.BooleanField(default=False)
+    looking_for_dance_partner = models.BooleanField(default=False)
+    notes = models.CharField(max_length=255, blank=True, help_text="E.g., 'Have a spare bed in my Airbnb'")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'event')
+
+class DanceProfile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='dance_profile')
+    points = models.IntegerField(default=0)
+    current_streak = models.IntegerField(default=0)
+    max_streak = models.IntegerField(default=0)
+    last_checkin_date = models.DateField(null=True, blank=True)
+    
+    @property
+    def level(self):
+        return (self.points // 100) + 1
+
+    def get_rank(self):
+        if self.points < 100: return "Novato"
+        if self.points < 500: return "Bailador Local"
+        if self.points < 2000: return "Explorador SBK"
+        if self.points < 5000: return "Embajador del Social"
+        return "Leyenda del Social"
+
+    def __str__(self):
+        return f"Profile of {self.user.username} ({self.points} XP)"
+
+class EventNotice(models.Model):
+    CATEGORY_CHOICES = [
+        ('partner', '🤝 Buscar Pareja'),
+        ('transport', '🚗 Compartir Coche'),
+        ('dinner', '🥘 Cena / Quedada'),
+        ('other', '✨ Otros'),
+    ]
+    
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='notices')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='other')
+    message = models.TextField(max_length=250)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.category} by {self.user.username}"
+
+class CheckIn(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='checkins')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('event', 'user') # One checkin per event per night (we can reset/clear old ones later)
+
+class VibeReport(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='vibe_reports')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    music_score = models.IntegerField(default=3) # 1-5
+    crowd_score = models.IntegerField(default=3) # 1-5 (1=Empty, 5=Packed)
+    ac_score = models.IntegerField(default=3) # 1-5 (1=Sauna, 5=Cold)
+    created_at = models.DateTimeField(auto_now_add=True)

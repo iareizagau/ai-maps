@@ -1,0 +1,947 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-27 23:13+0200\n"
+"PO-Revision-Date: 2026-04-27 23:15+0200\n"
+"Last-Translator: Antigravity AI\n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: apps/core/templates/core/partials/following_list.html:29
+msgid "Following since"
+msgstr "Following since"
+
+#: apps/core/templates/core/partials/following_list.html:36
+msgid "¿Estás seguro de que quieres dejar de seguir a"
+msgstr "Are you sure you want to unfollow"
+
+#: apps/core/templates/core/partials/following_list.html:38
+msgid "Unfollow"
+msgstr "Unfollow"
+
+#: apps/core/templates/core/partials/following_list.html:49
+msgid "No sigues a nadie todavía"
+msgstr "You are not following anyone yet"
+
+#: apps/core/templates/core/partials/following_list.html:51
+msgid "Cuando sigas a alguien en PintxoMaps u otras apps, aparecerán aquí. Sus valoraciones te ayudarán a decidir mejor."
+msgstr "When you follow someone on PintxoMaps or other apps, they will appear here. Their ratings will help you decide better."
+
+#: apps/core/templates/core/partials/user_search_results.html:23
+#: templates/core/profile.html:159
+msgid "Following"
+msgstr "Following"
+
+#: apps/core/templates/core/partials/user_search_results.html:30
+msgid "Follow"
+msgstr "Follow"
+
+#: apps/core/templates/core/partials/user_search_results.html:37
+msgid "No users found matching your search."
+msgstr "No users found matching your search."
+
+#: apps/inguru/models.py:17
+msgid "Calidad del Aire"
+msgstr "Air Quality"
+
+#: apps/inguru/models.py:18
+msgid "Polen"
+msgstr "Pollen"
+
+#: apps/inguru/models.py:19
+msgid "Calidad de Aguas (URA)"
+msgstr "Water Quality (URA)"
+
+#: apps/inguru/models.py:20
+msgid "Aguas de Consumo"
+msgstr "Drinking Water"
+
+#: apps/inguru/models.py:21
+msgid "Meteorología (Euskalmet)"
+msgstr "Weather (Euskalmet)"
+
+#: apps/kultur/models.py:5
+msgid "ID Origen"
+msgstr "Origin ID"
+
+#: apps/kultur/models.py:5
+msgid "ID from the Euskadi API"
+msgstr "ID from the Euskadi API"
+
+#: apps/kultur/models.py:6
+msgid "Título (ES)"
+msgstr "Title (ES)"
+
+#: apps/kultur/models.py:7
+msgid "Título (EU)"
+msgstr "Title (EU)"
+
+#: apps/kultur/models.py:8
+msgid "Descripción (ES)"
+msgstr "Description (ES)"
+
+#: apps/kultur/models.py:9
+msgid "Descripción (EU)"
+msgstr "Description (EU)"
+
+#: apps/kultur/models.py:11
+msgid "Fecha Inicio"
+msgstr "Start Date"
+
+#: apps/kultur/models.py:12
+msgid "Fecha Fin"
+msgstr "End Date"
+
+#: apps/kultur/models.py:14
+msgid "Lugar"
+msgstr "Place"
+
+#: apps/kultur/models.py:15
+msgid "Municipio"
+msgstr "Municipality"
+
+#: apps/kultur/models.py:16
+msgid "Provincia"
+msgstr "Province"
+
+#: apps/kultur/models.py:17
+msgid "Tipo/Categoría"
+msgstr "Type/Category"
+
+#: apps/kultur/models.py:20
+msgid "URL (ES)"
+msgstr "URL (ES)"
+
+#: apps/kultur/models.py:21
+msgid "URL (EU)"
+msgstr "URL (EU)"
+
+#: apps/kultur/models.py:24
+msgid "Imagen"
+msgstr "Image"
+
+#: apps/kultur/models.py:27
+msgid "Ubicación"
+msgstr "Location"
+
+#: apps/kultur/models.py:33
+msgid "Evento Cultural"
+msgstr "Cultural Event"
+
+#: apps/kultur/models.py:34
+msgid "Eventos Culturales"
+msgstr "Cultural Events"
+
+#: apps/pintxos/models.py:55
+msgid "Bar"
+msgstr "Bar"
+
+#: apps/pintxos/models.py:56
+msgid "Restaurant"
+msgstr "Restaurant"
+
+#: apps/pintxos/models.py:57
+msgid "Txoko"
+msgstr "Txoko"
+
+#: apps/pintxos/models.py:113
+msgid "Tortilla"
+msgstr "Spanish Omelette"
+
+#: apps/pintxos/models.py:114
+msgid "Croquetas"
+msgstr "Croquettes"
+
+#: apps/pintxos/models.py:115
+msgid "Calamares"
+msgstr "Squid"
+
+#: apps/pintxos/models.py:116
+msgid "Comida Mexicana"
+msgstr "Mexican Food"
+
+#: apps/pintxos/models.py:117
+msgid "Patatas Bravas"
+msgstr "Patatas Bravas"
+
+#: apps/pintxos/models.py:118
+msgid "Tarta de Queso Horno"
+msgstr "Baked Cheesecake"
+
+#: apps/pintxos/models.py:119
+msgid "Tarta de Queso Frío"
+msgstr "Cold Cheesecake"
+
+#: apps/pintxos/models.py:120
+msgid "Hamburguesa"
+msgstr "Burger"
+
+#: apps/pintxos/models.py:121
+msgid "Pizza"
+msgstr "Pizza"
+
+#: apps/pintxos/models.py:122
+msgid "Sushi"
+msgstr "Sushi"
+
+#: templates/account/login.html:5 templates/account/login.html:67
+#: templates/account/signup.html:66 templates/socialaccount/login.html:4
+msgid "Sign In"
+msgstr "Sign In"
+
+#: templates/account/login.html:11
+msgid "Welcome Back"
+msgstr "Welcome Back"
+
+#: templates/account/login.html:12
+msgid "Enter your details to access your account"
+msgstr "Enter your details to access your account"
+
+#: templates/account/login.html:20
+msgid "Or continue with"
+msgstr "Or continue with"
+
+#: templates/account/login.html:59
+msgid "Remember me"
+msgstr "Remember me"
+
+#: templates/account/login.html:62
+msgid "Forgot password?"
+msgstr "Forgot password?"
+
+#: templates/account/login.html:76
+msgid "Don't have an account?"
+msgstr "Don't have an account?"
+
+#: templates/account/login.html:78 templates/account/signup.html:5
+msgid "Sign Up"
+msgstr "Sign Up"
+
+#: templates/account/logout.html:5 templates/account/logout.html:18
+#: templates/account/logout.html:29
+msgid "Sign Out"
+msgstr "Sign Out"
+
+#: templates/account/logout.html:19
+msgid "Are you sure you want to sign out?"
+msgstr "Are you sure you want to sign out?"
+
+#: templates/account/logout.html:32 templates/socialaccount/login.html:40
+msgid "Cancel"
+msgstr "Cancel"
+
+#: templates/account/signup.html:11 templates/account/signup.html:55
+msgid "Create Account"
+msgstr "Create Account"
+
+#: templates/account/signup.html:12
+msgid "Join the Euskal Herriko GIS ecosystem"
+msgstr "Join the Euskal Herriko GIS ecosystem"
+
+#: templates/account/signup.html:20
+msgid "Or register with"
+msgstr "Or register with"
+
+#: templates/account/signup.html:64
+msgid "Already have an account?"
+msgstr "Already have an account?"
+
+#: templates/core/partials/expert_suggestions.html:15
+msgid "Top Contributor"
+msgstr "Top Contributor"
+
+#: templates/core/partials/expert_suggestions.html:23
+msgid "Followers"
+msgstr "Followers"
+
+#: templates/core/partials/password_form.html:15
+msgid "Change Password"
+msgstr "Change Password"
+
+#: templates/core/partials/payment_methods.html:15
+msgid "Are you sure you want to delete this card?"
+msgstr "Are you sure you want to delete this card?"
+
+#: templates/core/partials/payment_methods.html:27
+msgid "DEFAULT"
+msgstr "DEFAULT"
+
+#: templates/core/partials/payment_methods.html:37
+msgid "No payment methods"
+msgstr "No payment methods"
+
+#: templates/core/partials/payment_methods.html:38
+msgid "Add a card to manage your subscriptions."
+msgstr "Add a card to manage your subscriptions."
+
+#: templates/core/partials/profile_form.html:6
+msgid "First Name"
+msgstr "First Name"
+
+#: templates/core/partials/profile_form.html:10
+msgid "Last Name"
+msgstr "Last Name"
+
+#: templates/core/partials/profile_form.html:15
+msgid "Email"
+msgstr "Email"
+
+#: templates/core/partials/profile_form.html:19
+msgid "Phone"
+msgstr "Phone"
+
+#: templates/core/partials/profile_form.html:23
+msgid "Bio"
+msgstr "Bio"
+
+#: templates/core/partials/profile_form.html:27
+msgid "Save Changes"
+msgstr "Save Changes"
+
+#: templates/core/partials/username_form.html:5
+msgid "New Username"
+msgstr "New Username"
+
+#: templates/core/partials/username_form.html:9 templates/core/profile.html:75
+msgid "Change Username"
+msgstr "Change Username"
+
+#: templates/core/profile.html:3
+msgid "Control Panel"
+msgstr "Control Panel"
+
+#: templates/core/profile.html:25 templates/core/profile.html:61
+msgid "Personal Data"
+msgstr "Personal Data"
+
+#: templates/core/profile.html:33
+msgid "Account & Security"
+msgstr "Account & Security"
+
+#: templates/core/profile.html:41 templates/core/profile.html:100
+msgid "Payment Methods"
+msgstr "Payment Methods"
+
+#: templates/core/profile.html:49
+msgid "Social & Trust"
+msgstr "Social & Trust"
+
+#: templates/core/profile.html:62
+msgid "Manage your basic identity information."
+msgstr "Manage your basic identity information."
+
+#: templates/core/profile.html:76
+msgid "Your unique identifier on the platform."
+msgstr "Your unique identifier on the platform."
+
+#: templates/core/profile.html:85
+msgid "Update Password"
+msgstr "Update Password"
+
+#: templates/core/profile.html:86
+msgid "Keep your account secure with a strong password."
+msgstr "Keep your account secure with a strong password."
+
+#: templates/core/profile.html:101
+msgid "Manage your credit cards and billing information."
+msgstr "Manage your credit cards and billing information."
+
+#: templates/core/profile.html:104
+msgid "Add Card"
+msgstr "Add Card"
+
+#: templates/core/profile.html:120
+msgid "Build your Circle"
+msgstr "Build your Circle"
+
+#: templates/core/profile.html:121
+msgid "Search for other experts and friends to follow."
+msgstr "Search for other experts and friends to follow."
+
+#: templates/core/profile.html:126
+msgid "Search by username..."
+msgstr "Search by username..."
+
+#: templates/core/profile.html:149
+msgid "Descubrir Expertos"
+msgstr "Discover Experts"
+
+#: templates/core/profile.html:160
+msgid "People you are currently following across different apps."
+msgstr "People you are currently following across different apps."
+
+#: templates/cotton/molecules/dish_card.html:20
+msgid "Reviews"
+msgstr "Reviews"
+
+#: templates/cotton/molecules/restaurant_card.html:40
+msgid "Featured Dishes"
+msgstr "Featured Dishes"
+
+#: templates/cotton/molecules/restaurant_card.html:55
+msgid "No dishes listed yet."
+msgstr "No dishes listed yet."
+
+#: templates/cotton/molecules/restaurant_card.html:61
+#: templates/pintxos/index.html:109 templates/pintxos/index.html:188
+msgid "View Details"
+msgstr "View Details"
+
+#: templates/cotton/organisms/leaderboard.html:12
+msgid "The podium is empty. Start rating!"
+msgstr "The podium is empty. Start rating!"
+
+#: templates/cotton/organisms/map_section.html:5
+msgid "Culinary Map"
+msgstr "Culinary Map"
+
+#: templates/cotton/organisms/map_section.html:6
+msgid "Click anywhere on the map to add a new bar or restaurant"
+msgstr "Click anywhere on the map to add a new bar or restaurant"
+
+#: templates/cotton/organisms/map_section.html:15
+msgid "Live Data"
+msgstr "Live Data"
+
+#: templates/cotton/organisms/navbar.html:37
+#: templates/cotton/organisms/navbar.html:87
+msgid "Logout"
+msgstr "Logout"
+
+#: templates/cotton/organisms/navbar.html:41
+#: templates/cotton/organisms/navbar.html:92
+#: templates/pintxos/dish_detail.html:159
+msgid "Login"
+msgstr "Login"
+
+#: templates/cotton/organisms/navbar.html:44
+#: templates/cotton/organisms/navbar.html:95
+msgid "Register"
+msgstr "Register"
+
+#: templates/home.html:2
+msgid "Hasiera"
+msgstr "Home"
+
+#: templates/home.html:5
+msgid "Euskal Herriko GIS Ekosistema"
+msgstr "Euskal Herriko GIS Ecosystem"
+
+#: templates/home.html:6
+msgid "Explora el territorio a través de mapas inteligentes, datos abiertos y herramientas colaborativas diseñadas para la comunidad."
+msgstr "Explore the territory through smart maps, open data and collaborative tools designed for the community."
+
+#: templates/home.html:12
+msgid "¿Qué quieres encontrar hoy? (ej. Aire, Pintxos, Museos...)"
+msgstr "What do you want to find today? (e.g. Air, Pintxos, Museums...)"
+
+#: templates/home.html:21
+msgid "Tendencias:"
+msgstr "Trending:"
+
+#: templates/home.html:35
+msgid "Monitorización ambiental en tiempo real. Calidad del aire, clima y biodiversidad."
+msgstr "Real-time environmental monitoring. Air quality, climate and biodiversity."
+
+#: templates/home.html:38
+msgid "Datu Bizidunak"
+msgstr "Live Data"
+
+#: templates/home.html:43
+msgid "La guía definitiva de la gastronomía vasca. Rutas, favoritos y rankings locales."
+msgstr "The ultimate guide to Basque gastronomy. Routes, favorites and local rankings."
+
+#: templates/home.html:46
+msgid "+500 Restaurantes"
+msgstr "+500 Restaurants"
+
+#: templates/home.html:51
+msgid "Agenda cultural geolocalizada. Museos, teatros y eventos en todo el territorio."
+msgstr "Geolocated cultural agenda. Museums, theaters and events across the territory."
+
+#: templates/home.html:54
+msgid "Agenda Hoy"
+msgstr "Today's Agenda"
+
+#: templates/home.html:59
+msgid "Salsa, Bachata y Kizomba. Encuentra los mejores eventos de baile cada noche."
+msgstr "Salsa, Bachata and Kizomba. Find the best dance events every night."
+
+#: templates/home.html:62
+msgid "Eventos Activos"
+msgstr "Active Events"
+
+#: templates/home.html:71
+msgid "Ecosistema"
+msgstr "Ecosystem"
+
+#: templates/home.html:72
+msgid "Más allá de los mapas"
+msgstr "Beyond the maps"
+
+#: templates/home.html:75
+msgid "Estamos construyendo una infraestructura de datos abierta para que cualquier ciudadano u organización pueda crear valor sobre el territorio."
+msgstr "We are building an open data infrastructure so that any citizen or organization can create value on the territory."
+
+#: templates/home.html:83
+msgid "Bidaiak"
+msgstr "Travel"
+
+#: templates/home.html:84
+msgid "Planificador de rutas y logística."
+msgstr "Route planner and logistics."
+
+#: templates/home.html:91
+msgid "Data Studio"
+msgstr "Data Studio"
+
+#: templates/home.html:92
+msgid "Analítica avanzada territorial."
+msgstr "Advanced territorial analytics."
+
+#: templates/home.html:94 templates/home.html:103
+msgid "Próximamente"
+msgstr "Coming Soon"
+
+#: templates/home.html:100
+msgid "API OpenData"
+msgstr "OpenData API"
+
+#: templates/home.html:101
+msgid "Acceso programático para devs."
+msgstr "Programmatic access for devs."
+
+#: templates/pintxos/comanda.html:3 templates/pintxos/comanda.html:16
+#: templates/pintxos/comanda_camarero.html:6
+#: templates/pintxos/comanda_camarero.html:27 templates/pintxos/index.html:442
+msgid "Comanda"
+msgstr "Order"
+
+#: templates/pintxos/comanda.html:18
+msgid "Apunta lo que vais a pedir antes de ir a la barra."
+msgstr "Write down what you're going to order before going to the bar."
+
+#: templates/pintxos/comanda.html:26 templates/pintxos/comanda_camarero.html:6
+msgid "Vista barra"
+msgstr "Bar view"
+
+#: templates/pintxos/comanda.html:31
+msgid "Histórico"
+msgstr "History"
+
+#: templates/pintxos/comanda.html:36
+msgid "Vaciar"
+msgstr "Clear"
+
+#: templates/pintxos/comanda.html:45
+msgid "Comandas recientes"
+msgstr "Recent orders"
+
+#: templates/pintxos/comanda.html:48
+msgid "Aún no hay comandas guardadas. Cuando compartas una se guardará aquí."
+msgstr "No saved orders yet. When you share one, it will be saved here."
+
+#: templates/pintxos/comanda.html:60
+msgid "Repetir"
+msgstr "Repeat"
+
+#: templates/pintxos/comanda.html:71
+msgid "Personas"
+msgstr "People"
+
+#: templates/pintxos/comanda.html:71
+msgid "opcional"
+msgstr "optional"
+
+#: templates/pintxos/comanda.html:74
+msgid "Toca uno para asignarle lo que pides"
+msgstr "Tap one to assign what you order"
+
+#: templates/pintxos/comanda.html:97
+msgid "Grupo"
+msgstr "Group"
+
+#: templates/pintxos/comanda.html:102
+msgid "Añadir nombre…"
+msgstr "Add name…"
+
+#: templates/pintxos/comanda.html:129
+msgid "Buscar…"
+msgstr "Search…"
+
+#: templates/pintxos/comanda.html:134
+msgid "+1 a todo lo de esta pestaña"
+msgstr "+1 to everything in this tab"
+
+#: templates/pintxos/comanda.html:136
+msgid "Otra ronda"
+msgstr "Another round"
+
+#: templates/pintxos/comanda.html:172
+msgid "Sin resultados. Añade abajo lo que falte."
+msgstr "No results. Add below what's missing."
+
+#: templates/pintxos/comanda.html:179
+msgid "Añadir algo personalizado"
+msgstr "Add something custom"
+
+#: templates/pintxos/comanda.html:184
+msgid "Ej. Patatas bravas"
+msgstr "e.g. Patatas bravas"
+
+#: templates/pintxos/comanda.html:189
+msgid "Añadir"
+msgstr "Add"
+
+#: templates/pintxos/comanda.html:198
+msgid "Total artículos"
+msgstr "Total items"
+
+#: templates/pintxos/comanda.html:230
+msgid "Compartir"
+msgstr "Share"
+
+#: templates/pintxos/comanda.html:236
+msgid "¡Copiado!"
+msgstr "Copied!"
+
+#: templates/pintxos/comanda.html:236
+msgid "Copiar"
+msgstr "Copy"
+
+#: templates/pintxos/comanda.html:483
+msgid "¿Quitar a esta persona? Sus pedidos pasan al grupo."
+msgstr "Remove this person? Their orders pass to the group."
+
+#: templates/pintxos/comanda.html:494
+msgid "Nota (sin cebolla, muy hecho, para llevar…)"
+msgstr "Note (no onion, well done, to go…)"
+
+#: templates/pintxos/comanda.html:586
+msgid "art."
+msgstr "items"
+
+#: templates/pintxos/comanda.html:598
+msgid "¿Reemplazar la comanda actual?"
+msgstr "Replace current order?"
+
+#: templates/pintxos/comanda.html:607
+msgid "¿Vaciar la comanda?"
+msgstr "Clear the order?"
+
+#: templates/pintxos/comanda_camarero.html:652
+msgid "La comanda está vacía."
+msgstr "The order is empty."
+
+#: templates/pintxos/comanda_camarero.html:665
+msgid "Total"
+msgstr "Total"
+
+#: templates/pintxos/comanda_camarero.html:669
+msgid "Bebidas"
+msgstr "Drinks"
+
+#: templates/pintxos/comanda_camarero.html:675
+msgid "Pintxos"
+msgstr "Pintxos"
+
+#: templates/pintxos/comanda_camarero.html:679
+msgid "Raciones"
+msgstr "Portions"
+
+#: templates/pintxos/dish_detail.html:687
+msgid "Error submitting rating"
+msgstr "Error submitting rating"
+
+#: templates/pintxos/dish_detail.html:692
+msgid "Rate this dish"
+msgstr "Rate this dish"
+
+#: templates/pintxos/dish_detail.html:696
+msgid "to rate this dish"
+msgstr "to rate this dish"
+
+#: templates/pintxos/dish_detail.html:700
+msgid "Community Reviews"
+msgstr "Community Reviews"
+
+#: templates/pintxos/dish_detail.html:704
+msgid "No reviews yet. Be the first to rate this dish!"
+msgstr "No reviews yet. Be the first to rate this dish!"
+
+#: templates/pintxos/dish_detail.html:708
+msgid "Your Rating"
+msgstr "Your Rating"
+
+#: templates/pintxos/dish_detail.html:712
+msgid "Terrible"
+msgstr "Terrible"
+
+#: templates/pintxos/dish_detail.html:718
+msgid "Bad"
+msgstr "Bad"
+
+#: templates/pintxos/dish_detail.html:722
+msgid "OK"
+msgstr "OK"
+
+#: templates/pintxos/dish_detail.html:726
+msgid "Good"
+msgstr "Good"
+
+#: templates/pintxos/dish_detail.html:730
+msgid "Excellent!"
+msgstr "Excellent!"
+
+#: templates/pintxos/dish_detail.html:734
+msgid "Review (Optional)"
+msgstr "Review (Optional)"
+
+#: templates/pintxos/dish_detail.html:738
+msgid "What made it special?"
+msgstr "What made it special?"
+
+#: templates/pintxos/dish_detail.html:742
+msgid "Price paid (Optional)"
+msgstr "Price paid (Optional)"
+
+#: templates/pintxos/dish_detail.html:746
+msgid "Submit Rating"
+msgstr "Submit Rating"
+
+#: templates/pintxos/dish_detail.html:750
+msgid "Submitting..."
+msgstr "Submitting..."
+
+#: templates/pintxos/dish_detail.html:754
+msgid "Rating submitted!"
+msgstr "Rating submitted!"
+
+#: templates/pintxos/dish_detail.html:758
+msgid "Thanks for your contribution."
+msgstr "Thanks for your contribution."
+
+#: templates/pintxos/index.html:762
+msgid "Pintxos Guide"
+msgstr "Pintxos Guide"
+
+#: templates/pintxos/index.html:766
+msgid "Could not get location"
+msgstr "Could not get location"
+
+#: templates/pintxos/index.html:770
+msgid "Explore Map"
+msgstr "Explore Map"
+
+#: templates/pintxos/index.html:774
+msgid "Add Pintxo"
+msgstr "Add Pintxo"
+
+#: templates/pintxos/index.html:778
+msgid "Trending Right Now"
+msgstr "Trending Right Now"
+
+#: templates/pintxos/index.html:782
+msgid "View all topics"
+msgstr "View all topics"
+
+#: templates/pintxos/index.html:786
+msgid "Weekly Pick"
+msgstr "Weekly Pick"
+
+#: templates/pintxos/index.html:790
+msgid "Bilbao's Best Tortilla"
+msgstr "Bilbao's Best Tortilla"
+
+#: templates/pintxos/index.html:794
+msgid "Join the debate and vote for your favorite tortilla in the old town."
+msgstr "Join the debate and vote for your favorite tortilla in the old town."
+
+#: templates/pintxos/index.html:802
+msgid "The Gilda Route"
+msgstr "The Gilda Route"
+
+#: templates/pintxos/index.html:806
+msgid "From Donostia to Vitoria: a journey through the best spicy skewers."
+msgstr "From Donostia to Vitoria: a journey through the best spicy skewers."
+
+#: templates/pintxos/index.html:810
+msgid "New Openings"
+msgstr "New Openings"
+
+#: templates/pintxos/index.html:814
+msgid "Grilled Perfection"
+msgstr "Grilled Perfection"
+
+#: templates/pintxos/index.html:818
+msgid "Reviewing the new generation of charcoal-grilled pintxos."
+msgstr "Reviewing the new generation of charcoal-grilled pintxos."
+
+#: templates/pintxos/index.html:822
+msgid "Search by pintxo, bar or area..."
+msgstr "Search by pintxo, bar or area..."
+
+#: templates/pintxos/index.html:826
+msgid "Searching Near You"
+msgstr "Searching Near You"
+
+#: templates/pintxos/index.html:830
+msgid "Near Me"
+msgstr "Near Me"
+
+#: templates/pintxos/index.html:834
+msgid "All"
+msgstr "All"
+
+#: templates/pintxos/index.html:840
+msgid "Pintxo Hall of Fame"
+msgstr "Pintxo Hall of Fame"
+
+#: templates/pintxos/index.html:844
+msgid "The community's absolute favorites"
+msgstr "The community's absolute favorites"
+
+#: templates/pintxos/index.html:848
+msgid "Global"
+msgstr "Global"
+
+#: templates/pintxos/index.html:852
+msgid "Friends"
+msgstr "Friends"
+
+#: templates/pintxos/index.html:858
+msgid "Updating Map..."
+msgstr "Updating Map..."
+
+#: templates/pintxos/index.html:864
+msgid "Explore All Places"
+msgstr "Explore All Places"
+
+#: templates/pintxos/index.html:868
+msgid "Browse our complete curated list of bars and restaurants"
+msgstr "Browse our complete curated list of bars and restaurants"
+
+#: templates/pintxos/index.html:872
+msgid "spots found"
+msgstr "spots found"
+
+#: templates/pintxos/index.html:878
+msgid "Add New Pintxo"
+msgstr "Add New Pintxo"
+
+#: templates/pintxos/index.html:884
+msgid "Help the community discover the best bites."
+msgstr "Help the community discover the best bites."
+
+#: templates/pintxos/index.html:890
+msgid "Pintxo Name"
+msgstr "Pintxo Name"
+
+#: templates/pintxos/index.html:894
+msgid "Category"
+msgstr "Category"
+
+#: templates/pintxos/index.html:898
+msgid "What did you think?"
+msgstr "What did you think?"
+
+#: templates/pintxos/index.html:902
+msgid "Price"
+msgstr "Price"
+
+#: templates/pintxos/index.html:906
+msgid "Where is it?"
+msgstr "Where is it?"
+
+#: templates/pintxos/index.html:910
+msgid "Search Bar or Address"
+msgstr "Search Bar or Address"
+
+#: templates/pintxos/index.html:914
+msgid "e.g. Bar Nestor Donostia..."
+msgstr "e.g. Bar Nestor Donostia..."
+
+#: templates/pintxos/index.html:918
+msgid "Existing"
+msgstr "Existing"
+
+#: templates/pintxos/index.html:922
+msgid "Location Confirmation"
+msgstr "Location Confirmation"
+
+#: templates/pintxos/index.html:926
+msgid "Drag marker to refine"
+msgstr "Drag marker to refine"
+
+#: templates/pintxos/index.html:932
+msgid "Bar Details"
+msgstr "Bar Details"
+
+#: templates/pintxos/index.html:938
+msgid "Adding..."
+msgstr "Adding..."
+
+#: templates/pintxos/index.html:942
+msgid "Success!"
+msgstr "Success!"
+
+#: templates/pintxos/index.html:946
+msgid "Restaurant submitted for approval."
+msgstr "Restaurant submitted for approval."
+
+#: templates/pintxos/partials/leaderboard_content.html:950
+msgid "No ratings found in this circle yet."
+msgstr "No ratings found in this circle yet."
+
+#: templates/pintxos/partials/leaderboard_content.html:954
+msgid "Back to Global"
+msgstr "Back to Global"
+
+#: templates/pintxos/partials/restaurant_grid.html:958
+msgid "No matching bites found"
+msgstr "No matching bites found"
+
+#: templates/pintxos/partials/restaurant_grid.html:962
+msgid "Try adjusting your filters or searching in a different area."
+msgstr "Try adjusting your filters or searching in a different area."
+
+#: templates/pintxos/restaurant_detail.html:966
+msgid "Pintxos & Dishes"
+msgstr "Pintxos & Dishes"
+
+#: templates/pintxos/restaurant_detail.html:970
+msgid "Add Dish"
+msgstr "Add Dish"
+
+#: templates/pintxos/restaurant_detail.html:976
+msgid "Login to Add Dish"
+msgstr "Login to Add Dish"
+
+#: templates/socialaccount/login.html:981
+#, python-format
+msgid "Sign In via %(provider_name)s"
+msgstr "Sign In via %(provider_name)s"
+
+#: templates/socialaccount/login.html:986
+#, python-format
+msgid "You are about to sign in using a third-party account from %(provider_name)s."
+msgstr "You are about to sign in using a third-party account from %(provider_name)s."
+
+#: templates/socialaccount/login.html:990
+msgid "Continue"
+msgstr "Continue"
+
+#: templates/socialaccount/snippets/provider_list.html:995
+#, python-format
+msgid "Continue with %(provider_name)s"
+msgstr "Continue with %(provider_name)s"

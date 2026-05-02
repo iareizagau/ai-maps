@@ -1,0 +1,14 @@
+<c-vars rank=1 />
+
+<div class="relative flex items-center justify-center w-8 h-8 rounded-full border shadow-lg font-bold text-xs
+    {% if rank == 1 %}
+        bg-gradient-to-br from-yellow-300 via-yellow-500 to-amber-600 border-yellow-200 text-black
+    {% elif rank == 2 %}
+        bg-gradient-to-br from-gray-200 via-gray-400 to-gray-600 border-gray-100 text-black
+    {% elif rank == 3 %}
+        bg-gradient-to-br from-orange-300 via-orange-500 to-orange-700 border-orange-200 text-black
+    {% else %}
+        bg-white/5 border-white/10 text-gray-400
+    {% endif %}">
+    {{ rank }}
+</div>

@@ -1,0 +1,6 @@
+<button
+    class="flex items-center justify-center gap-2 font-bold py-3 px-6 rounded-xl transition-all active:scale-[0.98] {% if variant == 'primary' %}bg-primary hover:bg-primary_hover text-white shadow-lg shadow-primary/20{% else %}bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-300/50 dark:border-white/10{% endif %}"
+    {{ attrs }}
+>
+    {{ slot }}
+</button>

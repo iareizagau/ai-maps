@@ -1,0 +1,28 @@
+django>=6.0a1
+django-hosts
+django-cotton
+django-ninja
+django-environ
+psycopg[binary]
+django-extensions
+whitenoise
+django-allauth
+requests
+PyJWT
+cryptography
+Pillow
+gunicorn
+
+# GIS
+django-leaflet
+
+# Vector search
+pgvector
+
+# Testing
+pytest
+pytest-django
+faker
+
+# Debugging
+debugpy

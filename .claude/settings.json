@@ -1,0 +1,20 @@
+{
+  "model": "claude-opus-4-7",
+  "theme": "dark",
+  "permissions": {
+    "read": ["*"],
+    "bash": [
+      "git",
+      "docker",
+      "npm",
+      "pip",
+      "python",
+      "node"
+    ]
+  },
+  "hooks": {
+    "task-post-submit": {
+      "shell": "git status --porcelain | head -5"
+    }
+  }
+}

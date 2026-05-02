@@ -1,0 +1,21 @@
+{% load i18n %}
+<div class="space-y-2" id="leaderboard-list">
+    {% for dish in top_dishes %}
+        <c-molecules.ranking_row :dish="dish" :rank="forloop.counter" />
+        {% if not forloop.last %}
+            <div class="ml-16 h-px bg-gradient-to-r from-slate-200 dark:from-white/5 to-transparent"></div>
+        {% endif %}
+    {% empty %}
+        <div class="py-12 text-center space-y-4">
+            <div class="text-4xl">🔭</div>
+            <p class="text-gray-500 italic text-sm">{% trans "No ratings found in this circle yet." %}</p>
+            <c-atoms.button variant="secondary" class="text-[10px]" 
+                            @click="lense = 'global'"
+                            hx-get="{% url 'pintxos:index' %}?component=leaderboard&lense=global"
+                            hx-target="#leaderboard-list"
+                            hx-swap="outerHTML">
+                {% trans "Back to Global" %}
+            </c-atoms.button>
+        </div>
+    {% endfor %}
+</div>

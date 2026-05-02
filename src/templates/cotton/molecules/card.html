@@ -1,0 +1,14 @@
+<div class="glass p-6 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-xl transition-all hover:border-primary/50 group {{ class }}">
+    {% if title %}
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white group-hover:text-primary transition-colors">{{ title }}</h3>
+            {% if icon %}
+                <span class="text-slate-400 dark:text-slate-500 group-hover:text-primary">{{ icon }}</span>
+            {% endif %}
+        </div>
+    {% endif %}
+    
+    <div class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+        {{ slot }}
+    </div>
+</div>

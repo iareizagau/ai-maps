@@ -1,0 +1,10 @@
+{# Card - Cotton Atom #}
+<div class="rounded-2xl transition p-6 {% if variant == 'glass' %}glass shadow-2xl relative overflow-hidden{% else %}bg-gray-900 dark:bg-gray-900 light:bg-white border border-gray-800 dark:border-gray-800 light:border-gray-200{% endif %}" {{ attrs }}>
+    {% if variant == "glass" %}
+        <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-600/10 blur-3xl rounded-full"></div>
+        <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-600/10 blur-3xl rounded-full"></div>
+    {% endif %}
+    <div class="relative z-10">
+        {{ slot }}
+    </div>
+</div>

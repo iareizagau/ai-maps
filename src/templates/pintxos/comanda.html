@@ -1,0 +1,616 @@
+{% load i18n %}
+
+<c-layouts.main title="{% trans 'Comanda' %}">
+    <c-slot name="extra_head">
+        <link rel="manifest" href="{% url 'pintxos:comanda_manifest' %}" />
+        <meta name="theme-color" content="#f97316" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="Comanda" />
+    </c-slot>
+
+    <div class="max-w-3xl mx-auto px-4 py-6" x-data="comandaPad()" x-cloak>
+
+        {# Header #}
+        <header class="flex items-center justify-between mb-6 gap-3 flex-wrap">
+            <div class="min-w-0">
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">{% trans "Comanda" %}</h1>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    {% trans "Apunta lo que vais a pedir antes de ir a la barra." %}
+                </p>
+            </div>
+            <div class="flex gap-2 flex-wrap">
+                <a href="{% url 'pintxos:comanda_camarero' %}"
+                   target="_blank"
+                   class="text-sm px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                   x-show="totalCount() > 0">
+                    👁️ {% trans "Vista barra" %}
+                </a>
+                <button type="button"
+                        @click="showHistory = !showHistory"
+                        class="text-sm px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    🕓 {% trans "Histórico" %}
+                </button>
+                <button type="button"
+                        @click="reset()"
+                        class="text-sm px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    {% trans "Vaciar" %}
+                </button>
+            </div>
+        </header>
+
+        {# History panel #}
+        <div x-show="showHistory" x-transition
+             class="mb-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                {% trans "Comandas recientes" %}
+            </h2>
+            <div x-show="history.length === 0" class="text-sm text-slate-500 dark:text-slate-400">
+                {% trans "Aún no hay comandas guardadas. Cuando compartas una se guardará aquí." %}
+            </div>
+            <ul class="space-y-2">
+                <template x-for="(snap, idx) in history" :key="snap.savedAt">
+                    <li class="flex items-center justify-between gap-2 p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <div class="min-w-0 flex-1">
+                            <div class="text-sm font-medium truncate" x-text="historyLabel(snap)"></div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400" x-text="formatDate(snap.savedAt)"></div>
+                        </div>
+                        <button type="button"
+                                @click="repeatHistory(idx)"
+                                class="text-xs px-3 py-1.5 rounded-md bg-primary text-white hover:bg-primary_hover font-medium transition">
+                            {% trans "Repetir" %}
+                        </button>
+                    </li>
+                </template>
+            </ul>
+        </div>
+
+        {# People manager #}
+        <section class="mb-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {% trans "Personas" %} <span class="opacity-60">({% trans "opcional" %})</span>
+                </p>
+                <span x-show="people.length > 0" class="text-xs text-slate-500 dark:text-slate-400">
+                    {% trans "Toca uno para asignarle lo que pides" %}
+                </span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <template x-for="p in people" :key="p.id">
+                    <div class="inline-flex items-center gap-1 rounded-full pl-3 pr-1 py-1 text-sm font-medium border transition cursor-pointer"
+                         @click="activePerson = activePerson === p.id ? null : p.id"
+                         :class="activePerson === p.id
+                            ? 'bg-primary text-white border-primary'
+                            : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 hover:border-primary'">
+                        <span x-text="p.name"></span>
+                        <button type="button"
+                                @click.stop="removePerson(p.id)"
+                                class="w-5 h-5 rounded-full text-xs hover:bg-black/10 dark:hover:bg-white/10">×</button>
+                    </div>
+                </template>
+                <button type="button"
+                        @click="activePerson = null"
+                        x-show="people.length > 0"
+                        :class="activePerson === null
+                            ? 'bg-slate-200 dark:bg-slate-600'
+                            : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600'"
+                        class="rounded-full px-3 py-1 text-sm font-medium transition">
+                    👥 {% trans "Grupo" %}
+                </button>
+                <form @submit.prevent="addPerson()" class="inline-flex items-center gap-1">
+                    <input type="text"
+                           x-model="newPersonName"
+                           :placeholder="people.length === 0 ? '{% trans "Añadir nombre…" %}' : '+'"
+                           class="px-3 py-1 text-sm rounded-full w-32" />
+                </form>
+            </div>
+        </section>
+
+        {# Tabs #}
+        <div class="flex gap-2 mb-4 border-b border-slate-200 dark:border-slate-700 overflow-x-auto">
+            <template x-for="tab in tabs" :key="tab.id">
+                <button type="button"
+                        @click="activeTab = tab.id"
+                        :class="activeTab === tab.id
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'"
+                        class="px-4 py-2 text-sm font-medium border-b-2 transition flex items-center gap-2 whitespace-nowrap">
+                    <span x-text="tab.label"></span>
+                    <span x-show="countByGroup(tab.id) > 0"
+                          x-text="countByGroup(tab.id)"
+                          class="bg-primary text-white text-xs rounded-full px-2 py-0.5"></span>
+                </button>
+            </template>
+        </div>
+
+        {# Search + round button #}
+        <div class="flex gap-2 mb-4">
+            <input type="search"
+                   x-model="search"
+                   placeholder="{% trans 'Buscar…' %}"
+                   class="flex-1 px-3 py-2 rounded-lg text-sm" />
+            <button type="button"
+                    @click="repeatRound()"
+                    :disabled="!canRepeatRound()"
+                    :title="'{% trans "+1 a todo lo de esta pestaña" %}'"
+                    class="px-3 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium transition whitespace-nowrap">
+                🔁 {% trans "Otra ronda" %}
+            </button>
+        </div>
+
+        {# Items grid #}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+            <template x-for="item in itemsForTab()" :key="item.id">
+                <div class="flex items-center justify-between gap-3 p-4 rounded-xl bg-white dark:bg-slate-800 border shadow-sm transition"
+                     :class="qtyOf(item.id) > 0
+                        ? 'border-primary/50 ring-1 ring-primary/20'
+                        : 'border-slate-200 dark:border-slate-700'">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl" x-text="item.icon"></span>
+                            <span class="font-medium truncate" x-text="item.name"></span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button"
+                                @click="dec(item.id)"
+                                :disabled="qtyOf(item.id) === 0"
+                                class="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-lg font-bold transition">
+                            −
+                        </button>
+                        <span class="w-8 text-center font-bold text-lg tabular-nums"
+                              :class="qtyOf(item.id) > 0 ? 'text-primary' : 'text-slate-400'"
+                              x-text="qtyOf(item.id)"></span>
+                        <button type="button"
+                                @click="inc(item.id)"
+                                class="w-9 h-9 rounded-full bg-primary text-white hover:bg-primary_hover text-lg font-bold transition">
+                            +
+                        </button>
+                    </div>
+                </div>
+            </template>
+            <div x-show="itemsForTab().length === 0" class="col-span-full text-center text-sm text-slate-500 dark:text-slate-400 py-8">
+                {% trans "Sin resultados. Añade abajo lo que falte." %}
+            </div>
+        </div>
+
+        {# Custom item #}
+        <div class="mb-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-300 dark:border-slate-700">
+            <p class="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                {% trans "Añadir algo personalizado" %}
+            </p>
+            <form @submit.prevent="addCustom()" class="flex flex-col sm:flex-row gap-2">
+                <input type="text"
+                       x-model="customName"
+                       placeholder="{% trans 'Ej. Patatas bravas' %}"
+                       class="flex-1 px-3 py-2 rounded-lg text-sm" />
+                <button type="submit"
+                        :disabled="!customName.trim()"
+                        class="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary_hover disabled:opacity-50 text-sm font-medium transition">
+                    {% trans "Añadir" %}
+                </button>
+            </form>
+        </div>
+
+        {# Summary / sticky bottom #}
+        <div class="sticky bottom-2 z-20 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xl p-4">
+            <div class="flex items-center justify-between mb-3">
+                <div class="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {% trans "Total artículos" %}
+                </div>
+                <div class="text-2xl font-bold tabular-nums" x-text="totalCount()"></div>
+            </div>
+
+            <div x-show="totalCount() > 0" class="border-t border-slate-200 dark:border-slate-700 pt-3 mb-3">
+                <ul class="text-sm space-y-1 max-h-48 overflow-y-auto">
+                    <template x-for="line in summaryLines()" :key="line.id">
+                        <li class="flex items-start gap-2 group">
+                            <span class="font-bold tabular-nums text-primary shrink-0" x-text="line.qty + '×'"></span>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-baseline gap-2 flex-wrap">
+                                    <span x-text="line.name"></span>
+                                    <span x-show="line.who" class="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary" x-text="line.who"></span>
+                                </div>
+                                <div x-show="line.note" class="text-xs text-slate-500 dark:text-slate-400 italic" x-text="'↳ ' + line.note"></div>
+                            </div>
+                            <button type="button"
+                                    @click="editNote(line.id)"
+                                    class="text-xs text-slate-400 hover:text-primary opacity-0 group-hover:opacity-100 transition">
+                                ✏️
+                            </button>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="button"
+                        @click="share()"
+                        :disabled="totalCount() === 0"
+                        class="flex-1 px-4 py-3 rounded-lg bg-primary text-white hover:bg-primary_hover disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition">
+                    {% trans "Compartir" %}
+                </button>
+                <button type="button"
+                        @click="copy()"
+                        :disabled="totalCount() === 0"
+                        class="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition">
+                    <span x-text="copied ? '{% trans "¡Copiado!" %}' : '{% trans "Copiar" %}'"></span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <c-slot name="extra_js">
+        <script>
+        function comandaPad() {
+            const STORAGE_KEY = 'pintxos.comanda.v2';
+            const HISTORY_KEY = 'pintxos.comanda.history';
+            const HISTORY_MAX = 5;
+
+            const CATALOG = [
+                // Bebidas
+                { id: 'cana',         group: 'bebidas',  name: 'Caña',              icon: '🍺' },
+                { id: 'zurito',       group: 'bebidas',  name: 'Zurito',            icon: '🍺' },
+                { id: 'cerveza_limon',group: 'bebidas',  name: 'Cerveza con limón', icon: '🍋' },
+                { id: 'vino_tinto',   group: 'bebidas',  name: 'Vino tinto',        icon: '🍷' },
+                { id: 'vino_blanco',  group: 'bebidas',  name: 'Vino blanco',       icon: '🥂' },
+                { id: 'txakoli',      group: 'bebidas',  name: 'Txakoli',           icon: '🥂' },
+                { id: 'kalimotxo',    group: 'bebidas',  name: 'Kalimotxo',         icon: '🍹' },
+                { id: 'sidra',        group: 'bebidas',  name: 'Sidra',             icon: '🍶' },
+                { id: 'gin_tonic',    group: 'bebidas',  name: 'Gin-tonic',         icon: '🍸' },
+                { id: 'cocacola',     group: 'bebidas',  name: 'Coca-Cola',         icon: '🥤' },
+                { id: 'cocacola_zero',group: 'bebidas',  name: 'Coca-Cola Zero',    icon: '🥤' },
+                { id: 'pepsi',        group: 'bebidas',  name: 'Pepsi',             icon: '🥤' },
+                { id: 'kas_limon',    group: 'bebidas',  name: 'Kas limón',         icon: '🍋' },
+                { id: 'kas_naranja',  group: 'bebidas',  name: 'Kas naranja',       icon: '🍊' },
+                { id: 'tonica',       group: 'bebidas',  name: 'Tónica',            icon: '🥃' },
+                { id: 'agua',         group: 'bebidas',  name: 'Agua',              icon: '💧' },
+                { id: 'agua_gas',     group: 'bebidas',  name: 'Agua con gas',      icon: '🫧' },
+                { id: 'cafe',         group: 'bebidas',  name: 'Café',              icon: '☕' },
+
+                // Pintxos
+                { id: 'tortilla',   group: 'pintxos',  name: 'Tortilla',       icon: '🥚' },
+                { id: 'gilda',      group: 'pintxos',  name: 'Gilda',          icon: '🌶️' },
+                { id: 'jamon',      group: 'pintxos',  name: 'Jamón',          icon: '🥓' },
+                { id: 'queso',      group: 'pintxos',  name: 'Queso',          icon: '🧀' },
+                { id: 'bacalao',    group: 'pintxos',  name: 'Bacalao',        icon: '🐟' },
+                { id: 'txangurro',  group: 'pintxos',  name: 'Txangurro',      icon: '🦀' },
+                { id: 'morcilla',   group: 'pintxos',  name: 'Morcilla',       icon: '🥩' },
+
+                // Raciones
+                { id: 'croquetas',  group: 'raciones', name: 'Croquetas',      icon: '🥟' },
+                { id: 'calamares',  group: 'raciones', name: 'Calamares',      icon: '🦑' },
+                { id: 'bravas',     group: 'raciones', name: 'Patatas bravas', icon: '🍟' },
+                { id: 'jamon_rac',  group: 'raciones', name: 'Jamón ibérico',  icon: '🍖' },
+                { id: 'pulpo',      group: 'raciones', name: 'Pulpo',          icon: '🐙' },
+                { id: 'chuleta',    group: 'raciones', name: 'Chuleta',        icon: '🥩' },
+                { id: 'ensalada',   group: 'raciones', name: 'Ensalada mixta', icon: '🥗' },
+            ];
+
+            return {
+                tabs: [
+                    { id: 'bebidas',  label: '🍻 Bebidas' },
+                    { id: 'pintxos',  label: '🍢 Pintxos' },
+                    { id: 'raciones', label: '🍽️ Raciones' },
+                ],
+                activeTab: 'bebidas',
+                catalog: CATALOG,
+                customItems: [],
+                /**
+                 * lines: [{ id, itemId, qty, who, note }]
+                 *   - id: unique line id
+                 *   - itemId: catalog/custom item ref
+                 *   - qty: integer >= 1
+                 *   - who: person id (null = group)
+                 *   - note: free text or ''
+                 */
+                lines: [],
+                people: [],
+                activePerson: null,
+                newPersonName: '',
+                customName: '',
+                search: '',
+                copied: false,
+                showHistory: false,
+                history: [],
+                broadcast: null,
+
+                init() {
+                    try {
+                        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                        this.lines = saved.lines || [];
+                        this.customItems = saved.customItems || [];
+                        this.people = saved.people || [];
+                    } catch (e) { /* ignore corrupt state */ }
+                    try {
+                        this.history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+                    } catch (e) { this.history = []; }
+
+                    // Sync to broadcast channel for waiter view
+                    this.broadcast = ('BroadcastChannel' in window) ? new BroadcastChannel('pintxos.comanda') : null;
+                    this.$watch('lines', () => { this.persist(); this.publish(); }, { deep: true });
+                    this.$watch('customItems', () => { this.persist(); this.publish(); }, { deep: true });
+                    this.$watch('people', () => { this.persist(); this.publish(); }, { deep: true });
+
+                    // Register service worker for offline / installable PWA
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.register('{% url "pintxos:comanda_sw" %}', { scope: '{% url "pintxos:comanda" %}' })
+                            .catch(() => { /* offline-only feature, ignore failure */ });
+                    }
+                },
+
+                persist() {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                        lines: this.lines,
+                        customItems: this.customItems,
+                        people: this.people,
+                    }));
+                },
+
+                publish() {
+                    if (!this.broadcast) return;
+                    this.broadcast.postMessage({
+                        lines: this.lines,
+                        customItems: this.customItems,
+                        people: this.people,
+                    });
+                },
+
+                allItems() {
+                    return [...this.catalog, ...this.customItems];
+                },
+
+                itemById(id) {
+                    return this.allItems().find(i => i.id === id);
+                },
+
+                personById(id) {
+                    return this.people.find(p => p.id === id);
+                },
+
+                itemsForTab() {
+                    const q = this.search.trim().toLowerCase();
+                    let items = this.allItems().filter(i => i.group === this.activeTab);
+                    if (q) {
+                        items = items.filter(i => i.name.toLowerCase().includes(q));
+                    }
+                    // Items already ordered float to top, preserving catalog order within each bucket
+                    return items.slice().sort((a, b) => {
+                        const aOrdered = this.qtyOf(a.id) > 0 ? 0 : 1;
+                        const bOrdered = this.qtyOf(b.id) > 0 ? 0 : 1;
+                        return aOrdered - bOrdered;
+                    });
+                },
+
+                // ---- Lines / quantities ----
+
+                qtyOf(itemId) {
+                    return this.lines
+                        .filter(l => l.itemId === itemId)
+                        .reduce((sum, l) => sum + l.qty, 0);
+                },
+
+                findOrCreateLine(itemId) {
+                    // Group lines by (itemId, who, note) so increments stack on the active person/note context
+                    const who = this.activePerson;
+                    const existing = this.lines.find(l => l.itemId === itemId && l.who === who && !l.note);
+                    if (existing) return existing;
+                    const line = {
+                        id: 'l_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                        itemId,
+                        qty: 0,
+                        who,
+                        note: '',
+                    };
+                    this.lines.push(line);
+                    return line;
+                },
+
+                inc(itemId) {
+                    const line = this.findOrCreateLine(itemId);
+                    line.qty += 1;
+                },
+
+                dec(itemId) {
+                    // Decrement the most recently touched line for this item
+                    for (let i = this.lines.length - 1; i >= 0; i--) {
+                        if (this.lines[i].itemId === itemId && this.lines[i].qty > 0) {
+                            this.lines[i].qty -= 1;
+                            if (this.lines[i].qty === 0) this.lines.splice(i, 1);
+                            return;
+                        }
+                    }
+                },
+
+                countByGroup(groupId) {
+                    return this.lines
+                        .filter(l => {
+                            const item = this.itemById(l.itemId);
+                            return item && item.group === groupId;
+                        })
+                        .reduce((sum, l) => sum + l.qty, 0);
+                },
+
+                totalCount() {
+                    return this.lines.reduce((sum, l) => sum + l.qty, 0);
+                },
+
+                canRepeatRound() {
+                    return this.lines.some(l => {
+                        const item = this.itemById(l.itemId);
+                        return item && item.group === this.activeTab && l.qty > 0;
+                    });
+                },
+
+                repeatRound() {
+                    // Duplicate every line in the active tab — each line +1, preserving who/note
+                    this.lines.forEach(l => {
+                        const item = this.itemById(l.itemId);
+                        if (item && item.group === this.activeTab && l.qty > 0) {
+                            l.qty += 1;
+                        }
+                    });
+                },
+
+                // ---- Custom items ----
+
+                addCustom() {
+                    const name = this.customName.trim();
+                    if (!name) return;
+                    const id = 'custom_' + Date.now();
+                    this.customItems.push({
+                        id,
+                        group: this.activeTab,
+                        name,
+                        icon: '✨',
+                    });
+                    this.inc(id);
+                    this.customName = '';
+                },
+
+                // ---- People ----
+
+                addPerson() {
+                    const name = this.newPersonName.trim();
+                    if (!name) return;
+                    const id = 'p_' + Date.now();
+                    this.people.push({ id, name });
+                    this.activePerson = id;
+                    this.newPersonName = '';
+                },
+
+                removePerson(id) {
+                    if (!confirm('{% trans "¿Quitar a esta persona? Sus pedidos pasan al grupo." %}')) return;
+                    this.people = this.people.filter(p => p.id !== id);
+                    this.lines.forEach(l => { if (l.who === id) l.who = null; });
+                    if (this.activePerson === id) this.activePerson = null;
+                },
+
+                // ---- Notes ----
+
+                editNote(lineId) {
+                    const line = this.lines.find(l => l.id === lineId);
+                    if (!line) return;
+                    const note = prompt('{% trans "Nota (sin cebolla, muy hecho, para llevar…)" %}', line.note || '');
+                    if (note === null) return; // cancelled
+                    line.note = note.trim();
+                },
+
+                // ---- Summary / share ----
+
+                summaryLines() {
+                    return this.lines
+                        .filter(l => l.qty > 0)
+                        .map(l => {
+                            const item = this.itemById(l.itemId);
+                            const person = l.who ? this.personById(l.who) : null;
+                            return {
+                                id: l.id,
+                                name: item ? item.name : '?',
+                                qty: l.qty,
+                                who: person ? person.name : '',
+                                note: l.note || '',
+                            };
+                        });
+                },
+
+                buildText() {
+                    const out = ['🍻 Comanda Pintxos.eus', ''];
+                    this.tabs.forEach(tab => {
+                        const tabLines = this.lines.filter(l => {
+                            const item = this.itemById(l.itemId);
+                            return item && item.group === tab.id && l.qty > 0;
+                        });
+                        if (!tabLines.length) return;
+                        out.push(tab.label);
+                        tabLines.forEach(l => {
+                            const item = this.itemById(l.itemId);
+                            const person = l.who ? this.personById(l.who) : null;
+                            const tags = [];
+                            if (person) tags.push(person.name);
+                            if (l.note) tags.push(l.note);
+                            const suffix = tags.length ? ` (${tags.join(' · ')})` : '';
+                            out.push(`  ${l.qty}× ${item.name}${suffix}`);
+                        });
+                        out.push('');
+                    });
+                    return out.join('\n').trim();
+                },
+
+                async share() {
+                    const text = this.buildText();
+                    this.snapshotToHistory();
+                    if (navigator.share) {
+                        try {
+                            await navigator.share({ text });
+                            return;
+                        } catch (e) { /* user cancelled */ }
+                    }
+                    const url = 'https://wa.me/?text=' + encodeURIComponent(text);
+                    window.open(url, '_blank');
+                },
+
+                async copy() {
+                    try {
+                        await navigator.clipboard.writeText(this.buildText());
+                        this.copied = true;
+                        this.snapshotToHistory();
+                        setTimeout(() => { this.copied = false; }, 1500);
+                    } catch (e) {
+                        alert(this.buildText());
+                    }
+                },
+
+                // ---- History ----
+
+                snapshotToHistory() {
+                    if (this.totalCount() === 0) return;
+                    const snap = {
+                        savedAt: Date.now(),
+                        lines: JSON.parse(JSON.stringify(this.lines)),
+                        customItems: JSON.parse(JSON.stringify(this.customItems)),
+                        people: JSON.parse(JSON.stringify(this.people)),
+                    };
+                    this.history.unshift(snap);
+                    this.history = this.history.slice(0, HISTORY_MAX);
+                    localStorage.setItem(HISTORY_KEY, JSON.stringify(this.history));
+                },
+
+                historyLabel(snap) {
+                    const total = snap.lines.reduce((s, l) => s + l.qty, 0);
+                    const top = snap.lines.slice(0, 3).map(l => {
+                        const all = [...this.catalog, ...(snap.customItems || [])];
+                        const item = all.find(i => i.id === l.itemId);
+                        return `${l.qty}× ${item ? item.name : '?'}`;
+                    }).join(', ');
+                    return `${total} {% trans "art." %} — ${top}${snap.lines.length > 3 ? '…' : ''}`;
+                },
+
+                formatDate(ts) {
+                    return new Date(ts).toLocaleString('es-ES', {
+                        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+                    });
+                },
+
+                repeatHistory(idx) {
+                    const snap = this.history[idx];
+                    if (!snap) return;
+                    if (this.totalCount() > 0 && !confirm('{% trans "¿Reemplazar la comanda actual?" %}')) return;
+                    this.lines = JSON.parse(JSON.stringify(snap.lines));
+                    this.customItems = JSON.parse(JSON.stringify(snap.customItems || []));
+                    this.people = JSON.parse(JSON.stringify(snap.people || []));
+                    this.showHistory = false;
+                },
+
+                reset() {
+                    if (this.totalCount() === 0 && this.people.length === 0) return;
+                    if (!confirm('{% trans "¿Vaciar la comanda?" %}')) return;
+                    this.lines = [];
+                    this.customItems = [];
+                    this.activePerson = null;
+                },
+            };
+        }
+        </script>
+    </c-slot>
+</c-layouts.main>

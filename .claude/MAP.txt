@@ -1,0 +1,100 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║                    .claude/ DIRECTORY MAP                                      ║
+║                  Tu Guía Rápida de Archivos                                    ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                          ⭐ EMPIEZA AQUÍ                                     ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃                                                                              ┃
+┃  START_HERE.md           Bienvenida, oriéntate (5 min)                      ┃
+┃         ↓                                                                    ┃
+┃  EXAMPLES.md             Lee BAD vs GOOD ejemplos (CRUCIAL) ← MUST READ     ┃
+┃         ↓                                                                    ┃
+┃  QUICK_START.md          Aprende el workflow (10 min)                       ┃
+┃                                                                              ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                  📚 DOCUMENTACIÓN PARA REFERENCIA                             ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃                                                                              ┃
+┃  CLAUDE.md               Guía completa (arquitectura, patrones, contexto)    ┃
+┃  PROJECT_STATE.md        Dónde estamos (DB, backend, frontend, tasks)       ┃
+┃  DECISIONS.md            Por qué (PostGIS, Django, HTMX, etc.)              ┃
+┃  HOTKEYS.md              Comandos rápidos y templates                       ┃
+┃  README.md               Este directorio explicado                          ┃
+┃                                                                              ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃               🧠 MEMORY SYSTEM (Conocimiento Persistente)                    ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃                                                                              ┃
+┃  MEMORY.md                          ← Índice (leer primero)                  ┃
+┃     ↓                                                                        ┃
+┃  memory/                                                                     ┃
+┃  ├─ user_solopreneur.md              Quién eres tú                          ┃
+┃  ├─ project_maps_eus.md              Contexto del proyecto                  ┃
+┃  ├─ decision_tech_stack.md           Por qué tecnologías                    ┃
+┃  ├─ feedback_code_style.md           Cómo escribir código                   ┃
+┃  ├─ feedback_workflow.md             Cómo trabajar contigo                  ┃
+┃  └─ feedback_setup_complete.md       Este setup (para Claude)               ┃
+┃                                                                              ┃
+┃  Claude lee estos archivos automáticamente y recuerda contexto.             ┃
+┃  Actualízalos cuando aprendas algo importante.                              ┃
+┃                                                                              ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                         ⚙️ CONFIGURACIÓN                                      ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃                                                                              ┃
+┃  settings.json           Claude Code settings (modelo, permisos, etc.)      ┃
+┃  .gitignore              Qué NO commitear (session files, tmp)              ┃
+┃                                                                              ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║                    TU FLUJO DE TRABAJO DIARIO                                  ║
+║                                                                                ║
+║  1. Abre PROJECT_STATE.md  ──→  Sabe dónde estamos                            ║
+║  2. Describe qué quieres   ──→  Usa template de EXAMPLES.md                   ║
+║  3. Claude propone         ──→  ¿Sí? ¿No? ¿Cambias algo?                     ║
+║  4. Claude implementa      ──→  Edita archivos, muestra cambios               ║
+║  5. Tú pruebas localmente  ──→  git diff, pytest, manual testing              ║
+║  6. Haces commit           ──→  git commit -m "descripción"                   ║
+║  7. Actualiza memory       ──→  Si aprendiste algo importante                 ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                          ARCHIVOS UTILIDAD                                    ║
+╠════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                ║
+║  VALIDATION.md           Checklist: ¿todo está en orden?                      ║
+║  STRUCTURE_OVERVIEW.txt  Diagrama visual (este archivo)                       ║
+║  MAP.txt                 Mapa visual (este archivo)                           ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+PRÓXIMOS PASOS:
+
+1. Abre START_HERE.md
+2. Lee EXAMPLES.md (5 minutos)
+3. Describe tu primera tarea
+4. ¡Que disfrutes!
+
+═══════════════════════════════════════════════════════════════════════════════════

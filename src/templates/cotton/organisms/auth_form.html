@@ -1,0 +1,20 @@
+{# Auth Form Container - Cotton Organism #}
+<div class="max-w-md mx-auto mt-12">
+  <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-8">
+    <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-6 text-center">{{ title }}</h1>
+
+    <form method="{{ method|default:'post' }}" {% if enctype %}enctype="{{ enctype }}"{% endif %} class="space-y-4">
+      {% csrf_token %}
+      {{ slot }}
+    </form>
+
+    {% if footer_text %}
+      <div class="mt-6 text-center text-sm text-slate-600 dark:text-gray-400">
+        {{ footer_text }}
+        {% if footer_link_text %}
+          <a href="{{ footer_link_url }}" class="text-primary hover:text-primary_hover">{{ footer_link_text }}</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>

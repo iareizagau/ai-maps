@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load account socialaccount %}
+
+{% block title %}{% trans "Sign In" %} - Maps.eus{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center px-4 py-12">
+    <c-atoms.card variant="glass" class="w-full max-w-md p-8 space-y-8">
+        <div class="text-center space-y-2">
+            <h1 class="text-3xl font-bold tracking-tight text-white">{% trans "Welcome Back" %}</h1>
+            <p class="text-gray-400 text-sm">{% trans "Enter your details to access your account" %}</p>
+        </div>
+
+        <div class="space-y-4">
+            {% include "socialaccount/snippets/provider_list.html" with process="login" %}
+            
+            <div class="relative flex items-center">
+                <div class="flex-grow border-t border-white/10"></div>
+                <span class="flex-shrink mx-4 text-xs text-gray-500 uppercase tracking-widest">{% trans "Or continue with" %}</span>
+                <div class="flex-grow border-t border-white/10"></div>
+            </div>
+        </div>
+
+        <form class="space-y-6" method="POST" action="{% url 'account_login' %}">
+            {% csrf_token %}
+            
+            <div class="space-y-4">
+                {% for field in form %}
+                {% if field.name != "remember" %}
+                <div class="space-y-1">
+                    <label for="{{ field.id_for_label }}" class="block text-xs font-medium text-gray-400 ml-1">
+                        {{ field.label }}
+                    </label>
+                    <c-atoms.input 
+                        type="{{ field.field.widget.input_type|default:'text' }}" 
+                        name="{{ field.name }}" 
+                        id="{{ field.id_for_label }}"
+                        value="{{ field.value|default:'' }}"
+                        required
+                    />
+                    {% if field.errors %}
+                        {% for error in field.errors %}
+                        <p class="text-red-400 text-[10px] mt-1 ml-1">{{ error }}</p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+
+            <div class="flex items-center justify-between text-xs">
+                <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" name="remember" class="w-4 h-4 rounded border-white/10 bg-white/5 text-indigo-600 focus:ring-indigo-500/50 transition-all">
+                    <span class="text-gray-400 group-hover:text-gray-300 transition-colors">{% trans "Remember me" %}</span>
+                </label>
+                <a href="{% url 'account_reset_password' %}" class="text-indigo-400 hover:text-indigo-300 transition-colors font-medium">
+                    {% trans "Forgot password?" %}
+                </a>
+            </div>
+
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 active:scale-[0.98]">
+                {% trans "Sign In" %}
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewbox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+            </button>
+        </form>
+
+        <div class="text-center pt-4">
+            <p class="text-sm text-gray-400">
+                {% trans "Don't have an account?" %} 
+                <a href="{{ signup_url }}" class="text-indigo-400 hover:text-indigo-300 font-bold transition-colors">
+                    {% trans "Sign Up" %}
+                </a>
+            </p>
+        </div>
+    </c-atoms.card>
+</div>
+{% endblock %}

@@ -1,0 +1,198 @@
+{% load i18n %}<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'eu' }}" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "Comanda" %} — {% trans "Vista barra" %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { primary: '#f97316' } } }
+        };
+    </script>
+    <style>
+        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen p-6 sm:p-10" x-data="camareroView()" x-cloak>
+
+    <header class="flex items-center justify-between mb-8 no-print">
+        <div>
+            <h1 class="text-3xl sm:text-4xl font-black tracking-tight">🍻 {% trans "Comanda" %}</h1>
+            <p class="text-slate-400 mt-1 text-sm" x-text="lastUpdated"></p>
+        </div>
+        <div class="flex gap-2">
+            <button @click="window.print()"
+                    class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-medium">
+                🖨️ {% trans "Imprimir" %}
+            </button>
+            <a href="{% url 'pintxos:comanda' %}"
+               class="px-4 py-2 rounded-lg bg-primary hover:opacity-90 text-sm font-medium">
+                ← {% trans "Editar" %}
+            </a>
+        </div>
+    </header>
+
+    <main>
+        <div x-show="totalCount === 0" class="text-center py-20 text-2xl text-slate-500">
+            {% trans "La comanda está vacía." %}
+        </div>
+
+        <template x-for="section in sections" :key="section.id">
+            <section x-show="section.lines.length > 0" class="mb-10">
+                <h2 class="text-2xl sm:text-3xl font-bold mb-4 pb-2 border-b-2 border-primary"
+                    x-text="section.label"></h2>
+                <ul class="space-y-3">
+                    <template x-for="line in section.lines" :key="line.id">
+                        <li class="flex items-start gap-4 py-2">
+                            <span class="text-4xl sm:text-5xl font-black text-primary tabular-nums shrink-0 w-16 text-right"
+                                  x-text="line.qty + '×'"></span>
+                            <div class="flex-1 min-w-0 pt-1">
+                                <div class="text-2xl sm:text-3xl font-semibold" x-text="line.name"></div>
+                                <div class="flex flex-wrap gap-2 mt-1">
+                                    <span x-show="line.who"
+                                          class="text-base px-2 py-0.5 rounded bg-primary/20 text-primary font-medium"
+                                          x-text="line.who"></span>
+                                    <span x-show="line.note"
+                                          class="text-base text-slate-300 italic"
+                                          x-text="'↳ ' + line.note"></span>
+                                </div>
+                            </div>
+                        </li>
+                    </template>
+                </ul>
+            </section>
+        </template>
+
+        <div x-show="totalCount > 0" class="mt-10 pt-6 border-t-2 border-slate-700 flex items-center justify-between">
+            <div class="text-slate-400 uppercase tracking-wider text-sm">{% trans "Total" %}</div>
+            <div class="text-5xl font-black tabular-nums" x-text="totalCount"></div>
+        </div>
+    </main>
+
+    <script>
+    function camareroView() {
+        const STORAGE_KEY = 'pintxos.comanda.v2';
+        const TABS = [
+            { id: 'bebidas',  label: '🍻 {% trans "Bebidas" %}' },
+            { id: 'pintxos',  label: '🍢 {% trans "Pintxos" %}' },
+            { id: 'raciones', label: '🍽️ {% trans "Raciones" %}' },
+        ];
+        const CATALOG = [
+            { id: 'cana', group: 'bebidas', name: 'Caña' },
+            { id: 'zurito', group: 'bebidas', name: 'Zurito' },
+            { id: 'cerveza_limon', group: 'bebidas', name: 'Cerveza con limón' },
+            { id: 'vino_tinto', group: 'bebidas', name: 'Vino tinto' },
+            { id: 'vino_blanco', group: 'bebidas', name: 'Vino blanco' },
+            { id: 'txakoli', group: 'bebidas', name: 'Txakoli' },
+            { id: 'kalimotxo', group: 'bebidas', name: 'Kalimotxo' },
+            { id: 'sidra', group: 'bebidas', name: 'Sidra' },
+            { id: 'gin_tonic', group: 'bebidas', name: 'Gin-tonic' },
+            { id: 'cocacola', group: 'bebidas', name: 'Coca-Cola' },
+            { id: 'cocacola_zero', group: 'bebidas', name: 'Coca-Cola Zero' },
+            { id: 'pepsi', group: 'bebidas', name: 'Pepsi' },
+            { id: 'kas_limon', group: 'bebidas', name: 'Kas limón' },
+            { id: 'kas_naranja', group: 'bebidas', name: 'Kas naranja' },
+            { id: 'tonica', group: 'bebidas', name: 'Tónica' },
+            { id: 'agua', group: 'bebidas', name: 'Agua' },
+            { id: 'agua_gas', group: 'bebidas', name: 'Agua con gas' },
+            { id: 'cafe', group: 'bebidas', name: 'Café' },
+            { id: 'tortilla', group: 'pintxos', name: 'Tortilla' },
+            { id: 'gilda', group: 'pintxos', name: 'Gilda' },
+            { id: 'jamon', group: 'pintxos', name: 'Jamón' },
+            { id: 'queso', group: 'pintxos', name: 'Queso' },
+            { id: 'bacalao', group: 'pintxos', name: 'Bacalao' },
+            { id: 'txangurro', group: 'pintxos', name: 'Txangurro' },
+            { id: 'morcilla', group: 'pintxos', name: 'Morcilla' },
+            { id: 'croquetas', group: 'raciones', name: 'Croquetas' },
+            { id: 'calamares', group: 'raciones', name: 'Calamares' },
+            { id: 'bravas', group: 'raciones', name: 'Patatas bravas' },
+            { id: 'jamon_rac', group: 'raciones', name: 'Jamón ibérico' },
+            { id: 'pulpo', group: 'raciones', name: 'Pulpo' },
+            { id: 'chuleta', group: 'raciones', name: 'Chuleta' },
+            { id: 'ensalada', group: 'raciones', name: 'Ensalada mixta' },
+        ];
+
+        return {
+            state: { lines: [], customItems: [], people: [] },
+            lastUpdated: '',
+
+            init() {
+                this.load();
+                window.addEventListener('storage', (e) => {
+                    if (e.key === STORAGE_KEY) this.load();
+                });
+                if ('BroadcastChannel' in window) {
+                    const ch = new BroadcastChannel('pintxos.comanda');
+                    ch.addEventListener('message', (e) => {
+                        if (e.data) {
+                            this.state = e.data;
+                            this.touch();
+                        }
+                    });
+                }
+                // Re-read on tab focus in case storage event missed
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden) this.load();
+                });
+            },
+
+            load() {
+                try {
+                    this.state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                    this.state.lines = this.state.lines || [];
+                    this.state.customItems = this.state.customItems || [];
+                    this.state.people = this.state.people || [];
+                } catch (e) {
+                    this.state = { lines: [], customItems: [], people: [] };
+                }
+                this.touch();
+            },
+
+            touch() {
+                this.lastUpdated = '{% trans "Actualizado" %} ' + new Date().toLocaleTimeString('es-ES');
+            },
+
+            allItems() {
+                return [...CATALOG, ...this.state.customItems];
+            },
+
+            personName(id) {
+                const p = (this.state.people || []).find(p => p.id === id);
+                return p ? p.name : '';
+            },
+
+            get totalCount() {
+                return (this.state.lines || []).reduce((s, l) => s + l.qty, 0);
+            },
+
+            get sections() {
+                return TABS.map(tab => {
+                    const lines = (this.state.lines || [])
+                        .filter(l => l.qty > 0)
+                        .map(l => {
+                            const item = this.allItems().find(i => i.id === l.itemId);
+                            if (!item || item.group !== tab.id) return null;
+                            return {
+                                id: l.id,
+                                qty: l.qty,
+                                name: item.name,
+                                who: this.personName(l.who),
+                                note: l.note || '',
+                            };
+                        })
+                        .filter(Boolean);
+                    return { ...tab, lines };
+                });
+            },
+        };
+    }
+    </script>
+</body>
+</html>

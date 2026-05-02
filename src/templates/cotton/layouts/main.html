@@ -1,0 +1,149 @@
+<c-vars title="Maps.eus" />
+
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'eu' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - {{ current_app.name|default:"Maps.eus" }}</title>
+    <meta name="description" content="{{ current_app.hero_subtitle|default:'Euskal Herriko GIS Ekosistema' }}">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="{{ title }} - {{ current_app.name|default:'Maps.eus' }}">
+    <meta property="og:description" content="{{ current_app.hero_subtitle|default:'Euskal Herriko GIS Ekosistema' }}">
+    {% if current_app.hero_image %}
+    <meta property="og:image" content="{{ current_app.hero_image.url }}">
+    {% endif %}
+    
+    <!-- SEO Best Practices -->
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+    
+    <!-- Modern Stack -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Theme initialization to prevent FOUC
+        (function() {
+            const theme = localStorage.getItem('theme') || 
+                         (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '{{ current_app.primary_color|default:"#f97316" }}',
+                        primary_hover: '{{ current_app.primary_hover_color|default:"#ea580c" }}',
+                        secondary: '{{ current_app.secondary_color|default:"#84cc16" }}',
+                        surface: {
+                            light: '#ffffff',
+                            dark: '#1e293b',
+                        },
+                        background: {
+                            light: '#f8fafc',
+                            dark: '#0f172a',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['{{ current_app.font_family|default:"Inter" }}', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <style>
+        [x-cloak] { display: none !important; }
+        
+        /* Premium Gastronomic Glass - Theme Aware */
+        .glass {
+            background: rgba(255, 255, 255, 0.7) !important;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 0, 0, 0.05) !important;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dark .glass {
+            background: rgba(30, 41, 59, 0.75) !important; /* slate-800 + opacity */
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Elegant custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; } 
+        .dark ::-webkit-scrollbar-track { background: #0f172a; } 
+        ::-webkit-scrollbar-thumb { 
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb { 
+            background: #334155; 
+        }
+        ::-webkit-scrollbar-thumb:hover { 
+            background: #f97316; /* primary orange */
+        }
+    </style>
+
+    <!-- Global Gastronomic Theme Overrides -->
+    <style type="text/tailwindcss">
+        @layer base {
+            /* Input styling for elegant Theme Switching */
+            input, select, textarea {
+                @apply bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-inner;
+            }
+            input::placeholder, textarea::placeholder {
+                @apply text-slate-400 dark:text-slate-500;
+            }
+            input:focus, select:focus, textarea:focus {
+                @apply ring-primary/50 border-primary outline-none;
+            }
+            
+            /* Globally swap the cold indigo for our appetizing Saffron/Paprika Orange */
+            .bg-indigo-600 { @apply bg-primary; }
+            .hover\:bg-indigo-500:hover { @apply bg-primary_hover; }
+            .text-indigo-400 { @apply text-orange-400; }
+            .text-indigo-500 { @apply text-orange-500; }
+            .bg-indigo-500\/5 { @apply bg-orange-500/5; }
+            .bg-indigo-500\/10 { @apply bg-orange-500/10; }
+            .border-indigo-500\/10 { @apply border-orange-500/10; }
+            .border-indigo-500\/20 { @apply border-orange-500/20; }
+            .border-indigo-500\/30 { @apply border-orange-500/30; }
+            .shadow-indigo-500\/20 { @apply shadow-orange-500/20; }
+            
+            /* Popups */
+            .premium-popup {
+                @apply bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-700 shadow-2xl rounded-xl;
+            }
+        }
+    </style>
+    
+    {{ extra_head }}
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' class="bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-slate-200 font-sans antialiased selection:bg-primary/30 selection:text-white transition-colors duration-300">
+    
+    <div class="min-h-screen flex flex-col">
+        <!-- Navigation -->
+        <c-organisms.navbar />
+
+        <!-- Main Content -->
+        <main class="flex-grow">
+            {{ slot }}
+        </main>
+
+        <!-- Footer -->
+        <c-organisms.footer />
+    </div>
+
+    {{ extra_js }}
+</body>
+</html>

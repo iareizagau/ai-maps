@@ -1,0 +1,13 @@
+services:
+  db:
+    container_name: maps_db_prod
+    restart: always
+
+  web:
+    container_name: maps_web_prod
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    ports:
+      - "8060:8000"
+    restart: always
+    env_file:
+      - .env.prod

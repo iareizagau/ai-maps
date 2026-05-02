@@ -1,0 +1,21 @@
+{# Detail Header with Image - Cotton Organism #}
+<div class="mb-8">
+    {% if back_link_url %}
+        <a href="{{ back_link_url }}" class="text-indigo-400 hover:text-indigo-300 mb-4 inline-block">← {{ back_link_text }}</a>
+    {% endif %}
+
+    <div class="bg-gray-900 dark:bg-gray-900 light:bg-white border border-gray-800 dark:border-gray-800 light:border-gray-200 rounded-lg overflow-hidden mb-6">
+        {% if image_url %}
+            <img src="{{ image_url }}" alt="{{ title }}" class="w-full h-64 object-cover">
+        {% else %}
+            <div class="w-full h-64 bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center">
+                <span class="text-6xl">{{ default_emoji }}</span>
+            </div>
+        {% endif %}
+
+        <div class="p-6">
+            <h1 class="text-3xl font-bold text-white dark:text-white light:text-gray-900 mb-2">{{ title }}</h1>
+            {{ slot }}
+        </div>
+    </div>
+</div>

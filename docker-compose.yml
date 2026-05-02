@@ -1,0 +1,24 @@
+services:
+  db:
+    image: timescale/timescaledb-ha:pg15
+    environment:
+      POSTGRES_DB: maps_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d maps_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+
+  web:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

@@ -1,0 +1,36 @@
+{# Restaurant Card - Cotton Component #}
+<div class="bg-gray-900 dark:bg-gray-900 light:bg-white border border-gray-800 dark:border-gray-800 light:border-gray-200 rounded-lg overflow-hidden hover:border-indigo-500 transition {{ attrs }}">
+    {% if restaurant.image_url %}
+        <img src="{{ restaurant.image_url }}" alt="{{ restaurant.name }}" class="w-full h-40 object-cover">
+    {% else %}
+        <div class="w-full h-40 bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center">
+            <span class="text-4xl">🍽️</span>
+        </div>
+    {% endif %}
+
+    <div class="p-4">
+        <h3 class="text-lg font-bold text-white light:text-gray-900 mb-2">{{ restaurant.name }}</h3>
+
+        <div class="flex items-center gap-2 text-sm text-gray-400 light:text-gray-600 mb-2">
+            <span>{{ restaurant.get_category_display }}</span>
+            <span>•</span>
+            <span>{{ restaurant.address }}</span>
+        </div>
+
+        {% if restaurant.phone %}
+            <div class="text-sm text-gray-400 light:text-gray-600 mb-3">
+                📞 {{ restaurant.phone }}
+            </div>
+        {% endif %}
+
+        <div class="flex items-center justify-between">
+            <div class="text-sm text-gray-400 light:text-gray-600">{{ restaurant.dishes.count }} platos</div>
+            <a
+                href="{% url 'pintxos:restaurant_detail' restaurant.id %}"
+                class="text-indigo-400 light:text-indigo-600 hover:text-indigo-300 light:hover:text-indigo-700 text-sm font-medium"
+            >
+                Ver →
+            </a>
+        </div>
+    </div>
+</div>

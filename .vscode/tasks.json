@@ -1,0 +1,66 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Docker: Compose Up",
+            "type": "shell",
+            "command": "docker compose up -d",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Docker: Compose Down",
+            "type": "shell",
+            "command": "docker compose down",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Django: Make Migrations (Docker)",
+            "type": "shell",
+            "command": "docker compose exec web python manage.py makemigrations",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Django: Migrate (Docker)",
+            "type": "shell",
+            "command": "docker compose exec web python manage.py migrate",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Django: Make Messages (Docker)",
+            "type": "shell",
+            "command": "docker compose exec web python manage.py makemessages -l eu -l es -l en",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Django: Compile Messages (Docker)",
+            "type": "shell",
+            "command": "docker compose exec web python manage.py compilemessages",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

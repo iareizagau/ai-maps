@@ -1,0 +1,38 @@
+<c-vars title="" description="" icon="" url="" badge_text="" accent_color="primary" />
+
+<a href="{{ url }}" 
+   class="group relative overflow-hidden glass p-8 rounded-[32px] border border-slate-200/50 dark:border-white/10 hover:border-{{ accent_color }}/40 transition-all duration-500 flex flex-col justify-between h-[320px] hover:-translate-y-2 hover:shadow-2xl hover:shadow-{{ accent_color }}/10">
+    
+    <!-- Background Decor -->
+    <div class="absolute -right-4 -top-4 w-24 h-24 bg-{{ accent_color }}/5 rounded-full blur-2xl group-hover:bg-{{ accent_color }}/10 transition-colors"></div>
+    
+    <div class="relative z-10">
+        <!-- Icon -->
+        <div class="w-14 h-14 bg-{{ accent_color }}/10 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+            {{ icon }}
+        </div>
+        
+        <!-- Content -->
+        <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight group-hover:text-{{ accent_color }} transition-colors">
+            {{ title }}
+        </h3>
+        <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed line-clamp-3">
+            {{ description }}
+        </p>
+    </div>
+    
+    <!-- Footer -->
+    <div class="mt-6 flex items-center justify-between relative z-10">
+        {% if badge_text %}
+        <span class="text-[10px] uppercase tracking-widest font-bold px-3 py-1 bg-{{ accent_color }}/10 text-{{ accent_color }} rounded-full border border-{{ accent_color }}/20">
+            {{ badge_text }}
+        </span>
+        {% endif %}
+        
+        <div class="w-8 h-8 rounded-full border border-slate-200 dark:border-white/10 flex items-center justify-center group-hover:bg-{{ accent_color }} group-hover:border-{{ accent_color }} transition-all duration-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+        </div>
+    </div>
+</a>

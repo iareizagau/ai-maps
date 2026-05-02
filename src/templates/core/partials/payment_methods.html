@@ -1,0 +1,41 @@
+{% load i18n %}
+{% for method in payment_methods %}
+<div class="relative group">
+    <div class="bg-gradient-to-br from-indigo-900/40 to-black/40 border border-white/10 rounded-2xl p-6 backdrop-blur-md shadow-xl transition-all hover:border-indigo-500/30">
+        <div class="flex justify-between items-start mb-8">
+            <div class="text-indigo-400 font-bold tracking-widest uppercase text-xs">
+                {% if method.brand|lower == 'visa' %}
+                    <span class="flex items-center gap-2">💳 {{ method.brand }}</span>
+                {% else %}
+                    {{ method.brand }}
+                {% endif %}
+            </div>
+            <button hx-post="{% url 'delete_payment_method' method.pk %}" 
+                    hx-target="#payment-methods-container" 
+                    hx-confirm="{% trans 'Are you sure you want to delete this card?' %}"
+                    class="text-gray-500 hover:text-red-500 transition-colors">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+            </button>
+        </div>
+        <div class="space-y-4">
+            <div class="text-xl text-white font-mono tracking-widest">**** **** **** {{ method.last4 }}</div>
+            <div class="flex justify-between items-center text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                <span>EXP: {{ method.exp_month }}/{{ method.exp_year }}</span>
+                {% if method.is_default %}
+                    <span class="bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/20">{% trans "DEFAULT" %}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="col-span-full py-16 text-center bg-white/5 rounded-3xl border border-dashed border-white/10 flex flex-col items-center gap-4">
+    <div class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-2xl">💳</div>
+    <div>
+        <p class="text-white font-bold">{% trans "No payment methods" %}</p>
+        <p class="text-xs text-gray-500">{% trans "Add a card to manage your subscriptions." %}</p>
+    </div>
+</div>
+{% endfor %}

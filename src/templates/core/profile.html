@@ -1,0 +1,173 @@
+{% load i18n %}
+
+<c-layouts.main title="{% trans 'Control Panel' %}">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" x-data="{ tab: 'personal' }">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-12">
+            
+            <!-- Sidebar Navigation -->
+            <div class="lg:col-span-1 space-y-4">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-2xl font-bold text-white shadow-lg shadow-indigo-500/20">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-white">{{ user.username }}</h2>
+                        <p class="text-xs text-gray-400">{{ user.email }}</p>
+                    </div>
+                </div>
+
+                <nav class="space-y-2">
+                    <button @click="tab = 'personal'" :class="tab === 'personal' ? 'bg-indigo-600 text-white shadow-indigo-500/20 shadow-lg' : 'bg-white/5 text-gray-400 hover:bg-white/10'" 
+                            class="w-full flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all text-left">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        {% trans "Personal Data" %}
+                    </button>
+
+                    <button @click="tab = 'account'" :class="tab === 'account' ? 'bg-indigo-600 text-white shadow-indigo-500/20 shadow-lg' : 'bg-white/5 text-gray-400 hover:bg-white/10'" 
+                            class="w-full flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all text-left">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        {% trans "Account & Security" %}
+                    </button>
+
+                    <button @click="tab = 'billing'" :class="tab === 'billing' ? 'bg-indigo-600 text-white shadow-indigo-500/20 shadow-lg' : 'bg-white/5 text-gray-400 hover:bg-white/10'" 
+                            class="w-full flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all text-left">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        {% trans "Payment Methods" %}
+                    </button>
+
+                    <button @click="tab = 'social'" :class="tab === 'social' ? 'bg-indigo-600 text-white shadow-indigo-500/20 shadow-lg' : 'bg-white/5 text-gray-400 hover:bg-white/10'" 
+                            class="w-full flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all text-left">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        {% trans "Social & Trust" %}
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Content Area -->
+            <div class="lg:col-span-3">
+                
+                <!-- Personal Data Tab -->
+                <div x-show="tab === 'personal'" x-transition>
+                    <c-atoms.card variant="glass" class="p-8 space-y-8">
+                        <div>
+                            <h3 class="text-2xl font-bold text-white">{% trans "Personal Data" %}</h3>
+                            <p class="text-sm text-gray-400">{% trans "Manage your basic identity information." %}</p>
+                        </div>
+                        <div id="profile-form-container">
+                            {% include 'core/partials/profile_form.html' %}
+                        </div>
+                    </c-atoms.card>
+                </div>
+
+                <!-- Account & Security Tab -->
+                <div x-show="tab === 'account'" x-transition x-cloak>
+                    <div class="space-y-8">
+                        <c-atoms.card variant="glass" class="p-8 space-y-8">
+                            <div>
+                                <h3 class="text-2xl font-bold text-white">{% trans "Change Username" %}</h3>
+                                <p class="text-sm text-gray-400">{% trans "Your unique identifier on the platform." %}</p>
+                            </div>
+                            <div id="username-form-container">
+                                {% include 'core/partials/username_form.html' %}
+                            </div>
+                        </c-atoms.card>
+
+                        <c-atoms.card variant="glass" class="p-8 space-y-8">
+                            <div>
+                                <h3 class="text-2xl font-bold text-white">{% trans "Update Password" %}</h3>
+                                <p class="text-sm text-gray-400">{% trans "Keep your account secure with a strong password." %}</p>
+                            </div>
+                            <div id="password-form-container">
+                                {% include 'core/partials/password_form.html' %}
+                            </div>
+                        </c-atoms.card>
+                    </div>
+                </div>
+
+                <!-- Billing Tab -->
+                <div x-show="tab === 'billing'" x-transition x-cloak>
+                    <c-atoms.card variant="glass" class="p-8 space-y-8">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="text-2xl font-bold text-white">{% trans "Payment Methods" %}</h3>
+                                <p class="text-sm text-gray-400">{% trans "Manage your credit cards and billing information." %}</p>
+                            </div>
+                            <c-atoms.button variant="primary" hx-post="{% url 'add_payment_method' %}" hx-target="#payment-methods-container" hx-swap="innerHTML">
+                                {% trans "Add Card" %}
+                            </c-atoms.button>
+                        </div>
+                        
+                        <div id="payment-methods-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {% include 'core/partials/payment_methods.html' %}
+                        </div>
+                    </c-atoms.card>
+                </div>
+
+                <!-- Social & Trust Tab -->
+                <div x-show="tab === 'social'" x-transition x-cloak>
+                    <div class="space-y-8">
+                        <c-atoms.card variant="glass" class="p-8 space-y-8">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                <div>
+                                    <h3 class="text-2xl font-bold text-white">{% trans "Build your Circle" %}</h3>
+                                    <p class="text-sm text-gray-400">{% trans "Search for other experts and friends to follow." %}</p>
+                                </div>
+                                <div class="relative w-full md:w-72">
+                                    <input type="text" name="q" 
+                                           class="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm focus:ring-primary focus:border-primary transition-all"
+                                           placeholder="{% trans 'Search by username...' %}"
+                                           hx-get="{% url 'search_users' %}"
+                                           hx-trigger="keyup changed delay:500ms"
+                                           hx-target="#user-search-results"
+                                           hx-indicator="#search-spinner">
+                                    <div class="absolute left-3 top-2.5 text-gray-500">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    </div>
+                                    <div id="search-spinner" class="htmx-indicator absolute right-3 top-2.5">
+                                        <svg class="animate-spin h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="user-search-results" class="empty:hidden">
+                                {# Results populated by HTMX #}
+                            </div>
+
+                            {% if suggested_experts %}
+                            <div class="pt-8 border-t border-white/5 space-y-6">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold text-primary uppercase tracking-widest">{% trans "Descubrir Expertos" %}</span>
+                                    <div class="h-px flex-grow bg-white/5"></div>
+                                </div>
+                                {% include 'core/partials/expert_suggestions.html' %}
+                            </div>
+                            {% endif %}
+                        </c-atoms.card>
+
+                        <c-atoms.card variant="glass" class="p-8 space-y-8">
+                            <div>
+                                <h3 class="text-2xl font-bold text-white">{% trans "Following" %}</h3>
+                                <p class="text-sm text-gray-400">{% trans "People you are currently following across different apps." %}</p>
+                            </div>
+                            <div id="following-list-container">
+                                {# hx-swap="outerHTML" en los botones del partial apunta a #following-list (div raíz del partial) #}
+                                {% include 'core/partials/following_list.html' %}
+                            </div>
+                        </c-atoms.card>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</c-layouts.main>

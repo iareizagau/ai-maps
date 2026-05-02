@@ -1,0 +1,163 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║            ✅ .claude/ SETUP - CHECKLIST FINAL                             ║
+║                                                                              ║
+║           Verifica que todo está en orden antes de prescindir de .agents/   ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+📂 ESTRUCTURA .claude/ COMPLETA
+═══════════════════════════════════════════════════════════════════════════════
+
+Entry Points (Comienza aquí)
+  [✓] START_HERE.md              Bienvenida y orientación
+  [✓] EXAMPLES.md                Cómo pedir cosas (BAD vs GOOD)
+  [✓] QUICK_START.md             Workflow básico
+
+Documentación
+  [✓] CLAUDE.md                  Guía principal
+  [✓] PROJECT_STATE.md           Dónde estamos
+  [✓] DECISIONS.md               Por qué decisiones
+  [✓] TECHNICAL_RUNBOOK.md       Skills técnicas (NEW - migrado de .agents)
+  [✓] HOTKEYS.md                 Templates y atajos
+  [✓] README.md                  Descripción de este directorio
+  [✓] VALIDATION.md              Checklist de validación
+  [✓] MIGRATION_FROM_AGENTS.md   Cómo migramos (NEW)
+
+Visualización
+  [✓] STRUCTURE_OVERVIEW.txt     Diagrama visual
+  [✓] MAP.txt                    Mapa de archivos
+
+Configuración
+  [✓] settings.json              Claude Code config
+  [✓] .gitignore                 Qué no commitear
+
+Memory System
+  [✓] MEMORY.md                  Índice
+  [✓] memory/user_solopreneur.md
+  [✓] memory/project_maps_eus.md
+  [✓] memory/decision_tech_stack.md
+  [✓] memory/feedback_code_style.md
+  [✓] memory/feedback_workflow.md
+  [✓] memory/feedback_setup_complete.md
+
+
+📋 CONTENIDO MIGRADO DE .agents/
+═══════════════════════════════════════════════════════════════════════════════
+
+De .agents/ → Migrado a .claude/
+──────────────────────────────────
+✅ .agents/00_AOS_KERNEL.md              → CLAUDE.md
+✅ .agents/specialists.md                → TECHNICAL_RUNBOOK.md (SKILL 1, 2, 5)
+✅ .agents/data.md                       → TECHNICAL_RUNBOOK.md (SKILL 1)
+✅ .agents/frontend.md                   → TECHNICAL_RUNBOOK.md (SKILL 2)
+✅ .agents/skills.md                     → TECHNICAL_RUNBOOK.md
+✅ .agents/state/PROJECT_STATUS.md       → PROJECT_STATE.md
+✅ .agents/state/JOURNAL.md              → Git log (más permanente)
+
+⚠️  .agents/skills/                      → Documentación reemplazada
+
+
+🎯 TECHNICAL_RUNBOOK.md INCLUYE
+═══════════════════════════════════════════════════════════════════════════════
+
+[✓] SKILL 1: Hybrid Spatial-Semantic Search
+    - Protocolo de búsqueda
+    - Implementación Django ORM
+    - Query SQL PostGIS + pgvector
+    - Performance tips
+
+[✓] SKILL 2: Atomic Design System
+    - Estructura Cotton
+    - Ejemplos Atom/Molecule/Organism
+    - HTMX + Alpine patterns
+
+[✓] SKILL 3: Geographic & Schema Validation
+    - Tests de bounds geográficos
+    - Schema validation
+    - CSRF security (django-hosts)
+
+[✓] SKILL 4: Ghost Ops Deployment
+    - Dockerfile multi-stage
+    - Pre-deploy checklist
+    - Heavy migrations
+    - Environment variables
+
+[✓] SKILL 5: Domain Orchestration
+    - Base models compartidos
+    - Subdomain isolation
+    - CSS variables (branding)
+
+
+✨ VENTAJAS DE LA NUEVA ESTRUCTURA
+═══════════════════════════════════════════════════════════════════════════════
+
+De .agents/ (Jerárquico, 4 capas)          → .claude/ (Lineal, 1 fuente de verdad)
+────────────────────────────────────────────────────────────────────────────────
+❌ 4 capas de indirección (L0→L4)          ✅ Estructura clara y plana
+❌ Archivos no ejecutables                  ✅ Código ejecutable en TECHNICAL_RUNBOOK
+❌ Documentación dispersa                   ✅ Información centralizada
+❌ Estado en JOURNAL.md manual              ✅ Memory system automático
+❌ Confusión (¿especialista o skill?)      ✅ Skills concretas con implementación
+❌ Redundancia de contenido                 ✅ Única fuente de verdad
+
+
+🚀 CHECKLIST: ¿LISTO PARA ELIMINAR .agents/?
+═══════════════════════════════════════════════════════════════════════════════
+
+  [✓] Todo contenido útil está en .claude/
+  [✓] TECHNICAL_RUNBOOK.md tiene código ejecutable
+  [✓] PROJECT_STATE.md es la fuente de estado
+  [✓] DECISIONS.md documenta arquitectura
+  [✓] Memory system es más poderoso que JOURNAL
+  [✓] He leído MIGRATION_FROM_AGENTS.md
+  [✓] Entiendo qué se movió a dónde
+
+
+📖 PRUEBA: LEE ESTOS ARCHIVOS EN ORDEN
+═══════════════════════════════════════════════════════════════════════════════
+
+1. START_HERE.md              (5 min)
+   └─ Oriéntate en la estructura
+
+2. EXAMPLES.md                (5 min)
+   └─ Lee BAD vs GOOD ejemplos
+
+3. TECHNICAL_RUNBOOK.md       (10 min)
+   └─ Revisa que tiene skills de .agents
+
+4. MIGRATION_FROM_AGENTS.md   (5 min)
+   └─ Entiende qué se movió
+
+5. PROJECT_STATE.md           (2 min)
+   └─ Sabe dónde estamos
+
+
+🎯 COMANDO FINAL: PRESCINDIR DE .agents/
+═══════════════════════════════════════════════════════════════════════════════
+
+Cuando estés 100% seguro:
+
+# 1. Verifica que todo está en .claude/
+ls -la .claude/ | grep -E "TECHNICAL_RUNBOOK|MIGRATION"
+
+# 2. Lee TECHNICAL_RUNBOOK.md
+cat .claude/TECHNICAL_RUNBOOK.md | head -50
+
+# 3. Elimina .agents/
+rm -rf .agents/
+
+# 4. Commit
+git add -A
+git commit -m "Archive: Move .agents content to .claude, use single source of truth"
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+                    ✅ SETUP COMPLETADO Y VALIDADO
+
+           Tienes todo lo necesario para prescindir de .agents/
+                 Tu fuente única de verdad es ahora .claude/
+
+═══════════════════════════════════════════════════════════════════════════════

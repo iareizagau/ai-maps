@@ -1,0 +1,109 @@
+{% load i18n %}
+<c-layouts.main title="{% trans 'Hasiera' %}">
+    
+    <c-organisms.hero_section 
+        title="{% trans 'Euskal Herriko GIS Ekosistema' %}" 
+        description="{% trans 'Explora el territorio a través de mapas inteligentes, datos abiertos y herramientas colaborativas diseñadas para la comunidad.' %}">
+        
+        <!-- Search Value Add -->
+        <div class="w-full max-w-xl mx-auto mt-8">
+            <div class="relative group">
+                <input type="text" 
+                       placeholder="{% trans '¿Qué quieres encontrar hoy? (ej. Aire, Pintxos, Museos...)' %}" 
+                       class="w-full h-14 pl-12 pr-4 rounded-2xl border-none glass focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-white transition-all shadow-2xl">
+                <div class="absolute left-4 top-4 text-slate-400 group-hover:text-primary transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2 mt-4 text-[10px] uppercase tracking-widest font-bold text-slate-400">
+                <span>{% trans "Tendencias:" %}</span>
+                <a href="#" class="hover:text-primary transition-colors">#AirePuro</a>
+                <a href="#" class="hover:text-primary transition-colors">#RutaGilda</a>
+                <a href="#" class="hover:text-primary transition-colors">#Jazzaldia</a>
+            </div>
+        </div>
+    </c-organisms.hero_section>
+
+    <div class="max-w-7xl mx-auto px-6 py-12 lg:py-24">
+        <!-- Main Apps Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            
+            <c-molecules.app_tile 
+                title="Inguru"
+                description="{% trans 'Monitorización ambiental en tiempo real. Calidad del aire, clima y biodiversidad.' %}"
+                icon="🌱"
+                url="/inguru/"
+                badge_text="{% trans 'Datu Bizidunak' %}"
+                accent_color="emerald-500" />
+
+            <c-molecules.app_tile 
+                title="Pintxos"
+                description="{% trans 'La guía definitiva de la gastronomía vasca. Rutas, favoritos y rankings locales.' %}"
+                icon="🍢"
+                url="/pintxos/"
+                badge_text="{% trans '+500 Restaurantes' %}"
+                accent_color="orange-500" />
+
+            <c-molecules.app_tile 
+                title="Kultur"
+                description="{% trans 'Agenda cultural geolocalizada. Museos, teatros y eventos en todo el territorio.' %}"
+                icon="🎭"
+                url="/kultur/"
+                badge_text="{% trans 'Agenda Hoy' %}"
+                accent_color="purple-500" />
+
+            <c-molecules.app_tile 
+                title="SBK"
+                description="{% trans 'Salsa, Bachata y Kizomba. Encuentra los mejores eventos de baile cada noche.' %}"
+                icon="🕺"
+                url="/sbk/"
+                badge_text="{% trans 'Eventos Activos' %}"
+                accent_color="pink-500" />
+
+        </div>
+
+        <!-- Secondary Features Section -->
+        <div class="mt-24 pt-16 border-t border-slate-200 dark:border-white/5">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+                <div>
+                    <h2 class="text-sm font-bold text-primary uppercase tracking-[0.2em] mb-4">{% trans "Ecosistema" %}</h2>
+                    <h3 class="text-3xl font-bold text-slate-900 dark:text-white">{% trans "Más allá de los mapas" %}</h3>
+                </div>
+                <p class="text-slate-500 dark:text-slate-400 max-w-md text-sm leading-relaxed">
+                    {% trans "Estamos construyendo una infraestructura de datos abierta para que cualquier ciudadano u organización pueda crear valor sobre el territorio." %}
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <a href="/bidaiak/" class="group flex items-center gap-5 p-6 glass rounded-[24px] border border-slate-200/50 dark:border-white/5 hover:bg-white dark:hover:bg-slate-800 transition-all duration-300">
+                    <div class="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🌍</div>
+                    <div>
+                        <h4 class="font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">{% trans "Bidaiak" %}</h4>
+                        <p class="text-xs text-slate-500">{% trans "Planificador de rutas y logística." %}</p>
+                    </div>
+                </a>
+
+                <div class="group flex items-center gap-5 p-6 glass rounded-[24px] border border-slate-200/50 dark:border-white/5 opacity-60 grayscale hover:grayscale-0 transition-all duration-300 cursor-not-allowed">
+                    <div class="w-12 h-12 bg-slate-500/10 rounded-xl flex items-center justify-center text-2xl">📉</div>
+                    <div>
+                        <h4 class="font-bold text-slate-900 dark:text-white">{% trans "Data Studio" %}</h4>
+                        <p class="text-xs text-slate-500">{% trans "Analítica avanzada territorial." %}</p>
+                    </div>
+                    <span class="ml-auto text-[8px] font-black uppercase text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">{% trans "Próximamente" %}</span>
+                </div>
+
+                <div class="group flex items-center gap-5 p-6 glass rounded-[24px] border border-slate-200/50 dark:border-white/5 opacity-60 grayscale hover:grayscale-0 transition-all duration-300 cursor-not-allowed">
+                    <div class="w-12 h-12 bg-slate-500/10 rounded-xl flex items-center justify-center text-2xl">🔌</div>
+                    <div>
+                        <h4 class="font-bold text-slate-900 dark:text-white">{% trans "API OpenData" %}</h4>
+                        <p class="text-xs text-slate-500">{% trans "Acceso programático para devs." %}</p>
+                    </div>
+                    <span class="ml-auto text-[8px] font-black uppercase text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">{% trans "Próximamente" %}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</c-layouts.main>

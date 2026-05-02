@@ -1,0 +1,16 @@
+<c-layouts.main title="Kultur Map">
+    <c-slot name="extra_head">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+        {% include "kultur/partials/map_styles.html" %}
+    </c-slot>
+
+    <div class="flex flex-col md:flex-row h-[calc(100vh-64px)] overflow-hidden">
+        {% include "kultur/sections/map_sidebar.html" %}
+        {% include "kultur/sections/map_container.html" %}
+    </div>
+
+    <c-slot name="extra_js">
+        {{ request.LANGUAGE_CODE|json_script:"current-language" }}
+        {% include "kultur/partials/map_scripts.html" %}
+    </c-slot>
+</c-layouts.main>

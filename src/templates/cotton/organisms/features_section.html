@@ -1,0 +1,7 @@
+<section class="mb-16 bg-gradient-to-r from-primary/5 to-secondary/5 dark:from-indigo-900/20 dark:to-purple-900/20 border border-slate-200 dark:border-indigo-800/30 rounded-lg p-12 {{ class|default:'' }}">
+    <h2 class="text-3xl font-bold text-slate-900 dark:text-white mb-8 text-center">{{ title }}</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {{ slot }}
+    </div>
+</section>

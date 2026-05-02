@@ -1,0 +1,29 @@
+{% load i18n %}
+<form hx-post="{% url 'update_profile' %}" hx-target="#profile-form-container" class="space-y-6">
+    {% csrf_token %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-2">
+            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "First Name" %}</label>
+            {{ user_form.first_name }}
+        </div>
+        <div class="space-y-2">
+            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "Last Name" %}</label>
+            {{ user_form.last_name }}
+        </div>
+    </div>
+    <div class="space-y-2">
+        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "Email" %}</label>
+        {{ user_form.email }}
+    </div>
+    <div class="space-y-2">
+        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "Phone" %}</label>
+        {{ user_form.phone }}
+    </div>
+    <div class="space-y-2">
+        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "Bio" %}</label>
+        {{ user_form.bio }}
+    </div>
+    <c-atoms.button variant="primary" type="submit" class="w-full py-4">
+        {% trans "Save Changes" %}
+    </c-atoms.button>
+</form>

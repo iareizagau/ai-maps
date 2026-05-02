@@ -1,0 +1,6 @@
+{# Error Message - Cotton Atom #}
+<div class="bg-red-900/20 dark:bg-red-900/20 light:bg-red-100 border border-red-700 dark:border-red-700 light:border-red-300 rounded-lg p-3 text-red-400 dark:text-red-400 light:text-red-700 text-sm">
+    {% for error in errors %}
+        <p>{{ error }}</p>
+    {% endfor %}
+</div>

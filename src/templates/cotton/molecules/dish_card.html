@@ -1,0 +1,24 @@
+{% load i18n %}
+<c-vars dish=None />
+
+<c-atoms.card variant="glass" class="p-4 group">
+    <div class="flex gap-4">
+        <div class="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 shadow-lg border border-slate-200 dark:border-white/5">
+            <img src="{{ dish.image_url|default:'https://picsum.photos/seed/dish/200/200' }}" alt="{{ dish.name }}" class="w-full h-full object-cover">
+        </div>
+        <div class="flex-grow space-y-1">
+            <div class="flex justify-between items-start">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">{{ dish.name }}</h3>
+                <div class="flex items-center gap-1 text-yellow-500 text-xs">
+                    <c-atoms.star_rating :rating="dish.avg_rating" />
+                </div>
+            </div>
+            <span class="inline-block px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-gray-500 border border-slate-200 dark:border-white/10 uppercase font-bold">{{ dish.get_category_display }}</span>
+            <p class="text-xs text-slate-600 dark:text-gray-400 line-clamp-2 pt-1">{{ dish.description }}</p>
+            <div class="flex justify-between items-center pt-2">
+                <span class="text-primary font-bold text-sm">{{ dish.price }}€</span>
+                <a href="{% url 'pintxos:dish_detail' dish.id %}" class="text-[10px] text-slate-500 dark:text-gray-500 hover:text-slate-900 dark:hover:text-white transition-colors">{% trans "Reviews" %} ({{ dish.rating_count|default:0 }})</a>
+            </div>
+        </div>
+    </div>
+</c-atoms.card>

@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Inguru | Eco-Monitor de Euskadi{% endblock %}
+
+{% block extra_head %}
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<style>
+    #map { height: calc(100vh - 64px); width: 100%; z-index: 0; }
+    
+    .sidebar-inguru {
+        position: absolute;
+        top: 80px;
+        left: 20px;
+        width: 380px;
+        max-height: calc(100vh - 120px);
+        z-index: 1000;
+        overflow-y: auto;
+    }
+
+    .eco-score-gauge {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        background: conic-gradient(#10b981 var(--score-percent), #1f2937 0);
+    }
+
+    .eco-score-gauge::before {
+        content: '';
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        background: #111827;
+        border-radius: 50%;
+    }
+
+    .eco-score-inner {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+    }
+
+    /* Animations */
+    @keyframes pulse-soft {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+    }
+
+    .status-badge-pulse {
+        animation: pulse-soft 2s infinite;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="relative">
+    <!-- Map Container -->
+    <div id="map"></div>
+
+    <!-- Floating Sidebar -->
+    <div class="sidebar-inguru space-y-4" x-data="inguruApp()">
+        <!-- Summary Card -->
+        <div class="glass p-6 rounded-3xl shadow-2xl border-white/10">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">Inguru Bizia</h1>
+                    <p class="text-gray-400 text-sm">Pulso ambiental en tiempo real</p>
+                </div>
+                <div class="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-medium border border-emerald-500/20 status-badge-pulse">
+                    En Vivo
+                </div>
+            </div>
+
+            <!-- Eco-Score Section -->
+            <div class="flex items-center gap-6 mb-6">
+                <div class="eco-score-gauge" :style="'--score-percent: ' + (score * 3.6) + 'deg'">
+                    <div class="eco-score-inner">
+                        <span class="text-3xl font-black block" x-text="score">85</span>
+                        <span class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Eco-Score</span>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-emerald-400" x-text="statusText">Excelente</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">
+                        Las condiciones en <span class="text-white font-medium" x-text="locationName">Euskadi</span> son óptimas para actividades al aire libre.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Fast Filters -->
+            <div class="grid grid-cols-2 gap-2">
+                <button class="bg-white/5 hover:bg-white/10 p-3 rounded-2xl transition-all border border-white/5 flex flex-col items-center gap-2">
+                    <i data-lucide="wind" class="w-5 h-5 text-blue-400"></i>
+                    <span class="text-xs font-medium">Aire</span>
+                </button>
+                <button class="bg-white/5 hover:bg-white/10 p-3 rounded-2xl transition-all border border-white/5 flex flex-col items-center gap-2">
+                    <i data-lucide="flower-2" class="w-5 h-5 text-orange-400"></i>
+                    <span class="text-xs font-medium">Polen</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Detail Cards (Dynamic) -->
+        <div class="glass p-5 rounded-3xl border-white/10 space-y-4">
+            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Detalle por Estación</h4>
+            
+            <div class="space-y-3">
+                <template x-for="item in details">
+                    <div class="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                                <i :data-lucide="item.icon" class="w-4 h-4 text-indigo-400"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium" x-text="item.label"></p>
+                                <p class="text-[10px] text-gray-500" x-text="item.value"></p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-bold" :class="item.colorClass" x-text="item.status"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function inguruApp() {
+        return {
+            score: 82,
+            statusText: 'Muy Bueno',
+            locationName: 'Bilbao - Centro',
+            details: [
+                { label: 'Calidad Aire', value: 'NO2: 12µg/m³', status: 'Limpio', icon: 'wind', colorClass: 'text-emerald-400' },
+                { label: 'Polen', value: 'Gramíneas: Bajo', status: 'Seguro', icon: 'flower-2', colorClass: 'text-emerald-400' },
+                { label: 'Agua (URA)', value: 'Río Nervión', status: 'Apta', icon: 'droplets', colorClass: 'text-blue-400' },
+                { label: 'Meteorología', value: '22°C - Despejado', status: 'Ideal', icon: 'sun', colorClass: 'text-yellow-400' }
+            ],
+            init() {
+                lucide.createIcons();
+                this.initMap();
+            },
+            initMap() {
+                const map = L.map('map', {
+                    zoomControl: false,
+                    attributionControl: false
+                }).setView([43.2630, -2.9350], 11);
+
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 20
+                }).addTo(map);
+
+                // Placeholder for stations from Django
+                const stations = {{ stations_json|safe }};
+                
+                stations.forEach(s => {
+                    const icon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div class="w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-lg"></div>`,
+                        iconSize: [16, 16]
+                    });
+                    L.marker([s.latitude, s.longitude], { icon: icon })
+                        .addTo(map)
+                        .bindPopup(`<b>${s.name}</b><br>${s.type}`);
+                });
+            }
+        }
+    }
+</script>
+{% endblock %}

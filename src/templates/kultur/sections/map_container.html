@@ -1,0 +1,17 @@
+{% load i18n %}
+<!-- Map Container -->
+<div class="w-full flex-1 h-full relative" id="map-container">
+    <div id="map"></div>
+    <!-- Theme Toggle Overlay -->
+    <div class="absolute top-4 right-4 z-[1000] bg-white dark:bg-slate-800 rounded-full shadow-md">
+       <c-molecules.theme_toggle />
+    </div>
+</div>
+
+<!-- Mobile Toggle List Button (Always on top) -->
+<div class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[3000]">
+    <button id="mobile-toggle-btn" class="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-3 rounded-full font-bold shadow-2xl flex items-center gap-2 border border-slate-700 dark:border-slate-300">
+        <span id="mobile-toggle-text">{% trans "Ver lista" %}</span>
+        <span id="mobile-count" class="bg-primary text-white text-xs px-2 py-0.5 rounded-full shadow-inner">0</span>
+    </button>
+</div>

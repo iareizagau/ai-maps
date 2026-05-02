@@ -1,0 +1,40 @@
+{% load i18n %}
+
+<div x-data="{ open: false }" class="relative">
+    <button @click="open = !open" class="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors uppercase tracking-widest">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>{{ LANGUAGE_CODE }}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+    </button>
+
+    <div x-show="open" 
+         x-cloak
+         @click.away="open = false"
+         x-transition:enter="transition ease-out duration-100"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         class="absolute right-0 mt-2 w-48 glass rounded-xl shadow-2xl py-2 z-[100] border border-slate-200 dark:border-white/10">
+        
+        <form action="{% url 'set_language' %}" method="post">
+            {% csrf_token %}
+            <input name="next" type="hidden" value="{{ request.get_full_path }}">
+            
+            {% get_current_language as CURRENT_LANG %}
+            {% get_available_languages as AVAILABLE_LANGS %}
+            {% get_language_info_list for AVAILABLE_LANGS as languages %}
+            
+            {% for language in languages %}
+                <button type="submit" 
+                        name="language" 
+                        value="{{ language.code }}"
+                        class="w-full text-left px-4 py-2 text-xs font-bold transition-colors uppercase tracking-widest {% if language.code == CURRENT_LANG %}text-primary bg-primary/10{% else %}text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5{% endif %}">
+                    {{ language.code }} - {{ language.name_local }}
+                </button>
+            {% endfor %}
+        </form>
+    </div>
+</div>

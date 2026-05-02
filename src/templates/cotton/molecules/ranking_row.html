@@ -1,0 +1,30 @@
+<c-vars dish=None rank=1 />
+
+<div class="group relative flex items-center gap-6 p-4 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-white/5 transition-all duration-300">
+    <div class="flex-shrink-0">
+        <c-atoms.rank_badge :rank="rank" />
+    </div>
+
+    <div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 border border-slate-200 dark:border-white/5 shadow-xl group-hover:scale-105 transition-transform">
+        <img src="{{ dish.image_url|default:'https://picsum.photos/seed/dish/200/200' }}" alt="{{ dish.name }}" class="w-full h-full object-cover">
+    </div>
+
+    <div class="flex-grow min-w-0">
+        <div class="flex flex-col">
+            <h4 class="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-primary transition-colors">
+                {{ dish.name }}
+            </h4>
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] text-slate-500 dark:text-gray-500 font-medium">{{ dish.get_category_display }}</span>
+                <span class="text-[10px] text-primary/60 font-bold">@ {{ dish.restaurant.name }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-shrink-0 text-right">
+        <c-atoms.star_rating :rating="dish.avg_rating" :count="dish.rating_count" />
+        <p class="text-[10px] font-bold text-primary mt-1">{{ dish.price }}€</p>
+    </div>
+    
+    <a href="{% url 'pintxos:dish_detail' dish.id %}" class="absolute inset-0 z-20"></a>
+</div>

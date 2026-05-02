@@ -1,0 +1,20 @@
+<c-vars title="" description="" />
+
+<div class="relative py-20 overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-purple-900/20"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center space-y-6">
+            <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+                {{ title }}
+            </h1>
+            {% if description %}
+            <p class="max-w-2xl mx-auto text-base sm:text-xl text-slate-600 dark:text-slate-400 px-4">
+                {{ description }}
+            </p>
+            {% endif %}
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4 px-6">
+                {{ slot }}
+            </div>
+        </div>
+    </div>
+</div>

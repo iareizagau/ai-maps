@@ -1,0 +1,91 @@
+{% load cotton %}<!DOCTYPE html>
+<html lang="eu" x-data="themeController()" :class="darkMode ? 'dark' : ''">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pintxos.eus - Gastronomía Vasca{% endblock %}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        :root {
+            --color-primary: #6366f1;
+            --color-accent: #a78bfa;
+        }
+
+        /* Dark mode (default) */
+        body {
+            --color-bg: #0b0e14;
+            --color-text: #f3f4f6;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+        }
+
+        /* Light mode */
+        html.light body {
+            --color-bg: #ffffff;
+            --color-text: #1f2937;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% block data_script %}{% endblock %}
+
+    <script>
+        function themeController() {
+            return {
+                darkMode: true,
+                init() {
+                    const saved = localStorage.getItem('theme-mode');
+                    if (saved) {
+                        this.darkMode = saved === 'dark';
+                    } else {
+                        this.darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    }
+                    this.applyTheme();
+                },
+                toggleTheme() {
+                    this.darkMode = !this.darkMode;
+                    this.applyTheme();
+                },
+                applyTheme() {
+                    const htmlEl = document.documentElement;
+                    if (this.darkMode) {
+                        htmlEl.classList.remove('light');
+                        localStorage.setItem('theme-mode', 'dark');
+                    } else {
+                        htmlEl.classList.add('light');
+                        localStorage.setItem('theme-mode', 'light');
+                    }
+                }
+            }
+        }
+    </script>
+
+    {# Navbar Component #}
+    {% include "cotton/organisms/navbar.html" with brand="Pintxos.eus" %}
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    {# Footer #}
+    <footer class="bg-gray-900 dark:bg-gray-900 light:bg-gray-100 border-t border-gray-800 dark:border-gray-800 light:border-gray-300 mt-16 py-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm text-gray-400 light:text-gray-600">
+            <p>Pintxos.eus © 2026 - Descubre la gastronomía vasca</p>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

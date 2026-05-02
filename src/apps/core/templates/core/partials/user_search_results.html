@@ -1,0 +1,40 @@
+{% load i18n %}
+
+<div class="space-y-4">
+    {% for user_obj in users %}
+    <div class="glass p-4 rounded-xl flex items-center justify-between group transition-all hover:border-primary/30">
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-full bg-slate-700 flex items-center justify-center border border-white/10 overflow-hidden">
+                {% if user_obj.avatar %}
+                    <img src="{{ user_obj.avatar.url }}" alt="{{ user_obj.username }}" class="h-full w-full object-cover">
+                {% else %}
+                    <span class="text-slate-400 font-bold">{{ user_obj.username|slice:":1"|upper }}</span>
+                {% endif %}
+            </div>
+            <div>
+                <p class="text-sm font-medium text-white">{{ user_obj.username }}</p>
+                <p class="text-[10px] text-slate-500">{{ user_obj.bio|default:""|truncatechars:40 }}</p>
+            </div>
+        </div>
+        
+        <div id="follow-btn-{{ user_obj.id }}">
+            {% if user_obj.id in followed_ids %}
+                <span class="text-[10px] font-bold text-green-400 uppercase tracking-widest px-3 py-1 rounded-lg bg-green-400/10 border border-green-400/20">
+                    {% trans "Following" %}
+                </span>
+            {% else %}
+                <button hx-post="/api/follow/{{ user_obj.id }}/pintxos"
+                        hx-swap="none"
+                        @click="$el.closest('#follow-btn-{{ user_obj.id }}').innerHTML = '<span class=\"text-[10px] font-bold text-green-400 uppercase tracking-widest px-3 py-1 rounded-lg bg-green-400/10 border border-green-400/20\">{% trans \"Following\" %}</span>'"
+                        class="text-[10px] font-bold text-primary hover:text-white transition-colors uppercase tracking-widest px-4 py-1.5 rounded-lg border border-primary/30 hover:bg-primary">
+                    {% trans "Follow" %}
+                </button>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="py-12 text-center">
+        <p class="text-sm text-slate-500 italic">{% trans "No users found matching your search." %}</p>
+    </div>
+    {% endfor %}
+</div>

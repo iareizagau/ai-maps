@@ -1,0 +1,10 @@
+{# Theme Toggle Button #}
+<button
+    @click="toggleTheme()"
+    class="p-2 rounded-lg bg-gray-800 dark:bg-gray-800 light:bg-gray-200 hover:bg-gray-700 dark:hover:bg-gray-700 light:hover:bg-gray-300 transition"
+    :title="darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+    {{ attrs }}
+>
+    <span x-show="darkMode" class="text-lg">☀️</span>
+    <span x-show="!darkMode" class="text-lg">🌙</span>
+</button>

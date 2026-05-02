@@ -1,0 +1,55 @@
+{% load i18n %}
+
+<div id="following-list" class="space-y-8">
+    {% if following %}
+        {% regroup following by app_context as app_follows %}
+
+        {% for app in app_follows %}
+        <div class="space-y-4">
+            <div class="flex items-center gap-3">
+                <div class="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                    <span class="text-primary font-bold text-xs">{{ app.grouper|slice:":3"|upper }}</span>
+                </div>
+                <h4 class="text-sm font-bold text-white uppercase tracking-wider">{{ app.grouper }}</h4>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for follow in app.list %}
+                <div class="glass p-4 rounded-xl flex items-center justify-between group transition-all hover:border-primary/30">
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-full bg-slate-700 flex items-center justify-center border border-white/10 overflow-hidden">
+                            {% if follow.followed.avatar %}
+                                <img src="{{ follow.followed.avatar.url }}" alt="{{ follow.followed.username }}" class="h-full w-full object-cover">
+                            {% else %}
+                                <span class="text-slate-400 font-bold">{{ follow.followed.username|slice:":1"|upper }}</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-white">{{ follow.followed.username }}</p>
+                            <p class="text-xs text-slate-500">{% trans "Following since" %} {{ follow.created_at|date:"M Y" }}</p>
+                        </div>
+                    </div>
+
+                    <button hx-post="{% url 'remove_follow' follow.pk %}"
+                            hx-target="#following-list"
+                            hx-swap="outerHTML"
+                            hx-confirm="{% trans '¿Estás seguro de que quieres dejar de seguir a' %} {{ follow.followed.username }}?"
+                            class="text-xs font-bold text-slate-500 hover:text-red-400 transition-colors uppercase tracking-widest px-3 py-1 rounded-lg hover:bg-red-400/10">
+                        {% trans "Unfollow" %}
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+    {% else %}
+    <div class="py-20 text-center space-y-4 glass rounded-3xl">
+        <div class="text-5xl">🤝</div>
+        <h3 class="text-xl font-bold text-white">{% trans "No sigues a nadie todavía" %}</h3>
+        <p class="text-slate-400 max-w-sm mx-auto">
+            {% trans "Cuando sigas a alguien en PintxoMaps u otras apps, aparecerán aquí. Sus valoraciones te ayudarán a decidir mejor." %}
+        </p>
+    </div>
+    {% endif %}
+</div>

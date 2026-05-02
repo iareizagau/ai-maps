@@ -1,0 +1,79 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                   Maps.eus Claude Code Setup                              ║
+║                      Your Workflow Foundation                              ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌─ ENTRY POINTS ──────────────────────────────────────────────────────────────┐
+│                                                                              │
+│  START HERE: .claude/CLAUDE.md  ──┐                                         │
+│                                   │                                         │
+│                       ┌───────────┴──────────────┐                          │
+│                       ▼                          ▼                          │
+│              QUICK_START.md              EXAMPLES.md                        │
+│          (Learn the workflow)       (How to ask for things)                 │
+│                                                                              │
+│  Then consult:                                                              │
+│  • PROJECT_STATE.md  ───  Know where we are                                 │
+│  • DECISIONS.md      ───  Understand the why                                │
+│  • MEMORY.md         ───  Persistent knowledge                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ YOUR WORKFLOW ─────────────────────────────────────────────────────────────┐
+│                                                                              │
+│  1. Read PROJECT_STATE.md                                                   │
+│     ↓                                                                        │
+│  2. Describe what you want (see EXAMPLES.md)                                │
+│     ↓                                                                        │
+│  3. Claude proposes approach                                                │
+│     ↓                                                                        │
+│  4. You approve/modify                                                      │
+│     ↓                                                                        │
+│  5. Claude implements                                                       │
+│     ↓                                                                        │
+│  6. You test locally (git, pytest, etc.)                                    │
+│     ↓                                                                        │
+│  7. Commit                                                                   │
+│     ↓                                                                        │
+│  8. Update memory if learned something important                            │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ FILE PURPOSES ─────────────────────────────────────────────────────────────┐
+│                                                                              │
+│  CLAUDE.md              Main guide. Architecture, patterns, how to ask       │
+│  QUICK_START.md         Walkthrough of basic workflow                       │
+│  EXAMPLES.md            ⭐ BAD vs GOOD request examples                     │
+│  PROJECT_STATE.md       Status: DB, backend, frontend, domains, tasks      │
+│  DECISIONS.md           Why PostGIS, why Django, why HTMX, etc.             │
+│  settings.json          Model, permissions, hooks configuration             │
+│  MEMORY.md              Index of persistent knowledge files                 │
+│  memory/*               Actual memories (user profile, decisions, refs)      │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ MEMORY SYSTEM ─────────────────────────────────────────────────────────────┐
+│                                                                              │
+│  Type: user              Your preferences, role, goals                      │
+│  Type: feedback          "Keep doing X", "Stop doing Y", "Why"              │
+│  Type: project           Current work, deadlines, business context          │
+│  Type: reference         External resources (APIs, docs)                    │
+│                                                                              │
+│  Claude reads these automatically → understands context across sessions     │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ MAINTENANCE CHECKLIST ─────────────────────────────────────────────────────┐
+│                                                                              │
+│  After shipping features        → Update PROJECT_STATE.md                   │
+│  After architectural decisions  → Add to DECISIONS.md                       │
+│  Learned something important    → Create memory/ file + update MEMORY.md    │
+│  Changed workflow               → Update QUICK_START.md or EXAMPLES.md      │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+NEXT STEP: Open .claude/CLAUDE.md (or QUICK_START.md if you want to jump in)
+
+═══════════════════════════════════════════════════════════════════════════════
+Generated: 2026-04-23 | Maps.eus SaaS | Solopreneur Mode Activated
+═══════════════════════════════════════════════════════════════════════════════

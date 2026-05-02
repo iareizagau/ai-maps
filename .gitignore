@@ -1,0 +1,37 @@
+# Claude Code session-specific files (DO NOT COMMIT)
+*.claude-session
+.claude-session/
+__pycache__/
+*.pyc
+
+docker-compose.override.yml
+.env
+.env.local
+.env.prod
+
+# Local settings override (if you need local customization)
+settings.local.json
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+
+# Claude Code project-specific files (DO NOT COMMIT)
+.claude-project.json
+
+# Claude Code persistent memories (DO NOT COMMIT)
+.claude/memory/*
+.claude/DECISIONS.md
+.claude/PROJECT_STATE.md
+.claude/QUICK_START.md
+
+# Claude Code development files (DO NOT COMMIT)
+.claude/workflows/*
+.claude/skills/*
+.claude/tools/*
+
+# Claude Code temporary files (DO NOT COMMIT)
+.claude-session/
+.claude/session-*.log
+.claude/scratch/

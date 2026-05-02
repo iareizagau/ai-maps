@@ -7,12 +7,16 @@ import json
 from .models import Event, UserEvent, UserEventStatus, EventReview, DanceProfile, EventNotice, CheckIn, VibeReport, EventType
 from django.utils import timezone
 from datetime import timedelta
+from django.conf import settings
 
 def map_view(request):
     """
     Main view that renders the Leaflet map and Passport UI.
     """
-    return render(request, 'sbk/pages/home/map.html')
+    context = {
+        'OPENWEATHERMAP_API_KEY': settings.OPENWEATHERMAP_API_KEY
+    }
+    return render(request, 'sbk/pages/home/map.html', context)
 
 def events_json(request):
     """

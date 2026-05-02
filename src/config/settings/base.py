@@ -163,3 +163,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Login
 LOGIN_URL = 'account_login'
 LOGIN_REDIRECT_URL = 'home'
+
+# Weather APIs
+EUSKALMET_API_KEY = env('EUSKALMET_API_KEY', default='')
+OPENWEATHERMAP_API_KEY = env('OPENWEATHERMAP_API_KEY', default='')

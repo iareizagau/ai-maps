@@ -1,6 +1,11 @@
 <c-layouts.main title="SBK Hub - Internacional">
     <c-slot name="extra_head">
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+        <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+        <script src="https://unpkg.com/lucide@latest"></script>
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
         <style>
             #map { height: calc(100vh - 64px); width: 100%; z-index: 1; }
             /* Minimal Popup Styles */
@@ -69,79 +74,147 @@
 
     <div class="flex flex-col md:flex-row h-[calc(100vh-64px)] overflow-hidden">
         <!-- Sidebar -->
-        <div class="hidden md:flex flex-col w-full md:w-[400px] lg:w-[450px] h-full bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-xl z-10 flex-shrink-0" id="sidebar">
-            <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center gap-3">
-                        <span class="text-3xl">🔥</span>
-                        <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">SBK Hub</h2>
+        <div class="hidden md:flex flex-col w-full md:w-3/5 lg:w-[60%] xl:w-[65%] h-full bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-xl z-10 flex-shrink-0 transition-all duration-500" id="sidebar">
+            <div class="p-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+                <div class="flex flex-col gap-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">🔥</span>
+                            <h2 class="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">SBK HUB</h2>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div id="view-mode-toggle" class="flex p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                                <button onclick="setViewMode('map')" id="view-map" class="p-1 rounded-md transition-all bg-white dark:bg-slate-700 shadow-sm text-rose-600">
+                                    <i data-lucide="map" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="setViewMode('list')" id="view-list" class="p-1 rounded-md transition-all text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                                    <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'sbk:passport' %}" class="bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tighter hover:scale-105 transition-transform shadow-md">
+                                    Passport
+                                </a>
+                            {% endif %}
+                        </div>
                     </div>
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'sbk:passport' %}" class="flex items-center gap-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-3 py-1.5 rounded-full text-xs font-bold hover:scale-105 transition-transform shadow-md">
-                            🛂 Pasaporte
-                        </a>
-                    {% else %}
-                        <a href="{% url 'account_login' %}?next={{ request.path }}" class="flex items-center gap-2 bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
-                            Iniciar sesión
-                        </a>
-                    {% endif %}
-                </div>
-                <p class="text-slate-600 dark:text-slate-400 mb-4 text-sm leading-tight">Encuentra tu próximo festival. Explora el mundo bailando.</p>
-                
-                <!-- Live Legend -->
-                <div class="flex items-center gap-4 mb-4 p-2.5 bg-slate-100/50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/50">
-                    <div class="flex items-center gap-2">
-                        <span class="flex h-2 w-2 rounded-full bg-rose-500 animate-ping"></span>
-                        <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Actividad en vivo</span>
-                    </div>
-                    <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs">🔥</span>
-                        <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Pista caliente</span>
-                    </div>
-                </div>
-                
-                <!-- Filters -->
-                <div class="space-y-3">
-                    <!-- Styles -->
-                    <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" id="style-filters">
-                        <button class="filter-btn active flex items-center gap-2" data-filter="all" onclick="setStyle('all')">
-                            🌎 Todos
-                        </button>
-                    </div>
-                    <!-- Type -->
-                    <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" id="type-filters">
-                        <button class="filter-btn active flex items-center gap-2" data-filter="all" onclick="setType('all')">
-                            Cualquiera
-                        </button>
-                        <button class="filter-btn inactive flex items-center gap-2 border-rose-500/30 text-rose-600 dark:text-rose-400 font-bold" data-filter="live" onclick="setType('live')">
-                            <span class="flex h-2 w-2 rounded-full bg-rose-500 animate-ping"></span>
-                            LIVE
-                        </button>
-                        <button class="filter-btn inactive flex items-center gap-2" data-filter="festival" onclick="setType('festival')">
-                            🎉 Festivales
-                        </button>
-                        <button class="filter-btn inactive flex items-center gap-2" data-filter="party" onclick="setType('party')">
-                            🪩 Fiestas
-                        </button>
-                        <button class="filter-btn inactive flex items-center gap-2" data-filter="workshop" onclick="setType('workshop')">
-                            👟 Talleres
+                    
+                    <div class="flex gap-2">
+                        <!-- Hybrid Search Bar -->
+                        <div class="relative flex-1">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i data-lucide="search" class="h-3.5 w-3.5 text-slate-400"></i>
+                            </div>
+                            <input type="text" id="event-search" oninput="updateSearch(this.value)" placeholder="Busca eventos, salas o ciudades..." class="block w-full pl-9 pr-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl leading-5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-xs transition-all shadow-sm">
+                        </div>
+                        <button onclick="toggleFilters()" id="filters-toggle-btn" class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-500 hover:text-rose-600 transition-colors">
+                            <i data-lucide="filter" class="w-4 h-4"></i>
                         </button>
                     </div>
                 </div>
             </div>
+
+            <!-- Improved Filter Strip (Collapsed by default) -->
+            <div id="filter-strip" class="bg-white dark:bg-slate-900 transition-all duration-300 overflow-hidden max-h-0 p-0 border-0">
+                <div class="p-4 space-y-6">
+                    <!-- Thumb-Ready Moods Grid -->
+                    <div>
+                        <div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 px-1">Experiencias</div>
+                        <div class="grid grid-cols-3 gap-2" id="mood-filters">
+                            <button onclick="toggleType('live')" data-filter="live" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-rose-100 dark:border-rose-900/30 bg-rose-50/50 dark:bg-rose-900/10 text-rose-700 dark:text-rose-400 transition-all cursor-pointer">
+                                <span class="text-xl mb-1">🔥</span>
+                                <span class="text-[10px] font-bold">LIVE</span>
+                            </button>
+                            <button onclick="toggleType('festival')" data-filter="festival" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-amber-100 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-400 transition-all cursor-pointer">
+                                <span class="text-xl mb-1">🎉</span>
+                                <span class="text-[10px] font-bold">Festivales</span>
+                            </button>
+                            <button onclick="toggleType('party')" data-filter="party" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-purple-100 dark:border-purple-900/30 bg-purple-50/50 dark:bg-purple-900/10 text-purple-700 dark:text-purple-400 transition-all cursor-pointer">
+                                <span class="text-xl mb-1">🪩</span>
+                                <span class="text-[10px] font-bold">Social</span>
+                            </button>
+                            <button onclick="toggleMood('workshop')" data-mood="workshop" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-blue-100 dark:border-blue-900/30 bg-blue-50/50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400 transition-all cursor-pointer">
+                                <span class="text-xl mb-1">👟</span>
+                                <span class="text-[10px] font-bold">Talleres</span>
+                            </button>
+                            <button onclick="toggleMood('premium')" data-mood="premium" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/50 dark:bg-emerald-900/10 text-emerald-700 dark:text-emerald-400 transition-all cursor-pointer">
+                                <span class="text-xl mb-1">💎</span>
+                                <span class="text-[10px] font-bold">Premium</span>
+                            </button>
+                            <button onclick="toggleMood('outdoor')" data-mood="outdoor" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-sky-100 dark:border-sky-900/30 bg-sky-50/50 dark:bg-sky-900/10 text-sky-700 dark:text-sky-400 transition-all cursor-pointer">
+                                <span class="text-xl mb-1">🌴</span>
+                                <span class="text-[10px] font-bold">Exterior</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Styles (Visual List) -->
+                    <div>
+                        <div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">Estilos de baile</div>
+                        <div class="flex flex-wrap gap-2" id="style-filters">
+                            <button class="filter-btn active px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2" data-filter="all" onclick="setStyle('all')">
+                                🌎 Todos
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Date Selection -->
+                    <div>
+                        <div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">Cuándo bailar</div>
+                        <div class="grid grid-cols-4 gap-2" id="date-filters">
+                            <button class="filter-btn active py-2.5 rounded-xl text-[10px] font-black uppercase transition-all border border-slate-200 dark:border-slate-700" data-filter="all" onclick="setDate('all')">Siempre</button>
+                            <button class="filter-btn inactive py-2.5 rounded-xl text-[10px] font-black uppercase transition-all border border-slate-200 dark:border-slate-700" data-filter="today" onclick="setDate('today')">Hoy</button>
+                            <button class="filter-btn inactive py-2.5 rounded-xl text-[10px] font-black uppercase transition-all border border-slate-200 dark:border-slate-700" data-filter="weekend" onclick="setDate('weekend')">Finde</button>
+                            <button id="custom-date-btn" class="py-2.5 rounded-xl text-[10px] font-black uppercase transition-all border border-rose-500/30 text-rose-600 bg-rose-500/5 relative">
+                                Rango
+                                <input type="text" id="date-range-picker" class="absolute inset-0 opacity-0 cursor-pointer">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
-            <div id="events-list" class="flex-1 overflow-y-auto p-4 space-y-4">
-                <p class="text-slate-500 italic">Cargando la magia en el mapa...</p>
+            <div id="events-list" class="flex-1 overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 auto-rows-max transition-all duration-300">
+                <p class="text-slate-500 italic col-span-full">Cargando la magia en el mapa...</p>
             </div>
         </div>
 
         <!-- Map Container -->
         <div class="w-full flex-1 h-full relative" id="map-container">
             <div id="map"></div>
-            <!-- Theme Toggle Overlay -->
-            <div class="absolute top-4 right-4 z-[1000] bg-white dark:bg-slate-800 rounded-full shadow-md">
-               <c-molecules.theme_toggle />
+
+            <!-- Mobile Search & Filter Bar Overlay -->
+            <div class="md:hidden absolute top-4 left-4 right-16 z-[1000]">
+                <div class="flex gap-2">
+                    <div class="relative flex-1">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="search" class="h-4 w-4 text-slate-400"></i>
+                        </div>
+                        <input type="text" id="mobile-event-search" oninput="updateSearch(this.value)" placeholder="Busca festivales o estilos..." class="block w-full pl-10 pr-3 py-2.5 border border-slate-200/50 dark:border-slate-700/50 rounded-2xl leading-5 bg-white/90 dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500 text-xs transition-all shadow-xl backdrop-blur-md">
+                    </div>
+                    <button onclick="toggleMobileFilters()" class="p-2.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl text-slate-500 hover:text-rose-500 transition-colors">
+                        <i data-lucide="sliders-horizontal" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Weather & Theme Toggle Overlay -->
+            <div class="absolute top-4 right-4 z-[1000] flex flex-col items-end gap-2">
+                <div class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-lg rounded-full shadow-xl">
+                    <c-molecules.theme_toggle />
+                </div>
+                
+                <!-- Premium Weather Pill -->
+                <div id="weather-widget" class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur-lg rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl transition-all duration-500 hover:scale-105">
+                    <div class="flex items-center gap-1.5 border-r border-slate-200 dark:border-slate-700 pr-2">
+                        <span id="weather-icon" class="text-sm">--</span>
+                        <span class="text-xs font-black text-slate-800 dark:text-slate-100" id="weather-temp">--°</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[8px] uppercase tracking-widest font-bold text-slate-400 dark:text-slate-500 leading-none mb-0.5">Clima</span>
+                        <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 max-w-[80px] truncate leading-none" id="weather-location">...</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Add Social FAB -->
@@ -352,13 +425,26 @@
         <script>
             let allEvents = [];
             let geoJsonLayer = null;
-            let currentStyle = 'all';
-            let currentType = 'all';
             let map;
+            
+            // Unified State
+            let filters = {
+                style: 'all',
+                type: 'all',
+                moods: new Set(),
+                search: '',
+                dateRange: 'all', // all, today, weekend, custom
+                customDates: null
+            };
+
+            let isListView = false;
 
             document.addEventListener('DOMContentLoaded', function() {
-                // Focus on Europe by default
-                map = L.map('map', {zoomControl: false}).setView([46.0, 10.0], 4);
+                // Initialize Lucide Icons
+                lucide.createIcons();
+                
+                // Initialize Map
+                map = L.map('map', {zoomControl: false, scrollWheelZoom: true}).setView([46.0, 10.0], 4);
                 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
                 const lightTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -380,72 +466,57 @@
                 updateMapTheme();
                 new MutationObserver(() => updateMapTheme()).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
+                // Initialize Flatpickr
+                flatpickr("#date-range-picker", {
+                    mode: "range",
+                    dateFormat: "Y-m-d",
+                    locale: "es",
+                    disableMobile: "true",
+                    onChange: function(selectedDates) {
+                        if (selectedDates.length === 2) {
+                            filters.dateRange = 'custom';
+                            filters.customDates = selectedDates;
+                            document.getElementById('custom-date-btn').classList.add('bg-rose-500', 'text-white');
+                            renderMapAndList();
+                        }
+                    }
+                });
+
                 // Fetch Data
                 fetch('{% url "sbk:events_json" %}')
                     .then(r => r.json())
                     .then(data => {
                         allEvents = data.events || [];
-                        
                         extractStyles();
                         renderMapAndList();
+                        updateWeather();
                     });
 
-                // Update list when map moves
-                map.on('moveend', updateList);
-
-                // Mobile list toggle logic
-                let isListView = false;
-                document.getElementById('mobile-toggle-btn').addEventListener('click', () => {
-                    isListView = !isListView;
-                    const sidebar = document.getElementById('sidebar');
-                    const mapContainer = document.getElementById('map-container');
-                    const btnText = document.getElementById('mobile-toggle-text');
-                    
-                    if (isListView) {
-                        sidebar.classList.remove('hidden');
-                        sidebar.classList.add('flex', 'absolute', 'inset-0', 'z-[2000]', 'w-full');
-                        mapContainer.classList.add('hidden');
-                        btnText.innerText = 'Ver mapa';
-                    } else {
-                        sidebar.classList.add('hidden');
-                        sidebar.classList.remove('flex', 'absolute', 'inset-0', 'z-[2000]', 'w-full');
-                        mapContainer.classList.remove('hidden');
-                        btnText.innerText = 'Ver eventos';
-                        setTimeout(() => map.invalidateSize(), 100);
-                    }
+                // Update list and weather when map moves
+                map.on('moveend', () => {
+                    updateList();
+                    updateWeather();
                 });
-                
-                // Map click handler
+
+                // Map click handler for Social Mode
                 map.on('click', function(e) {
-                    console.log("Map clicked, addingSocialMode is:", window.addingSocialMode);
                     if (window.addingSocialMode) {
-                        // Turn off mode
                         window.toggleAddSocialMode();
-                        
-                        // Populate modal
                         document.getElementById('social-lat').value = e.latlng.lat;
                         document.getElementById('social-lng').value = e.latlng.lng;
-                        
-                        // Show modal
-                        const modal = document.getElementById('add-social-modal');
-                        const content = document.getElementById('add-social-modal-content');
-                        modal.classList.remove('hidden');
-                        modal.classList.add('flex');
-                        setTimeout(() => {
-                            content.classList.remove('scale-95', 'opacity-0');
-                            content.classList.add('scale-100', 'opacity-100');
-                        }, 10);
+                        openAddSocialModal();
                     }
                 });
             });
 
+            // --- Icon & Style Config ---
             const styleMap = {
-                'bachata': { icon: '🔥', name: 'Bachata' },
-                'salsa': { icon: '🎺', name: 'Salsa' },
-                'kizomba': { icon: '🫂', name: 'Kizomba' },
-                'urbankiz': { icon: '👟', name: 'Urban Kiz' },
-                'zouk': { icon: '🌊', name: 'Zouk' },
-                'mixed': { icon: '✨', name: 'SBK' }
+                'bachata': { icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s-8 6-8 12c0 4.4 3.6 8 8 8s8-3.6 8-8c0-6-8-12-8-12z"/></svg>', name: 'Bachata' },
+                'salsa': { icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>', name: 'Salsa' },
+                'kizomba': { icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>', name: 'Kizomba' },
+                'urbankiz': { icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5h4a2 2 0 1 1 0 4h-4V5Z"/><path d="M10 9v11"/><path d="M6 9h4"/></svg>', name: 'Urban Kiz' },
+                'mixed': { icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>', name: 'SBK' },
+                'default': { icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>', name: 'Evento' }
             };
 
             const styleColors = {
@@ -453,76 +524,177 @@
                 'salsa': { bg: 'bg-red-500', text: 'text-red-500', border: 'border-l-red-500', bgSoft: 'bg-red-500/10' },
                 'kizomba': { bg: 'bg-indigo-500', text: 'text-indigo-500', border: 'border-l-indigo-500', bgSoft: 'bg-indigo-500/10' },
                 'urbankiz': { bg: 'bg-violet-500', text: 'text-violet-500', border: 'border-l-violet-500', bgSoft: 'bg-violet-500/10' },
-                'zouk': { bg: 'bg-cyan-500', text: 'text-cyan-500', border: 'border-l-cyan-500', bgSoft: 'bg-cyan-500/10' },
                 'mixed': { bg: 'bg-amber-500', text: 'text-amber-500', border: 'border-l-amber-500', bgSoft: 'bg-amber-500/10' },
                 'default': { bg: 'bg-slate-500', text: 'text-slate-500', border: 'border-l-slate-500', bgSoft: 'bg-slate-500/10' }
             };
 
+            // --- Logic Functions ---
+
             function extractStyles() {
                 const styles = new Set();
-                allEvents.forEach(e => {
-                    if (e.primary_style) styles.add(e.primary_style);
-                });
-                
+                allEvents.forEach(e => { if (e.primary_style) styles.add(e.primary_style); });
                 const container = document.getElementById('style-filters');
                 Array.from(styles).sort().forEach(style => {
                     const btn = document.createElement('button');
-                    const info = styleMap[style] || { icon: '📍', name: style };
-                    btn.className = 'filter-btn inactive flex items-center gap-2';
-                    btn.innerHTML = `<span>${info.icon}</span> <span>${info.name}</span>`;
+                    const info = styleMap[style] || { name: style };
+                    btn.className = 'filter-btn inactive px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm';
+                    btn.innerHTML = info.name;
                     btn.onclick = () => setStyle(style);
                     btn.dataset.filter = style;
                     container.appendChild(btn);
                 });
             }
 
-            window.setStyle = function(style) {
-                currentStyle = style;
-                document.querySelectorAll('#style-filters .filter-btn').forEach(btn => {
-                    const btnStyle = btn.dataset.filter;
-                    const c = styleColors[btnStyle] || styleColors.default;
-                    
-                    if (btnStyle === style) {
-                        btn.className = `filter-btn active flex items-center gap-2 text-white shadow-md transition-colors ${c.bg}`;
-                        if(style === 'all') btn.className = `filter-btn active flex items-center gap-2 text-white shadow-md transition-colors bg-rose-600`;
-                    } else {
-                        btn.className = `filter-btn inactive flex items-center gap-2`;
-                    }
-                });
+            window.updateSearch = function(val) {
+                filters.search = val.toLowerCase();
+                // Sync inputs
+                document.getElementById('event-search').value = val;
+                document.getElementById('mobile-event-search').value = val;
                 renderMapAndList();
             };
 
-            window.setType = function(type) {
-                currentType = type;
-                document.querySelectorAll('#type-filters .filter-btn').forEach(btn => {
-                    if (btn.dataset.filter === type) {
-                        btn.classList.remove('inactive'); btn.classList.add('active');
-                        btn.classList.add('bg-rose-600', 'text-white');
-                    } else {
-                        btn.classList.remove('active', 'bg-rose-600', 'text-white'); 
-                        btn.classList.add('inactive');
-                    }
-                });
-                renderMapAndList();
-            };
-
-            function matchesFilters(event) {
-                if (currentStyle !== 'all' && event.primary_style !== currentStyle) return false;
-                
-                if (currentType === 'live') {
-                    return event.pulse && event.pulse.active_checkins > 0;
+            window.toggleFilters = function() {
+                const strip = document.getElementById('filter-strip');
+                const btn = document.getElementById('filters-toggle-btn');
+                if (strip.classList.contains('max-h-0')) {
+                    strip.classList.remove('max-h-0', 'border-0');
+                    strip.classList.add('max-h-[800px]', 'border-b', 'border-slate-100', 'dark:border-slate-800');
+                    btn.classList.add('bg-rose-50', 'text-rose-600', 'border-rose-200');
+                } else {
+                    strip.classList.add('max-h-0', 'border-0');
+                    strip.classList.remove('max-h-[800px]', 'border-b', 'border-slate-100', 'dark:border-slate-800');
+                    btn.classList.remove('bg-rose-50', 'text-rose-600', 'border-rose-200');
                 }
+            };
+
+            window.toggleMobileFilters = function() {
+                if (!isListView) {
+                    window.setViewMode('list');
+                }
+                setTimeout(() => window.toggleFilters(), 100);
+            };
+
+            window.setStyle = function(style) {
+                filters.style = style;
+                document.querySelectorAll('#style-filters .filter-btn').forEach(btn => {
+                    if (btn.dataset.filter === style) {
+                        btn.className = 'filter-btn active px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white shadow-md';
+                    } else {
+                        btn.className = 'filter-btn inactive px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-500';
+                    }
+                });
+                renderMapAndList();
+            };
+
+            window.toggleType = function(type) {
+                filters.type = (filters.type === type) ? 'all' : type;
+                document.querySelectorAll('#mood-filters [data-filter]').forEach(btn => {
+                    if (btn.dataset.filter === filters.type) btn.classList.remove('opacity-60');
+                    else btn.classList.add('opacity-60');
+                });
+                renderMapAndList();
+            };
+
+            window.toggleMood = function(mood) {
+                if (filters.moods.has(mood)) filters.moods.delete(mood);
+                else filters.moods.add(mood);
                 
-                if (currentType !== 'all' && event.event_type !== currentType) return false;
+                document.querySelectorAll('#mood-filters [data-mood]').forEach(btn => {
+                    if (filters.moods.has(btn.dataset.mood)) btn.classList.remove('opacity-60');
+                    else btn.classList.add('opacity-60');
+                });
+                renderMapAndList();
+            };
+
+            window.setDate = function(range) {
+                filters.dateRange = range;
+                document.querySelectorAll('#date-filters .filter-btn').forEach(btn => {
+                    if (btn.dataset.filter === range) {
+                        btn.classList.remove('inactive'); btn.classList.add('active', 'bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900');
+                    } else {
+                        btn.classList.add('inactive'); btn.classList.remove('active', 'bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900');
+                    }
+                });
+                document.getElementById('custom-date-btn').classList.remove('bg-rose-500', 'text-white');
+                renderMapAndList();
+            };
+
+            window.setViewMode = function(mode) {
+                isListView = (mode === 'list');
+                const sidebar = document.getElementById('sidebar');
+                const mapContainer = document.getElementById('map-container');
+                const btnMap = document.getElementById('view-map');
+                const btnList = document.getElementById('view-list');
+                const mobileBtnText = document.getElementById('mobile-toggle-text');
+
+                if (isListView) {
+                    sidebar.classList.remove('hidden', 'md:w-3/5', 'lg:w-[60%]', 'xl:w-[65%]');
+                    sidebar.classList.add('flex', 'w-full');
+                    mapContainer.classList.add('hidden');
+                    btnList.className = "p-1 rounded-md transition-all bg-white dark:bg-slate-700 shadow-sm text-rose-600";
+                    btnMap.className = "p-1 rounded-md transition-all text-slate-500 hover:text-slate-700 dark:hover:text-slate-300";
+                    if (mobileBtnText) mobileBtnText.innerText = 'Ver mapa';
+                    // Scroll to top when switching to list
+                    document.getElementById('events-list').scrollTop = 0;
+                } else {
+                    sidebar.classList.remove('flex', 'w-full');
+                    sidebar.classList.add('hidden', 'md:flex', 'md:w-3/5', 'lg:w-[60%]', 'xl:w-[65%]');
+                    mapContainer.classList.remove('hidden');
+                    btnMap.className = "p-1 rounded-md transition-all bg-white dark:bg-slate-700 shadow-sm text-rose-600";
+                    btnList.className = "p-1 rounded-md transition-all text-slate-500 hover:text-slate-700 dark:hover:text-slate-300";
+                    if (mobileBtnText) mobileBtnText.innerText = 'Ver eventos';
+                    setTimeout(() => { map.invalidateSize(); }, 300);
+                }
+            };
+
+            // Mobile toggle shortcut
+            document.getElementById('mobile-toggle-btn')?.addEventListener('click', () => {
+                window.setViewMode(isListView ? 'map' : 'list');
+            });
+
+            function matchesFilters(e) {
+                // Style
+                if (filters.style !== 'all' && e.primary_style !== filters.style) return false;
+                
+                // Type (Live, Festival, Social)
+                if (filters.type === 'live' && !(e.pulse?.active_checkins > 0)) return false;
+                if (filters.type !== 'all' && filters.type !== 'live' && e.event_type !== filters.type) return false;
+                
+                // Moods (Premium, Outdoor, etc - hypothetical fields or based on tags)
+                if (filters.moods.has('workshop') && e.event_type !== 'workshop') return false;
+                
+                // Search
+                if (filters.search && !e.name.toLowerCase().includes(filters.search) && !e.city.toLowerCase().includes(filters.search)) return false;
+                
+                // Date
+                if (filters.dateRange !== 'all') {
+                    const eventDate = new Date(e.start_date);
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+                    
+                    if (filters.dateRange === 'today') {
+                        if (eventDate.toDateString() !== today.toDateString()) return false;
+                    } else if (filters.dateRange === 'weekend') {
+                        const day = today.getDay(); // 0 is Sun
+                        const diffToFri = (day <= 5) ? (5 - day) : 0;
+                        const fri = new Date(today); fri.setDate(today.getDate() + diffToFri);
+                        const sun = new Date(fri); sun.setDate(fri.getDate() + 2); sun.setHours(23,59,59,999);
+                        if (eventDate < fri || eventDate > sun) return false;
+                    } else if (filters.dateRange === 'custom' && filters.customDates) {
+                        const start = filters.customDates[0];
+                        const end = filters.customDates[1] || start;
+                        end.setHours(23,59,59,999);
+                        if (eventDate < start || eventDate > end) return false;
+                    }
+                }
+
                 return true;
             }
 
             function renderMapAndList() {
                 const filteredEvents = allEvents.filter(matchesFilters);
-                
                 if (geoJsonLayer) map.removeLayer(geoJsonLayer);
                 
-                // Convert to GeoJSON for leaflet
                 const geoJsonData = {
                     type: "FeatureCollection",
                     features: filteredEvents.map(e => ({
@@ -536,14 +708,14 @@
                 geoJsonLayer = L.geoJSON(geoJsonData, {
                     pointToLayer: (feature, latlng) => {
                         const props = feature.properties;
-                        const styleInfo = styleMap[props.primary_style] || {icon: '📍'};
                         const colors = styleColors[props.primary_style] || styleColors.default;
+                        const info = styleMap[props.primary_style] || styleMap.default;
                         
                         const customIcon = L.divIcon({
                             className: 'custom-map-marker',
-                            html: `<div class="${colors.bg} text-white rounded-full shadow-lg border-2 border-white dark:border-slate-800 transition-transform hover:scale-110 flex items-center justify-center w-10 h-10 text-xl shadow-rose-500/50 relative">
+                            html: `<div class="${colors.bg} text-white rounded-full shadow-lg border-2 border-white dark:border-slate-800 transition-transform hover:scale-110 flex items-center justify-center w-10 h-10 shadow-rose-500/50 relative">
                                     ${props.pulse?.active_checkins > 0 ? '<div class="pulse-marker-inner absolute inset-0"></div>' : ''}
-                                    <span class="relative z-10">${styleInfo.icon}</span>
+                                    <div class="relative z-10 w-5 h-5">${info.icon}</div>
                                    </div>`,
                             iconSize: [40, 40],
                             iconAnchor: [20, 20],
@@ -556,41 +728,15 @@
                         const colors = styleColors[props.primary_style] || styleColors.default;
                         const styleName = (styleMap[props.primary_style] || {}).name || props.primary_style;
                         
-                        let popupContent = `
+                        layer.bindPopup(`
                             <div class="p-2 cursor-pointer" onclick="document.getElementById('event-card-${feature.id}')?.scrollIntoView({behavior:'smooth', block:'center'});">
-                                <span class="text-[9px] font-bold ${colors.text} mb-1 inline-block uppercase tracking-wide">${styleName} &bull; ${props.event_type}</span>
-                                <h3 class="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight max-w-[200px] truncate" title="${props.name}">${props.name}</h3>
-                            </div>`;
-                            
-                        layer.bindPopup(popupContent, { 
-                            className: 'minimal-popup',
-                            closeButton: false,
-                            autoPanPadding: [50, 50]
-                        });
-                        
-                        layer.on('click', () => {
-                            const card = document.getElementById(`event-card-${feature.id}`);
-                            if (card) {
-                                if (window.innerWidth < 768 && !isListView) {
-                                    document.getElementById('mobile-toggle-btn').click();
-                                    setTimeout(() => scrollAndHighlightCard(card), 100);
-                                } else {
-                                    scrollAndHighlightCard(card);
-                                }
-                            }
-                        });
+                                <span class="text-[9px] font-black ${colors.text} mb-1 inline-block uppercase tracking-widest">${styleName}</span>
+                                <h3 class="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight max-w-[180px] truncate">${props.name}</h3>
+                            </div>`, { className: 'minimal-popup', closeButton: false });
                     }
                 }).addTo(map);
 
                 updateList();
-            }
-            
-            function scrollAndHighlightCard(card) {
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                card.classList.add('ring-2', 'ring-rose-500', 'shadow-rose-500/20', 'scale-[1.02]');
-                setTimeout(() => {
-                    card.classList.remove('ring-2', 'ring-rose-500', 'shadow-rose-500/20', 'scale-[1.02]');
-                }, 1500);
             }
 
             function updateList() {
@@ -606,184 +752,88 @@
                 document.getElementById('mobile-count').innerText = visibleEvents.length;
 
                 if (visibleEvents.length === 0) {
-                    container.innerHTML = `
-                        <div class="flex flex-col items-center justify-center h-40 text-center">
-                            <span class="text-4xl mb-2">🏝️</span>
-                            <p class="text-slate-500 dark:text-slate-400">No hay eventos SBK en esta zona.</p>
-                            <p class="text-sm text-slate-400 mt-2">Mueve el mapa o ajusta los filtros.</p>
-                        </div>
-                    `;
+                    container.innerHTML = `<div class="col-span-full flex flex-col items-center justify-center h-64 opacity-50"><i data-lucide="map-pin-off" class="w-12 h-12 mb-2"></i><p>Nada por aquí...</p></div>`;
+                    lucide.createIcons();
                     return;
                 }
 
-                const futureEvents = visibleEvents.filter(e => !e.is_recent_past);
-                const pastEvents = visibleEvents.filter(e => e.is_recent_past);
-
-                // Sort
-                futureEvents.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
-                pastEvents.sort((a, b) => new Date(b.end_date) - new Date(a.end_date));
-
-                const renderEvent = (e) => {
+                visibleEvents.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+                visibleEvents.forEach(e => {
                     const colors = styleColors[e.primary_style] || styleColors.default;
                     const styleName = (styleMap[e.primary_style] || {}).name || e.primary_style;
                     const isPast = e.is_recent_past;
                     
-                    let dateStr = "Fecha por confirmar";
-                    if (e.start_date) {
-                        dateStr = new Date(e.start_date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: 'numeric' });
-                    }
-
-                    const el = document.createElement('div');
-                    el.id = `event-card-${e.id}`;
-                    el.className = `p-4 border-l-4 ${colors.border} border-y border-y-slate-200 dark:border-y-slate-800 border-r border-r-slate-200 dark:border-r-slate-800 rounded-xl hover:shadow-md transition-all duration-300 cursor-pointer bg-white dark:bg-slate-800 flex flex-col gap-3 group relative overflow-hidden transform ${isPast ? 'opacity-80 grayscale-[0.3]' : ''}`;
-                    el.innerHTML = `
-                        <div class="flex gap-4">
-                            ${e.image_url ? `
-                            <div class="w-20 h-28 flex-shrink-0 relative overflow-hidden rounded-lg shadow-sm">
-                                <img src="${e.image_url}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition duration-500" alt="${e.name}">
-                            </div>` : ''}
-                            <div class="flex-1 min-w-0 flex flex-col justify-between py-1">
-                                <div>
-                                    <div class="flex justify-between items-start">
-                                        <span class="text-[10px] font-bold ${colors.text} uppercase tracking-wider mb-1 px-2 py-0.5 rounded-full ${colors.bgSoft} inline-block">${styleName} • ${e.event_type}</span>
-                                        ${isPast ? '<span class="text-[9px] font-black text-slate-400 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded uppercase">Finalizado</span>' : ''}
-                                    </div>
-                                    <h4 class="font-bold text-slate-900 dark:text-slate-100 leading-tight mt-1 mb-2 line-clamp-2" title="${e.name}">${e.name}</h4>
-                                    
-                                    ${e.pulse?.active_checkins > 0 && !isPast ? `
-                                    <div class="flex items-center gap-2 mb-2 animate-pulse">
-                                        <span class="flex h-2 w-2 rounded-full bg-rose-500"></span>
-                                        <span class="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest">LIVE: ${e.pulse.active_checkins} BAILADORES</span>
-                                    </div>
-                                    ` : ''}
-                                </div>
-                                <div>
-                                    <p class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                        ${dateStr}
-                                    </p>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate flex items-center gap-1.5">
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                        ${e.city || 'Ubicación desconocida'}
-                                    </p>
-                                    
-                                    <div class="flex flex-wrap gap-2 mt-2">
-                                        ${e.price_info && !isPast ? `
-                                        <span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-800">
-                                            💰 ${e.price_info}
-                                        </span>
-                                        ` : ''}
-                                        ${e.pulse?.vibe ? `
-                                        <span class="text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-md border border-amber-100 dark:border-amber-800">
-                                            🎸 Música ${e.pulse.vibe.music}
-                                        </span>
-                                        ` : ''}
-                                    </div>
-
-                                    ${e.avg_rating ? `
-                                    <div class="flex items-center gap-1 mt-1.5">
-                                        <span class="text-amber-500 text-xs">⭐</span>
-                                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">${e.avg_rating}</span>
-                                        <span class="text-xs text-slate-400">(${e.review_count} reseñas)</span>
-                                    </div>
-                                    ` : ''}
-                                </div>
+                    const card = document.createElement('div');
+                    card.id = `event-card-${e.id}`;
+                    card.className = `group relative bg-white dark:bg-slate-800 rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col ${isPast ? 'opacity-70' : ''}`;
+                    card.innerHTML = `
+                        <div class="relative h-48 overflow-hidden">
+                            <img src="${e.image_url || 'https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=800'}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                            <div class="absolute top-3 left-3 flex gap-2">
+                                <span class="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[10px] font-black text-white uppercase tracking-widest">${styleName}</span>
+                            </div>
+                            <div class="absolute bottom-3 left-3 right-3 text-white">
+                                <h4 class="font-black text-lg leading-tight line-clamp-2 uppercase tracking-tighter">${e.name}</h4>
                             </div>
                         </div>
-                        
-                        <!-- Actions Row -->
-                        <div class="flex flex-col gap-3 pt-3 mt-1 border-t border-slate-100 dark:border-slate-700/50">
-                            ${(() => {
-                                const eventDate = new Date(e.start_date).toDateString();
-                                const today = new Date().toDateString();
-                                const isToday = eventDate === today;
-                                
-                                if (isPast) {
-                                    return `
-                                        <button onclick="event.stopPropagation(); openReviewModal('${e.id}', '${e.name.replace(/'/g, "\\'")}')" class="w-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 text-[10px] font-bold py-2.5 rounded-xl hover:bg-amber-200 transition-colors flex items-center justify-center gap-1.5">
-                                            ⭐ Valorar experiencia
-                                        </button>
-                                    `;
-                                }
-                                
-                                if (isToday) {
-                                    return `
-                                        <!-- Live Pulse Actions -->
-                                        <div class="flex gap-2">
-                                            <button onclick="event.stopPropagation(); doCheckIn('${e.id}')" class="flex-1 bg-rose-600 text-white text-[10px] font-bold py-2.5 rounded-xl hover:bg-rose-700 transition-colors shadow-md shadow-rose-500/20 flex items-center justify-center gap-1.5 animate-pulse">
-                                                📍 ¡Estoy aquí!
-                                            </button>
-                                            <button onclick="event.stopPropagation(); openVibeModal('${e.id}', '${e.name.replace(/'/g, "\\'")}')" class="flex-1 bg-slate-900 dark:bg-white dark:text-slate-900 text-white text-[10px] font-bold py-2.5 rounded-xl hover:opacity-90 transition-colors shadow-md flex items-center justify-center gap-1.5">
-                                                🔥 Vibe Check
-                                            </button>
-                                        </div>
-                                    `;
-                                }
-                                
-                                return `
-                                    <!-- Future State -->
-                                    <button onclick="event.stopPropagation(); window.open('https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.name)}', '_blank')" class="w-full bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 text-[10px] font-bold py-2.5 rounded-xl hover:bg-indigo-100 transition-colors flex items-center justify-center gap-1.5 border border-indigo-100/50 dark:border-indigo-500/10">
-                                        📅 Añadir al calendario
-                                    </button>
-                                `;
-                            })()}
-
-                            <div class="flex items-center justify-between">
-                                <div class="flex gap-2">
-                                    ${!isPast ? `
-                                    <button id="btn-interested-${e.id}" class="text-xs px-3 py-1.5 rounded-md ${e.user_status === 'interested' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 font-bold border border-amber-300 dark:border-amber-700' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 font-medium'} transition-all" onclick="event.stopPropagation(); toggleStatus('${e.id}', 'interested')">
-                                        ⭐ Me interesa
-                                    </button>
-                                    <button id="btn-going-${e.id}" class="text-xs px-3 py-1.5 rounded-md ${e.user_status === 'going' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 font-bold border border-emerald-300 dark:border-emerald-700' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 font-medium'} transition-all" onclick="event.stopPropagation(); toggleStatus('${e.id}', 'going')">
-                                        🎟️ ¡Voy!
-                                    </button>
-                                    ` : ''}
-                                    <button class="text-xs px-3 py-1.5 rounded-md bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 font-medium transition-colors" onclick="event.stopPropagation(); openCommunityModal('${e.id}')">
-                                        Comunidad
-                                    </button>
+                        <div class="p-4 flex-1 flex flex-col justify-between gap-4">
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                                    <span class="text-[11px] font-bold">${new Date(e.start_date).toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'short'})}</span>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    ${e.ticket_url && !isPast ? `
-                                    <a href="${e.ticket_url}" target="_blank" onclick="event.stopPropagation();" class="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1">
-                                        Entradas
-                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                                    </a>
-                                    ` : ''}
+                                <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                                    <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                                    <span class="text-[11px] font-bold truncate">${e.city}</span>
                                 </div>
+                                ${e.pulse?.active_checkins > 0 ? `
+                                <div class="flex items-center gap-2 text-rose-500 animate-pulse">
+                                    <div class="w-2 h-2 rounded-full bg-rose-500"></div>
+                                    <span class="text-[10px] font-black uppercase">${e.pulse.active_checkins} BAILANDO AHORA</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="flex gap-2">
+                                <button onclick="event.stopPropagation(); window.openCommunityModal('${e.id}')" class="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-colors">Comunidad</button>
+                                <button onclick="event.stopPropagation(); window.toggleStatus('${e.id}', 'going')" class="flex-1 py-2.5 rounded-xl ${e.user_status === 'going' ? 'bg-emerald-500 text-white' : 'bg-rose-600 text-white'} text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-lg shadow-rose-500/20">${e.user_status === 'going' ? '✓ Voy' : '¡Voy!'}</button>
                             </div>
                         </div>
                     `;
-                    
-                    el.onclick = () => {
-                        map.flyTo([e.lat, e.lng], 16, { duration: 1.5 });
-                        setTimeout(() => {
-                            geoJsonLayer.eachLayer(layer => {
-                                if(layer.feature.properties.id === e.id) {
-                                    layer.openPopup();
-                                }
-                            });
-                        }, 1000);
+                    card.onclick = () => {
+                        if (window.innerWidth < 768) window.setViewMode('map');
+                        map.flyTo([e.lat, e.lng], 15, { duration: 1 });
                     };
-                    return el;
-                };
-
-                // Add sections
-                if (futureEvents.length > 0) {
-                    const header = document.createElement('div');
-                    header.className = "flex items-center gap-2 px-2 py-4 mt-2";
-                    header.innerHTML = '<span class="text-xs font-black text-slate-400 uppercase tracking-widest">Próximos Destinos</span><div class="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>';
-                    container.appendChild(header);
-                    futureEvents.forEach(e => container.appendChild(renderEvent(e)));
-                }
-
-                if (pastEvents.length > 0) {
-                    const header = document.createElement('div');
-                    header.className = "flex items-center gap-2 px-2 py-4 mt-6";
-                    header.innerHTML = '<span class="text-xs font-black text-slate-400 uppercase tracking-widest">Acabamos de bailar</span><div class="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>';
-                    container.appendChild(header);
-                    pastEvents.forEach(e => container.appendChild(renderEvent(e)));
-                }
+                    container.appendChild(card);
+                });
+                lucide.createIcons();
             }
+
+            function updateWeather() {
+                if (allEvents.length === 0) return;
+                const center = map.getCenter();
+                const API_KEY = '{{ OPENWEATHERMAP_API_KEY }}';
+                if (!API_KEY) return;
+                fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${center.lat}&lon=${center.lng}&units=metric&appid=${API_KEY}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const temp = Math.round(data.main.temp);
+                        const icon = getWeatherIcon(data.weather[0].main);
+                        document.getElementById('weather-temp').innerText = `${temp}°`;
+                        document.getElementById('weather-icon').innerText = icon;
+                        document.getElementById('weather-location').innerText = data.name;
+                        document.getElementById('weather-widget').classList.remove('hidden');
+                    });
+            }
+
+            function getWeatherIcon(condition) {
+                const icons = { 'Clear': '☀️', 'Clouds': '☁️', 'Rain': '🌧️', 'Snow': '❄️', 'Thunderstorm': '⛈️' };
+                return icons[condition] || '⛅';
+            }
+
+            // --- Preservation of Existing Logic ---
+
             function getCookie(name) {
                 let cookieValue = null;
                 if (document.cookie && document.cookie !== '') {
@@ -802,92 +852,41 @@
             window.toggleStatus = function(eventId, status) {
                 const csrftoken = getCookie('csrftoken');
                 if (!csrftoken) {
-                    alert("Por favor, inicia sesión para usar el Pasaporte Bailador.");
+                    alert("Inicia sesión para usar el Pasaporte Bailador.");
                     window.location.href = "{% url 'account_login' %}?next={{ request.path }}";
                     return;
                 }
-                
-                // Find event in allEvents
-                const eventIndex = allEvents.findIndex(e => e.id === eventId);
-                if (eventIndex === -1) return;
-                
-                const currentStatus = allEvents[eventIndex].user_status;
-                const newStatus = currentStatus === status ? null : status;
-                
-                // Optimistic UI update
-                allEvents[eventIndex].user_status = newStatus;
-                updateList(); // re-render list
-                
+                const event = allEvents.find(e => e.id === eventId);
+                if (!event) return;
+                const oldStatus = event.user_status;
+                event.user_status = (oldStatus === status) ? null : status;
+                updateList();
                 fetch(`/sbk/api/events/${eventId}/status/`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
-                    },
-                    body: JSON.stringify({ status: newStatus })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        if (response.status === 403) {
-                            alert("Inicia sesión para guardar tu evento.");
-                            window.location.href = "{% url 'account_login' %}?next={{ request.path }}";
-                        }
-                        // Revert on error
-                        allEvents[eventIndex].user_status = currentStatus;
-                        updateList();
-                    }
-                })
-                .catch(err => {
-                    console.error("Error toggling status:", err);
-                    allEvents[eventIndex].user_status = currentStatus;
-                    updateList();
-                });
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                    body: JSON.stringify({ status: event.user_status })
+                }).catch(() => { event.user_status = oldStatus; updateList(); });
             };
 
             window.openCommunityModal = function(eventId) {
                 const modal = document.getElementById('community-modal');
                 const content = document.getElementById('community-modal-content');
-                
-                // Reset tabs
                 window.currentCommunityEventId = eventId;
-                switchCommunityTab('list');
-                
-                // Show modal
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                // Trigger animation
-                setTimeout(() => {
-                    content.classList.remove('scale-95', 'opacity-0');
-                    content.classList.add('scale-100', 'opacity-100');
-                }, 10);
-                
-                // Show loading state
+                window.switchCommunityTab('list');
+                modal.classList.remove('hidden'); modal.classList.add('flex');
+                setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); content.classList.add('scale-100', 'opacity-100'); }, 10);
                 const listContainer = document.getElementById('community-modal-list');
                 listContainer.innerHTML = '<div class="flex justify-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600"></div></div>';
-                
-                // Fetch community data
                 fetch(`/sbk/api/events/${eventId}/community/`)
-                    .then(r => {
-                        if (!r.ok) {
-                            if (r.status === 403) {
-                                throw new Error('Debes iniciar sesión para ver la comunidad.');
-                            }
-                            throw new Error('Error al cargar la comunidad.');
-                        }
-                        return r.json();
-                    })
-                    .then(data => {
-                        window.communityData = data;
-                        renderCommunityList();
-                        renderCommunityBoard();
-                    })
-                    .catch(err => {
-                        document.getElementById('community-modal-list').innerHTML = `
-                            <div class="text-center py-8">
-                                <p class="text-rose-500 font-bold">${err.message}</p>
-                            </div>
-                        `;
-                    });
+                    .then(r => r.json())
+                    .then(data => { window.communityData = data; renderCommunityList(); renderCommunityBoard(); });
+            };
+
+            window.closeCommunityModal = function() {
+                const modal = document.getElementById('community-modal');
+                const content = document.getElementById('community-modal-content');
+                content.classList.remove('scale-100', 'opacity-100'); content.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200);
             };
 
             window.switchCommunityTab = function(tab) {
@@ -895,15 +894,12 @@
                 const boardTab = document.getElementById('community-board-tab');
                 const btnList = document.getElementById('tab-list');
                 const btnBoard = document.getElementById('tab-board');
-                
                 if (tab === 'list') {
-                    listTab.classList.remove('hidden');
-                    boardTab.classList.add('hidden');
+                    listTab.classList.remove('hidden'); boardTab.classList.add('hidden');
                     btnList.className = "flex-1 py-3 text-sm font-bold border-b-2 border-rose-500 text-rose-600";
                     btnBoard.className = "flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700";
                 } else {
-                    listTab.classList.add('hidden');
-                    boardTab.classList.remove('hidden');
+                    listTab.classList.add('hidden'); boardTab.classList.remove('hidden');
                     btnBoard.className = "flex-1 py-3 text-sm font-bold border-b-2 border-rose-500 text-rose-600";
                     btnList.className = "flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700";
                 }
@@ -912,81 +908,35 @@
             function renderCommunityList() {
                 const listContainer = document.getElementById('community-modal-list');
                 const data = window.communityData;
-                
                 if (!data.community || data.community.length === 0) {
-                    listContainer.innerHTML = `
-                        <div class="text-center py-8">
-                            <div class="text-4xl mb-3">👻</div>
-                            <p class="text-slate-500 dark:text-slate-400">Aún no hay nadie apuntado.</p>
-                        </div>
-                    `;
+                    listContainer.innerHTML = `<div class="text-center py-8"><p class="text-slate-500">Nadie apuntado aún.</p></div>`;
                     return;
                 }
-                
                 let html = '<div class="space-y-4">';
                 data.community.forEach(user => {
-                    html += `
-                        <div class="flex items-center gap-4 p-3 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-                            <img src="${user.avatar_url}" alt="${user.username}" class="w-12 h-12 rounded-full border-2 border-white dark:border-slate-700 shadow-sm">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2">
-                                    <h4 class="font-bold text-slate-900 dark:text-white truncate">@${user.username}</h4>
-                                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                                        ${user.rank}
-                                    </span>
-                                </div>
-                                <div class="flex flex-wrap gap-2 mt-1">
-                                    ${user.looking_for_roommate ? '<span class="text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 px-2 py-0.5 rounded-md">🛏️ Busca Habitación</span>' : ''}
-                                    ${user.looking_for_dance_partner ? '<span class="text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 px-2 py-0.5 rounded-md">💃 Busca Pareja</span>' : ''}
-                                    ${!user.looking_for_roommate && !user.looking_for_dance_partner ? '<span class="text-[10px] text-slate-500 dark:text-slate-400">Asiste al evento</span>' : ''}
-                                </div>
-                            </div>
-                            <button class="px-3 py-1.5 text-xs font-bold text-white bg-slate-900 dark:bg-white dark:text-slate-900 rounded-lg hover:opacity-80 transition-opacity" onclick="alert('Escríbele por Instagram: @${user.username}')">
-                                Contactar
-                            </button>
-                        </div>
-                    `;
+                    html += `<div class="flex items-center gap-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                        <img src="${user.avatar_url}" class="w-12 h-12 rounded-full">
+                        <div class="flex-1 min-w-0"><h4 class="font-bold">@${user.username}</h4><p class="text-[10px] uppercase font-black text-slate-400">${user.rank}</p></div>
+                        <button class="px-3 py-1.5 text-xs font-bold text-white bg-slate-900 dark:bg-white dark:text-slate-900 rounded-lg" onclick="alert('Instagram: @${user.username}')">Contactar</button>
+                    </div>`;
                 });
-                html += '</div>';
-                listContainer.innerHTML = html;
+                listContainer.innerHTML = html + '</div>';
             }
 
             function renderCommunityBoard() {
                 const boardContainer = document.getElementById('community-modal-board');
                 const data = window.communityData;
-                
                 if (!data.notices || data.notices.length === 0) {
-                    boardContainer.innerHTML = `
-                        <div class="text-center py-8">
-                            <div class="text-4xl mb-3">📢</div>
-                            <p class="text-slate-500 dark:text-slate-400">El tablón está vacío.</p>
-                            <p class="text-xs text-slate-400 mt-1">Publica algo para buscar pareja o compartir coche.</p>
-                        </div>
-                    `;
+                    boardContainer.innerHTML = `<div class="text-center py-8"><p class="text-slate-500">El tablón está vacío.</p></div>`;
                     return;
                 }
-                
                 let html = '';
                 data.notices.forEach(n => {
-                    html += `
-                        <div class="p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border border-rose-100 dark:border-rose-800">
-                                    ${n.category_display}
-                                </span>
-                                <span class="text-[10px] text-slate-400">${n.created_at}</span>
-                            </div>
-                            <p class="text-sm text-slate-700 dark:text-slate-300 mb-3 italic">"${n.message}"</p>
-                            <div class="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-700/50">
-                                <div class="flex items-center gap-2">
-                                    <img src="${n.avatar_url}" class="w-6 h-6 rounded-full">
-                                    <span class="text-xs font-bold text-slate-900 dark:text-white">@${n.username}</span>
-                                    <span class="text-[8px] px-1 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded">${n.rank}</span>
-                                </div>
-                                <button class="text-xs font-bold text-rose-600 hover:underline" onclick="alert('Contactar con @${n.username}')">Me interesa</button>
-                            </div>
-                        </div>
-                    `;
+                    html += `<div class="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 mb-3">
+                        <div class="flex justify-between mb-2"><span class="text-[10px] font-bold text-rose-600">${n.category_display}</span><span class="text-[10px] text-slate-400">${n.created_at}</span></div>
+                        <p class="text-sm italic mb-3">"${n.message}"</p>
+                        <div class="flex items-center gap-2"><img src="${n.avatar_url}" class="w-5 h-5 rounded-full"><span class="text-xs font-bold">@${n.username}</span></div>
+                    </div>`;
                 });
                 boardContainer.innerHTML = html;
             }
@@ -995,103 +945,52 @@
                 const eventId = window.currentCommunityEventId;
                 const category = document.getElementById('notice-category').value;
                 const message = document.getElementById('notice-message').value;
-                
-                if (!message) return alert("Escribe un mensaje primero");
-                
+                if (!message) return;
                 fetch(`/sbk/api/events/${eventId}/notice/`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
                     body: JSON.stringify({ category, message })
-                })
-                .then(r => r.json())
-                .then(res => {
-                    if (res.error) alert(res.error);
-                    else {
-                        document.getElementById('notice-message').value = '';
-                        openCommunityModal(eventId); // Refresh
-                    }
-                });
+                }).then(() => { document.getElementById('notice-message').value = ''; openCommunityModal(eventId); });
             };
 
-            window.closeCommunityModal = function() {
-                const modal = document.getElementById('community-modal');
-                const content = document.getElementById('community-modal-content');
-                
-                content.classList.remove('scale-100', 'opacity-100');
-                content.classList.add('scale-95', 'opacity-0');
-                
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                }, 200); // match transition duration
-            };
-            
-            // Add Social Feature (Waze Approach)
             window.addingSocialMode = false;
-            
-            window.toggleAddSocialMode = function(e) {
-                if (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }
-                
-                console.log("Toggle Add Social Mode called!");
-                
+            window.toggleAddSocialMode = function() {
                 {% if not request.user.is_authenticated %}
-                alert("Debes iniciar sesión para añadir eventos al mapa.");
-                window.location.href = "{% url 'account_login' %}?next={{ request.path }}";
-                return;
+                window.location.href = "{% url 'account_login' %}?next={{ request.path }}"; return;
                 {% endif %}
-                
                 window.addingSocialMode = !window.addingSocialMode;
-                console.log("addingSocialMode is now:", window.addingSocialMode);
-                
                 const toast = document.getElementById('add-social-toast');
                 const btn = document.getElementById('btn-add-social');
-                
                 if (window.addingSocialMode) {
-                    if (toast) toast.classList.remove('opacity-0');
-                    if (btn) {
-                        btn.classList.add('bg-rose-800');
-                        btn.innerHTML = `<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Cancelar`;
-                    }
-                    if (map && map._container) {
-                        map._container.style.cursor = 'crosshair';
-                    }
+                    toast.classList.remove('opacity-0');
+                    btn.classList.add('bg-rose-800'); btn.innerHTML = `Cancelar`;
+                    map._container.style.cursor = 'crosshair';
                 } else {
-                    if (toast) toast.classList.add('opacity-0');
-                    if (btn) {
-                        btn.classList.remove('bg-rose-800');
-                        btn.innerHTML = `<svg class="w-5 h-5 group-hover:rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> Añadir Social`;
-                    }
-                    if (map && map._container) {
-                        map._container.style.cursor = '';
-                    }
+                    toast.classList.add('opacity-0');
+                    btn.classList.remove('bg-rose-800'); btn.innerHTML = `<i data-lucide="plus" class="w-5 h-5"></i> Añadir Social`;
+                    map._container.style.cursor = '';
                 }
+                lucide.createIcons();
             };
-            
+
+            window.openAddSocialModal = function() {
+                const modal = document.getElementById('add-social-modal');
+                const content = document.getElementById('add-social-modal-content');
+                modal.classList.remove('hidden'); modal.classList.add('flex');
+                setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); content.classList.add('scale-100', 'opacity-100'); }, 10);
+            };
+
             window.closeAddSocialModal = function() {
                 const modal = document.getElementById('add-social-modal');
                 const content = document.getElementById('add-social-modal-content');
-                
-                content.classList.remove('scale-100', 'opacity-100');
-                content.classList.add('scale-95', 'opacity-0');
-                
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                }, 200);
+                content.classList.remove('scale-100', 'opacity-100'); content.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200);
             };
-            
+
             window.submitAddSocial = function(e) {
                 e.preventDefault();
                 const btn = document.getElementById('btn-submit-social');
-                btn.disabled = true;
-                btn.innerText = 'Publicando...';
-                
+                btn.disabled = true; btn.innerText = 'Publicando...';
                 const formData = new FormData();
                 formData.append('name', document.getElementById('social-name').value);
                 formData.append('primary_style', document.getElementById('social-style').value);
@@ -1100,37 +999,13 @@
                 formData.append('atmosphere', document.getElementById('social-atmosphere').value);
                 formData.append('lat', document.getElementById('social-lat').value);
                 formData.append('lng', document.getElementById('social-lng').value);
-                
                 const posterFile = document.getElementById('social-poster').files[0];
-                if (posterFile) {
-                    formData.append('poster', posterFile);
-                }
-                
+                if (posterFile) formData.append('poster', posterFile);
                 fetch('{% url "sbk:submit_local_social" %}', {
                     method: 'POST',
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') },
                     body: formData
-                })
-                .then(r => r.json())
-                .then(res => {
-                    if(res.error) {
-                        alert("Error: " + res.error);
-                    } else {
-                        alert("¡Gracias! Fiesta local añadida al mapa.");
-                        closeAddSocialModal();
-                        window.location.reload();
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert("Error al publicar evento");
-                })
-                .finally(() => {
-                    btn.disabled = false;
-                    btn.innerText = 'Publicar Evento';
-                });
+                }).then(() => { closeAddSocialModal(); window.location.reload(); });
             };
 
             window.previewPoster = function(input) {
@@ -1138,57 +1013,17 @@
                 const placeholder = document.getElementById('poster-upload-placeholder');
                 if (input.files && input.files[0]) {
                     const reader = new FileReader();
-                    reader.onload = function(e) {
-                        preview.src = e.target.result;
-                        preview.classList.remove('hidden');
-                        placeholder.classList.add('hidden');
-                    }
+                    reader.onload = e => { preview.src = e.target.result; preview.classList.remove('hidden'); placeholder.classList.add('hidden'); };
                     reader.readAsDataURL(input.files[0]);
                 }
             };
 
-            // Close modal on click outside
-            document.getElementById('community-modal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeCommunityModal();
-                }
-            });
-            
-            document.getElementById('add-social-modal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeAddSocialModal();
-                }
-            });
-
-            window.reportEvent = function(eventId) {
-                if (!confirm("¿Estás seguro de que quieres reportar este evento como inapropiado o falso?")) return;
-                
-                fetch(`/sbk/api/events/${eventId}/report/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken')
-                    }
-                })
-                .then(r => r.json())
-                .then(data => {
-                    alert(data.message);
-                    // Optionally hide from UI immediately
-                    window.location.reload();
-                })
-                .catch(err => console.error(err));
-            };
             window.doCheckIn = function(eventId) {
                 if (!confirm("¿Confirmas que estás físicamente en este local?")) return;
-                
                 fetch(`/sbk/api/events/${eventId}/checkin/`, {
                     method: 'POST',
                     headers: { 'X-CSRFToken': getCookie('csrftoken') }
-                })
-                .then(r => r.json())
-                .then(data => {
-                    alert(data.message);
-                    window.location.reload();
-                });
+                }).then(() => window.location.reload());
             };
 
             window.openVibeModal = function(eventId, eventName) {
@@ -1196,23 +1031,15 @@
                 document.getElementById('vibe-modal-title').innerText = eventName;
                 const modal = document.getElementById('vibe-modal');
                 const content = document.getElementById('vibe-modal-content');
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                setTimeout(() => {
-                    content.classList.remove('scale-95', 'opacity-0');
-                    content.classList.add('scale-100', 'opacity-100');
-                }, 10);
+                modal.classList.remove('hidden'); modal.classList.add('flex');
+                setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); content.classList.add('scale-100', 'opacity-100'); }, 10);
             };
 
             window.closeVibeModal = function() {
                 const modal = document.getElementById('vibe-modal');
                 const content = document.getElementById('vibe-modal-content');
-                content.classList.remove('scale-100', 'opacity-100');
-                content.classList.add('scale-95', 'opacity-0');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                }, 200);
+                content.classList.remove('scale-100', 'opacity-100'); content.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200);
             };
 
             window.submitVibe = function(e) {
@@ -1220,21 +1047,11 @@
                 const eventId = document.getElementById('vibe-event-id').value;
                 const music = document.querySelector('input[name="music"]:checked').value;
                 const crowd = document.querySelector('input[name="crowd"]:checked').value;
-                
                 fetch(`/sbk/api/events/${eventId}/vibe/`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
                     body: JSON.stringify({ music, crowd })
-                })
-                .then(r => r.json())
-                .then(res => {
-                    alert(res.message);
-                    closeVibeModal();
-                    window.location.reload();
-                });
+                }).then(() => { closeVibeModal(); window.location.reload(); });
             };
         </script>
     </c-slot>

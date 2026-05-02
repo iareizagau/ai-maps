@@ -1,7 +1,7 @@
 from .base import *
 
 DEBUG = False
-DEFAULT_HOST = 'www'
+DEFAULT_HOST = 'ai'
 
 # Coolify / Production settings
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')

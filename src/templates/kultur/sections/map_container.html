@@ -2,12 +2,27 @@
 <!-- Map Container -->
 <div class="w-full flex-1 h-full relative" id="map-container">
     <div id="map"></div>
+    <!-- Mobile Search & Filter Bar Overlay -->
+    <div class="md:hidden absolute top-4 left-4 right-16 z-[1000]">
+        <div class="flex gap-2">
+            <div class="relative flex-1">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                </div>
+                <input type="text" id="mobile-event-search" oninput="syncSearch(this.value)" placeholder="{% trans 'Busca eventos...' %}" class="block w-full pl-9 pr-3 py-2 border border-slate-200/50 dark:border-slate-700/50 rounded-2xl leading-5 bg-white/90 dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary text-xs transition-all shadow-xl backdrop-blur-md">
+            </div>
+            <button onclick="toggleMobileFilters()" class="p-2 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl text-slate-500 hover:text-primary transition-colors">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+            </button>
+        </div>
+    </div>
+
     <!-- Weather & Theme Toggle Overlay -->
     <div class="absolute top-4 right-4 z-[1000] flex flex-col items-end gap-2">
         <c-molecules.theme_toggle />
         
-        <!-- Premium Weather Pill -->
-        <div id="weather-widget" class="flex items-center gap-2 px-3 py-1.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur-lg rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl transition-all duration-500 hover:scale-105">
+        <!-- Premium Weather Pill (Hidden on mobile if needed, or kept small) -->
+        <div id="weather-widget" class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur-lg rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl transition-all duration-500 hover:scale-105">
             <div class="flex items-center gap-1.5 border-r border-slate-200 dark:border-slate-700 pr-2">
                 <span id="weather-icon" class="text-sm drop-shadow-sm">--</span>
                 <span class="text-xs font-black text-slate-800 dark:text-slate-100" id="weather-temp">--°</span>

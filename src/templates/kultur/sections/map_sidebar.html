@@ -36,48 +36,60 @@
         </div>
     </div>
 
-    <!-- Collapsible Filter Strip -->
+    <!-- Improved Filter Strip -->
     <div id="filter-strip" class="bg-white dark:bg-slate-900 transition-all duration-300 overflow-hidden max-h-0 p-0 border-0">
-        <div class="p-3 space-y-3">
-            <!-- Moods -->
-            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide items-center no-scrollbar" id="mood-filters">
-                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-1">{% trans "Experiencias" %}:</div>
-                <button onclick="toggleMood('hot')" data-mood="hot" class="mood-btn opacity-60 flex-shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border border-orange-200 dark:border-orange-800/30 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 hover:bg-orange-100 transition-all cursor-pointer">
-                    <span>✨</span> {% trans "Imperdibles" %}
-                </button>
-                <button onclick="toggleMood('free')" data-mood="free" class="mood-btn opacity-60 flex-shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border border-emerald-200 dark:border-emerald-800/30 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 transition-all cursor-pointer">
-                    <span>🏷️</span> {% trans "Gratis" %}
-                </button>
-                <button onclick="toggleMood('family')" data-mood="family" class="mood-btn opacity-60 flex-shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border border-blue-200 dark:border-blue-800/30 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-100 transition-all cursor-pointer">
-                    <span>👨‍👩‍👧‍👦</span> {% trans "Familiar" %}
-                </button>
-                <button onclick="toggleMood('night')" data-mood="night" class="mood-btn opacity-60 flex-shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border border-purple-200 dark:border-purple-800/30 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 hover:bg-purple-100 transition-all cursor-pointer">
-                    <span>🌙</span> {% trans "Noche" %}
-                </button>
-                <button onclick="toggleMood('rain')" data-mood="rain" class="mood-btn opacity-60 flex-shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border border-indigo-200 dark:border-indigo-800/30 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 transition-all cursor-pointer">
-                    <span>☂️</span> {% trans "Lluvia" %}
-                </button>
+        <div class="p-4 space-y-5">
+            <!-- Experiences (Large Icons) -->
+            <div>
+                <div class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">{% trans "Experiencias" %}</div>
+                <div class="grid grid-cols-3 gap-2" id="mood-filters">
+                    <button onclick="toggleMood('hot')" data-mood="hot" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-orange-100 dark:border-orange-900/30 bg-orange-50/50 dark:bg-orange-900/10 text-orange-700 dark:text-orange-400 transition-all cursor-pointer">
+                        <span class="text-xl mb-1">✨</span>
+                        <span class="text-[10px] font-bold">{% trans "Top" %}</span>
+                    </button>
+                    <button onclick="toggleMood('free')" data-mood="free" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/50 dark:bg-emerald-900/10 text-emerald-700 dark:text-emerald-400 transition-all cursor-pointer">
+                        <span class="text-xl mb-1">🏷️</span>
+                        <span class="text-[10px] font-bold">{% trans "Gratis" %}</span>
+                    </button>
+                    <button onclick="toggleMood('family')" data-mood="family" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-blue-100 dark:border-blue-900/30 bg-blue-50/50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400 transition-all cursor-pointer">
+                        <span class="text-xl mb-1">👨‍👩‍👧‍👦</span>
+                        <span class="text-[10px] font-bold">{% trans "Familia" %}</span>
+                    </button>
+                    <button onclick="toggleMood('night')" data-mood="night" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-purple-100 dark:border-purple-900/30 bg-purple-50/50 dark:bg-purple-900/10 text-purple-700 dark:text-purple-400 transition-all cursor-pointer">
+                        <span class="text-xl mb-1">🌙</span>
+                        <span class="text-[10px] font-bold">{% trans "Noche" %}</span>
+                    </button>
+                    <button onclick="toggleMood('rain')" data-mood="rain" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-indigo-100 dark:border-indigo-900/30 bg-indigo-50/50 dark:bg-indigo-900/10 text-indigo-700 dark:text-indigo-400 transition-all cursor-pointer">
+                        <span class="text-xl mb-1">☂️</span>
+                        <span class="text-[10px] font-bold">{% trans "Interior" %}</span>
+                    </button>
+                    <button onclick="toggleMood('euskara')" data-mood="euskara" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-900/10 text-red-700 dark:text-red-400 transition-all cursor-pointer">
+                        <span class="text-xl mb-1">🗣️</span>
+                        <span class="text-[10px] font-bold">{% trans "Euskara" %}</span>
+                    </button>
+                </div>
             </div>
 
-            <div class="flex items-center gap-4">
-                <!-- Categories Dropdown/Scroll -->
-                <div class="flex-1 overflow-x-auto no-scrollbar" id="category-filters">
-                    <div class="flex gap-2">
-                        <button class="filter-btn active flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap transition-all shadow-sm" data-filter="all" onclick="setCategory('all')">
-                            {% trans "Todas" %}
-                        </button>
-                    </div>
+            <!-- Categories (Visual List) -->
+            <div>
+                <div class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">{% trans "Categorías" %}</div>
+                <div class="flex flex-wrap gap-2" id="category-filters">
+                    <button class="filter-btn active px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2" data-filter="all" onclick="setCategory('all')">
+                        <span>🌈</span> {% trans "Todas" %}
+                    </button>
+                    <!-- Dinamic categories will be injected here with icons -->
                 </div>
-                
-                <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+            </div>
 
-                <!-- Date Filters -->
-                <div class="flex gap-2" id="date-filters">
-                    <button class="filter-btn active text-[10px] font-bold px-2 py-1" data-filter="all" onclick="setDate('all')">{% trans "Siempre" %}</button>
-                    <button class="filter-btn inactive text-[10px] font-bold px-2 py-1" data-filter="today" onclick="setDate('today')">{% trans "Hoy" %}</button>
-                    <button class="filter-btn inactive text-[10px] font-bold px-2 py-1" data-filter="weekend" onclick="setDate('weekend')">{% trans "Finde" %}</button>
-                    <button class="text-[10px] font-bold text-primary px-2 py-1 border border-primary/20 rounded-lg hover:bg-primary/10 transition-all relative" id="custom-date-btn">
-                        {% trans "Fecha..." %}
+            <!-- Date Picker (Large Horizontal) -->
+            <div>
+                <div class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">{% trans "Cuándo" %}</div>
+                <div class="grid grid-cols-4 gap-2" id="date-filters">
+                    <button class="filter-btn active py-2.5 rounded-xl text-[10px] font-black uppercase transition-all border border-slate-200 dark:border-slate-700" data-filter="all" onclick="setDate('all')">{% trans "Siempre" %}</button>
+                    <button class="filter-btn inactive py-2.5 rounded-xl text-[10px] font-black uppercase transition-all border border-slate-200 dark:border-slate-700" data-filter="today" onclick="setDate('today')">{% trans "Hoy" %}</button>
+                    <button class="filter-btn inactive py-2.5 rounded-xl text-[10px] font-black uppercase transition-all border border-slate-200 dark:border-slate-700" data-filter="weekend" onclick="setDate('weekend')">{% trans "Finde" %}</button>
+                    <button id="custom-date-btn" class="py-2.5 rounded-xl text-[10px] font-black uppercase transition-all border border-primary/30 text-primary bg-primary/5 relative">
+                        {% trans "Rango" %}
                         <input type="text" id="date-range-picker" class="absolute inset-0 opacity-0 cursor-pointer">
                     </button>
                 </div>

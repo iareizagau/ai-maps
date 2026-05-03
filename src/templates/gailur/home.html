@@ -1,0 +1,641 @@
+{% load i18n %}
+<c-layouts.main title="Gailur - {% trans 'Mendia eta Escalada' %}">
+  <c-slot name="extra_head">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+      .leaflet-container { font-family: inherit; }
+      .crag-popup .leaflet-popup-content-wrapper {
+          background: rgba(15, 23, 42, 0.9) !important;
+          backdrop-filter: blur(12px);
+          color: white !important;
+          border-radius: 20px !important;
+          border: 1px solid rgba(16, 185, 129, 0.3);
+          padding: 4px;
+      }
+      .crag-popup .leaflet-popup-tip { background: rgba(15, 23, 42, 0.9) !important; }
+      .dark .leaflet-tile { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7); }
+      
+      [x-cloak] { display: none !important; }
+    </style>
+  </c-slot>
+
+  <div class="flex flex-col md:flex-row h-[calc(100vh-64px)] overflow-hidden" x-data="gailurApp({{ crags_json }}, '{{ OPENWEATHERMAP_API_KEY }}')">
+    <!-- Sidebar -->
+    <aside class="w-full md:w-[450px] lg:w-[500px] flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-white/5 z-20 shadow-2xl transition-all duration-500 overflow-hidden">
+      
+      <!-- Compact Hero / Brand -->
+      <div class="p-6 bg-gradient-to-br from-emerald-600 to-teal-700 text-white relative overflow-hidden">
+        <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+        <div class="flex justify-between items-start relative z-10">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center">
+              <i data-lucide="mountain"></i>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight">Gailur</h1>
+          </div>
+          <!-- Global Weather Widget -->
+          <div class="flex flex-col items-end" x-show="weather">
+            <div class="flex items-center gap-2">
+              <span class="text-xl" x-text="weather.icon"></span>
+              <span class="text-xl font-bold" x-text="weather.temp + '°'"></span>
+            </div>
+            <span class="text-[9px] font-black uppercase opacity-70 tracking-widest" x-text="weather.location"></span>
+          </div>
+        </div>
+        
+        <p class="text-sm text-emerald-100 font-medium opacity-90 mb-6 relative z-10">
+          {% trans "Mendi taldeen irteerak eta eskalada gidak" %}
+        </p>
+        
+        <!-- Search Bar -->
+        <div class="relative z-10">
+          <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-300"></i>
+          <input 
+            type="text" 
+            placeholder="{% trans 'Buscar zonas, vías o salidas...' %}" 
+            class="w-full pl-11 pr-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-sm placeholder-emerald-200 text-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all shadow-inner"
+          >
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="flex border-b border-slate-100 dark:border-white/5 p-2 bg-slate-50/50 dark:bg-slate-800/30">
+        <button 
+          @click="tab = 'crags'" 
+          :class="tab === 'crags' ? 'bg-white dark:bg-slate-800 shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-slate-500 hover:text-slate-700'"
+          class="flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+        >
+          {% trans "Zonas" %}
+        </button>
+        <button 
+          @click="tab = 'routes'" 
+          :class="tab === 'routes' ? 'bg-white dark:bg-slate-800 shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-slate-500 hover:text-slate-700'"
+          class="flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+        >
+          {% trans "Vías" %}
+        </button>
+        <button 
+          @click="tab = 'outings'" 
+          :class="tab === 'outings' ? 'bg-white dark:bg-slate-800 shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-slate-500 hover:text-slate-700'"
+          class="flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+        >
+          {% trans "Salidas" %}
+        </button>
+      </div>
+
+      <!-- Scrollable Content -->
+      <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
+        
+        <!-- Crags Tab -->
+        <div x-show="tab === 'crags'" x-transition class="space-y-4">
+          
+          <!-- Smart Discovery Filters -->
+          <div class="flex flex-col gap-1">
+            <div class="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-x-auto custom-scrollbar">
+              <button @click="setSortMode('magic')" :class="sortMode === 'magic' ? 'bg-white dark:bg-slate-700 shadow-sm text-emerald-600' : 'text-slate-500'" class="flex-1 min-w-[100px] px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter flex items-center justify-center gap-1.5 transition-all">
+                <i data-lucide="sparkles" class="w-3 h-3"></i> {% trans "Magic Mix" %}
+              </button>
+              <button @click="setSortMode('weather')" :class="sortMode === 'weather' ? 'bg-white dark:bg-slate-700 shadow-sm text-amber-500' : 'text-slate-500'" class="flex-1 min-w-[100px] px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter flex items-center justify-center gap-1.5 transition-all">
+                <i data-lucide="sun" class="w-3 h-3"></i> {% trans "Finde Seguro" %}
+              </button>
+              <button @click="setSortMode('distance')" :class="sortMode === 'distance' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-500' : 'text-slate-500'" class="flex-1 min-w-[100px] px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter flex items-center justify-center gap-1.5 transition-all">
+                <i data-lucide="map-pin" class="w-3 h-3"></i> {% trans "Escapada" %}
+              </button>
+            </div>
+            <!-- Loading Progress -->
+            <div x-show="isWeatherLoading" class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full bg-emerald-500 transition-all duration-300" :style="'width: ' + weatherProgress + '%'"></div>
+            </div>
+          </div>
+
+          <!-- Location Request Prompt -->
+          <div x-show="!userLocation && sortMode !== 'weather'" class="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 flex items-start gap-3">
+            <div class="p-2 bg-blue-100 dark:bg-blue-800/50 rounded-lg text-blue-600 dark:text-blue-400">
+              <i data-lucide="compass" class="w-4 h-4"></i>
+            </div>
+            <div class="flex-1">
+              <p class="text-xs text-blue-800 dark:text-blue-200 font-medium mb-1">{% trans "Para ordenar por cercanía, necesitamos tu ubicación." %}</p>
+              <button @click="requestLocation()" class="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors">
+                {% trans "Compartir Ubicación" %}
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Crag List -->
+          <template x-for="crag in sortedCrags" :key="crag.id">
+            <div class="relative group transition-all duration-500" 
+                 :id="'crag-card-' + crag.id"
+                 @mouseenter="hoveredCrag = crag.id" 
+                 @mouseleave="hoveredCrag = null">
+              <div @click="window.location.href = crag.url" class="cursor-pointer block p-5 rounded-[28px] border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 hover:border-emerald-500/30 transition-all">
+                <div class="flex justify-between items-start mb-4">
+                  <div class="flex gap-3">
+                    <div class="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                      <i data-lucide="mountain"></i>
+                    </div>
+                    <div class="flex flex-col">
+                      <h4 class="text-lg font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors" x-text="crag.name"></h4>
+                      <span class="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                        <i data-lucide="car" class="w-3 h-3"></i>
+                        <template x-if="crag.distance !== undefined">
+                          <span>
+                              <span class="text-slate-600 dark:text-slate-300" x-text="crag.drivingTime > 60 ? Math.floor(crag.drivingTime/60) + 'h ' + (crag.drivingTime%60) + 'm' : crag.drivingTime + ' min'"></span> 
+                              <span class="opacity-50" x-text="'(' + crag.distance + ' km)'"></span>
+                          </span>
+                        </template>
+                        <template x-if="crag.distance === undefined">
+                          <span x-text="crag.lat.toFixed(2) + ', ' + crag.lon.toFixed(2)"></span>
+                        </template>
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <!-- Smart Badges -->
+                  <div class="flex gap-2 items-start relative z-10">
+                    <button @click.stop="flyToCrag(crag)" title="{% trans 'Localizar en mapa' %}" class="p-1.5 text-slate-400 bg-white dark:bg-slate-800 border border-slate-100 dark:border-white/5 shadow-sm hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all scale-0 group-hover:scale-100">
+                      <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <!-- Google Maps Directions Link -->
+                    <a :href="'https://www.google.com/maps/dir/?api=1&destination=' + crag.lat + ',' + crag.lon" @click.stop target="_blank" title="{% trans 'Cómo llegar (Google Maps)' %}" class="p-1.5 text-blue-400 bg-white dark:bg-slate-800 border border-slate-100 dark:border-white/5 shadow-sm hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all scale-0 group-hover:scale-100">
+                      <i data-lucide="navigation-2" class="w-3.5 h-3.5"></i>
+                    </a>
+                    <template x-if="sortMode === 'magic' && cragForecasts[crag.id]">
+                      <div class="px-2 py-1 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex flex-col items-center min-w-[40px] shadow-lg">
+                        <span class="text-[8px] font-black leading-none mb-1 opacity-80 uppercase">{% trans "Match" %}</span>
+                        <span class="text-xs font-black leading-none" x-text="crag.magicScore + '%'"></span>
+                      </div>
+                    </template>
+                    <template x-if="sortMode !== 'magic' && cragForecasts[crag.id]">
+                      <div :class="cragForecasts[crag.id].score > 70 ? 'bg-emerald-500' : (cragForecasts[crag.id].score > 40 ? 'bg-amber-500' : 'bg-rose-500')" 
+                           class="px-2 py-1 rounded-lg text-white flex flex-col items-center min-w-[40px] shadow-lg">
+                        <span class="text-[8px] font-black leading-none mb-1 opacity-80 uppercase">{% trans "Clima" %}</span>
+                        <span class="text-xs font-black leading-none" x-text="cragForecasts[crag.id].score"></span>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+
+                <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4" x-text="crag.description"></p>
+                
+                <!-- Weekend Condition Summary -->
+                <template x-if="cragForecasts[crag.id]">
+                  <div class="flex items-center gap-4 pt-4 border-t border-slate-100 dark:border-white/5">
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-xs" x-text="cragForecasts[crag.id].sat.icon"></span>
+                      <span class="text-[10px] font-bold text-slate-400 uppercase">{% trans "Sáb" %}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-xs" x-text="cragForecasts[crag.id].sun.icon"></span>
+                      <span class="text-[10px] font-bold text-slate-400 uppercase">{% trans "Dom" %}</span>
+                    </div>
+                    <div class="flex-1 text-right">
+                      <span class="text-[9px] font-black text-emerald-500 uppercase tracking-tighter" x-text="cragForecasts[crag.id].summary"></span>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Routes Tab -->
+        <div x-show="tab === 'routes'" x-cloak x-transition class="grid grid-cols-2 gap-4">
+          {% for route in recent_routes %}
+          <a href="{% url 'gailur:route_detail' route.pk %}" class="group block p-3 rounded-3xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 hover:border-emerald-500/30 transition-all">
+            <div class="aspect-square rounded-2xl bg-slate-200 dark:bg-slate-800 mb-3 overflow-hidden relative">
+              {% with croquis=route.get_croquis %}
+              {% if croquis %}
+              <img src="{{ croquis.0 }}" alt="{{ route.name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+              {% else %}
+              <div class="w-full h-full flex items-center justify-center text-slate-400">
+                <i data-lucide="mountain" class="w-8 h-8"></i>
+              </div>
+              {% endif %}
+              {% endwith %}
+              <div class="absolute top-2 right-2">
+                <span class="px-2 py-0.5 bg-black/60 backdrop-blur-md text-white text-[9px] font-black rounded-lg">
+                  {{ route.grade }}
+                </span>
+              </div>
+            </div>
+            <h5 class="font-bold text-slate-900 dark:text-white text-xs truncate group-hover:text-emerald-500 transition-colors">{{ route.name }}</h5>
+            <p class="text-[10px] text-slate-500 truncate">{{ route.sector.crag.name }}</p>
+          </a>
+          {% endfor %}
+        </div>
+
+        <!-- Outings Tab -->
+        <div x-show="tab === 'outings'" x-cloak x-transition class="space-y-3">
+          {% for outing in recent_outings %}
+          <div class="p-4 rounded-3xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-colors group flex items-center gap-4">
+            <div class="flex flex-col items-center bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm min-w-[50px]">
+              <span class="text-xl font-black text-emerald-600">{{ outing.date|date:"d" }}</span>
+              <span class="text-[9px] font-black uppercase text-slate-400">{{ outing.date|date:"M" }}</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h5 class="font-bold text-slate-900 dark:text-white text-sm truncate">{{ outing.title }}</h5>
+              <p class="text-[10px] text-slate-500 flex items-center gap-1">
+                <i data-lucide="users" class="w-3 h-3"></i>
+                {{ outing.club.name }}
+              </p>
+            </div>
+            <span class="px-3 py-1 bg-white dark:bg-slate-800 rounded-lg text-[9px] font-black text-slate-400 uppercase tracking-tighter">
+              {{ outing.difficulty }}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+
+      </div>
+
+      <!-- Footer CTA -->
+      <div class="p-4 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/30">
+        <button class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-xl shadow-emerald-600/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          {% trans "Planea tu próxima aventura" %}
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- Map Container -->
+    <main class="flex-1 relative">
+      <div id="climbing-map" class="w-full h-full z-0 bg-slate-100 dark:bg-slate-900"></div>
+      
+      <!-- Overlay Controls -->
+      <div class="absolute top-6 right-6 z-10 flex flex-col gap-3">
+        <button @click="resetView()" class="p-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-2xl text-slate-700 dark:text-white hover:bg-emerald-500 hover:text-white transition-all shadow-xl border border-slate-200 dark:border-white/10" title="{% trans 'Resetear vista' %}">
+          <i data-lucide="maximize" class="w-5 h-5"></i>
+        </button>
+        
+        <!-- Weather Layers -->
+        <div class="flex flex-col bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/10 shadow-xl overflow-hidden">
+          <button @click="toggleWeatherLayer('precipitation')" :class="activeWeatherLayer === 'precipitation' ? 'bg-blue-500 text-white' : 'text-slate-500'" class="p-3 transition-all hover:bg-blue-500 hover:text-white" title="{% trans 'Radar de Lluvia' %}">
+            <i data-lucide="cloud-rain" class="w-5 h-5"></i>
+          </button>
+          <button @click="toggleWeatherLayer('wind')" :class="activeWeatherLayer === 'wind' ? 'bg-amber-500 text-white' : 'text-slate-500'" class="p-3 border-t border-slate-100 dark:border-white/5 transition-all hover:bg-amber-500 hover:text-white" title="{% trans 'Mapa de Viento' %}">
+            <i data-lucide="wind" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <c-molecules.theme_toggle />
+      </div>
+      
+      <!-- Stats Overlay -->
+      <div class="absolute bottom-8 left-8 z-10 hidden lg:block">
+        <div class="glass p-6 rounded-[32px] border border-white/20 shadow-2xl flex items-center gap-8">
+          <div class="flex flex-col">
+            <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">{% trans "Euskadi Map" %}</span>
+            <span class="text-2xl font-bold text-slate-900 dark:text-white">{{ featured_crags|length }} {% trans "Zonas" %}</span>
+          </div>
+          <div class="w-px h-10 bg-slate-200 dark:bg-white/10"></div>
+          <div class="flex flex-col">
+            <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">{% trans "Mejor Plan" %}</span>
+            <span class="text-2xl font-bold text-slate-900 dark:text-white" x-text="weekendSummary">{% trans "Cargando..." %}</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function gailurApp(cragsData, weatherApiKey) {
+      return {
+        tab: 'crags',
+        map: null,
+        apiKey: weatherApiKey,
+        crags: cragsData,
+        markers: [],
+        markerObjects: {}, // ID to marker instance
+        weather: null,
+        cragForecasts: {},
+        activeWeatherLayer: null,
+        weatherLayers: {},
+        weekendSummary: '{% trans "Analizando..." %}',
+        
+        // Smart Discovery
+        sortMode: 'magic', // 'magic', 'weather', 'distance'
+        userLocation: null, // {lat, lon}
+        hoveredCrag: null,
+        isWeatherLoading: false,
+        weatherProgress: 0,
+
+        init() {
+          this.$nextTick(() => {
+            this.initMap();
+            this.fetchGlobalWeather();
+            this.fetchCragForecasts();
+            
+            // Auto-request location for Magic Mix distance calculation
+            this.requestLocation();
+            
+            // Re-run lucide icons if DOM changes
+            this.$watch('sortMode', () => {
+              setTimeout(() => lucide.createIcons(), 50);
+            });
+            
+            // Map highlighting sync
+            this.$watch('hoveredCrag', (newId, oldId) => {
+                if (oldId && this.markerObjects[oldId]) {
+                    const el = this.markerObjects[oldId]._icon;
+                    if (el) el.classList.remove('ring-4', 'ring-emerald-400', 'scale-125', 'z-50');
+                }
+                if (newId && this.markerObjects[newId]) {
+                    const el = this.markerObjects[newId]._icon;
+                    if (el) el.classList.add('ring-4', 'ring-emerald-400', 'scale-125', 'z-50');
+                }
+            });
+          });
+        },
+        
+        setSortMode(mode) {
+            this.sortMode = mode;
+            if (mode === 'distance' && !this.userLocation) {
+                this.requestLocation();
+            } else if (mode === 'magic' && !this.userLocation) {
+                this.requestLocation();
+            }
+        },
+
+        flyToCrag(crag) {
+            if (!this.map) return;
+            this.map.flyTo([crag.lat, crag.lon], 13, { duration: 1.2 });
+            if (this.markerObjects[crag.id]) {
+                setTimeout(() => this.markerObjects[crag.id].openPopup(), 1200);
+            }
+        },
+
+        scrollToCrag(cragId) {
+            this.tab = 'crags'; // Ensure tab is open
+            this.$nextTick(() => {
+                const el = document.getElementById('crag-card-' + cragId);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Highlight pulse effect
+                    el.classList.add('ring-2', 'ring-emerald-500', 'bg-emerald-50/50');
+                    setTimeout(() => el.classList.remove('ring-2', 'ring-emerald-500', 'bg-emerald-50/50'), 1500);
+                }
+            });
+        },
+
+        requestLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        this.userLocation = {
+                            lat: position.coords.latitude,
+                            lon: position.coords.longitude
+                        };
+                        this.updateDistances();
+                    },
+                    (error) => {
+                        console.warn("Geolocation error:", error);
+                        // Fallback to Vitoria-Gasteiz center
+                        this.userLocation = { lat: 42.8467, lon: -2.6716 };
+                        this.updateDistances();
+                    }
+                );
+            }
+        },
+
+        updateDistances() {
+            if (!this.userLocation) return;
+            this.crags = this.crags.map(crag => {
+                crag.distance = this.calculateDistance(
+                    this.userLocation.lat, this.userLocation.lon, 
+                    crag.lat, crag.lon
+                );
+                // Estimation: 50km/h average on mountain/country roads + 5 mins buffer
+                crag.drivingTime = Math.round((crag.distance / 50) * 60) + 5;
+                return crag;
+            });
+        },
+
+        calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return Math.round(R * c);
+        },
+
+        get sortedCrags() {
+            let sorted = [...this.crags];
+            
+            if (this.sortMode === 'distance') {
+                if (this.userLocation) {
+                    sorted.sort((a, b) => (a.distance || 9999) - (b.distance || 9999));
+                }
+            } 
+            else if (this.sortMode === 'weather') {
+                sorted.sort((a, b) => {
+                    const scoreA = this.cragForecasts[a.id] ? this.cragForecasts[a.id].score : 0;
+                    const scoreB = this.cragForecasts[b.id] ? this.cragForecasts[b.id].score : 0;
+                    return scoreB - scoreA;
+                });
+            }
+            else if (this.sortMode === 'magic') {
+                // Magic Mix: (Weather Score * 0.7) + (Proximity Score * 0.3)
+                sorted.sort((a, b) => {
+                    const wA = this.cragForecasts[a.id] ? this.cragForecasts[a.id].score : 50;
+                    const wB = this.cragForecasts[b.id] ? this.cragForecasts[b.id].score : 50;
+                    
+                    // Proximity score (0-100): 0km = 100, >200km = 0
+                    const pA = a.distance ? Math.max(0, 100 - (a.distance / 2)) : 50;
+                    const pB = b.distance ? Math.max(0, 100 - (b.distance / 2)) : 50;
+                    
+                    const magicA = (wA * 0.7) + (pA * 0.3);
+                    const magicB = (wB * 0.7) + (pB * 0.3);
+                    
+                    // Store for display
+                    a.magicScore = Math.round(magicA);
+                    b.magicScore = Math.round(magicB);
+                    
+                    return magicB - magicA;
+                });
+            }
+            
+            return sorted;
+        },
+
+        initMap() {
+          if (this.map) return;
+          
+          this.map = L.map('climbing-map', {
+            zoomControl: false,
+            attributionControl: false
+          }).setView([43.0, -2.5], 9);
+
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+
+          L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+
+          this.renderMarkers();
+          this.resetView();
+
+          setTimeout(() => this.map.invalidateSize(), 100);
+        },
+
+        fetchGlobalWeather() {
+          if (!this.apiKey) return;
+          fetch(`https://api.openweathermap.org/data/2.5/weather?lat=43.0&lon=-2.5&units=metric&appid=${this.apiKey}`)
+            .then(r => r.json())
+            .then(data => {
+              this.weather = {
+                temp: Math.round(data.main.temp),
+                icon: this.getIcon(data.weather[0].main),
+                location: data.name || 'Euskadi'
+              };
+            });
+        },
+
+        async fetchCragForecasts() {
+          if (!this.apiKey || this.crags.length === 0) return;
+          
+          this.isWeatherLoading = true;
+          this.weatherProgress = 0;
+          let loadedCount = 0;
+          const total = this.crags.length;
+          
+          // Process in batches of 4 to prevent network bottleneck and browser freeze
+          const batchSize = 4;
+          for (let i = 0; i < total; i += batchSize) {
+            const batch = this.crags.slice(i, i + batchSize);
+            
+            await Promise.all(batch.map(crag => {
+              return fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${crag.lat}&lon=${crag.lon}&units=metric&appid=${this.apiKey}`)
+                .then(r => r.json())
+                .then(data => {
+                  const sat = this.extractDayForecast(data.list, 'Saturday');
+                  const sun = this.extractDayForecast(data.list, 'Sunday');
+                  const score = this.calculateScore(sat, sun);
+                  
+                  this.cragForecasts[crag.id] = {
+                    sat,
+                    sun,
+                    score,
+                    summary: score > 70 ? '{% trans "CONDICIONES TOP" %}' : (score > 40 ? '{% trans "VARIABLE" %}' : '{% trans "NO RECOMENDADO" %}')
+                  };
+                  
+                  if (crag.id === this.crags[0].id) {
+                      this.weekendSummary = score > 70 ? '{% trans "Sábado Top" %}' : '{% trans "Ojo lluvia" %}';
+                  }
+                })
+                .catch(e => console.warn("Weather error", e))
+                .finally(() => {
+                  loadedCount++;
+                  this.weatherProgress = Math.round((loadedCount / total) * 100);
+                });
+            }));
+            
+            // Brief pause between batches to let the browser breathe
+            await new Promise(r => setTimeout(r, 150));
+          }
+          
+          this.isWeatherLoading = false;
+        },
+
+        extractDayForecast(list, dayName) {
+          // Find mid-day forecast for the specific day
+          const forecast = list.find(f => {
+            const date = new Date(f.dt * 1000);
+            return date.toLocaleDateString('en-US', { weekday: 'long' }) === dayName && date.getHours() >= 12;
+          }) || list[0];
+
+          return {
+            temp: Math.round(forecast.main.temp),
+            main: forecast.weather[0].main,
+            icon: this.getIcon(forecast.weather[0].main),
+            pop: forecast.pop || 0 // Probability of precipitation
+          };
+        },
+
+        calculateScore(sat, sun) {
+          let score = 100;
+          // Penalty for rain prob
+          score -= (sat.pop * 50);
+          score -= (sun.pop * 50);
+          // Penalty for extreme temps
+          if (sat.temp > 28 || sat.temp < 5) score -= 10;
+          if (sun.temp > 28 || sun.temp < 5) score -= 10;
+          return Math.max(0, Math.round(score));
+        },
+
+        getIcon(condition) {
+          const icons = { 
+            'Clear': '☀️', 'Clouds': '⛅', 'Rain': '🌧️', 'Drizzle': '🌦️',
+            'Snow': '❄️', 'Thunderstorm': '⛈️', 'Mist': '🌫️'
+          };
+          return icons[condition] || '⛅';
+        },
+
+        toggleWeatherLayer(type) {
+          const layerKey = type === 'precipitation' ? 'precipitation_new' : 'wind_new';
+          
+          if (this.activeWeatherLayer === type) {
+            this.map.removeLayer(this.weatherLayers[type]);
+            this.activeWeatherLayer = null;
+          } else {
+            // Remove previous
+            if (this.activeWeatherLayer) {
+              this.map.removeLayer(this.weatherLayers[this.activeWeatherLayer]);
+            }
+            
+            if (!this.weatherLayers[type]) {
+              this.weatherLayers[type] = L.tileLayer(`https://tile.openweathermap.org/map/${layerKey}/{z}/{x}/{y}.png?appid=${this.apiKey}`);
+            }
+            
+            this.weatherLayers[type].addTo(this.map);
+            this.activeWeatherLayer = type;
+          }
+        },
+
+        renderMarkers() {
+          this.crags.forEach(crag => {
+            if (!crag.lat || !crag.lon) return;
+
+            const customIcon = L.divIcon({
+              className: 'custom-crag-icon transition-all duration-300 rounded-full',
+              html: `<div class="w-6 h-6 bg-emerald-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white transition-transform hover:scale-125">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mountain"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
+                    </div>`,
+              iconSize: [24, 24],
+              iconAnchor: [12, 12]
+            });
+
+            const marker = L.marker([crag.lat, crag.lon], { icon: customIcon }).addTo(this.map);
+            
+            marker.bindPopup(`
+              <div class="p-3 min-w-[200px]">
+                <p class="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">{% trans "Zona de Escalada" %}</p>
+                <h4 class="text-lg font-bold mb-2">${crag.name}</h4>
+                <p class="text-xs text-slate-300 leading-relaxed mb-4">${crag.description}</p>
+                <a href="${crag.url}" class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:text-emerald-300">
+                  {% trans "Explorar" %} <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
+                </a>
+              </div>
+            `, { className: 'crag-popup', maxWidth: 300 });
+
+            // Reverse binding: Map to List
+            marker.on('click', () => {
+              this.scrollToCrag(crag.id);
+            });
+
+            this.markers.push(marker);
+            this.markerObjects[crag.id] = marker; // Store mapping
+          });
+        },
+
+        resetView() {
+          if (this.markers.length === 0) return;
+          const group = new L.featureGroup(this.markers);
+          this.map.fitBounds(group.getBounds().pad(0.2));
+        }
+      }
+    }
+  </script>
+</c-layouts.main>

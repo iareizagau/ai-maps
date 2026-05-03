@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib import messages
 from .forms import UserProfileForm, UsernameChangeForm
-from .models import User, PaymentMethod, Follow
+from .models import User, PaymentMethod, Follow, AppRegistry
 from . import selectors
 
 
@@ -18,7 +18,12 @@ class CustomUserCreationForm(UserCreationForm):
 
 
 def home(request):
-    return render(request, 'home.html')
+    apps = AppRegistry.objects.filter(is_active=True)
+    featured_app = apps.filter(is_featured=True).first() or apps.first()
+    return render(request, 'home.html', {
+        'apps': apps,
+        'featured_app': featured_app
+    })
 
 
 def login_view(request):

@@ -18,6 +18,8 @@ urlpatterns += [
     path('sbk/', include('apps.sbk.urls')),
     path('kultur/', include('apps.kultur.urls')),
     path('inguru/', include('apps.inguru.urls')),
+    path('gailur/', include('apps.gailur.urls')),
+    path('zbe/', include('apps.zbe.urls')),
 ]
 if settings.DEBUG:
     from django.conf.urls.static import static

@@ -1,18 +1,29 @@
-<c-vars title="" description="" />
+<c-vars title="" description="" tagline="" accent_color="#f97316" />
 
-<div class="relative py-20 overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-purple-900/20"></div>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div class="text-center space-y-6">
-            <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
-                {{ title }}
+<div class="relative py-24 overflow-hidden" style="--hero-accent: {{ accent_color }};">
+    <!-- Dynamic Background -->
+    <div class="absolute inset-0 bg-gradient-to-br from-[var(--hero-accent)]/5 to-secondary/5 dark:from-[var(--hero-accent)]/20 dark:to-background-dark/20"></div>
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_0%,var(--hero-accent),transparent_50%)] opacity-[0.03] dark:opacity-[0.07]"></div>
+    
+    <div class="max-w-7xl mx-auto px-6 relative z-10">
+        <div class="text-center space-y-8">
+            {% if tagline %}
+            <span class="inline-block px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] bg-[var(--hero-accent)]/10 text-[var(--hero-accent)] border border-[var(--hero-accent)]/20 animate-fade-in">
+                {{ tagline }}
+            </span>
+            {% endif %}
+            
+            <h1 class="text-5xl md:text-7xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.1]">
+                {{ title|safe }}
             </h1>
+            
             {% if description %}
-            <p class="max-w-2xl mx-auto text-base sm:text-xl text-slate-600 dark:text-slate-400 px-4">
+            <p class="max-w-3xl mx-auto text-lg md:text-xl text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
                 {{ description }}
             </p>
             {% endif %}
-            <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4 px-6">
+            
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-6">
                 {{ slot }}
             </div>
         </div>

@@ -1,0 +1,106 @@
+{% load i18n %}
+<c-vars crags_json="[]" />
+
+<div class="max-w-7xl mx-auto px-6 mb-24" x-data="climbingMap({{ crags_json }})">
+    <div class="relative rounded-[40px] overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl h-[500px]">
+        
+        <!-- Leaflet Map -->
+        <div id="climbing-map" class="w-full h-full z-0 bg-slate-100 dark:bg-slate-900"></div>
+
+        <!-- Map Overlays -->
+        <div class="absolute top-6 left-6 z-10">
+            <div class="glass px-4 py-2 rounded-2xl border border-white/20 flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span class="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-emerald-400">
+                    {% trans "Zonas Activas" %}
+                </span>
+            </div>
+        </div>
+
+        <div class="absolute bottom-6 right-6 z-10 flex flex-col gap-2">
+            <button @click="resetView()" class="p-3 glass rounded-xl text-slate-700 dark:text-white hover:bg-emerald-500 hover:text-white transition-all shadow-lg">
+                <i data-lucide="maximize" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Custom Styling for the Map -->
+        <style>
+            .leaflet-container { font-family: inherit; }
+            .crag-popup .leaflet-popup-content-wrapper {
+                background: rgba(15, 23, 42, 0.9) !important;
+                backdrop-filter: blur(12px);
+                color: white !important;
+                border-radius: 20px !important;
+                border: 1px solid rgba(16, 185, 129, 0.3);
+                padding: 4px;
+            }
+            .crag-popup .leaflet-popup-tip { background: rgba(15, 23, 42, 0.9) !important; }
+            .dark .leaflet-tile { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7); }
+        </style>
+    </div>
+
+    <script>
+        function climbingMap(cragsData) {
+            return {
+                map: null,
+                crags: cragsData,
+                markers: [],
+
+                init() {
+                    this.$nextTick(() => {
+                        this.initMap();
+                    });
+                },
+
+                initMap() {
+                    if (this.map) return;
+                    
+                    // Default center (Euskadi approx)
+                    this.map = L.map('climbing-map', {
+                        scrollWheelZoom: false,
+                        zoomControl: false
+                    }).setView([43.0, -2.5], 9);
+
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap'
+                    }).addTo(this.map);
+
+                    L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+
+                    this.renderMarkers();
+                    this.resetView();
+
+                    // Ensure map fits container
+                    setTimeout(() => this.map.invalidateSize(), 500);
+                },
+
+                renderMarkers() {
+                    this.crags.forEach(crag => {
+                        if (!crag.lat || !crag.lon) return;
+
+                        const marker = L.marker([crag.lat, crag.lon]).addTo(this.map);
+                        
+                        marker.bindPopup(`
+                            <div class="p-3 min-w-[200px]">
+                                <p class="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">{% trans "Zona de Escalada" %}</p>
+                                <h4 class="text-lg font-bold mb-2">${crag.name}</h4>
+                                <p class="text-xs text-slate-300 leading-relaxed mb-4">${crag.description}</p>
+                                <a href="${crag.url}" class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:text-emerald-300">
+                                    {% trans "Ver sectores" %} <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                </a>
+                            </div>
+                        `, { className: 'crag-popup', maxWidth: 300 });
+
+                        this.markers.push(marker);
+                    });
+                },
+
+                resetView() {
+                    if (this.markers.length === 0) return;
+                    const group = new L.featureGroup(this.markers);
+                    this.map.fitBounds(group.getBounds().pad(0.2));
+                }
+            }
+        }
+    </script>
+</div>

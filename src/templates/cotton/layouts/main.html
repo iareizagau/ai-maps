@@ -59,6 +59,15 @@
     </script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+        document.addEventListener('htmx:afterOnLoad', () => {
+            lucide.createIcons();
+        });
+    </script>
     
     <style>
         [x-cloak] { display: none !important; }

@@ -48,6 +48,8 @@ INSTALLED_APPS = [
     'apps.kultur',
     'apps.sbk',
     'apps.inguru',
+    'apps.gailur',
+    'apps.zbe',
 ]
 
 MIDDLEWARE = [

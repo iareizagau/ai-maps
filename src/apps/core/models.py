@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.conf import settings
 
 class User(AbstractUser):
     """
@@ -44,28 +45,44 @@ class AppRegistry(models.Model):
     """
     slug = models.SlugField(unique=True, help_text="e.g., 'pintxos', 'sbk'")
     name = models.CharField(max_length=100)
+    tagline = models.CharField(max_length=255, blank=True)
     domain = models.CharField(max_length=255, help_text="e.g., 'pintxos.maps.eus'")
+    icon = models.CharField(max_length=50, default="map-pin", help_text="Lucide icon name")
+    is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False, help_text="Show this app in the Home Hero section")
     
     # Branding
     primary_color = models.CharField(max_length=7, default="#f97316", help_text="Hex color")
     secondary_color = models.CharField(max_length=7, default="#84cc16")
     font_family = models.CharField(max_length=100, default="'Inter', sans-serif")
     
-    # Hero Content
+    # Hero & SEO Content
     hero_title = models.CharField(max_length=200, blank=True)
     hero_subtitle = models.TextField(blank=True)
+    description = models.TextField(blank=True)
     hero_image = models.ImageField(upload_to='app_branding/', null=True, blank=True)
+    social_image = models.ImageField(upload_to='apps/social/', blank=True, null=True)
     
     # Feature Flags
     has_reviews = models.BooleanField(default=True)
     has_maps = models.BooleanField(default=True)
     has_bookings = models.BooleanField(default=False)
     
-    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name_plural = "App Registries"
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.slug})"
+
+    @property
+    def get_absolute_url(self):
+        """
+        Devuelve la URL absoluta dependiendo del entorno.
+        En producción (DEBUG=False): Usa el subdominio configurado (ej. https://kultur.maps.eus).
+        En desarrollo (DEBUG=True): Usa el enrutamiento por rutas locales (ej. http://localhost:8000/kultur/).
+        """
+        if settings.DEBUG:
+            return f"http://localhost:8000/{self.slug}/"
+        return f"https://{self.domain}"

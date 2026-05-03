@@ -18,4 +18,6 @@ else:
         host(r'sbk', 'apps.sbk.urls', name='sbk'),
         host(r'kultur', 'apps.kultur.urls', name='kultur'),
         host(r'inguru', 'apps.inguru.urls', name='inguru'),
+        host(r'gailur', 'apps.gailur.urls', name='gailur'),
+        host(r'zbe', 'apps.zbe.urls', name='zbe'),
     )

@@ -31,6 +31,9 @@ $COMPOSE run --rm web python manage.py migrate --noinput
 echo ">> Collecting static files..."
 $COMPOSE run --rm web python manage.py collectstatic --noinput
 
+echo ">> Initializing app registry..."
+$COMPOSE run --rm web python manage.py init_apps
+
 echo ">> Starting services..."
 $COMPOSE up -d --remove-orphans
 

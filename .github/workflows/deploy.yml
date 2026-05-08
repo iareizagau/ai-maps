@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: ai-maps
     steps:
       - name: SSH and deploy
         uses: appleboy/ssh-action@v1.0.3

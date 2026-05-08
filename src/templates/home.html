@@ -1,8 +1,9 @@
 {% load i18n %}
 <c-layouts.main title="{% trans 'Hasiera' %}">
     
-    <c-organisms.hero_section 
-        title="{{ featured_app.hero_title|default:featured_app.name }}" 
+    {% with hero_title=featured_app.hero_title|default:featured_app.name %}
+    <c-organisms.hero_section
+        title="{{ hero_title }}"
         tagline="{{ featured_app.tagline }}"
         description="{{ featured_app.description }}"
         accent_color="{{ featured_app.primary_color }}">
@@ -25,18 +26,21 @@
             </div>
         </div>
     </c-organisms.hero_section>
+    {% endwith %}
 
     <div class="max-w-7xl mx-auto px-6 py-12 lg:py-24">
         <!-- Main Apps Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {% for app in apps %}
-            <c-molecules.app_tile 
+            {% with app_description=app.tagline|default:app.description %}
+            <c-molecules.app_tile
                 title="{{ app.name }}"
-                description="{{ app.tagline|default:app.description }}"
+                description="{{ app_description }}"
                 icon="{{ app.icon }}"
                 url="{{ app.get_absolute_url }}"
                 badge_text="{% trans 'Activo' %}"
                 accent_color="{{ app.primary_color }}" />
+            {% endwith %}
             {% endfor %}
         </div>
 

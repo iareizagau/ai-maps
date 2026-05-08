@@ -61,6 +61,83 @@
                 "panel": "new"
             },
             "problemMatcher": []
+        },
+        {
+            "label": "Django: Init Apps (Docker)",
+            "type": "shell",
+            "command": "docker compose exec web python manage.py init_apps",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Django: Seed Pintxos (Docker)",
+            "type": "shell",
+            "command": "docker compose exec web python manage.py seed_pintxos",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Django: Seed Mock Data (Docker)",
+            "type": "shell",
+            "command": "docker compose exec web python manage.py seed_mock_data",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Django: Seed Inguru (Docker)",
+            "type": "shell",
+            "command": "docker compose exec web python manage.py seed_inguru",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Django: Load Events Kultur (Docker)",
+            "type": "shell",
+            "command": "docker compose exec web python manage.py load_events",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Django: Load SBK Events (Docker)",
+            "type": "shell",
+            "command": "docker compose exec web python manage.py load_sbk_events",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Django: Seed All (Docker)",
+            "type": "shell",
+            "command": "docker compose exec web bash -c \"python manage.py seed_pintxos && python manage.py seed_mock_data && python manage.py seed_inguru && python manage.py load_events && python manage.py load_sbk_events\"",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
         }
     ]
 }

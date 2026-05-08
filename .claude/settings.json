@@ -1,8 +1,8 @@
 {
-  "model": "claude-opus-4-7",
-  "theme": "dark",
   "permissions": {
-    "read": ["*"],
+    "read": [
+      "*"
+    ],
     "bash": [
       "git",
       "docker",
@@ -10,11 +10,11 @@
       "pip",
       "python",
       "node"
+    ],
+    "allow": [
+      "Bash(curl -s http://127.0.0.1:8000/)"
     ]
   },
-  "hooks": {
-    "task-post-submit": {
-      "shell": "git status --porcelain | head -5"
-    }
-  }
+  "model": "claude-opus-4-7",
+  "theme": "dark"
 }

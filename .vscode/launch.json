@@ -18,6 +18,168 @@
             "django": true,
             "justMyCode": true,
             "preLaunchTask": "Docker: Compose Up"
+        },
+        {
+            "name": "Django: Make Migrations (Docker)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/src",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "django": true,
+            "justMyCode": true,
+            "preLaunchTask": "Django: Make Migrations (Docker)"
+        },
+        {
+            "name": "Django: Migrate (Docker)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/src",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "django": true,
+            "justMyCode": true,
+            "preLaunchTask": "Django: Migrate (Docker)"
+        },
+        {
+            "name": "Django: Init Apps (Docker)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/src",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "django": true,
+            "justMyCode": true,
+            "preLaunchTask": "Django: Init Apps (Docker)"
+        },
+        {
+            "name": "Django: Seed Pintxos (Docker)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/src",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "django": true,
+            "justMyCode": true,
+            "preLaunchTask": "Django: Seed Pintxos (Docker)"
+        },
+        {
+            "name": "Django: Seed Mock Data (Docker)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/src",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "django": true,
+            "justMyCode": true,
+            "preLaunchTask": "Django: Seed Mock Data (Docker)"
+        },
+        {
+            "name": "Django: Seed Inguru (Docker)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/src",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "django": true,
+            "justMyCode": true,
+            "preLaunchTask": "Django: Seed Inguru (Docker)"
+        },
+        {
+            "name": "Django: Load Events Kultur (Docker)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/src",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "django": true,
+            "justMyCode": true,
+            "preLaunchTask": "Django: Load Events Kultur (Docker)"
+        },
+        {
+            "name": "Django: Load SBK Events (Docker)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/src",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "django": true,
+            "justMyCode": true,
+            "preLaunchTask": "Django: Load SBK Events (Docker)"
+        },
+        {
+            "name": "Django: Seed All (Docker)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/src",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "django": true,
+            "justMyCode": true,
+            "preLaunchTask": "Django: Seed All (Docker)"
         }
     ]
 }

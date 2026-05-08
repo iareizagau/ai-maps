@@ -1,0 +1,49 @@
+.git
+.github
+.gitignore
+.vscode
+.idea
+.claude
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+.tox
+*.egg-info
+.venv
+venv
+env
+
+# Node
+node_modules
+
+# Env / secrets (mounted at runtime, never baked in)
+.env
+.env.*
+
+# Local dev / docker
+docker-compose.yml
+docker-compose.override.yml
+docker-compose.prod.yml
+Dockerfile
+.dockerignore
+Caddyfile
+
+# Memory / docs
+memory
+*.md
+LICENSE
+
+# Local data
+media
+staticfiles
+*.sqlite3
+*.log

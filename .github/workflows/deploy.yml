@@ -1,0 +1,25 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            set -euo pipefail
+            cd ${{ secrets.APP_DIR }}
+            git fetch --all --prune
+            git reset --hard origin/main
+            chmod +x scripts/deploy.sh
+            ./scripts/deploy.sh

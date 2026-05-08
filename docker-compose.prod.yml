@@ -1,13 +1,17 @@
 services:
   db:
     container_name: maps_db_prod
-    restart: always
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-maps_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env.prod}
 
   web:
     container_name: maps_web_prod
-    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    restart: unless-stopped
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile - --error-logfile -
     ports:
-      - "8060:8000"
-    restart: always
+      - "127.0.0.1:8060:8000"
     env_file:
       - .env.prod

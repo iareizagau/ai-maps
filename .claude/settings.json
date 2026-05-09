@@ -15,7 +15,11 @@
       "Bash(curl -fsSL -o c:/Users/imanol/projects/imanol/saas/maps/src/static/fonts/InterVariable.woff2 \"https://rsms.me/inter/font-files/InterVariable.woff2?v=4.1\")",
       "Bash(curl -fsSL -o c:/Users/imanol/projects/imanol/saas/maps/src/static/fonts/InterVariable-Italic.woff2 \"https://rsms.me/inter/font-files/InterVariable-Italic.woff2?v=4.1\")",
       "Bash(curl -fsSL -o c:/Users/imanol/projects/imanol/saas/maps/src/static/fonts/JetBrainsMono-Variable.woff2 \"https://unpkg.com/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2\")",
-      "Bash(npm --version)"
+      "Bash(npm --version)",
+      "Bash(npm install *)",
+      "PowerShell(\\(Get-Item src\\\\manage.py\\).LastWriteTime = Get-Date; $sw = [Diagnostics.Stopwatch]::StartNew\\(\\); docker compose -f docker-compose.yml build web 2>&1 | Select-String -Pattern \"CACHED|DONE|exporting\" | Select-Object -Last 20; $sw.Stop\\(\\); Write-Output \"TOTAL: $\\($sw.Elapsed.TotalSeconds\\)s\")",
+      "PowerShell($sw = [Diagnostics.Stopwatch]::StartNew\\(\\); docker compose -f docker-compose.yml build web 2>&1 | Select-String -Pattern \"CACHED|DONE|RUN|COPY\" | Select-Object -Last 25; $sw.Stop\\(\\); Write-Output \"TOTAL: $\\($sw.Elapsed.TotalSeconds\\)s\")",
+      "Bash(git update-index *)"
     ],
     "read": [
       "*"

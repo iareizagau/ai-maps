@@ -34,12 +34,14 @@ class InguruIngestor:
                 }
             )
 
-            # Guardar medición
-            Measurement.objects.create(
+            bucket_ts = timezone.now().replace(minute=0, second=0, microsecond=0)
+            Measurement.objects.update_or_create(
                 station=station,
-                timestamp=timezone.now(), # O usar el del item si existe
-                values=item.get('measurements') or item,
-                eco_score=self._calculate_eco_score(item)
+                timestamp=bucket_ts,
+                defaults={
+                    'values': item.get('measurements') or item,
+                    'eco_score': self._calculate_eco_score(item),
+                },
             )
             count += 1
         return count
@@ -65,10 +67,11 @@ class InguruIngestor:
                 }
             )
 
-            Measurement.objects.create(
+            bucket_ts = timezone.now().replace(minute=0, second=0, microsecond=0)
+            Measurement.objects.update_or_create(
                 station=station,
-                timestamp=timezone.now(),
-                values=item
+                timestamp=bucket_ts,
+                defaults={'values': item},
             )
             count += 1
         return count

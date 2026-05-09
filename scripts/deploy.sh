@@ -34,21 +34,6 @@ $COMPOSE run --rm web python manage.py collectstatic --noinput
 echo ">> Initializing app registry..."
 $COMPOSE run --rm web python manage.py init_apps
 
-echo ">> Loading kultur events..."
-$COMPOSE run --rm web python manage.py load_events || echo "WARN: load_events failed, continuing deploy"
-
-echo ">> Loading sbk events..."
-$COMPOSE run --rm web python manage.py load_sbk_events || echo "WARN: load_sbk_events failed, continuing deploy"
-
-echo ">> Ingesting inguru data..."
-$COMPOSE run --rm web python manage.py ingest_inguru || echo "WARN: ingest_inguru failed, continuing deploy"
-
-echo ">> Importing gailur climbing data..."
-$COMPOSE run --rm web python manage.py import_climbing || echo "WARN: import_climbing failed, continuing deploy"
-
-echo ">> Geocoding gailur crags..."
-$COMPOSE run --rm web python manage.py geocode_crags || echo "WARN: geocode_crags failed, continuing deploy"
-
 echo ">> Starting services..."
 $COMPOSE up -d --remove-orphans
 

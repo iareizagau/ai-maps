@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-27 23:13+0200\n"
+"POT-Creation-Date: 2026-05-09 11:44+0200\n"
 "PO-Revision-Date: 2026-04-27 23:15+0200\n"
 "Last-Translator: Antigravity AI\n"
 "Language-Team: English\n"
@@ -34,8 +34,12 @@ msgid "No sigues a nadie todavía"
 msgstr "You are not following anyone yet"
 
 #: apps/core/templates/core/partials/following_list.html:51
-msgid "Cuando sigas a alguien en PintxoMaps u otras apps, aparecerán aquí. Sus valoraciones te ayudarán a decidir mejor."
-msgstr "When you follow someone on PintxoMaps or other apps, they will appear here. Their ratings will help you decide better."
+msgid ""
+"Cuando sigas a alguien en PintxoMaps u otras apps, aparecerán aquí. Sus "
+"valoraciones te ayudarán a decidir mejor."
+msgstr ""
+"When you follow someone on PintxoMaps or other apps, they will appear here. "
+"Their ratings will help you decide better."
 
 #: apps/core/templates/core/partials/user_search_results.html:23
 #: templates/core/profile.html:159
@@ -103,42 +107,94 @@ msgid "Fecha Fin"
 msgstr "End Date"
 
 #: apps/kultur/models.py:14
-msgid "Lugar"
+#, fuzzy
+#| msgid "Lugar"
+msgid "Lugar (ES)"
 msgstr "Place"
 
 #: apps/kultur/models.py:15
-msgid "Municipio"
-msgstr "Municipality"
+#, fuzzy
+#| msgid "Lugar"
+msgid "Lugar (EU)"
+msgstr "Place"
 
 #: apps/kultur/models.py:16
+#, fuzzy
+#| msgid "Municipio"
+msgid "Municipio (ES)"
+msgstr "Municipality"
+
+#: apps/kultur/models.py:17
+#, fuzzy
+#| msgid "Municipio"
+msgid "Municipio (EU)"
+msgstr "Municipality"
+
+#: apps/kultur/models.py:18
 msgid "Provincia"
 msgstr "Province"
 
-#: apps/kultur/models.py:17
-msgid "Tipo/Categoría"
+#: apps/kultur/models.py:19
+#, fuzzy
+#| msgid "Tipo/Categoría"
+msgid "Tipo/Categoría (ES)"
 msgstr "Type/Category"
 
 #: apps/kultur/models.py:20
+#, fuzzy
+#| msgid "Tipo/Categoría"
+msgid "Tipo/Categoría (EU)"
+msgstr "Type/Category"
+
+#: apps/kultur/models.py:22
+msgid "Horario (ES)"
+msgstr ""
+
+#: apps/kultur/models.py:23
+msgid "Horario (EU)"
+msgstr ""
+
+#: apps/kultur/models.py:24
+msgid "Precio (ES)"
+msgstr ""
+
+#: apps/kultur/models.py:25
+msgid "Precio (EU)"
+msgstr ""
+
+#: apps/kultur/models.py:28
 msgid "URL (ES)"
 msgstr "URL (ES)"
 
-#: apps/kultur/models.py:21
+#: apps/kultur/models.py:29
 msgid "URL (EU)"
 msgstr "URL (EU)"
 
-#: apps/kultur/models.py:24
+#: apps/kultur/models.py:31
+#, fuzzy
+#| msgid "URL (ES)"
+msgid "URL Compra (ES)"
+msgstr "URL (ES)"
+
+#: apps/kultur/models.py:32
+#, fuzzy
+#| msgid "URL (EU)"
+msgid "URL Compra (EU)"
+msgstr "URL (EU)"
+
+#: apps/kultur/models.py:35
 msgid "Imagen"
 msgstr "Image"
 
-#: apps/kultur/models.py:27
+#: apps/kultur/models.py:38
 msgid "Ubicación"
 msgstr "Location"
 
-#: apps/kultur/models.py:33
+#: apps/kultur/models.py:44
 msgid "Evento Cultural"
 msgstr "Cultural Event"
 
-#: apps/kultur/models.py:34
+#: apps/kultur/models.py:45
 msgid "Eventos Culturales"
 msgstr "Cultural Events"
 
@@ -193,6 +249,28 @@ msgstr "Pizza"
 #: apps/pintxos/models.py:122
 msgid "Sushi"
 msgstr "Sushi"
+
+#: apps/zbe/models.py:5
+msgid "Nombre de la Zona"
+msgstr ""
+
+#: apps/zbe/models.py:6
+#, fuzzy
+#| msgid "Descripción (ES)"
+msgid "Descripción"
+msgstr "Description (ES)"
+
+#: apps/zbe/models.py:7
+msgid "Geometría"
+msgstr ""
+
+#: apps/zbe/models.py:13
+msgid "Zona de Bajas Emisiones"
+msgstr ""
+
+#: apps/zbe/models.py:14 templates/zbe/home.html:2
+msgid "Zonas de Bajas Emisiones"
+msgstr ""
 
 #: templates/account/login.html:5 templates/account/login.html:67
 #: templates/account/signup.html:66 templates/socialaccount/login.html:4
@@ -397,6 +475,21 @@ msgstr "No dishes listed yet."
 msgid "View Details"
 msgstr "View Details"
 
+#: templates/cotton/organisms/climbing_map.html:15
+#, fuzzy
+#| msgid "Eventos Activos"
+msgid "Zonas Activas"
+msgstr "Active Events"
+
+#: templates/cotton/organisms/climbing_map.html:85
+#: templates/gailur/home.html:614
+msgid "Zona de Escalada"
+msgstr ""
+
+#: templates/cotton/organisms/climbing_map.html:89
+msgid "Ver sectores"
+msgstr ""
+
 #: templates/cotton/organisms/leaderboard.html:12
 msgid "The podium is empty. Start rating!"
 msgstr "The podium is empty. Start rating!"
@@ -429,97 +522,411 @@ msgstr "Login"
 msgid "Register"
 msgstr "Register"
 
+#: templates/gailur/crag_detail.html:16
+msgid "Zonas de Escalada"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:29
+msgid "Sectores"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:36 templates/gailur/route_detail.html:101
+msgid "Cómo llegar"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:54
+msgid "Información General"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:62
+msgid "Acceso y Aproximación"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:76
+msgid "Sectores y Vías"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:89 templates/gailur/home.html:76
+msgid "Vías"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:97
+msgid "Nombre"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:98
+msgid "Grado"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:99
+msgid "Tipo"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:118 templates/gailur/route_detail.html:26
+msgid "Equipada"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:118 templates/gailur/route_detail.html:26
+#, fuzzy
+#| msgid "opcional"
+msgid "Tradicional"
+msgstr "optional"
+
+#: templates/gailur/crag_detail.html:151
+#, fuzzy
+#| msgid "Raciones"
+msgid "Recomendaciones"
+msgstr "Portions"
+
+#: templates/gailur/crag_detail.html:158
+msgid "Mejor época"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:159
+msgid "Primavera y Otoño"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:167
+msgid "Agua"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:168
+msgid "Fuente en el parking"
+msgstr ""
+
+#: templates/gailur/home.html:2
+msgid "Mendia eta Escalada"
+msgstr ""
+
+#: templates/gailur/home.html:48
+msgid "Mendi taldeen irteerak eta eskalada gidak"
+msgstr ""
+
+#: templates/gailur/home.html:56
+msgid "Buscar zonas, vías o salidas..."
+msgstr ""
+
+#: templates/gailur/home.html:69 templates/gailur/home.html:290
+#, fuzzy
+#| msgid "Personas"
+msgid "Zonas"
+msgstr "People"
+
+#: templates/gailur/home.html:83
+msgid "Salidas"
+msgstr ""
+
+#: templates/gailur/home.html:97
+msgid "Magic Mix"
+msgstr ""
+
+#: templates/gailur/home.html:100
+msgid "Finde Seguro"
+msgstr ""
+
+#: templates/gailur/home.html:103
+msgid "Escapada"
+msgstr ""
+
+#: templates/gailur/home.html:118
+msgid "Para ordenar por cercanía, necesitamos tu ubicación."
+msgstr ""
+
+#: templates/gailur/home.html:120
+#, fuzzy
+#| msgid "Ubicación"
+msgid "Compartir Ubicación"
+msgstr "Location"
+
+#: templates/gailur/home.html:156
+msgid "Localizar en mapa"
+msgstr ""
+
+#: templates/gailur/home.html:160
+msgid "Cómo llegar (Google Maps)"
+msgstr ""
+
+#: templates/gailur/home.html:165
+msgid "Match"
+msgstr ""
+
+#: templates/gailur/home.html:172 templates/sbk/pages/home/map.html:215
+msgid "Clima"
+msgstr ""
+
+#: templates/gailur/home.html:186
+msgid "Sáb"
+msgstr ""
+
+#: templates/gailur/home.html:190
+msgid "Dom"
+msgstr ""
+
+#: templates/gailur/home.html:256
+msgid "Planea tu próxima aventura"
+msgstr ""
+
+#: templates/gailur/home.html:268
+msgid "Resetear vista"
+msgstr ""
+
+#: templates/gailur/home.html:274
+msgid "Radar de Lluvia"
+msgstr ""
+
+#: templates/gailur/home.html:277
+msgid "Mapa de Viento"
+msgstr ""
+
+#: templates/gailur/home.html:289
+msgid "Euskadi Map"
+msgstr ""
+
+#: templates/gailur/home.html:294
+msgid "Mejor Plan"
+msgstr ""
+
+#: templates/gailur/home.html:295
+msgid "Cargando..."
+msgstr ""
+
+#: templates/gailur/home.html:315
+msgid "Analizando..."
+msgstr ""
+
+#: templates/gailur/home.html:521
+msgid "CONDICIONES TOP"
+msgstr ""
+
+#: templates/gailur/home.html:521
+msgid "VARIABLE"
+msgstr ""
+
+#: templates/gailur/home.html:521
+msgid "NO RECOMENDADO"
+msgstr ""
+
+#: templates/gailur/home.html:525
+msgid "Sábado Top"
+msgstr ""
+
+#: templates/gailur/home.html:525
+msgid "Ojo lluvia"
+msgstr ""
+
+#: templates/gailur/home.html:618
+#, fuzzy
+#| msgid "Explore Map"
+msgid "Explorar"
+msgstr "Explore Map"
+
+#: templates/gailur/route_detail.html:38
+msgid "Haz clic para ampliar el croquis"
+msgstr ""
+
+#: templates/gailur/route_detail.html:51
+msgid "Sin croquis visual"
+msgstr ""
+
+#: templates/gailur/route_detail.html:68
+msgid "Reseña de la Vía"
+msgstr ""
+
+#: templates/gailur/route_detail.html:71
+msgid "Disponible en ES / EU"
+msgstr ""
+
+#: templates/gailur/route_detail.html:85
+#, fuzzy
+#| msgid "Fecha Inicio"
+msgid "Ficha Técnica"
+msgstr "Start Date"
+
+#: templates/gailur/route_detail.html:88
+msgid "Zona"
+msgstr ""
+
+#: templates/gailur/route_detail.html:92
+msgid "Sector"
+msgstr ""
+
+#: templates/gailur/route_detail.html:96
+#, fuzzy
+#| msgid "Ubicación"
+msgid "Orientación"
+msgstr "Location"
+
+#: templates/gailur/route_detail.html:106
+msgid "Sobre la Fuente"
+msgstr ""
+
+#: templates/gailur/route_detail.html:108
+msgid ""
+"Esta reseña ha sido importada automáticamente desde Eskalatzen. Respeta "
+"siempre el entorno y las regulaciones locales."
+msgstr ""
+
+#: templates/gailur/route_detail.html:111
+msgid "Ver post original"
+msgstr ""
+
 #: templates/home.html:2
 msgid "Hasiera"
 msgstr "Home"
 
-#: templates/home.html:5
-msgid "Euskal Herriko GIS Ekosistema"
-msgstr "Euskal Herriko GIS Ecosystem"
-
-#: templates/home.html:6
-msgid "Explora el territorio a través de mapas inteligentes, datos abiertos y herramientas colaborativas diseñadas para la comunidad."
-msgstr "Explore the territory through smart maps, open data and collaborative tools designed for the community."
-
-#: templates/home.html:12
+#: templates/home.html:16
 msgid "¿Qué quieres encontrar hoy? (ej. Aire, Pintxos, Museos...)"
 msgstr "What do you want to find today? (e.g. Air, Pintxos, Museums...)"
 
-#: templates/home.html:21
+#: templates/home.html:23
 msgid "Tendencias:"
 msgstr "Trending:"
 
-#: templates/home.html:35
-msgid "Monitorización ambiental en tiempo real. Calidad del aire, clima y biodiversidad."
-msgstr "Real-time environmental monitoring. Air quality, climate and biodiversity."
-
-#: templates/home.html:38
-msgid "Datu Bizidunak"
-msgstr "Live Data"
-
 #: templates/home.html:43
-msgid "La guía definitiva de la gastronomía vasca. Rutas, favoritos y rankings locales."
-msgstr "The ultimate guide to Basque gastronomy. Routes, favorites and local rankings."
+msgid "Activo"
+msgstr ""
 
-#: templates/home.html:46
-msgid "+500 Restaurantes"
-msgstr "+500 Restaurants"
-
-#: templates/home.html:51
-msgid "Agenda cultural geolocalizada. Museos, teatros y eventos en todo el territorio."
-msgstr "Geolocated cultural agenda. Museums, theaters and events across the territory."
-
-#: templates/home.html:54
-msgid "Agenda Hoy"
-msgstr "Today's Agenda"
-
-#: templates/home.html:59
-msgid "Salsa, Bachata y Kizomba. Encuentra los mejores eventos de baile cada noche."
-msgstr "Salsa, Bachata and Kizomba. Find the best dance events every night."
-
-#: templates/home.html:62
-msgid "Eventos Activos"
-msgstr "Active Events"
-
-#: templates/home.html:71
+#: templates/home.html:53
 msgid "Ecosistema"
 msgstr "Ecosystem"
 
-#: templates/home.html:72
+#: templates/home.html:54
 msgid "Más allá de los mapas"
 msgstr "Beyond the maps"
 
-#: templates/home.html:75
-msgid "Estamos construyendo una infraestructura de datos abierta para que cualquier ciudadano u organización pueda crear valor sobre el territorio."
-msgstr "We are building an open data infrastructure so that any citizen or organization can create value on the territory."
+#: templates/home.html:57
+msgid ""
+"Estamos construyendo una infraestructura de datos abierta para que cualquier "
+"ciudadano u organización pueda crear valor sobre el territorio."
+msgstr ""
+"We are building an open data infrastructure so that any citizen or "
+"organization can create value on the territory."
 
-#: templates/home.html:83
+#: templates/home.html:65
 msgid "Bidaiak"
 msgstr "Travel"
 
-#: templates/home.html:84
+#: templates/home.html:66
 msgid "Planificador de rutas y logística."
 msgstr "Route planner and logistics."
 
-#: templates/home.html:91
+#: templates/home.html:73
 msgid "Data Studio"
 msgstr "Data Studio"
 
-#: templates/home.html:92
+#: templates/home.html:74
 msgid "Analítica avanzada territorial."
 msgstr "Advanced territorial analytics."
 
-#: templates/home.html:94 templates/home.html:103
+#: templates/home.html:76 templates/home.html:85
 msgid "Próximamente"
 msgstr "Coming Soon"
 
-#: templates/home.html:100
+#: templates/home.html:82
 msgid "API OpenData"
 msgstr "OpenData API"
 
-#: templates/home.html:101
+#: templates/home.html:83
 msgid "Acceso programático para devs."
 msgstr "Programmatic access for devs."
+
+#: templates/kultur/sections/map_container.html:12
+msgid "Busca eventos..."
+msgstr ""
+
+#: templates/kultur/sections/map_container.html:31
+msgid "Clima en"
+msgstr ""
+
+#: templates/kultur/sections/map_container.html:32
+msgid "..."
+msgstr ""
+
+#: templates/kultur/sections/map_container.html:41
+msgid "Ver lista"
+msgstr ""
+
+#: templates/kultur/sections/map_sidebar.html:7
+msgid "Cultura Local"
+msgstr ""
+
+#: templates/kultur/sections/map_sidebar.html:30
+msgid "Busca eventos o ciudades..."
+msgstr ""
+
+#: templates/kultur/sections/map_sidebar.html:44
+#: templates/sbk/pages/home/map.html:123
+#, fuzzy
+#| msgid "Tendencias:"
+msgid "Experiencias"
+msgstr "Trending:"
+
+#: templates/kultur/sections/map_sidebar.html:48
+#: templates/sbk/passport.html:263
+msgid "Top"
+msgstr ""
+
+#: templates/kultur/sections/map_sidebar.html:52
+msgid "Gratis"
+msgstr ""
+
+#: templates/kultur/sections/map_sidebar.html:56
+msgid "Familia"
+msgstr ""
+
+#: templates/kultur/sections/map_sidebar.html:60
+msgid "Noche"
+msgstr ""
+
+#: templates/kultur/sections/map_sidebar.html:64
+msgid "Interior"
+msgstr ""
+
+#: templates/kultur/sections/map_sidebar.html:68
+msgid "Euskara"
+msgstr ""
+
+#: templates/kultur/sections/map_sidebar.html:75
+#, fuzzy
+#| msgid "Tipo/Categoría"
+msgid "Categorías"
+msgstr "Type/Category"
+
+#: templates/kultur/sections/map_sidebar.html:78
+msgid "Todas"
+msgstr ""
+
+#: templates/kultur/sections/map_sidebar.html:86
+msgid "Cuándo"
+msgstr ""
+
+#: templates/kultur/sections/map_sidebar.html:88
+#: templates/sbk/pages/home/map.html:166
+msgid "Siempre"
+msgstr ""
+
+#: templates/kultur/sections/map_sidebar.html:89
+#: templates/sbk/pages/home/map.html:167
+msgid "Hoy"
+msgstr ""
+
+#: templates/kultur/sections/map_sidebar.html:90
+#: templates/sbk/pages/home/map.html:168
+msgid "Finde"
+msgstr ""
+
+#: templates/kultur/sections/map_sidebar.html:92
+#: templates/sbk/pages/home/map.html:170
+msgid "Rango"
+msgstr ""
+
+#: templates/kultur/sections/map_sidebar.html:101
+msgid "Cargando eventos en el mapa..."
+msgstr ""
+
+#: templates/kultur/sections/map_sidebar.html:107
+msgid "¡Sorpréndeme!"
+msgstr ""
 
 #: templates/pintxos/comanda.html:3 templates/pintxos/comanda.html:16
 #: templates/pintxos/comanda_camarero.html:6
@@ -639,309 +1046,761 @@ msgstr "Replace current order?"
 msgid "¿Vaciar la comanda?"
 msgstr "Clear the order?"
 
-#: templates/pintxos/comanda_camarero.html:652
+#: templates/pintxos/comanda_camarero.html:33
+msgid "Imprimir"
+msgstr ""
+
+#: templates/pintxos/comanda_camarero.html:37
+msgid "Editar"
+msgstr ""
+
+#: templates/pintxos/comanda_camarero.html:44
 msgid "La comanda está vacía."
 msgstr "The order is empty."
 
-#: templates/pintxos/comanda_camarero.html:665
+#: templates/pintxos/comanda_camarero.html:74
 msgid "Total"
 msgstr "Total"
 
-#: templates/pintxos/comanda_camarero.html:669
+#: templates/pintxos/comanda_camarero.html:83
 msgid "Bebidas"
 msgstr "Drinks"
 
-#: templates/pintxos/comanda_camarero.html:675
+#: templates/pintxos/comanda_camarero.html:84
 msgid "Pintxos"
 msgstr "Pintxos"
 
-#: templates/pintxos/comanda_camarero.html:679
+#: templates/pintxos/comanda_camarero.html:85
 msgid "Raciones"
 msgstr "Portions"
 
-#: templates/pintxos/dish_detail.html:687
+#: templates/pintxos/comanda_camarero.html:159
+msgid "Actualizado"
+msgstr ""
+
+#: templates/pintxos/dish_detail.html:69
 msgid "Error submitting rating"
 msgstr "Error submitting rating"
 
-#: templates/pintxos/dish_detail.html:692
+#: templates/pintxos/dish_detail.html:134
+#: templates/pintxos/dish_detail.html:224
 msgid "Rate this dish"
 msgstr "Rate this dish"
 
-#: templates/pintxos/dish_detail.html:696
+#: templates/pintxos/dish_detail.html:159
 msgid "to rate this dish"
 msgstr "to rate this dish"
 
-#: templates/pintxos/dish_detail.html:700
+#: templates/pintxos/dish_detail.html:169
 msgid "Community Reviews"
 msgstr "Community Reviews"
 
-#: templates/pintxos/dish_detail.html:704
+#: templates/pintxos/dish_detail.html:203
 msgid "No reviews yet. Be the first to rate this dish!"
 msgstr "No reviews yet. Be the first to rate this dish!"
 
-#: templates/pintxos/dish_detail.html:708
+#: templates/pintxos/dish_detail.html:230 templates/pintxos/index.html:678
 msgid "Your Rating"
 msgstr "Your Rating"
 
-#: templates/pintxos/dish_detail.html:712
+#: templates/pintxos/dish_detail.html:242
 msgid "Terrible"
 msgstr "Terrible"
 
-#: templates/pintxos/dish_detail.html:718
+#: templates/pintxos/dish_detail.html:242
 msgid "Bad"
 msgstr "Bad"
 
-#: templates/pintxos/dish_detail.html:722
+#: templates/pintxos/dish_detail.html:242
 msgid "OK"
 msgstr "OK"
 
-#: templates/pintxos/dish_detail.html:726
+#: templates/pintxos/dish_detail.html:242
 msgid "Good"
 msgstr "Good"
 
-#: templates/pintxos/dish_detail.html:730
+#: templates/pintxos/dish_detail.html:242
 msgid "Excellent!"
 msgstr "Excellent!"
 
-#: templates/pintxos/dish_detail.html:734
+#: templates/pintxos/dish_detail.html:248 templates/pintxos/index.html:692
 msgid "Review (Optional)"
 msgstr "Review (Optional)"
 
-#: templates/pintxos/dish_detail.html:738
+#: templates/pintxos/dish_detail.html:250
 msgid "What made it special?"
 msgstr "What made it special?"
 
-#: templates/pintxos/dish_detail.html:742
+#: templates/pintxos/dish_detail.html:256
 msgid "Price paid (Optional)"
 msgstr "Price paid (Optional)"
 
-#: templates/pintxos/dish_detail.html:746
+#: templates/pintxos/dish_detail.html:267
 msgid "Submit Rating"
 msgstr "Submit Rating"
 
-#: templates/pintxos/dish_detail.html:750
+#: templates/pintxos/dish_detail.html:273
 msgid "Submitting..."
 msgstr "Submitting..."
 
-#: templates/pintxos/dish_detail.html:754
+#: templates/pintxos/dish_detail.html:293
 msgid "Rating submitted!"
 msgstr "Rating submitted!"
 
-#: templates/pintxos/dish_detail.html:758
+#: templates/pintxos/dish_detail.html:294
 msgid "Thanks for your contribution."
 msgstr "Thanks for your contribution."
 
-#: templates/pintxos/index.html:762
+#: templates/pintxos/index.html:3
 msgid "Pintxos Guide"
 msgstr "Pintxos Guide"
 
-#: templates/pintxos/index.html:766
+#: templates/pintxos/index.html:165
 msgid "Could not get location"
 msgstr "Could not get location"
 
-#: templates/pintxos/index.html:770
+#: templates/pintxos/index.html:435
 msgid "Explore Map"
 msgstr "Explore Map"
 
-#: templates/pintxos/index.html:774
+#: templates/pintxos/index.html:438 templates/pintxos/index.html:765
 msgid "Add Pintxo"
 msgstr "Add Pintxo"
 
-#: templates/pintxos/index.html:778
+#: templates/pintxos/index.html:451
 msgid "Trending Right Now"
 msgstr "Trending Right Now"
 
-#: templates/pintxos/index.html:782
+#: templates/pintxos/index.html:453
 msgid "View all topics"
 msgstr "View all topics"
 
-#: templates/pintxos/index.html:786
+#: templates/pintxos/index.html:462
 msgid "Weekly Pick"
 msgstr "Weekly Pick"
 
-#: templates/pintxos/index.html:790
+#: templates/pintxos/index.html:463
 msgid "Bilbao's Best Tortilla"
 msgstr "Bilbao's Best Tortilla"
 
-#: templates/pintxos/index.html:794
+#: templates/pintxos/index.html:466
 msgid "Join the debate and vote for your favorite tortilla in the old town."
 msgstr "Join the debate and vote for your favorite tortilla in the old town."
 
-#: templates/pintxos/index.html:802
+#: templates/pintxos/index.html:475
+msgid "Classic Trail"
+msgstr ""
+
+#: templates/pintxos/index.html:476
 msgid "The Gilda Route"
 msgstr "The Gilda Route"
 
-#: templates/pintxos/index.html:806
+#: templates/pintxos/index.html:479
 msgid "From Donostia to Vitoria: a journey through the best spicy skewers."
 msgstr "From Donostia to Vitoria: a journey through the best spicy skewers."
 
-#: templates/pintxos/index.html:810
+#: templates/pintxos/index.html:488
 msgid "New Openings"
 msgstr "New Openings"
 
-#: templates/pintxos/index.html:814
+#: templates/pintxos/index.html:489
 msgid "Grilled Perfection"
 msgstr "Grilled Perfection"
 
-#: templates/pintxos/index.html:818
+#: templates/pintxos/index.html:492
 msgid "Reviewing the new generation of charcoal-grilled pintxos."
 msgstr "Reviewing the new generation of charcoal-grilled pintxos."
 
-#: templates/pintxos/index.html:822
+#: templates/pintxos/index.html:516
 msgid "Search by pintxo, bar or area..."
 msgstr "Search by pintxo, bar or area..."
 
-#: templates/pintxos/index.html:826
+#: templates/pintxos/index.html:527
 msgid "Searching Near You"
 msgstr "Searching Near You"
 
-#: templates/pintxos/index.html:830
+#: templates/pintxos/index.html:527
 msgid "Near Me"
 msgstr "Near Me"
 
-#: templates/pintxos/index.html:834
+#: templates/pintxos/index.html:536
 msgid "All"
 msgstr "All"
 
-#: templates/pintxos/index.html:840
+#: templates/pintxos/index.html:557
 msgid "Pintxo Hall of Fame"
 msgstr "Pintxo Hall of Fame"
 
-#: templates/pintxos/index.html:844
+#: templates/pintxos/index.html:558
 msgid "The community's absolute favorites"
 msgstr "The community's absolute favorites"
 
-#: templates/pintxos/index.html:848
+#: templates/pintxos/index.html:567
 msgid "Global"
 msgstr "Global"
 
-#: templates/pintxos/index.html:852
+#: templates/pintxos/index.html:575
 msgid "Friends"
 msgstr "Friends"
 
-#: templates/pintxos/index.html:858
+#: templates/pintxos/index.html:603
 msgid "Updating Map..."
 msgstr "Updating Map..."
 
-#: templates/pintxos/index.html:864
+#: templates/pintxos/index.html:618
 msgid "Explore All Places"
 msgstr "Explore All Places"
 
-#: templates/pintxos/index.html:868
+#: templates/pintxos/index.html:619
 msgid "Browse our complete curated list of bars and restaurants"
 msgstr "Browse our complete curated list of bars and restaurants"
 
-#: templates/pintxos/index.html:872
+#: templates/pintxos/index.html:623
 msgid "spots found"
 msgstr "spots found"
 
-#: templates/pintxos/index.html:878
+#: templates/pintxos/index.html:649
 msgid "Add New Pintxo"
 msgstr "Add New Pintxo"
 
-#: templates/pintxos/index.html:884
+#: templates/pintxos/index.html:650
 msgid "Help the community discover the best bites."
 msgstr "Help the community discover the best bites."
 
-#: templates/pintxos/index.html:890
+#: templates/pintxos/index.html:659
 msgid "Pintxo Name"
 msgstr "Pintxo Name"
 
-#: templates/pintxos/index.html:894
+#: templates/pintxos/index.html:664
 msgid "Category"
 msgstr "Category"
 
-#: templates/pintxos/index.html:898
+#: templates/pintxos/index.html:693
 msgid "What did you think?"
 msgstr "What did you think?"
 
-#: templates/pintxos/index.html:902
+#: templates/pintxos/index.html:697
 msgid "Price"
 msgstr "Price"
 
-#: templates/pintxos/index.html:906
+#: templates/pintxos/index.html:709
 msgid "Where is it?"
 msgstr "Where is it?"
 
-#: templates/pintxos/index.html:910
+#: templates/pintxos/index.html:717
 msgid "Search Bar or Address"
 msgstr "Search Bar or Address"
 
-#: templates/pintxos/index.html:914
+#: templates/pintxos/index.html:721
 msgid "e.g. Bar Nestor Donostia..."
 msgstr "e.g. Bar Nestor Donostia..."
 
-#: templates/pintxos/index.html:918
+#: templates/pintxos/index.html:736
 msgid "Existing"
 msgstr "Existing"
 
-#: templates/pintxos/index.html:922
+#: templates/pintxos/index.html:746
 msgid "Location Confirmation"
 msgstr "Location Confirmation"
 
-#: templates/pintxos/index.html:926
+#: templates/pintxos/index.html:747
 msgid "Drag marker to refine"
 msgstr "Drag marker to refine"
 
-#: templates/pintxos/index.html:932
+#: templates/pintxos/index.html:753
 msgid "Bar Details"
 msgstr "Bar Details"
 
-#: templates/pintxos/index.html:938
+#: templates/pintxos/index.html:766
 msgid "Adding..."
 msgstr "Adding..."
 
-#: templates/pintxos/index.html:942
+#: templates/pintxos/index.html:788
 msgid "Success!"
 msgstr "Success!"
 
-#: templates/pintxos/index.html:946
+#: templates/pintxos/index.html:789
 msgid "Restaurant submitted for approval."
 msgstr "Restaurant submitted for approval."
 
-#: templates/pintxos/partials/leaderboard_content.html:950
+#: templates/pintxos/partials/leaderboard_content.html:11
 msgid "No ratings found in this circle yet."
 msgstr "No ratings found in this circle yet."
 
-#: templates/pintxos/partials/leaderboard_content.html:954
+#: templates/pintxos/partials/leaderboard_content.html:17
 msgid "Back to Global"
 msgstr "Back to Global"
 
-#: templates/pintxos/partials/restaurant_grid.html:958
+#: templates/pintxos/partials/restaurant_grid.html:7
 msgid "No matching bites found"
 msgstr "No matching bites found"
 
-#: templates/pintxos/partials/restaurant_grid.html:962
+#: templates/pintxos/partials/restaurant_grid.html:10
 msgid "Try adjusting your filters or searching in a different area."
 msgstr "Try adjusting your filters or searching in a different area."
 
-#: templates/pintxos/restaurant_detail.html:966
+#: templates/pintxos/restaurant_detail.html:43
 msgid "Pintxos & Dishes"
 msgstr "Pintxos & Dishes"
 
-#: templates/pintxos/restaurant_detail.html:970
+#: templates/pintxos/restaurant_detail.html:50
 msgid "Add Dish"
 msgstr "Add Dish"
 
-#: templates/pintxos/restaurant_detail.html:976
+#: templates/pintxos/restaurant_detail.html:54
 msgid "Login to Add Dish"
 msgstr "Login to Add Dish"
 
-#: templates/socialaccount/login.html:981
+#: templates/sbk/pages/home/map.html:109
+msgid "Busca eventos, salas o ciudades..."
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:131 templates/sbk/passport.html:43
+msgid "Festivales"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:135
+#, fuzzy
+#| msgid "Social & Trust"
+msgid "Social"
+msgstr "Social & Trust"
+
+#: templates/sbk/pages/home/map.html:139
+msgid "Talleres"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:143
+msgid "Premium"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:147
+msgid "Exterior"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:154
+msgid "Estilos de baile"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:157
+msgid "Todos"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:164
+msgid "Cuándo bailar"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:179
+msgid "Cargando la magia en el mapa..."
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:194
+msgid "Busca festivales o estilos..."
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:224 templates/sbk/pages/home/map.html:289
+#, fuzzy
+#| msgid "Añadir"
+msgid "Añadir Social"
+msgstr "Add"
+
+#: templates/sbk/pages/home/map.html:230
+msgid "Haz clic en el mapa donde es la fiesta"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:237
+msgid "Ver eventos"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:247
+msgid "Bailadores"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:248
+msgid "Tablón Quedadas"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:264
+msgid "Publicar un anuncio"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:267
+msgid "Buscar Pareja"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:268
+#, fuzzy
+#| msgid "Compartir"
+msgid "Compartir Coche"
+msgstr "Share"
+
+#: templates/sbk/pages/home/map.html:269
+msgid "Cena / Quedada"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:270
+msgid "Otros"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:272
+msgid "Ej: Busco pareja para el taller de bachata de las 11:00..."
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:273
+msgid "Publicar en el Tablón"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:290
+msgid "Registra una fiesta local en el mapa"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:303
+msgid "Nombre de la fiesta / local"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:304
+msgid "Ej: Jueves Salsero en The Host"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:308
+msgid "Estilo Principal"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:320
+#, fuzzy
+#| msgid "Fecha Fin"
+msgid "Fecha"
+msgstr "End Date"
+
+#: templates/sbk/pages/home/map.html:324
+msgid "Precio (aprox)"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:325
+msgid "Ej: 10€ c/copa"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:330
+msgid "Ambiente / Notas"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:331
+msgid "Ej: Social puro, mucha bachata, relax..."
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:335
+msgid "Cartel del evento (Opcional)"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:342
+msgid "Subir un archivo"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:343
+msgid "o arrastra y suelta"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:345
+msgid "PNG, JPG, GIF hasta 5MB"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:354 templates/sbk/passport.html:121
+#: templates/sbk/passport.html:311
+#, fuzzy
+#| msgid "Cancel"
+msgid "Cancelar"
+msgstr "Cancel"
+
+#: templates/sbk/pages/home/map.html:356
+msgid "Publicar Evento"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:369
+msgid "Vibe Check"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:381
+msgid "¿Cómo está la música?"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:399
+msgid "¿Espacio en pista?"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:417
+msgid "Enviar reporte de Vibe"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:756
+msgid "Nada por aquí..."
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:794
+msgid "BAILANDO AHORA"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:800
+msgid "Comunidad"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:801
+msgid "Voy"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:801
+msgid "¡Voy!"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:913
+msgid "Nadie apuntado aún."
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:921
+msgid "Contactar"
+msgstr ""
+
+#: templates/sbk/pages/home/map.html:931
+#, fuzzy
+#| msgid "La comanda está vacía."
+msgid "El tablón está vacío."
+msgstr "The order is empty."
+
+#: templates/sbk/passport.html:2
+msgid "Mi Pasaporte Bailador"
+msgstr ""
+
+#: templates/sbk/passport.html:15
+msgid "Buscar Eventos"
+msgstr ""
+
+#: templates/sbk/passport.html:23
+msgid "NIVEL"
+msgstr ""
+
+#: templates/sbk/passport.html:47
+msgid "Países"
+msgstr ""
+
+#: templates/sbk/passport.html:52
+msgid "Racha Días"
+msgstr ""
+
+#: templates/sbk/passport.html:56
+#, fuzzy
+#| msgid "Próximamente"
+msgid "Próximos"
+msgstr "Coming Soon"
+
+#: templates/sbk/passport.html:60
+msgid "Radar"
+msgstr ""
+
+#: templates/sbk/passport.html:74
+msgid "Próximos Destinos"
+msgstr ""
+
+#: templates/sbk/passport.html:79
+msgid "Aún no tienes confirmada tu asistencia a ningún evento."
+msgstr ""
+
+#: templates/sbk/passport.html:80
+#, fuzzy
+#| msgid "Explore Map"
+msgid "Explorar el mapa"
+msgstr "Explore Map"
+
+#: templates/sbk/passport.html:96
+msgid "Confirmado"
+msgstr ""
+
+#: templates/sbk/passport.html:115
+msgid "Busco Habitación"
+msgstr ""
+
+#: templates/sbk/passport.html:118
+msgid "Busco Pareja"
+msgstr ""
+
+#: templates/sbk/passport.html:134
+msgid "En el radar"
+msgstr ""
+
+#: templates/sbk/passport.html:138
+msgid "No tienes eventos en seguimiento."
+msgstr ""
+
+#: templates/sbk/passport.html:160
+msgid "¡Voy a ir!"
+msgstr ""
+
+#: templates/sbk/passport.html:174
+msgid "Sellos del Pasaporte"
+msgstr ""
+
+#: templates/sbk/passport.html:178
+msgid "Tu pasaporte está vacío. ¡Es hora de empezar a viajar!"
+msgstr ""
+
+#: templates/sbk/passport.html:194
+msgid "Valorar"
+msgstr ""
+
+#: templates/sbk/passport.html:204
+msgid "Racha Máxima"
+msgstr ""
+
+#: templates/sbk/passport.html:204
+msgid "días"
+msgstr ""
+
+#: templates/sbk/passport.html:213
+msgid "Top Embajadores"
+msgstr ""
+
+#: templates/sbk/passport.html:246
+msgid "Evaluar Evento"
+msgstr ""
+
+#: templates/sbk/passport.html:260
+msgid "Valoración General"
+msgstr ""
+
+#: templates/sbk/passport.html:263
+msgid "Pobre"
+msgstr ""
+
+#: templates/sbk/passport.html:263
+msgid "Regular"
+msgstr ""
+
+#: templates/sbk/passport.html:269
+#, fuzzy
+#| msgid "Calidad del Aire"
+msgid "Calidad del Suelo"
+msgstr "Air Quality"
+
+#: templates/sbk/passport.html:272
+msgid "Resbala/Pega"
+msgstr ""
+
+#: templates/sbk/passport.html:272
+msgid "Decente"
+msgstr ""
+
+#: templates/sbk/passport.html:272
+msgid "Parquet 10/10"
+msgstr ""
+
+#: templates/sbk/passport.html:278
+msgid "Climatización (AC)"
+msgstr ""
+
+#: templates/sbk/passport.html:281
+msgid "Sauna"
+msgstr ""
+
+#: templates/sbk/passport.html:281
+msgid "Bien"
+msgstr ""
+
+#: templates/sbk/passport.html:281
+msgid "Fresco"
+msgstr ""
+
+#: templates/sbk/passport.html:287
+msgid "Balance Lider/Follower"
+msgstr ""
+
+#: templates/sbk/passport.html:290
+msgid "Desbalanceado"
+msgstr ""
+
+#: templates/sbk/passport.html:290
+msgid "Ok"
+msgstr ""
+
+#: templates/sbk/passport.html:290
+msgid "Perfecto 50/50"
+msgstr ""
+
+#: templates/sbk/passport.html:296
+#, fuzzy
+#| msgid "Calidad del Aire"
+msgid "Calidad de la Música / DJs"
+msgstr "Air Quality"
+
+#: templates/sbk/passport.html:299
+msgid "Aburrida"
+msgstr ""
+
+#: templates/sbk/passport.html:299
+msgid "Buena"
+msgstr ""
+
+#: templates/sbk/passport.html:299
+msgid "Temazos"
+msgstr ""
+
+#: templates/sbk/passport.html:305
+msgid "Comentario adicional"
+msgstr ""
+
+#: templates/sbk/passport.html:306
+msgid "¿Qué fue lo mejor y lo peor?"
+msgstr ""
+
+#: templates/sbk/passport.html:313
+msgid "Guardar Reseña"
+msgstr ""
+
+#: templates/sbk/passport.html:377
+#, fuzzy
+#| msgid "¿Estás seguro de que quieres dejar de seguir a"
+msgid "¿Seguro que quieres cancelar tu asistencia?"
+msgstr "Are you sure you want to unfollow"
+
+#: templates/sbk/passport.html:449
+msgid "¡Gracias por tu valoración! Ayudará a otros bailarines."
+msgstr ""
+
+#: templates/socialaccount/login.html:21
 #, python-format
 msgid "Sign In via %(provider_name)s"
 msgstr "Sign In via %(provider_name)s"
 
-#: templates/socialaccount/login.html:986
+#: templates/socialaccount/login.html:24
 #, python-format
-msgid "You are about to sign in using a third-party account from %(provider_name)s."
-msgstr "You are about to sign in using a third-party account from %(provider_name)s."
+msgid ""
+"You are about to sign in using a third-party account from %(provider_name)s."
+msgstr ""
+"You are about to sign in using a third-party account from %(provider_name)s."
 
-#: templates/socialaccount/login.html:990
+#: templates/socialaccount/login.html:33
 msgid "Continue"
 msgstr "Continue"
 
-#: templates/socialaccount/snippets/provider_list.html:995
+#: templates/socialaccount/snippets/provider_list.html:16
+#: templates/socialaccount/snippets/provider_list.html:26
+#: templates/socialaccount/snippets/provider_list.html:36
 #, python-format
 msgid "Continue with %(provider_name)s"
 msgstr "Continue with %(provider_name)s"
+
+#: templates/zbe/home.html:35
+msgid "Diseño y gestión de Zonas de Bajas Emisiones"
+msgstr ""
+
+#: templates/zbe/home.html:42
+msgid "Polígonos"
+msgstr ""
+
+#: templates/zbe/home.html:44
+msgid "Dibujar ZBE"
+msgstr ""
+
+#: templates/zbe/home.html:53
+msgid "No hay ninguna zona trazada. Pulsa en dibujar para empezar."
+msgstr ""
+
+#: templates/zbe/home.html:88
+msgid "Guardar Zonas"
+msgstr ""

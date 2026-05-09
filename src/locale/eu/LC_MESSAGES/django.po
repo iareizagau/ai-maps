@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-02 18:33+0200\n"
+"POT-Creation-Date: 2026-05-09 11:44+0200\n"
 "PO-Revision-Date: 2026-04-27 23:15+0200\n"
 "Last-Translator: Antigravity AI\n"
 "Language-Team: Basque\n"
@@ -107,60 +107,48 @@ msgid "Fecha Fin"
 msgstr "Amaiera Data"
 
 #: apps/kultur/models.py:14
-#, fuzzy
-#| msgid "Lugar"
 msgid "Lugar (ES)"
-msgstr "Lekua"
+msgstr "Lekua (ES)"
 
 #: apps/kultur/models.py:15
-#, fuzzy
-#| msgid "Lugar"
 msgid "Lugar (EU)"
-msgstr "Lekua"
+msgstr "Lekua (EU)"
 
 #: apps/kultur/models.py:16
-#, fuzzy
-#| msgid "Municipio"
 msgid "Municipio (ES)"
-msgstr "Udalerria"
+msgstr "Udalerria (ES)"
 
 #: apps/kultur/models.py:17
-#, fuzzy
-#| msgid "Municipio"
 msgid "Municipio (EU)"
-msgstr "Udalerria"
+msgstr "Udalerria (EU)"
 
 #: apps/kultur/models.py:18
 msgid "Provincia"
 msgstr "Probintzia"
 
 #: apps/kultur/models.py:19
-#, fuzzy
-#| msgid "Tipo/Categoría"
 msgid "Tipo/Categoría (ES)"
-msgstr "Mota/Kategoria"
+msgstr "Mota/Kategoria (ES)"
 
 #: apps/kultur/models.py:20
-#, fuzzy
-#| msgid "Tipo/Categoría"
 msgid "Tipo/Categoría (EU)"
-msgstr "Mota/Kategoria"
+msgstr "Mota/Kategoria (EU)"
 
 #: apps/kultur/models.py:22
 msgid "Horario (ES)"
-msgstr ""
+msgstr "Ordutegia (ES)"
 
 #: apps/kultur/models.py:23
 msgid "Horario (EU)"
-msgstr ""
+msgstr "Ordutegia (EU)"
 
 #: apps/kultur/models.py:24
 msgid "Precio (ES)"
-msgstr ""
+msgstr "Prezioa (ES)"
 
 #: apps/kultur/models.py:25
 msgid "Precio (EU)"
-msgstr ""
+msgstr "Prezioa (EU)"
 
 #: apps/kultur/models.py:28
 msgid "URL (ES)"
@@ -171,16 +159,12 @@ msgid "URL (EU)"
 msgstr "URL (EU)"
 
 #: apps/kultur/models.py:31
-#, fuzzy
-#| msgid "URL (ES)"
 msgid "URL Compra (ES)"
-msgstr "URL (ES)"
+msgstr "Erosketa URL (ES)"
 
 #: apps/kultur/models.py:32
-#, fuzzy
-#| msgid "URL (EU)"
 msgid "URL Compra (EU)"
-msgstr "URL (EU)"
+msgstr "Erosketa URL (EU)"
 
 #: apps/kultur/models.py:35
 msgid "Imagen"
@@ -249,6 +233,30 @@ msgstr "Pizza"
 #: apps/pintxos/models.py:122
 msgid "Sushi"
 msgstr "Sushi"
+
+#: apps/zbe/models.py:5
+#, fuzzy
+#| msgid "Nombre de la fiesta / local"
+msgid "Nombre de la Zona"
+msgstr "Festa / aretoaren izena"
+
+#: apps/zbe/models.py:6
+#, fuzzy
+#| msgid "Descripción (ES)"
+msgid "Descripción"
+msgstr "Deskribapena (ES)"
+
+#: apps/zbe/models.py:7
+msgid "Geometría"
+msgstr ""
+
+#: apps/zbe/models.py:13
+msgid "Zona de Bajas Emisiones"
+msgstr ""
+
+#: apps/zbe/models.py:14 templates/zbe/home.html:2
+msgid "Zonas de Bajas Emisiones"
+msgstr ""
 
 #: templates/account/login.html:5 templates/account/login.html:67
 #: templates/account/signup.html:66 templates/socialaccount/login.html:4
@@ -453,6 +461,23 @@ msgstr "Ez dago platerrik oraindik."
 msgid "View Details"
 msgstr "Ikusi xehetasunak"
 
+#: templates/cotton/organisms/climbing_map.html:15
+#, fuzzy
+#| msgid "Eventos Activos"
+msgid "Zonas Activas"
+msgstr "Ekitaldi Aktiboak"
+
+#: templates/cotton/organisms/climbing_map.html:85
+#: templates/gailur/home.html:614
+msgid "Zona de Escalada"
+msgstr ""
+
+#: templates/cotton/organisms/climbing_map.html:89
+#, fuzzy
+#| msgid "Ver eventos"
+msgid "Ver sectores"
+msgstr "Ikusi ekitaldiak"
+
 #: templates/cotton/organisms/leaderboard.html:12
 msgid "The podium is empty. Start rating!"
 msgstr "Podiuma hutsik dago. Hasi baloratzen!"
@@ -486,84 +511,291 @@ msgstr "Saioa hasi"
 msgid "Register"
 msgstr "Erregistratu"
 
+#: templates/gailur/crag_detail.html:16
+msgid "Zonas de Escalada"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:29
+msgid "Sectores"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:36 templates/gailur/route_detail.html:101
+msgid "Cómo llegar"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:54
+#, fuzzy
+#| msgid "Valoración General"
+msgid "Información General"
+msgstr "Balorazio Orokorra"
+
+#: templates/gailur/crag_detail.html:62
+msgid "Acceso y Aproximación"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:76
+msgid "Sectores y Vías"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:89 templates/gailur/home.html:76
+msgid "Vías"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:97
+msgid "Nombre"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:98
+msgid "Grado"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:99
+msgid "Tipo"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:118 templates/gailur/route_detail.html:26
+msgid "Equipada"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:118 templates/gailur/route_detail.html:26
+#, fuzzy
+#| msgid "Comentario adicional"
+msgid "Tradicional"
+msgstr "Ohar gehigarria"
+
+#: templates/gailur/crag_detail.html:151
+#, fuzzy
+#| msgid "Raciones"
+msgid "Recomendaciones"
+msgstr "Razioak"
+
+#: templates/gailur/crag_detail.html:158
+msgid "Mejor época"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:159
+msgid "Primavera y Otoño"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:167
+msgid "Agua"
+msgstr ""
+
+#: templates/gailur/crag_detail.html:168
+msgid "Fuente en el parking"
+msgstr ""
+
+#: templates/gailur/home.html:2
+msgid "Mendia eta Escalada"
+msgstr ""
+
+#: templates/gailur/home.html:48
+msgid "Mendi taldeen irteerak eta eskalada gidak"
+msgstr ""
+
+#: templates/gailur/home.html:56
+#, fuzzy
+#| msgid "Busca eventos, salas o ciudades..."
+msgid "Buscar zonas, vías o salidas..."
+msgstr "Bilatu ekitaldiak, aretoak edo hiriak..."
+
+#: templates/gailur/home.html:69 templates/gailur/home.html:290
+#, fuzzy
+#| msgid "Personas"
+msgid "Zonas"
+msgstr "Pertsonak"
+
+#: templates/gailur/home.html:83
+msgid "Salidas"
+msgstr ""
+
+#: templates/gailur/home.html:97
+msgid "Magic Mix"
+msgstr ""
+
+#: templates/gailur/home.html:100
+msgid "Finde Seguro"
+msgstr ""
+
+#: templates/gailur/home.html:103
+msgid "Escapada"
+msgstr ""
+
+#: templates/gailur/home.html:118
+msgid "Para ordenar por cercanía, necesitamos tu ubicación."
+msgstr ""
+
+#: templates/gailur/home.html:120
+#, fuzzy
+#| msgid "Ubicación"
+msgid "Compartir Ubicación"
+msgstr "Kokapena"
+
+#: templates/gailur/home.html:156
+#, fuzzy
+#| msgid "Explorar el mapa"
+msgid "Localizar en mapa"
+msgstr "Esploratu mapa"
+
+#: templates/gailur/home.html:160
+msgid "Cómo llegar (Google Maps)"
+msgstr ""
+
+#: templates/gailur/home.html:165
+msgid "Match"
+msgstr ""
+
+#: templates/gailur/home.html:172 templates/sbk/pages/home/map.html:215
+msgid "Clima"
+msgstr "Eguraldia"
+
+#: templates/gailur/home.html:186
+msgid "Sáb"
+msgstr ""
+
+#: templates/gailur/home.html:190
+msgid "Dom"
+msgstr ""
+
+#: templates/gailur/home.html:256
+msgid "Planea tu próxima aventura"
+msgstr ""
+
+#: templates/gailur/home.html:268
+#, fuzzy
+#| msgid "Ver lista"
+msgid "Resetear vista"
+msgstr "Ikusi zerrenda"
+
+#: templates/gailur/home.html:274
+msgid "Radar de Lluvia"
+msgstr ""
+
+#: templates/gailur/home.html:277
+msgid "Mapa de Viento"
+msgstr ""
+
+#: templates/gailur/home.html:289
+#, fuzzy
+#| msgid "Euskara"
+msgid "Euskadi Map"
+msgstr "Euskara"
+
+#: templates/gailur/home.html:294
+msgid "Mejor Plan"
+msgstr ""
+
+#: templates/gailur/home.html:295
+msgid "Cargando..."
+msgstr ""
+
+#: templates/gailur/home.html:315
+#, fuzzy
+#| msgid "Actualizado"
+msgid "Analizando..."
+msgstr "Eguneratuta"
+
+#: templates/gailur/home.html:521
+msgid "CONDICIONES TOP"
+msgstr ""
+
+#: templates/gailur/home.html:521
+msgid "VARIABLE"
+msgstr ""
+
+#: templates/gailur/home.html:521
+msgid "NO RECOMENDADO"
+msgstr ""
+
+#: templates/gailur/home.html:525
+msgid "Sábado Top"
+msgstr ""
+
+#: templates/gailur/home.html:525
+msgid "Ojo lluvia"
+msgstr ""
+
+#: templates/gailur/home.html:618
+#, fuzzy
+#| msgid "Explore Map"
+msgid "Explorar"
+msgstr "Esploratu mapa"
+
+#: templates/gailur/route_detail.html:38
+msgid "Haz clic para ampliar el croquis"
+msgstr ""
+
+#: templates/gailur/route_detail.html:51
+msgid "Sin croquis visual"
+msgstr ""
+
+#: templates/gailur/route_detail.html:68
+msgid "Reseña de la Vía"
+msgstr ""
+
+#: templates/gailur/route_detail.html:71
+msgid "Disponible en ES / EU"
+msgstr ""
+
+#: templates/gailur/route_detail.html:85
+#, fuzzy
+#| msgid "Fecha Inicio"
+msgid "Ficha Técnica"
+msgstr "Hasiera Data"
+
+#: templates/gailur/route_detail.html:88
+msgid "Zona"
+msgstr ""
+
+#: templates/gailur/route_detail.html:92
+msgid "Sector"
+msgstr ""
+
+#: templates/gailur/route_detail.html:96
+#, fuzzy
+#| msgid "Ubicación"
+msgid "Orientación"
+msgstr "Kokapena"
+
+#: templates/gailur/route_detail.html:106
+msgid "Sobre la Fuente"
+msgstr ""
+
+#: templates/gailur/route_detail.html:108
+msgid ""
+"Esta reseña ha sido importada automáticamente desde Eskalatzen. Respeta "
+"siempre el entorno y las regulaciones locales."
+msgstr ""
+
+#: templates/gailur/route_detail.html:111
+msgid "Ver post original"
+msgstr ""
+
 #: templates/home.html:2
 msgid "Hasiera"
 msgstr "Hasiera"
 
-#: templates/home.html:5
-msgid "Euskal Herriko GIS Ekosistema"
-msgstr "Euskal Herriko GIS Ekosistema"
-
-#: templates/home.html:6
-msgid ""
-"Explora el territorio a través de mapas inteligentes, datos abiertos y "
-"herramientas colaborativas diseñadas para la comunidad."
-msgstr ""
-"Arakatu lurraldea mapa adimendunen, datu irekien eta komunitatearentzat "
-"diseinatutako lankidetza-tresnen bidez."
-
-#: templates/home.html:12
+#: templates/home.html:16
 msgid "¿Qué quieres encontrar hoy? (ej. Aire, Pintxos, Museos...)"
 msgstr "Zer aurkitu nahi duzu gaur? (adib. Airea, Pintxoak, Museoak...)"
 
-#: templates/home.html:21
+#: templates/home.html:23
 msgid "Tendencias:"
 msgstr "Joerak:"
 
-#: templates/home.html:35
-msgid ""
-"Monitorización ambiental en tiempo real. Calidad del aire, clima y "
-"biodiversidad."
-msgstr ""
-"Ingurumenaren monitorizazioa denbora errealean. Airearen kalitatea, klima "
-"eta biodibertsitatea."
-
-#: templates/home.html:38
-msgid "Datu Bizidunak"
-msgstr "Datu Bizidunak"
-
 #: templates/home.html:43
-msgid ""
-"La guía definitiva de la gastronomía vasca. Rutas, favoritos y rankings "
-"locales."
+msgid "Activo"
 msgstr ""
-"Euskal gastronomiaren behin-betiko gida. Ibilbideak, gogokoenak eta tokiko "
-"sailkapenak."
 
-#: templates/home.html:46
-msgid "+500 Restaurantes"
-msgstr "+500 Jatetxe"
-
-#: templates/home.html:51
-msgid ""
-"Agenda cultural geolocalizada. Museos, teatros y eventos en todo el "
-"territorio."
-msgstr ""
-"Kultur agenda geolokalizatua. Museoak, antzokiak eta ekitaldiak lurralde "
-"osoan."
-
-#: templates/home.html:54
-msgid "Agenda Hoy"
-msgstr "Gaurko Agenda"
-
-#: templates/home.html:59
-msgid ""
-"Salsa, Bachata y Kizomba. Encuentra los mejores eventos de baile cada noche."
-msgstr "Salsa, Bachata eta Kizomba. Aurkitu dantza-ekitaldirik onenak gauero."
-
-#: templates/home.html:62
-msgid "Eventos Activos"
-msgstr "Ekitaldi Aktiboak"
-
-#: templates/home.html:71
+#: templates/home.html:53
 msgid "Ecosistema"
 msgstr "Ekosistema"
 
-#: templates/home.html:72
+#: templates/home.html:54
 msgid "Más allá de los mapas"
 msgstr "Mapetatik harago"
 
-#: templates/home.html:75
+#: templates/home.html:57
 msgid ""
 "Estamos construyendo una infraestructura de datos abierta para que cualquier "
 "ciudadano u organización pueda crear valor sobre el territorio."
@@ -571,131 +803,127 @@ msgstr ""
 "Datu-azpiegitura ireki bat eraikitzen ari gara, edozein herritarrek edo "
 "erakundek lurraldean balioa sor dezan."
 
-#: templates/home.html:83
+#: templates/home.html:65
 msgid "Bidaiak"
 msgstr "Bidaiak"
 
-#: templates/home.html:84
+#: templates/home.html:66
 msgid "Planificador de rutas y logística."
 msgstr "Ibilbideen eta logistikaren planifikatzailea."
 
-#: templates/home.html:91
+#: templates/home.html:73
 msgid "Data Studio"
 msgstr "Data Studio"
 
-#: templates/home.html:92
+#: templates/home.html:74
 msgid "Analítica avanzada territorial."
 msgstr "Lurralde-analitika aurreratua."
 
-#: templates/home.html:94 templates/home.html:103
+#: templates/home.html:76 templates/home.html:85
 msgid "Próximamente"
 msgstr "Laster"
 
-#: templates/home.html:100
+#: templates/home.html:82
 msgid "API OpenData"
 msgstr "OpenData API"
 
-#: templates/home.html:101
+#: templates/home.html:83
 msgid "Acceso programático para devs."
 msgstr "Garatzaileentzako sarbide programatikoa."
 
 #: templates/kultur/sections/map_container.html:12
 msgid "Busca eventos..."
-msgstr ""
+msgstr "Bilatu ekitaldiak..."
 
 #: templates/kultur/sections/map_container.html:31
 msgid "Clima en"
-msgstr ""
+msgstr "Eguraldia hemen"
 
 #: templates/kultur/sections/map_container.html:32
 msgid "..."
-msgstr ""
+msgstr "..."
 
 #: templates/kultur/sections/map_container.html:41
 msgid "Ver lista"
-msgstr ""
+msgstr "Ikusi zerrenda"
 
 #: templates/kultur/sections/map_sidebar.html:7
 msgid "Cultura Local"
-msgstr ""
+msgstr "Tokiko Kultura"
 
 #: templates/kultur/sections/map_sidebar.html:30
 msgid "Busca eventos o ciudades..."
-msgstr ""
+msgstr "Bilatu ekitaldiak edo hiriak..."
 
 #: templates/kultur/sections/map_sidebar.html:44
 #: templates/sbk/pages/home/map.html:123
-#, fuzzy
-#| msgid "Tendencias:"
 msgid "Experiencias"
-msgstr "Joerak:"
+msgstr "Esperientziak"
 
 #: templates/kultur/sections/map_sidebar.html:48
 #: templates/sbk/passport.html:263
 msgid "Top"
-msgstr ""
+msgstr "Top"
 
 #: templates/kultur/sections/map_sidebar.html:52
 msgid "Gratis"
-msgstr ""
+msgstr "Doan"
 
 #: templates/kultur/sections/map_sidebar.html:56
 msgid "Familia"
-msgstr ""
+msgstr "Familia"
 
 #: templates/kultur/sections/map_sidebar.html:60
 msgid "Noche"
-msgstr ""
+msgstr "Gaua"
 
 #: templates/kultur/sections/map_sidebar.html:64
 msgid "Interior"
-msgstr ""
+msgstr "Barnealdea"
 
 #: templates/kultur/sections/map_sidebar.html:68
 msgid "Euskara"
-msgstr ""
+msgstr "Euskara"
 
 #: templates/kultur/sections/map_sidebar.html:75
-#, fuzzy
-#| msgid "Tipo/Categoría"
 msgid "Categorías"
-msgstr "Mota/Kategoria"
+msgstr "Kategoriak"
 
 #: templates/kultur/sections/map_sidebar.html:78
 msgid "Todas"
-msgstr ""
+msgstr "Guztiak"
 
 #: templates/kultur/sections/map_sidebar.html:86
 msgid "Cuándo"
-msgstr ""
+msgstr "Noiz"
 
 #: templates/kultur/sections/map_sidebar.html:88
 #: templates/sbk/pages/home/map.html:166
 msgid "Siempre"
-msgstr ""
+msgstr "Beti"
 
 #: templates/kultur/sections/map_sidebar.html:89
 #: templates/sbk/pages/home/map.html:167
 msgid "Hoy"
-msgstr ""
+msgstr "Gaur"
 
 #: templates/kultur/sections/map_sidebar.html:90
 #: templates/sbk/pages/home/map.html:168
 msgid "Finde"
-msgstr ""
+msgstr "Asteburua"
 
 #: templates/kultur/sections/map_sidebar.html:92
 #: templates/sbk/pages/home/map.html:170
 msgid "Rango"
-msgstr ""
+msgstr "Tartea"
 
 #: templates/kultur/sections/map_sidebar.html:101
 msgid "Cargando eventos en el mapa..."
-msgstr ""
+msgstr "Mapan ekitaldiak kargatzen..."
 
 #: templates/kultur/sections/map_sidebar.html:107
 msgid "¡Sorpréndeme!"
-msgstr ""
+msgstr "Harritu nazazu!"
 
 #: templates/pintxos/comanda.html:3 templates/pintxos/comanda.html:16
 #: templates/pintxos/comanda_camarero.html:6
@@ -819,11 +1047,11 @@ msgstr "Komanda hustu?"
 
 #: templates/pintxos/comanda_camarero.html:33
 msgid "Imprimir"
-msgstr ""
+msgstr "Inprimatu"
 
 #: templates/pintxos/comanda_camarero.html:37
 msgid "Editar"
-msgstr ""
+msgstr "Editatu"
 
 #: templates/pintxos/comanda_camarero.html:44
 msgid "La comanda está vacía."
@@ -847,7 +1075,7 @@ msgstr "Razioak"
 
 #: templates/pintxos/comanda_camarero.html:159
 msgid "Actualizado"
-msgstr ""
+msgstr "Eguneratuta"
 
 #: templates/pintxos/dish_detail.html:69
 msgid "Error submitting rating"
@@ -962,7 +1190,7 @@ msgstr ""
 
 #: templates/pintxos/index.html:475
 msgid "Classic Trail"
-msgstr ""
+msgstr "Ibilbide Klasikoa"
 
 #: templates/pintxos/index.html:476
 msgid "The Gilda Route"
@@ -1167,10 +1395,6 @@ msgstr "Mapan magia kargatzen..."
 #: templates/sbk/pages/home/map.html:194
 msgid "Busca festivales o estilos..."
 msgstr "Bilatu jaialdiak edo estiloak..."
-
-#: templates/sbk/pages/home/map.html:215
-msgid "Clima"
-msgstr "Eguraldia"
 
 #: templates/sbk/pages/home/map.html:224 templates/sbk/pages/home/map.html:289
 msgid "Añadir Social"
@@ -1534,6 +1758,30 @@ msgid "Continue"
 msgstr "Jarraitu"
 
 #: templates/socialaccount/snippets/provider_list.html:16
+#: templates/socialaccount/snippets/provider_list.html:26
+#: templates/socialaccount/snippets/provider_list.html:36
 #, python-format
 msgid "Continue with %(provider_name)s"
 msgstr "Jarraitu honekin: %(provider_name)s"
+
+#: templates/zbe/home.html:35
+msgid "Diseño y gestión de Zonas de Bajas Emisiones"
+msgstr ""
+
+#: templates/zbe/home.html:42
+msgid "Polígonos"
+msgstr ""
+
+#: templates/zbe/home.html:44
+msgid "Dibujar ZBE"
+msgstr ""
+
+#: templates/zbe/home.html:53
+msgid "No hay ninguna zona trazada. Pulsa en dibujar para empezar."
+msgstr ""
+
+#: templates/zbe/home.html:88
+#, fuzzy
+#| msgid "Guardar Reseña"
+msgid "Guardar Zonas"
+msgstr "Gorde Iritzia"

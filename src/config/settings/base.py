@@ -35,12 +35,15 @@ INSTALLED_APPS = [
     'django_cotton',
     'django_extensions',
     'ninja',
+    'django_celery_beat',
     
     # Allauth
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.instagram',
+    'allauth.socialaccount.providers.facebook',
 
     # Local apps
     'apps.core',
@@ -122,7 +125,28 @@ SOCIALACCOUNT_PROVIDERS = {
             'access_type': 'online',
         },
         'OAUTH_PKCE_ENABLED': True,
-    }
+    },
+    'instagram': {
+        'SCOPE': ['user_profile'],
+    },
+    'facebook': {
+        'METHOD': 'oauth2',
+        'SCOPE': ['email', 'public_profile'],
+        'AUTH_PARAMS': {'auth_type': 'reauthenticate'},
+        'INIT_PARAMS': {'cookie': True},
+        'FIELDS': [
+            'id',
+            'first_name',
+            'last_name',
+            'name',
+            'email',
+            'picture',
+            'short_name',
+        ],
+        'VERIFIED_EMAIL': False,
+        'VERSION': 'v19.0',
+        'OAUTH_PKCE_ENABLED': True,
+    },
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -169,3 +193,14 @@ LOGIN_REDIRECT_URL = 'home'
 # Weather APIs
 EUSKALMET_API_KEY = env('EUSKALMET_API_KEY', default='')
 OPENWEATHERMAP_API_KEY = env('OPENWEATHERMAP_API_KEY', default='')
+
+# Celery
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://redis:6379/0')
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://redis:6379/1')
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 60 * 30  # 30 min hard limit
+CELERY_TASK_SOFT_TIME_LIMIT = 60 * 25
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'

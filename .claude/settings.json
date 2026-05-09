@@ -40,7 +40,12 @@
       "PowerShell(docker compose exec -T web python /app/_translate_po.py)",
       "PowerShell(docker compose exec -T web python manage.py compilemessages 2>&1)",
       "PowerShell(tail -20)",
-      "PowerShell(docker compose exec -T web python manage.py compilemessages)"
+      "PowerShell(docker compose exec -T web python manage.py compilemessages)",
+      "Bash(curl -s \"http://localhost:8000/eu/kultur/api/weather.json?lat=43.18&lng=-2.27\")",
+      "Bash(curl -s \"http://localhost:8000/\" -L -I)",
+      "Bash(curl -s \"http://localhost:8000/eu/\" -I)",
+      "Bash(curl -s \"http://localhost:8000/kultur/api/weather.json?lat=43.18&lng=-2.27\")",
+      "Bash(curl -s \"http://localhost:8000/kultur/\")"
     ],
     "read": [
       "*"

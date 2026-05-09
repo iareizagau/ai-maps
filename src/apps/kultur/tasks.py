@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
     max_retries=3,
 )
 def load_events(self):
-    logger.info('kultur.load_events: starting')
+    logger.info('kultur.load_events: starting load_events')
     call_command('load_events')
+    logger.info('kultur.load_events: starting geocode_venues')
+    call_command('geocode_venues')
     logger.info('kultur.load_events: done')

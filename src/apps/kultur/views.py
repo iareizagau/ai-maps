@@ -1,10 +1,14 @@
-from datetime import timedelta
+from collections import defaultdict
+from datetime import datetime, timedelta
 
+import requests
 from django.conf import settings
+from django.core.cache import cache
 from django.db.models import BooleanField, Case, Q, Value, When
-from django.http import JsonResponse
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
+from django.views.decorators.http import require_GET
 
 from .models import CulturalEvent
 
@@ -13,10 +17,88 @@ def map_view(request):
     """
     Main view that renders the Leaflet map.
     """
-    context = {
-        'OPENWEATHERMAP_API_KEY': settings.OPENWEATHERMAP_API_KEY
+    return render(request, 'kultur/map.html')
+
+
+_OWM_ICONS = {
+    'Clear': '☀️', 'Clouds': '☁️', 'Rain': '🌧️', 'Drizzle': '🌦️',
+    'Snow': '❄️', 'Thunderstorm': '⛈️', 'Mist': '🌫️', 'Fog': '🌫️',
+}
+
+
+@require_GET
+def weather_forecast(request):
+    """
+    Server-side proxy for OpenWeatherMap 5-day/3h forecast.
+
+    Aggregates 3h slots into daily summaries and caches per ~11km grid cell
+    so the API key never reaches the browser and a region's forecast is
+    fetched at most once per hour regardless of concurrent users.
+    """
+    try:
+        lat = round(float(request.GET['lat']), 1)
+        lng = round(float(request.GET['lng']), 1)
+    except (KeyError, ValueError):
+        return HttpResponseBadRequest('lat/lng required')
+
+    cache_key = f'kultur:forecast:{lat}:{lng}'
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return JsonResponse(cached)
+
+    api_key = settings.OPENWEATHERMAP_API_KEY
+    if not api_key:
+        return JsonResponse({'days': [], 'location': '', 'now': None})
+
+    try:
+        r = requests.get(
+            'https://api.openweathermap.org/data/2.5/forecast',
+            params={'lat': lat, 'lon': lng, 'units': 'metric', 'appid': api_key},
+            timeout=5,
+        )
+        r.raise_for_status()
+        data = r.json()
+    except requests.RequestException:
+        return JsonResponse({'days': [], 'location': '', 'now': None})
+
+    by_day = defaultdict(list)
+    for slot in data.get('list', []):
+        dt = datetime.fromtimestamp(slot['dt'])
+        by_day[dt.date().isoformat()].append(slot)
+
+    days = []
+    for date_key in sorted(by_day.keys())[:6]:
+        slots = by_day[date_key]
+        temps = [s['main']['temp'] for s in slots]
+        midday = min(slots, key=lambda s: abs(datetime.fromtimestamp(s['dt']).hour - 13))
+        cond = midday['weather'][0]['main'] if midday.get('weather') else 'Clouds'
+        rain_mm = sum(s.get('rain', {}).get('3h', 0) for s in slots)
+        days.append({
+            'date': date_key,
+            'temp_max': round(max(temps)),
+            'temp_min': round(min(temps)),
+            'condition': cond,
+            'icon': _OWM_ICONS.get(cond, '⛅'),
+            'rain_mm': round(rain_mm, 1),
+        })
+
+    first = data.get('list', [{}])[0]
+    now = None
+    if first:
+        cond = first.get('weather', [{}])[0].get('main', 'Clouds')
+        now = {
+            'temp': round(first.get('main', {}).get('temp', 0)),
+            'condition': cond,
+            'icon': _OWM_ICONS.get(cond, '⛅'),
+        }
+
+    payload = {
+        'days': days,
+        'location': data.get('city', {}).get('name', ''),
+        'now': now,
     }
-    return render(request, 'kultur/map.html', context)
+    cache.set(cache_key, payload, 60 * 60)
+    return JsonResponse(payload)
 
 
 # Server-side detection of "family-friendly" events.
@@ -39,16 +121,16 @@ def events_geojson(request):
     """
     Returns upcoming CulturalEvents as GeoJSON.
 
-    Filters past events server-side and ships only fields actually used by
-    the map UI (popup + card + JS filters). Fields like description/url are
-    intentionally excluded — none are rendered.
+    Coordinates come from the linked Venue (real geocoded position when
+    available, municipal centroid as fallback). Falls back to the legacy
+    CulturalEvent.location only for events with no venue link yet.
     """
-    cutoff = timezone.localdate() - timedelta(days=30)
+    cutoff = timezone.localdate()
 
     qs = (
         CulturalEvent.objects
-        .exclude(location__isnull=True)
         .filter(start_date__date__gte=cutoff)
+        .filter(Q(venue__isnull=False) | Q(location__isnull=False))
         .annotate(
             is_family=Case(
                 When(_IS_FAMILY_Q, then=Value(True)),
@@ -59,6 +141,7 @@ def events_geojson(request):
         .values(
             'id',
             'location',
+            'venue__location',
             'title_es', 'title_eu',
             'event_type_es', 'event_type_eu',
             'venue_name_es', 'venue_name_eu',
@@ -77,7 +160,10 @@ def events_geojson(request):
             'id': row['id'],
             'geometry': {
                 'type': 'Point',
-                'coordinates': [row['location'].x, row['location'].y],
+                'coordinates': [
+                    (row['venue__location'] or row['location']).x,
+                    (row['venue__location'] or row['location']).y,
+                ],
             },
             'properties': {
                 'title_es': row['title_es'],

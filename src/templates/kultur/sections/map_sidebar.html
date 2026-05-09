@@ -14,10 +14,10 @@
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                         </button>
                     </div>
-                    <div id="weather-widget" class="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 rounded-full border border-indigo-100 dark:border-indigo-800/50">
-                        <span class="text-[10px] font-bold text-indigo-700 dark:text-indigo-300" id="weather-temp">14°C</span>
-                        <span id="weather-icon" class="text-xs">🌧️</span>
-                    </div>
+                    <button type="button" onclick="toggleWeatherSheet()" class="weather-widget-trigger flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 rounded-full border border-indigo-100 dark:border-indigo-800/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors cursor-pointer">
+                        <span class="text-[10px] font-bold text-indigo-700 dark:text-indigo-300" id="weather-temp">--°</span>
+                        <span id="weather-icon" class="text-xs">⛅</span>
+                    </button>
                 </div>
             </div>
             

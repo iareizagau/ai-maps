@@ -1,6 +1,48 @@
 from django.contrib.gis.db import models
 from django.utils.translation import gettext_lazy as _
 
+
+class Venue(models.Model):
+    """
+    Lugar físico donde ocurren eventos culturales.
+
+    El API de Euskadi solo entrega el centroide municipal por evento, así que
+    geocodificamos el venue por separado (vía Nominatim) y enlazamos los eventos
+    por FK. `geocoded_at IS NULL` señala "pendiente de geocoding real": en ese
+    caso `location` contiene el centroide del municipio como fallback.
+    """
+
+    SOURCE_NOMINATIM = 'nominatim'
+    SOURCE_MUNICIPALITY = 'municipality_centroid'
+    SOURCE_MANUAL = 'manual'
+
+    name_es = models.CharField(_("Nombre (ES)"), max_length=500)
+    name_eu = models.CharField(_("Nombre (EU)"), max_length=500, blank=True, default='')
+    municipality = models.CharField(_("Municipio"), max_length=255, db_index=True)
+    province = models.CharField(_("Provincia"), max_length=255, blank=True, default='')
+    location = models.PointField(_("Ubicación"), srid=4326, spatial_index=True)
+    geocoding_source = models.CharField(
+        _("Origen geocoding"), max_length=32, default=SOURCE_MUNICIPALITY,
+    )
+    geocoded_at = models.DateTimeField(_("Geocodificado en"), null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Lugar")
+        verbose_name_plural = _("Lugares")
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name_es', 'municipality'],
+                name='uniq_venue_name_municipality',
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.name_es} ({self.municipality})"
+
+
 class CulturalEvent(models.Model):
     source_id = models.CharField(_("ID Origen"), max_length=255, unique=True, help_text=_("ID from the Euskadi API"))
     title_es = models.CharField(_("Título (ES)"), max_length=500, blank=True, null=True)
@@ -36,7 +78,16 @@ class CulturalEvent(models.Model):
 
     # GeoDjango PointField for location
     location = models.PointField(_("Ubicación"), srid=4326, blank=True, null=True)
-    
+
+    venue = models.ForeignKey(
+        Venue,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='events',
+        verbose_name=_("Lugar"),
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

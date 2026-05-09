@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from django.core.management.base import BaseCommand
 from django.contrib.gis.geos import Point
-from apps.kultur.models import CulturalEvent
+from apps.kultur.models import CulturalEvent, Venue
 
 logger = logging.getLogger(__name__)
 
@@ -122,6 +122,19 @@ class Command(BaseCommand):
         images = item.get('images', [])
         image_url = images[0].get('imageUrl') if images else ''
 
+        venue = None
+        if venue_es and location is not None:
+            venue, _ = Venue.objects.get_or_create(
+                name_es=venue_es.strip()[:500],
+                municipality=(municipality_es or '').strip()[:255],
+                defaults={
+                    'name_eu': (venue_eu or '').strip()[:500],
+                    'province': (province or '').strip()[:255],
+                    'location': location,
+                    'geocoding_source': Venue.SOURCE_MUNICIPALITY,
+                },
+            )
+
         _event, created = CulturalEvent.objects.update_or_create(
             source_id=str(source_id),
             defaults={
@@ -148,6 +161,7 @@ class Command(BaseCommand):
                 'purchase_url_eu': purchase_url_eu[:1000] if purchase_url_eu else None,
                 'image_url': image_url[:1000] if image_url else None,
                 'location': location,
+                'venue': venue,
             }
         )
         return created

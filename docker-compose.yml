@@ -26,6 +26,8 @@ services:
 
   web:
     build: .
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
     depends_on:
       db:
         condition: service_healthy
@@ -35,6 +37,8 @@ services:
   worker:
     build: .
     command: celery -A config worker -l info
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
     depends_on:
       db:
         condition: service_healthy
@@ -44,6 +48,8 @@ services:
   beat:
     build: .
     command: celery -A config beat -l info
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
     depends_on:
       db:
         condition: service_healthy

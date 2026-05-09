@@ -687,8 +687,12 @@
     Array.from(cats)
       .sort()
       .forEach((cat) => {
+        const colors = categoryColors[cat] || categoryColors.default;
         const btn = document.createElement("button");
-        btn.className = "filter-btn inactive px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400";
+        // No `inactive`/`active` here: those classes carry hard-coded colors
+        // in map_styles.html that would override the per-category Tailwind
+        // classes we want. State is tracked via `data-filter` only.
+        btn.className = `filter-btn px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border-2 border-current ${colors.text} bg-white dark:bg-slate-900 hover:scale-105`;
 
         const sample = allFeatures.find(
           (f) => f.properties.event_type_es === cat,
@@ -698,6 +702,8 @@
 
         btn.innerHTML = `<span class="opacity-70">${icon}</span> <span>${label}</span>`;
         btn.onclick = () => setCategory(cat);
+        btn.onmouseenter = () => previewCategory(cat);
+        btn.onmouseleave = () => clearPreview();
         btn.dataset.filter = cat;
         container.appendChild(btn);
       });
@@ -709,11 +715,12 @@
       .querySelectorAll("#category-filters .filter-btn")
       .forEach((btn) => {
         const btnCat = btn.dataset.filter;
+        const colors = categoryColors[btnCat] || categoryColors.default;
 
         if (btnCat === cat) {
-          btn.className = `filter-btn active px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-white shadow-lg bg-primary border-primary scale-105`;
+          btn.className = `filter-btn px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${colors.bg} text-white border-2 border-transparent shadow-lg scale-105`;
         } else {
-          btn.className = `filter-btn inactive px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400`;
+          btn.className = `filter-btn px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border-2 border-current ${colors.text} bg-white dark:bg-slate-900 hover:scale-105`;
         }
       });
 
@@ -990,7 +997,7 @@
           : '';
         const icon = L.divIcon({
           className: "custom-map-marker",
-          html: `<div class="relative"><div class="${colors.bg} text-white p-1.5 rounded-full shadow-lg border-2 border-white dark:border-slate-800 transition-transform hover:scale-110 flex items-center justify-center w-9 h-9">${svgIcon}</div>${badge}</div>`,
+          html: `<div class="relative" data-cat="${cat}"><div class="${colors.bg} text-white p-1.5 rounded-full shadow-lg border-2 border-white dark:border-slate-800 transition-transform hover:scale-110 flex items-center justify-center w-9 h-9">${svgIcon}</div>${badge}</div>`,
           iconSize: [36, 36],
           iconAnchor: [18, 18],
           popupAnchor: [0, -18],
@@ -1285,6 +1292,30 @@
   window.closeVenueSheet = function () {
     document.getElementById('venue-sheet')?.classList.add('hidden');
     document.getElementById('venue-sheet-backdrop')?.classList.add('hidden');
+  };
+
+  window.previewCategory = function (cat) {
+    // Skip on touch devices: hover-driven affordances are noise on mobile.
+    if (window.matchMedia('(hover: none)').matches) return;
+    const pane = document.querySelector('.leaflet-marker-pane');
+    if (!pane) return;
+    pane.classList.add('preview-mode');
+    document.querySelectorAll('.custom-map-marker').forEach((el) => {
+      const inner = el.querySelector('[data-cat]');
+      if (inner && inner.dataset.cat === cat) {
+        el.dataset.active = 'true';
+      } else {
+        el.removeAttribute('data-active');
+      }
+    });
+  };
+
+  window.clearPreview = function () {
+    const pane = document.querySelector('.leaflet-marker-pane');
+    pane?.classList.remove('preview-mode');
+    document
+      .querySelectorAll('.custom-map-marker[data-active]')
+      .forEach((el) => el.removeAttribute('data-active'));
   };
 
   window.goToEventCard = function (eventId) {

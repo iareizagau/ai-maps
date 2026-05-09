@@ -39,7 +39,8 @@
       "PowerShell(docker compose exec -T web ls /app)",
       "PowerShell(docker compose exec -T web python /app/_translate_po.py)",
       "PowerShell(docker compose exec -T web python manage.py compilemessages 2>&1)",
-      "PowerShell(tail -20)"
+      "PowerShell(tail -20)",
+      "PowerShell(docker compose exec -T web python manage.py compilemessages)"
     ],
     "read": [
       "*"

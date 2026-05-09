@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-09 11:44+0200\n"
+"POT-Creation-Date: 2026-05-09 16:48+0200\n"
 "PO-Revision-Date: 2026-04-27 23:15+0200\n"
 "Last-Translator: Antigravity AI\n"
 "Language-Team: Spanish\n"
@@ -16,6 +16,74 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: apps/core/pulse.py:91
+msgid "Excelente"
+msgstr "Excelente"
+
+#: apps/core/pulse.py:93 templates/sbk/passport.html:299
+msgid "Buena"
+msgstr "Buena"
+
+#: apps/core/pulse.py:95
+msgid "Moderada"
+msgstr "Moderada"
+
+#: apps/core/pulse.py:97
+msgid "Baja"
+msgstr "Baja"
+
+#: apps/core/pulse.py:102
+#, python-format
+msgid "Aire en %(city)s: %(label)s"
+msgstr "Aire en %(city)s: %(label)s"
+
+#: apps/core/pulse.py:103
+#, python-format
+msgid "Eco-score %(s)s/100"
+msgstr "Eco-score %(s)s/100"
+
+#: apps/core/pulse.py:120 apps/core/pulse.py:142
+msgid "Evento"
+msgstr "Evento"
+
+#: apps/core/pulse.py:123
+#, python-format
+msgid "%(n)s eventos hoy"
+msgstr "%(n)s eventos hoy"
+
+#: apps/core/pulse.py:132 apps/core/pulse.py:164
+msgid "Esta noche"
+msgstr "Esta noche"
+
+#: apps/core/pulse.py:176
+#, python-format
+msgid "Próxima social: %(s)s"
+msgstr "Próxima social: %(s)s"
+
+#: apps/core/pulse.py:196
+#, python-format
+msgid "en %(r)s"
+msgstr "en %(r)s"
+
+#: apps/core/pulse.py:206
+msgid "ahora"
+msgstr "ahora"
+
+#: apps/core/pulse.py:208
+#, python-format
+msgid "hace %(m)smin"
+msgstr "hace %(m)smin"
+
+#: apps/core/pulse.py:210
+#, python-format
+msgid "hace %(h)sh"
+msgstr "hace %(h)sh"
+
+#: apps/core/pulse.py:211
+#, python-format
+msgid "hace %(d)sd"
+msgstr "hace %(d)sd"
 
 #: apps/core/templates/core/partials/following_list.html:29
 msgid "Following since"
@@ -440,9 +508,21 @@ msgstr "Descubrir Expertos"
 msgid "People you are currently following across different apps."
 msgstr "Personas a las que sigues actualmente en diferentes apps."
 
+#: templates/cotton/molecules/app_launcher_tile.html:5
+msgid "Abrir"
+msgstr "Abrir"
+
 #: templates/cotton/molecules/dish_card.html:20
 msgid "Reviews"
 msgstr "Valoraciones"
+
+#: templates/cotton/molecules/pulse_card.html:29
+msgid "Live"
+msgstr "En vivo"
+
+#: templates/cotton/molecules/pulse_card.html:48
+msgid "Ver detalle"
+msgstr "Ver detalle"
 
 #: templates/cotton/molecules/restaurant_card.html:40
 msgid "Featured Dishes"
@@ -743,61 +823,61 @@ msgstr "Ver post original"
 msgid "Hasiera"
 msgstr "Inicio"
 
-#: templates/home.html:16
-msgid "¿Qué quieres encontrar hoy? (ej. Aire, Pintxos, Museos...)"
-msgstr "¿Qué quieres encontrar hoy? (ej. Aire, Pintxos, Museos...)"
+#: templates/home.html:8
+msgid "Euskal Herria,"
+msgstr "Euskal Herria,"
 
-#: templates/home.html:23
+#: templates/home.html:9
+msgid "hoy."
+msgstr "hoy."
+
+#: templates/home.html:12
+msgid "Pintxos, cultura, aire, cimas y baile. Un solo mapa."
+msgstr "Pintxos, cultura, aire, cimas y baile. Un solo mapa."
+
+#: templates/home.html:21
+msgid "Aire, gildas, conciertos…"
+msgstr "Aire, gildas, conciertos…"
+
+#: templates/home.html:22
+msgid "Búsqueda global"
+msgstr "Búsqueda global"
+
+#: templates/home.html:34
 msgid "Tendencias:"
 msgstr "Tendencias:"
 
-#: templates/home.html:43
-msgid "Activo"
-msgstr "Activo"
+#: templates/home.html:35
+msgid "Aire"
+msgstr "Aire"
 
-#: templates/home.html:53
-msgid "Ecosistema"
-msgstr "Ecosistema"
+#: templates/home.html:36
+msgid "Cimas"
+msgstr "Cimas"
 
-#: templates/home.html:54
-msgid "Más allá de los mapas"
-msgstr "Más allá de los mapas"
+#: templates/home.html:37
+msgid "EstaNoche"
+msgstr "EstaNoche"
 
-#: templates/home.html:57
-msgid ""
-"Estamos construyendo una infraestructura de datos abierta para que cualquier"
-" ciudadano u organización pueda crear valor sobre el territorio."
-msgstr ""
-"Estamos construyendo una infraestructura de datos abierta para que cualquier"
-" ciudadano u organización pueda crear valor sobre el territorio."
+#: templates/home.html:38
+msgid "Festak"
+msgstr "Festak"
 
-#: templates/home.html:65
-msgid "Bidaiak"
-msgstr "Viajes"
+#: templates/home.html:47
+msgid "Tus apps"
+msgstr "Tus apps"
 
-#: templates/home.html:66
-msgid "Planificador de rutas y logística."
-msgstr "Planificador de rutas y logística."
+#: templates/home.html:67
+msgid "Hoy en Euskal Herria"
+msgstr "Hoy en Euskal Herria"
 
-#: templates/home.html:73
-msgid "Data Studio"
-msgstr "Data Studio"
+#: templates/home.html:71
+msgid "En vivo"
+msgstr "En vivo"
 
-#: templates/home.html:74
-msgid "Analítica avanzada territorial."
-msgstr "Analítica avanzada territorial."
-
-#: templates/home.html:76 templates/home.html:85
+#: templates/home.html:94
 msgid "Próximamente"
 msgstr "Próximamente"
-
-#: templates/home.html:82
-msgid "API OpenData"
-msgstr "API OpenData"
-
-#: templates/home.html:83
-msgid "Acceso programático para devs."
-msgstr "Acceso programático para desarrolladores."
 
 #: templates/kultur/sections/map_container.html:12
 msgid "Busca eventos..."
@@ -1676,10 +1756,6 @@ msgstr "Calidad de la Música / DJs"
 #: templates/sbk/passport.html:299
 msgid "Aburrida"
 msgstr "Aburrida"
-
-#: templates/sbk/passport.html:299
-msgid "Buena"
-msgstr "Buena"
 
 #: templates/sbk/passport.html:299
 msgid "Temazos"

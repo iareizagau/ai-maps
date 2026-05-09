@@ -1,0 +1,22 @@
+{
+  "name": "maps-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend asset pipeline for Maps.eus (Tailwind + htmx + Alpine, self-hosted)",
+  "scripts": {
+    "build:css": "tailwindcss -i ./src/static/css/source.css -o ./src/static/css/app.css --minify",
+    "watch:css": "tailwindcss -i ./src/static/css/source.css -o ./src/static/css/app.css --watch",
+    "copy:js": "node ./scripts/copy-vendor-js.mjs",
+    "build": "npm run copy:js && npm run build:css",
+    "watch": "npm run copy:js && npm run watch:css"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17"
+  },
+  "dependencies": {
+    "alpinejs": "^3.14.8",
+    "htmx.org": "^1.9.12"
+  }
+}

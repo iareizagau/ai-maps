@@ -7,7 +7,15 @@
       "Bash(docker compose *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "PowerShell($env:DOCKER_BUILDKIT=1; $env:COMPOSE_DOCKER_CLI_BUILD=1; docker compose -f docker-compose.yml build web 2>&1 | Select-Object -Last 80)"
+      "PowerShell($env:DOCKER_BUILDKIT=1; $env:COMPOSE_DOCKER_CLI_BUILD=1; docker compose -f docker-compose.yml build web 2>&1 | Select-Object -Last 80)",
+      "Bash(curl -fsSL -o c:/Users/imanol/projects/imanol/saas/maps/src/static/fonts/Inter-roman.var.woff2 https://rsms.me/inter/font-files/Inter-roman.var.woff2)",
+      "Bash(curl -fsSL -o c:/Users/imanol/projects/imanol/saas/maps/src/static/fonts/Inter-italic.var.woff2 https://rsms.me/inter/font-files/Inter-italic.var.woff2)",
+      "Bash(curl -fsSL -I https://rsms.me/inter/inter.css)",
+      "Bash(curl -fsSL https://rsms.me/inter/inter.css)",
+      "Bash(curl -fsSL -o c:/Users/imanol/projects/imanol/saas/maps/src/static/fonts/InterVariable.woff2 \"https://rsms.me/inter/font-files/InterVariable.woff2?v=4.1\")",
+      "Bash(curl -fsSL -o c:/Users/imanol/projects/imanol/saas/maps/src/static/fonts/InterVariable-Italic.woff2 \"https://rsms.me/inter/font-files/InterVariable-Italic.woff2?v=4.1\")",
+      "Bash(curl -fsSL -o c:/Users/imanol/projects/imanol/saas/maps/src/static/fonts/JetBrainsMono-Variable.woff2 \"https://unpkg.com/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2\")",
+      "Bash(npm --version)"
     ],
     "read": [
       "*"

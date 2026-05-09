@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    @font-face {
+        font-family: 'Inter';
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: swap;
+        src: url('../fonts/InterVariable.woff2') format('woff2-variations'),
+             url('../fonts/InterVariable.woff2') format('woff2');
+    }
+    @font-face {
+        font-family: 'Inter';
+        font-style: italic;
+        font-weight: 100 900;
+        font-display: swap;
+        src: url('../fonts/InterVariable-Italic.woff2') format('woff2-variations'),
+             url('../fonts/InterVariable-Italic.woff2') format('woff2');
+    }
+    @font-face {
+        font-family: 'JetBrains Mono';
+        font-style: normal;
+        font-weight: 100 800;
+        font-display: swap;
+        src: url('../fonts/JetBrainsMono-Variable.woff2') format('woff2-variations'),
+             url('../fonts/JetBrainsMono-Variable.woff2') format('woff2');
+    }
+
+    :root {
+        font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+    }
+
+    body { letter-spacing: -0.011em; }
+    h1, h2, h3, h4, h5, h6 { letter-spacing: -0.022em; }
+}
+
+@layer utilities {
+    [x-cloak] { display: none !important; }
+}
+
+@layer components {
+    .glass {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .dark .glass {
+        background: rgba(17, 24, 39, 0.7);
+    }
+}

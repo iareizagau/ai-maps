@@ -235,28 +235,24 @@ msgid "Sushi"
 msgstr "Sushi"
 
 #: apps/zbe/models.py:5
-#, fuzzy
-#| msgid "Nombre de la fiesta / local"
 msgid "Nombre de la Zona"
-msgstr "Nombre de la fiesta / local"
+msgstr "Nombre de la Zona"
 
 #: apps/zbe/models.py:6
-#, fuzzy
-#| msgid "Descripción (ES)"
 msgid "Descripción"
-msgstr "Descripción (ES)"
+msgstr "Descripción"
 
 #: apps/zbe/models.py:7
 msgid "Geometría"
-msgstr ""
+msgstr "Geometría"
 
 #: apps/zbe/models.py:13
 msgid "Zona de Bajas Emisiones"
-msgstr ""
+msgstr "Zona de Bajas Emisiones"
 
 #: apps/zbe/models.py:14 templates/zbe/home.html:2
 msgid "Zonas de Bajas Emisiones"
-msgstr ""
+msgstr "Zonas de Bajas Emisiones"
 
 #: templates/account/login.html:5 templates/account/login.html:67
 #: templates/account/signup.html:66 templates/socialaccount/login.html:4
@@ -462,21 +458,17 @@ msgid "View Details"
 msgstr "Ver detalles"
 
 #: templates/cotton/organisms/climbing_map.html:15
-#, fuzzy
-#| msgid "Eventos Activos"
 msgid "Zonas Activas"
-msgstr "Eventos activos"
+msgstr "Zonas Activas"
 
 #: templates/cotton/organisms/climbing_map.html:85
 #: templates/gailur/home.html:614
 msgid "Zona de Escalada"
-msgstr ""
+msgstr "Zona de Escalada"
 
 #: templates/cotton/organisms/climbing_map.html:89
-#, fuzzy
-#| msgid "Ver eventos"
 msgid "Ver sectores"
-msgstr "Ver eventos"
+msgstr "Ver sectores"
 
 #: templates/cotton/organisms/leaderboard.html:12
 msgid "The podium is empty. Start rating!"
@@ -513,137 +505,123 @@ msgstr "Registrarse"
 
 #: templates/gailur/crag_detail.html:16
 msgid "Zonas de Escalada"
-msgstr ""
+msgstr "Zonas de Escalada"
 
 #: templates/gailur/crag_detail.html:29
 msgid "Sectores"
-msgstr ""
+msgstr "Sectores"
 
 #: templates/gailur/crag_detail.html:36 templates/gailur/route_detail.html:101
 msgid "Cómo llegar"
-msgstr ""
+msgstr "Cómo llegar"
 
 #: templates/gailur/crag_detail.html:54
-#, fuzzy
-#| msgid "Valoración General"
 msgid "Información General"
-msgstr "Valoración General"
+msgstr "Información General"
 
 #: templates/gailur/crag_detail.html:62
 msgid "Acceso y Aproximación"
-msgstr ""
+msgstr "Acceso y Aproximación"
 
 #: templates/gailur/crag_detail.html:76
 msgid "Sectores y Vías"
-msgstr ""
+msgstr "Sectores y Vías"
 
 #: templates/gailur/crag_detail.html:89 templates/gailur/home.html:76
 msgid "Vías"
-msgstr ""
+msgstr "Vías"
 
 #: templates/gailur/crag_detail.html:97
 msgid "Nombre"
-msgstr ""
+msgstr "Nombre"
 
 #: templates/gailur/crag_detail.html:98
 msgid "Grado"
-msgstr ""
+msgstr "Grado"
 
 #: templates/gailur/crag_detail.html:99
 msgid "Tipo"
-msgstr ""
+msgstr "Tipo"
 
 #: templates/gailur/crag_detail.html:118 templates/gailur/route_detail.html:26
 msgid "Equipada"
-msgstr ""
+msgstr "Equipada"
 
 #: templates/gailur/crag_detail.html:118 templates/gailur/route_detail.html:26
-#, fuzzy
-#| msgid "Comentario adicional"
 msgid "Tradicional"
-msgstr "Comentario adicional"
+msgstr "Tradicional"
 
 #: templates/gailur/crag_detail.html:151
-#, fuzzy
-#| msgid "Raciones"
 msgid "Recomendaciones"
-msgstr "Raciones"
+msgstr "Recomendaciones"
 
 #: templates/gailur/crag_detail.html:158
 msgid "Mejor época"
-msgstr ""
+msgstr "Mejor época"
 
 #: templates/gailur/crag_detail.html:159
 msgid "Primavera y Otoño"
-msgstr ""
+msgstr "Primavera y Otoño"
 
 #: templates/gailur/crag_detail.html:167
 msgid "Agua"
-msgstr ""
+msgstr "Agua"
 
 #: templates/gailur/crag_detail.html:168
 msgid "Fuente en el parking"
-msgstr ""
+msgstr "Fuente en el parking"
 
 #: templates/gailur/home.html:2
 msgid "Mendia eta Escalada"
-msgstr ""
+msgstr "Montaña y Escalada"
 
 #: templates/gailur/home.html:48
 msgid "Mendi taldeen irteerak eta eskalada gidak"
-msgstr ""
+msgstr "Salidas de grupos de montaña y guías de escalada"
 
 #: templates/gailur/home.html:56
-#, fuzzy
-#| msgid "Busca eventos, salas o ciudades..."
 msgid "Buscar zonas, vías o salidas..."
-msgstr "Busca eventos, salas o ciudades..."
+msgstr "Buscar zonas, vías o salidas..."
 
 #: templates/gailur/home.html:69 templates/gailur/home.html:290
-#, fuzzy
-#| msgid "Personas"
 msgid "Zonas"
-msgstr "Personas"
+msgstr "Zonas"
 
 #: templates/gailur/home.html:83
 msgid "Salidas"
-msgstr ""
+msgstr "Salidas"
 
 #: templates/gailur/home.html:97
 msgid "Magic Mix"
-msgstr ""
+msgstr "Magic Mix"
 
 #: templates/gailur/home.html:100
 msgid "Finde Seguro"
-msgstr ""
+msgstr "Finde Seguro"
 
 #: templates/gailur/home.html:103
 msgid "Escapada"
-msgstr ""
+msgstr "Escapada"
 
 #: templates/gailur/home.html:118
 msgid "Para ordenar por cercanía, necesitamos tu ubicación."
-msgstr ""
+msgstr "Para ordenar por cercanía, necesitamos tu ubicación."
 
 #: templates/gailur/home.html:120
-#, fuzzy
-#| msgid "Ubicación"
 msgid "Compartir Ubicación"
-msgstr "Ubicación"
+msgstr "Compartir Ubicación"
 
 #: templates/gailur/home.html:156
-#, fuzzy
-#| msgid "Explorar el mapa"
 msgid "Localizar en mapa"
-msgstr "Explorar el mapa"
+msgstr "Localizar en mapa"
 
 #: templates/gailur/home.html:160
 msgid "Cómo llegar (Google Maps)"
-msgstr ""
+msgstr "Cómo llegar (Google Maps)"
 
 #: templates/gailur/home.html:165
 msgid "Match"
-msgstr ""
+msgstr "Match"
 
 #: templates/gailur/home.html:172 templates/sbk/pages/home/map.html:215
 msgid "Clima"
@@ -651,125 +629,115 @@ msgstr "Clima"
 
 #: templates/gailur/home.html:186
 msgid "Sáb"
-msgstr ""
+msgstr "Sáb"
 
 #: templates/gailur/home.html:190
 msgid "Dom"
-msgstr ""
+msgstr "Dom"
 
 #: templates/gailur/home.html:256
 msgid "Planea tu próxima aventura"
-msgstr ""
+msgstr "Planea tu próxima aventura"
 
 #: templates/gailur/home.html:268
-#, fuzzy
-#| msgid "Ver lista"
 msgid "Resetear vista"
-msgstr "Ver lista"
+msgstr "Resetear vista"
 
 #: templates/gailur/home.html:274
 msgid "Radar de Lluvia"
-msgstr ""
+msgstr "Radar de Lluvia"
 
 #: templates/gailur/home.html:277
 msgid "Mapa de Viento"
-msgstr ""
+msgstr "Mapa de Viento"
 
 #: templates/gailur/home.html:289
-#, fuzzy
-#| msgid "Euskara"
 msgid "Euskadi Map"
-msgstr "Euskara"
+msgstr "Mapa de Euskadi"
 
 #: templates/gailur/home.html:294
 msgid "Mejor Plan"
-msgstr ""
+msgstr "Mejor Plan"
 
 #: templates/gailur/home.html:295
 msgid "Cargando..."
-msgstr ""
+msgstr "Cargando..."
 
 #: templates/gailur/home.html:315
-#, fuzzy
-#| msgid "Actualizado"
 msgid "Analizando..."
-msgstr "Actualizado"
+msgstr "Analizando..."
 
 #: templates/gailur/home.html:521
 msgid "CONDICIONES TOP"
-msgstr ""
+msgstr "CONDICIONES TOP"
 
 #: templates/gailur/home.html:521
 msgid "VARIABLE"
-msgstr ""
+msgstr "VARIABLE"
 
 #: templates/gailur/home.html:521
 msgid "NO RECOMENDADO"
-msgstr ""
+msgstr "NO RECOMENDADO"
 
 #: templates/gailur/home.html:525
 msgid "Sábado Top"
-msgstr ""
+msgstr "Sábado Top"
 
 #: templates/gailur/home.html:525
 msgid "Ojo lluvia"
-msgstr ""
+msgstr "Ojo lluvia"
 
 #: templates/gailur/home.html:618
-#, fuzzy
-#| msgid "Explore Map"
 msgid "Explorar"
-msgstr "Explorar Mapa"
+msgstr "Explorar"
 
 #: templates/gailur/route_detail.html:38
 msgid "Haz clic para ampliar el croquis"
-msgstr ""
+msgstr "Haz clic para ampliar el croquis"
 
 #: templates/gailur/route_detail.html:51
 msgid "Sin croquis visual"
-msgstr ""
+msgstr "Sin croquis visual"
 
 #: templates/gailur/route_detail.html:68
 msgid "Reseña de la Vía"
-msgstr ""
+msgstr "Reseña de la Vía"
 
 #: templates/gailur/route_detail.html:71
 msgid "Disponible en ES / EU"
-msgstr ""
+msgstr "Disponible en ES / EU"
 
 #: templates/gailur/route_detail.html:85
-#, fuzzy
-#| msgid "Fecha Inicio"
 msgid "Ficha Técnica"
-msgstr "Fecha Inicio"
+msgstr "Ficha Técnica"
 
 #: templates/gailur/route_detail.html:88
 msgid "Zona"
-msgstr ""
+msgstr "Zona"
 
 #: templates/gailur/route_detail.html:92
 msgid "Sector"
-msgstr ""
+msgstr "Sector"
 
 #: templates/gailur/route_detail.html:96
-#, fuzzy
-#| msgid "Ubicación"
 msgid "Orientación"
-msgstr "Ubicación"
+msgstr "Orientación"
 
 #: templates/gailur/route_detail.html:106
 msgid "Sobre la Fuente"
-msgstr ""
+msgstr "Sobre la Fuente"
 
 #: templates/gailur/route_detail.html:108
 msgid ""
 "Esta reseña ha sido importada automáticamente desde Eskalatzen. Respeta "
 "siempre el entorno y las regulaciones locales."
 msgstr ""
+"Esta reseña ha sido importada automáticamente desde Eskalatzen. Respeta "
+"siempre el entorno y las regulaciones locales."
 
 #: templates/gailur/route_detail.html:111
 msgid "Ver post original"
-msgstr ""
+msgstr "Ver post original"
 
 #: templates/home.html:2
 msgid "Hasiera"
@@ -785,7 +753,7 @@ msgstr "Tendencias:"
 
 #: templates/home.html:43
 msgid "Activo"
-msgstr ""
+msgstr "Activo"
 
 #: templates/home.html:53
 msgid "Ecosistema"
@@ -797,11 +765,11 @@ msgstr "Más allá de los mapas"
 
 #: templates/home.html:57
 msgid ""
-"Estamos construyendo una infraestructura de datos abierta para que cualquier "
-"ciudadano u organización pueda crear valor sobre el territorio."
+"Estamos construyendo una infraestructura de datos abierta para que cualquier"
+" ciudadano u organización pueda crear valor sobre el territorio."
 msgstr ""
-"Estamos construyendo una infraestructura de datos abierta para que cualquier "
-"ciudadano u organización pueda crear valor sobre el territorio."
+"Estamos construyendo una infraestructura de datos abierta para que cualquier"
+" ciudadano u organización pueda crear valor sobre el territorio."
 
 #: templates/home.html:65
 msgid "Bidaiak"
@@ -1763,22 +1731,20 @@ msgstr "Continuar con %(provider_name)s"
 
 #: templates/zbe/home.html:35
 msgid "Diseño y gestión de Zonas de Bajas Emisiones"
-msgstr ""
+msgstr "Diseño y gestión de Zonas de Bajas Emisiones"
 
 #: templates/zbe/home.html:42
 msgid "Polígonos"
-msgstr ""
+msgstr "Polígonos"
 
 #: templates/zbe/home.html:44
 msgid "Dibujar ZBE"
-msgstr ""
+msgstr "Dibujar ZBE"
 
 #: templates/zbe/home.html:53
 msgid "No hay ninguna zona trazada. Pulsa en dibujar para empezar."
-msgstr ""
+msgstr "No hay ninguna zona trazada. Pulsa en dibujar para empezar."
 
 #: templates/zbe/home.html:88
-#, fuzzy
-#| msgid "Guardar Reseña"
 msgid "Guardar Zonas"
-msgstr "Guardar Reseña"
+msgstr "Guardar Zonas"

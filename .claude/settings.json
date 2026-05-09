@@ -33,7 +33,13 @@
       "PowerShell(docker compose exec -T web sh -c \"head -5 /app/.env\" 2>&1)",
       "PowerShell(docker compose exec -T web sh -c \"grep -i google /app/.env\" 2>&1)",
       "PowerShell(docker compose up -d --force-recreate web 2>&1)",
-      "PowerShell(docker compose exec -T web sh -c \"grep -E 'SITE_\\(DOMAIN|NAME\\)' /app/.env\" 2>&1)"
+      "PowerShell(docker compose exec -T web sh -c \"grep -E 'SITE_\\(DOMAIN|NAME\\)' /app/.env\" 2>&1)",
+      "Bash(gh run *)",
+      "PowerShell(docker compose exec -T web ls /app/src/_translate_po.py)",
+      "PowerShell(docker compose exec -T web ls /app)",
+      "PowerShell(docker compose exec -T web python /app/_translate_po.py)",
+      "PowerShell(docker compose exec -T web python manage.py compilemessages 2>&1)",
+      "PowerShell(tail -20)"
     ],
     "read": [
       "*"

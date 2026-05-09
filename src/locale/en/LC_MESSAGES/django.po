@@ -107,60 +107,48 @@ msgid "Fecha Fin"
 msgstr "End Date"
 
 #: apps/kultur/models.py:14
-#, fuzzy
-#| msgid "Lugar"
 msgid "Lugar (ES)"
-msgstr "Place"
+msgstr "Place (ES)"
 
 #: apps/kultur/models.py:15
-#, fuzzy
-#| msgid "Lugar"
 msgid "Lugar (EU)"
-msgstr "Place"
+msgstr "Place (EU)"
 
 #: apps/kultur/models.py:16
-#, fuzzy
-#| msgid "Municipio"
 msgid "Municipio (ES)"
-msgstr "Municipality"
+msgstr "Municipality (ES)"
 
 #: apps/kultur/models.py:17
-#, fuzzy
-#| msgid "Municipio"
 msgid "Municipio (EU)"
-msgstr "Municipality"
+msgstr "Municipality (EU)"
 
 #: apps/kultur/models.py:18
 msgid "Provincia"
 msgstr "Province"
 
 #: apps/kultur/models.py:19
-#, fuzzy
-#| msgid "Tipo/Categoría"
 msgid "Tipo/Categoría (ES)"
-msgstr "Type/Category"
+msgstr "Type/Category (ES)"
 
 #: apps/kultur/models.py:20
-#, fuzzy
-#| msgid "Tipo/Categoría"
 msgid "Tipo/Categoría (EU)"
-msgstr "Type/Category"
+msgstr "Type/Category (EU)"
 
 #: apps/kultur/models.py:22
 msgid "Horario (ES)"
-msgstr ""
+msgstr "Opening Hours (ES)"
 
 #: apps/kultur/models.py:23
 msgid "Horario (EU)"
-msgstr ""
+msgstr "Opening Hours (EU)"
 
 #: apps/kultur/models.py:24
 msgid "Precio (ES)"
-msgstr ""
+msgstr "Price (ES)"
 
 #: apps/kultur/models.py:25
 msgid "Precio (EU)"
-msgstr ""
+msgstr "Price (EU)"
 
 #: apps/kultur/models.py:28
 msgid "URL (ES)"
@@ -171,16 +159,12 @@ msgid "URL (EU)"
 msgstr "URL (EU)"
 
 #: apps/kultur/models.py:31
-#, fuzzy
-#| msgid "URL (ES)"
 msgid "URL Compra (ES)"
-msgstr "URL (ES)"
+msgstr "Purchase URL (ES)"
 
 #: apps/kultur/models.py:32
-#, fuzzy
-#| msgid "URL (EU)"
 msgid "URL Compra (EU)"
-msgstr "URL (EU)"
+msgstr "Purchase URL (EU)"
 
 #: apps/kultur/models.py:35
 msgid "Imagen"
@@ -252,25 +236,23 @@ msgstr "Sushi"
 
 #: apps/zbe/models.py:5
 msgid "Nombre de la Zona"
-msgstr ""
+msgstr "Zone Name"
 
 #: apps/zbe/models.py:6
-#, fuzzy
-#| msgid "Descripción (ES)"
 msgid "Descripción"
-msgstr "Description (ES)"
+msgstr "Description"
 
 #: apps/zbe/models.py:7
 msgid "Geometría"
-msgstr ""
+msgstr "Geometry"
 
 #: apps/zbe/models.py:13
 msgid "Zona de Bajas Emisiones"
-msgstr ""
+msgstr "Low Emission Zone"
 
 #: apps/zbe/models.py:14 templates/zbe/home.html:2
 msgid "Zonas de Bajas Emisiones"
-msgstr ""
+msgstr "Low Emission Zones"
 
 #: templates/account/login.html:5 templates/account/login.html:67
 #: templates/account/signup.html:66 templates/socialaccount/login.html:4
@@ -476,19 +458,17 @@ msgid "View Details"
 msgstr "View Details"
 
 #: templates/cotton/organisms/climbing_map.html:15
-#, fuzzy
-#| msgid "Eventos Activos"
 msgid "Zonas Activas"
-msgstr "Active Events"
+msgstr "Active Zones"
 
 #: templates/cotton/organisms/climbing_map.html:85
 #: templates/gailur/home.html:614
 msgid "Zona de Escalada"
-msgstr ""
+msgstr "Climbing Zone"
 
 #: templates/cotton/organisms/climbing_map.html:89
 msgid "Ver sectores"
-msgstr ""
+msgstr "View sectors"
 
 #: templates/cotton/organisms/leaderboard.html:12
 msgid "The podium is empty. Start rating!"
@@ -524,251 +504,239 @@ msgstr "Register"
 
 #: templates/gailur/crag_detail.html:16
 msgid "Zonas de Escalada"
-msgstr ""
+msgstr "Climbing Zones"
 
 #: templates/gailur/crag_detail.html:29
 msgid "Sectores"
-msgstr ""
+msgstr "Sectors"
 
 #: templates/gailur/crag_detail.html:36 templates/gailur/route_detail.html:101
 msgid "Cómo llegar"
-msgstr ""
+msgstr "How to get there"
 
 #: templates/gailur/crag_detail.html:54
 msgid "Información General"
-msgstr ""
+msgstr "General Information"
 
 #: templates/gailur/crag_detail.html:62
 msgid "Acceso y Aproximación"
-msgstr ""
+msgstr "Access and Approach"
 
 #: templates/gailur/crag_detail.html:76
 msgid "Sectores y Vías"
-msgstr ""
+msgstr "Sectors and Routes"
 
 #: templates/gailur/crag_detail.html:89 templates/gailur/home.html:76
 msgid "Vías"
-msgstr ""
+msgstr "Routes"
 
 #: templates/gailur/crag_detail.html:97
 msgid "Nombre"
-msgstr ""
+msgstr "Name"
 
 #: templates/gailur/crag_detail.html:98
 msgid "Grado"
-msgstr ""
+msgstr "Grade"
 
 #: templates/gailur/crag_detail.html:99
 msgid "Tipo"
-msgstr ""
+msgstr "Type"
 
 #: templates/gailur/crag_detail.html:118 templates/gailur/route_detail.html:26
 msgid "Equipada"
-msgstr ""
+msgstr "Equipped"
 
 #: templates/gailur/crag_detail.html:118 templates/gailur/route_detail.html:26
-#, fuzzy
-#| msgid "opcional"
 msgid "Tradicional"
-msgstr "optional"
+msgstr "Traditional"
 
 #: templates/gailur/crag_detail.html:151
-#, fuzzy
-#| msgid "Raciones"
 msgid "Recomendaciones"
-msgstr "Portions"
+msgstr "Recommendations"
 
 #: templates/gailur/crag_detail.html:158
 msgid "Mejor época"
-msgstr ""
+msgstr "Best season"
 
 #: templates/gailur/crag_detail.html:159
 msgid "Primavera y Otoño"
-msgstr ""
+msgstr "Spring and Autumn"
 
 #: templates/gailur/crag_detail.html:167
 msgid "Agua"
-msgstr ""
+msgstr "Water"
 
 #: templates/gailur/crag_detail.html:168
 msgid "Fuente en el parking"
-msgstr ""
+msgstr "Fountain at the parking"
 
 #: templates/gailur/home.html:2
 msgid "Mendia eta Escalada"
-msgstr ""
+msgstr "Mountains and Climbing"
 
 #: templates/gailur/home.html:48
 msgid "Mendi taldeen irteerak eta eskalada gidak"
-msgstr ""
+msgstr "Mountain group outings and climbing guides"
 
 #: templates/gailur/home.html:56
 msgid "Buscar zonas, vías o salidas..."
-msgstr ""
+msgstr "Search zones, routes or outings..."
 
 #: templates/gailur/home.html:69 templates/gailur/home.html:290
-#, fuzzy
-#| msgid "Personas"
 msgid "Zonas"
-msgstr "People"
+msgstr "Zones"
 
 #: templates/gailur/home.html:83
 msgid "Salidas"
-msgstr ""
+msgstr "Outings"
 
 #: templates/gailur/home.html:97
 msgid "Magic Mix"
-msgstr ""
+msgstr "Magic Mix"
 
 #: templates/gailur/home.html:100
 msgid "Finde Seguro"
-msgstr ""
+msgstr "Safe Weekend"
 
 #: templates/gailur/home.html:103
 msgid "Escapada"
-msgstr ""
+msgstr "Escape"
 
 #: templates/gailur/home.html:118
 msgid "Para ordenar por cercanía, necesitamos tu ubicación."
-msgstr ""
+msgstr "To sort by proximity, we need your location."
 
 #: templates/gailur/home.html:120
-#, fuzzy
-#| msgid "Ubicación"
 msgid "Compartir Ubicación"
-msgstr "Location"
+msgstr "Share Location"
 
 #: templates/gailur/home.html:156
 msgid "Localizar en mapa"
-msgstr ""
+msgstr "Locate on map"
 
 #: templates/gailur/home.html:160
 msgid "Cómo llegar (Google Maps)"
-msgstr ""
+msgstr "How to get there (Google Maps)"
 
 #: templates/gailur/home.html:165
 msgid "Match"
-msgstr ""
+msgstr "Match"
 
 #: templates/gailur/home.html:172 templates/sbk/pages/home/map.html:215
 msgid "Clima"
-msgstr ""
+msgstr "Weather"
 
 #: templates/gailur/home.html:186
 msgid "Sáb"
-msgstr ""
+msgstr "Sat"
 
 #: templates/gailur/home.html:190
 msgid "Dom"
-msgstr ""
+msgstr "Sun"
 
 #: templates/gailur/home.html:256
 msgid "Planea tu próxima aventura"
-msgstr ""
+msgstr "Plan your next adventure"
 
 #: templates/gailur/home.html:268
 msgid "Resetear vista"
-msgstr ""
+msgstr "Reset view"
 
 #: templates/gailur/home.html:274
 msgid "Radar de Lluvia"
-msgstr ""
+msgstr "Rain Radar"
 
 #: templates/gailur/home.html:277
 msgid "Mapa de Viento"
-msgstr ""
+msgstr "Wind Map"
 
 #: templates/gailur/home.html:289
 msgid "Euskadi Map"
-msgstr ""
+msgstr "Euskadi Map"
 
 #: templates/gailur/home.html:294
 msgid "Mejor Plan"
-msgstr ""
+msgstr "Best Plan"
 
 #: templates/gailur/home.html:295
 msgid "Cargando..."
-msgstr ""
+msgstr "Loading..."
 
 #: templates/gailur/home.html:315
 msgid "Analizando..."
-msgstr ""
+msgstr "Analyzing..."
 
 #: templates/gailur/home.html:521
 msgid "CONDICIONES TOP"
-msgstr ""
+msgstr "TOP CONDITIONS"
 
 #: templates/gailur/home.html:521
 msgid "VARIABLE"
-msgstr ""
+msgstr "VARIABLE"
 
 #: templates/gailur/home.html:521
 msgid "NO RECOMENDADO"
-msgstr ""
+msgstr "NOT RECOMMENDED"
 
 #: templates/gailur/home.html:525
 msgid "Sábado Top"
-msgstr ""
+msgstr "Top Saturday"
 
 #: templates/gailur/home.html:525
 msgid "Ojo lluvia"
-msgstr ""
+msgstr "Watch out for rain"
 
 #: templates/gailur/home.html:618
-#, fuzzy
-#| msgid "Explore Map"
 msgid "Explorar"
-msgstr "Explore Map"
+msgstr "Explore"
 
 #: templates/gailur/route_detail.html:38
 msgid "Haz clic para ampliar el croquis"
-msgstr ""
+msgstr "Click to enlarge the topo"
 
 #: templates/gailur/route_detail.html:51
 msgid "Sin croquis visual"
-msgstr ""
+msgstr "No visual topo"
 
 #: templates/gailur/route_detail.html:68
 msgid "Reseña de la Vía"
-msgstr ""
+msgstr "Route Review"
 
 #: templates/gailur/route_detail.html:71
 msgid "Disponible en ES / EU"
-msgstr ""
+msgstr "Available in ES / EU"
 
 #: templates/gailur/route_detail.html:85
-#, fuzzy
-#| msgid "Fecha Inicio"
 msgid "Ficha Técnica"
-msgstr "Start Date"
+msgstr "Technical Sheet"
 
 #: templates/gailur/route_detail.html:88
 msgid "Zona"
-msgstr ""
+msgstr "Zone"
 
 #: templates/gailur/route_detail.html:92
 msgid "Sector"
-msgstr ""
+msgstr "Sector"
 
 #: templates/gailur/route_detail.html:96
-#, fuzzy
-#| msgid "Ubicación"
 msgid "Orientación"
-msgstr "Location"
+msgstr "Orientation"
 
 #: templates/gailur/route_detail.html:106
 msgid "Sobre la Fuente"
-msgstr ""
+msgstr "About the Source"
 
 #: templates/gailur/route_detail.html:108
 msgid ""
 "Esta reseña ha sido importada automáticamente desde Eskalatzen. Respeta "
 "siempre el entorno y las regulaciones locales."
 msgstr ""
+"This review has been imported automatically from Eskalatzen. Always respect "
+"the environment and local regulations."
 
 #: templates/gailur/route_detail.html:111
 msgid "Ver post original"
-msgstr ""
+msgstr "View original post"
 
 #: templates/home.html:2
 msgid "Hasiera"
@@ -784,7 +752,7 @@ msgstr "Trending:"
 
 #: templates/home.html:43
 msgid "Activo"
-msgstr ""
+msgstr "Active"
 
 #: templates/home.html:53
 msgid "Ecosistema"
@@ -796,8 +764,8 @@ msgstr "Beyond the maps"
 
 #: templates/home.html:57
 msgid ""
-"Estamos construyendo una infraestructura de datos abierta para que cualquier "
-"ciudadano u organización pueda crear valor sobre el territorio."
+"Estamos construyendo una infraestructura de datos abierta para que cualquier"
+" ciudadano u organización pueda crear valor sobre el territorio."
 msgstr ""
 "We are building an open data infrastructure so that any citizen or "
 "organization can create value on the territory."
@@ -832,101 +800,97 @@ msgstr "Programmatic access for devs."
 
 #: templates/kultur/sections/map_container.html:12
 msgid "Busca eventos..."
-msgstr ""
+msgstr "Search events..."
 
 #: templates/kultur/sections/map_container.html:31
 msgid "Clima en"
-msgstr ""
+msgstr "Weather in"
 
 #: templates/kultur/sections/map_container.html:32
 msgid "..."
-msgstr ""
+msgstr "..."
 
 #: templates/kultur/sections/map_container.html:41
 msgid "Ver lista"
-msgstr ""
+msgstr "View list"
 
 #: templates/kultur/sections/map_sidebar.html:7
 msgid "Cultura Local"
-msgstr ""
+msgstr "Local Culture"
 
 #: templates/kultur/sections/map_sidebar.html:30
 msgid "Busca eventos o ciudades..."
-msgstr ""
+msgstr "Search events or cities..."
 
 #: templates/kultur/sections/map_sidebar.html:44
 #: templates/sbk/pages/home/map.html:123
-#, fuzzy
-#| msgid "Tendencias:"
 msgid "Experiencias"
-msgstr "Trending:"
+msgstr "Experiences"
 
 #: templates/kultur/sections/map_sidebar.html:48
 #: templates/sbk/passport.html:263
 msgid "Top"
-msgstr ""
+msgstr "Top"
 
 #: templates/kultur/sections/map_sidebar.html:52
 msgid "Gratis"
-msgstr ""
+msgstr "Free"
 
 #: templates/kultur/sections/map_sidebar.html:56
 msgid "Familia"
-msgstr ""
+msgstr "Family"
 
 #: templates/kultur/sections/map_sidebar.html:60
 msgid "Noche"
-msgstr ""
+msgstr "Night"
 
 #: templates/kultur/sections/map_sidebar.html:64
 msgid "Interior"
-msgstr ""
+msgstr "Indoor"
 
 #: templates/kultur/sections/map_sidebar.html:68
 msgid "Euskara"
-msgstr ""
+msgstr "Basque"
 
 #: templates/kultur/sections/map_sidebar.html:75
-#, fuzzy
-#| msgid "Tipo/Categoría"
 msgid "Categorías"
-msgstr "Type/Category"
+msgstr "Categories"
 
 #: templates/kultur/sections/map_sidebar.html:78
 msgid "Todas"
-msgstr ""
+msgstr "All"
 
 #: templates/kultur/sections/map_sidebar.html:86
 msgid "Cuándo"
-msgstr ""
+msgstr "When"
 
 #: templates/kultur/sections/map_sidebar.html:88
 #: templates/sbk/pages/home/map.html:166
 msgid "Siempre"
-msgstr ""
+msgstr "Always"
 
 #: templates/kultur/sections/map_sidebar.html:89
 #: templates/sbk/pages/home/map.html:167
 msgid "Hoy"
-msgstr ""
+msgstr "Today"
 
 #: templates/kultur/sections/map_sidebar.html:90
 #: templates/sbk/pages/home/map.html:168
 msgid "Finde"
-msgstr ""
+msgstr "Weekend"
 
 #: templates/kultur/sections/map_sidebar.html:92
 #: templates/sbk/pages/home/map.html:170
 msgid "Rango"
-msgstr ""
+msgstr "Range"
 
 #: templates/kultur/sections/map_sidebar.html:101
 msgid "Cargando eventos en el mapa..."
-msgstr ""
+msgstr "Loading events on the map..."
 
 #: templates/kultur/sections/map_sidebar.html:107
 msgid "¡Sorpréndeme!"
-msgstr ""
+msgstr "Surprise me!"
 
 #: templates/pintxos/comanda.html:3 templates/pintxos/comanda.html:16
 #: templates/pintxos/comanda_camarero.html:6
@@ -1048,11 +1012,11 @@ msgstr "Clear the order?"
 
 #: templates/pintxos/comanda_camarero.html:33
 msgid "Imprimir"
-msgstr ""
+msgstr "Print"
 
 #: templates/pintxos/comanda_camarero.html:37
 msgid "Editar"
-msgstr ""
+msgstr "Edit"
 
 #: templates/pintxos/comanda_camarero.html:44
 msgid "La comanda está vacía."
@@ -1076,7 +1040,7 @@ msgstr "Portions"
 
 #: templates/pintxos/comanda_camarero.html:159
 msgid "Actualizado"
-msgstr ""
+msgstr "Updated"
 
 #: templates/pintxos/dish_detail.html:69
 msgid "Error submitting rating"
@@ -1189,7 +1153,7 @@ msgstr "Join the debate and vote for your favorite tortilla in the old town."
 
 #: templates/pintxos/index.html:475
 msgid "Classic Trail"
-msgstr ""
+msgstr "Classic Trail"
 
 #: templates/pintxos/index.html:476
 msgid "The Gilda Route"
@@ -1353,414 +1317,392 @@ msgstr "Login to Add Dish"
 
 #: templates/sbk/pages/home/map.html:109
 msgid "Busca eventos, salas o ciudades..."
-msgstr ""
+msgstr "Search events, venues or cities..."
 
 #: templates/sbk/pages/home/map.html:131 templates/sbk/passport.html:43
 msgid "Festivales"
-msgstr ""
+msgstr "Festivals"
 
 #: templates/sbk/pages/home/map.html:135
-#, fuzzy
-#| msgid "Social & Trust"
 msgid "Social"
-msgstr "Social & Trust"
+msgstr "Social"
 
 #: templates/sbk/pages/home/map.html:139
 msgid "Talleres"
-msgstr ""
+msgstr "Workshops"
 
 #: templates/sbk/pages/home/map.html:143
 msgid "Premium"
-msgstr ""
+msgstr "Premium"
 
 #: templates/sbk/pages/home/map.html:147
 msgid "Exterior"
-msgstr ""
+msgstr "Outdoor"
 
 #: templates/sbk/pages/home/map.html:154
 msgid "Estilos de baile"
-msgstr ""
+msgstr "Dance styles"
 
 #: templates/sbk/pages/home/map.html:157
 msgid "Todos"
-msgstr ""
+msgstr "All"
 
 #: templates/sbk/pages/home/map.html:164
 msgid "Cuándo bailar"
-msgstr ""
+msgstr "When to dance"
 
 #: templates/sbk/pages/home/map.html:179
 msgid "Cargando la magia en el mapa..."
-msgstr ""
+msgstr "Loading the magic on the map..."
 
 #: templates/sbk/pages/home/map.html:194
 msgid "Busca festivales o estilos..."
-msgstr ""
+msgstr "Search festivals or styles..."
 
 #: templates/sbk/pages/home/map.html:224 templates/sbk/pages/home/map.html:289
-#, fuzzy
-#| msgid "Añadir"
 msgid "Añadir Social"
-msgstr "Add"
+msgstr "Add Social"
 
 #: templates/sbk/pages/home/map.html:230
 msgid "Haz clic en el mapa donde es la fiesta"
-msgstr ""
+msgstr "Click on the map where the party is"
 
 #: templates/sbk/pages/home/map.html:237
 msgid "Ver eventos"
-msgstr ""
+msgstr "View events"
 
 #: templates/sbk/pages/home/map.html:247
 msgid "Bailadores"
-msgstr ""
+msgstr "Dancers"
 
 #: templates/sbk/pages/home/map.html:248
 msgid "Tablón Quedadas"
-msgstr ""
+msgstr "Meetups Board"
 
 #: templates/sbk/pages/home/map.html:264
 msgid "Publicar un anuncio"
-msgstr ""
+msgstr "Post an ad"
 
 #: templates/sbk/pages/home/map.html:267
 msgid "Buscar Pareja"
-msgstr ""
+msgstr "Find Partner"
 
 #: templates/sbk/pages/home/map.html:268
-#, fuzzy
-#| msgid "Compartir"
 msgid "Compartir Coche"
-msgstr "Share"
+msgstr "Carpool"
 
 #: templates/sbk/pages/home/map.html:269
 msgid "Cena / Quedada"
-msgstr ""
+msgstr "Dinner / Meetup"
 
 #: templates/sbk/pages/home/map.html:270
 msgid "Otros"
-msgstr ""
+msgstr "Others"
 
 #: templates/sbk/pages/home/map.html:272
 msgid "Ej: Busco pareja para el taller de bachata de las 11:00..."
-msgstr ""
+msgstr "e.g. Looking for a partner for the 11:00 bachata workshop..."
 
 #: templates/sbk/pages/home/map.html:273
 msgid "Publicar en el Tablón"
-msgstr ""
+msgstr "Post on Board"
 
 #: templates/sbk/pages/home/map.html:290
 msgid "Registra una fiesta local en el mapa"
-msgstr ""
+msgstr "Register a local party on the map"
 
 #: templates/sbk/pages/home/map.html:303
 msgid "Nombre de la fiesta / local"
-msgstr ""
+msgstr "Party / venue name"
 
 #: templates/sbk/pages/home/map.html:304
 msgid "Ej: Jueves Salsero en The Host"
-msgstr ""
+msgstr "e.g. Salsa Thursday at The Host"
 
 #: templates/sbk/pages/home/map.html:308
 msgid "Estilo Principal"
-msgstr ""
+msgstr "Main Style"
 
 #: templates/sbk/pages/home/map.html:320
-#, fuzzy
-#| msgid "Fecha Fin"
 msgid "Fecha"
-msgstr "End Date"
+msgstr "Date"
 
 #: templates/sbk/pages/home/map.html:324
 msgid "Precio (aprox)"
-msgstr ""
+msgstr "Price (approx)"
 
 #: templates/sbk/pages/home/map.html:325
 msgid "Ej: 10€ c/copa"
-msgstr ""
+msgstr "e.g. €10 incl. drink"
 
 #: templates/sbk/pages/home/map.html:330
 msgid "Ambiente / Notas"
-msgstr ""
+msgstr "Vibe / Notes"
 
 #: templates/sbk/pages/home/map.html:331
 msgid "Ej: Social puro, mucha bachata, relax..."
-msgstr ""
+msgstr "e.g. Pure social, lots of bachata, chill..."
 
 #: templates/sbk/pages/home/map.html:335
 msgid "Cartel del evento (Opcional)"
-msgstr ""
+msgstr "Event poster (Optional)"
 
 #: templates/sbk/pages/home/map.html:342
 msgid "Subir un archivo"
-msgstr ""
+msgstr "Upload a file"
 
 #: templates/sbk/pages/home/map.html:343
 msgid "o arrastra y suelta"
-msgstr ""
+msgstr "or drag and drop"
 
 #: templates/sbk/pages/home/map.html:345
 msgid "PNG, JPG, GIF hasta 5MB"
-msgstr ""
+msgstr "PNG, JPG, GIF up to 5MB"
 
 #: templates/sbk/pages/home/map.html:354 templates/sbk/passport.html:121
 #: templates/sbk/passport.html:311
-#, fuzzy
-#| msgid "Cancel"
 msgid "Cancelar"
 msgstr "Cancel"
 
 #: templates/sbk/pages/home/map.html:356
 msgid "Publicar Evento"
-msgstr ""
+msgstr "Post Event"
 
 #: templates/sbk/pages/home/map.html:369
 msgid "Vibe Check"
-msgstr ""
+msgstr "Vibe Check"
 
 #: templates/sbk/pages/home/map.html:381
 msgid "¿Cómo está la música?"
-msgstr ""
+msgstr "How's the music?"
 
 #: templates/sbk/pages/home/map.html:399
 msgid "¿Espacio en pista?"
-msgstr ""
+msgstr "Room on the floor?"
 
 #: templates/sbk/pages/home/map.html:417
 msgid "Enviar reporte de Vibe"
-msgstr ""
+msgstr "Send Vibe report"
 
 #: templates/sbk/pages/home/map.html:756
 msgid "Nada por aquí..."
-msgstr ""
+msgstr "Nothing here..."
 
 #: templates/sbk/pages/home/map.html:794
 msgid "BAILANDO AHORA"
-msgstr ""
+msgstr "DANCING NOW"
 
 #: templates/sbk/pages/home/map.html:800
 msgid "Comunidad"
-msgstr ""
+msgstr "Community"
 
 #: templates/sbk/pages/home/map.html:801
 msgid "Voy"
-msgstr ""
+msgstr "I'm going"
 
 #: templates/sbk/pages/home/map.html:801
 msgid "¡Voy!"
-msgstr ""
+msgstr "I'm going!"
 
 #: templates/sbk/pages/home/map.html:913
 msgid "Nadie apuntado aún."
-msgstr ""
+msgstr "Nobody signed up yet."
 
 #: templates/sbk/pages/home/map.html:921
 msgid "Contactar"
-msgstr ""
+msgstr "Contact"
 
 #: templates/sbk/pages/home/map.html:931
-#, fuzzy
-#| msgid "La comanda está vacía."
 msgid "El tablón está vacío."
-msgstr "The order is empty."
+msgstr "The board is empty."
 
 #: templates/sbk/passport.html:2
 msgid "Mi Pasaporte Bailador"
-msgstr ""
+msgstr "My Dancer Passport"
 
 #: templates/sbk/passport.html:15
 msgid "Buscar Eventos"
-msgstr ""
+msgstr "Search Events"
 
 #: templates/sbk/passport.html:23
 msgid "NIVEL"
-msgstr ""
+msgstr "LEVEL"
 
 #: templates/sbk/passport.html:47
 msgid "Países"
-msgstr ""
+msgstr "Countries"
 
 #: templates/sbk/passport.html:52
 msgid "Racha Días"
-msgstr ""
+msgstr "Streak Days"
 
 #: templates/sbk/passport.html:56
-#, fuzzy
-#| msgid "Próximamente"
 msgid "Próximos"
-msgstr "Coming Soon"
+msgstr "Upcoming"
 
 #: templates/sbk/passport.html:60
 msgid "Radar"
-msgstr ""
+msgstr "Radar"
 
 #: templates/sbk/passport.html:74
 msgid "Próximos Destinos"
-msgstr ""
+msgstr "Upcoming Destinations"
 
 #: templates/sbk/passport.html:79
 msgid "Aún no tienes confirmada tu asistencia a ningún evento."
-msgstr ""
+msgstr "You haven't confirmed attendance to any event yet."
 
 #: templates/sbk/passport.html:80
-#, fuzzy
-#| msgid "Explore Map"
 msgid "Explorar el mapa"
-msgstr "Explore Map"
+msgstr "Explore the map"
 
 #: templates/sbk/passport.html:96
 msgid "Confirmado"
-msgstr ""
+msgstr "Confirmed"
 
 #: templates/sbk/passport.html:115
 msgid "Busco Habitación"
-msgstr ""
+msgstr "Looking for Room"
 
 #: templates/sbk/passport.html:118
 msgid "Busco Pareja"
-msgstr ""
+msgstr "Looking for Partner"
 
 #: templates/sbk/passport.html:134
 msgid "En el radar"
-msgstr ""
+msgstr "On the radar"
 
 #: templates/sbk/passport.html:138
 msgid "No tienes eventos en seguimiento."
-msgstr ""
+msgstr "You have no events on watch."
 
 #: templates/sbk/passport.html:160
 msgid "¡Voy a ir!"
-msgstr ""
+msgstr "I'm going!"
 
 #: templates/sbk/passport.html:174
 msgid "Sellos del Pasaporte"
-msgstr ""
+msgstr "Passport Stamps"
 
 #: templates/sbk/passport.html:178
 msgid "Tu pasaporte está vacío. ¡Es hora de empezar a viajar!"
-msgstr ""
+msgstr "Your passport is empty. Time to start traveling!"
 
 #: templates/sbk/passport.html:194
 msgid "Valorar"
-msgstr ""
+msgstr "Rate"
 
 #: templates/sbk/passport.html:204
 msgid "Racha Máxima"
-msgstr ""
+msgstr "Max Streak"
 
 #: templates/sbk/passport.html:204
 msgid "días"
-msgstr ""
+msgstr "days"
 
 #: templates/sbk/passport.html:213
 msgid "Top Embajadores"
-msgstr ""
+msgstr "Top Ambassadors"
 
 #: templates/sbk/passport.html:246
 msgid "Evaluar Evento"
-msgstr ""
+msgstr "Rate Event"
 
 #: templates/sbk/passport.html:260
 msgid "Valoración General"
-msgstr ""
+msgstr "Overall Rating"
 
 #: templates/sbk/passport.html:263
 msgid "Pobre"
-msgstr ""
+msgstr "Poor"
 
 #: templates/sbk/passport.html:263
 msgid "Regular"
-msgstr ""
+msgstr "Average"
 
 #: templates/sbk/passport.html:269
-#, fuzzy
-#| msgid "Calidad del Aire"
 msgid "Calidad del Suelo"
-msgstr "Air Quality"
+msgstr "Floor Quality"
 
 #: templates/sbk/passport.html:272
 msgid "Resbala/Pega"
-msgstr ""
+msgstr "Slippery/Sticky"
 
 #: templates/sbk/passport.html:272
 msgid "Decente"
-msgstr ""
+msgstr "Decent"
 
 #: templates/sbk/passport.html:272
 msgid "Parquet 10/10"
-msgstr ""
+msgstr "Parquet 10/10"
 
 #: templates/sbk/passport.html:278
 msgid "Climatización (AC)"
-msgstr ""
+msgstr "AC / Cooling"
 
 #: templates/sbk/passport.html:281
 msgid "Sauna"
-msgstr ""
+msgstr "Sauna"
 
 #: templates/sbk/passport.html:281
 msgid "Bien"
-msgstr ""
+msgstr "Good"
 
 #: templates/sbk/passport.html:281
 msgid "Fresco"
-msgstr ""
+msgstr "Cool"
 
 #: templates/sbk/passport.html:287
 msgid "Balance Lider/Follower"
-msgstr ""
+msgstr "Leader/Follower Balance"
 
 #: templates/sbk/passport.html:290
 msgid "Desbalanceado"
-msgstr ""
+msgstr "Unbalanced"
 
 #: templates/sbk/passport.html:290
 msgid "Ok"
-msgstr ""
+msgstr "Ok"
 
 #: templates/sbk/passport.html:290
 msgid "Perfecto 50/50"
-msgstr ""
+msgstr "Perfect 50/50"
 
 #: templates/sbk/passport.html:296
-#, fuzzy
-#| msgid "Calidad del Aire"
 msgid "Calidad de la Música / DJs"
-msgstr "Air Quality"
+msgstr "Music / DJ Quality"
 
 #: templates/sbk/passport.html:299
 msgid "Aburrida"
-msgstr ""
+msgstr "Boring"
 
 #: templates/sbk/passport.html:299
 msgid "Buena"
-msgstr ""
+msgstr "Good"
 
 #: templates/sbk/passport.html:299
 msgid "Temazos"
-msgstr ""
+msgstr "Bangers"
 
 #: templates/sbk/passport.html:305
 msgid "Comentario adicional"
-msgstr ""
+msgstr "Additional comment"
 
 #: templates/sbk/passport.html:306
 msgid "¿Qué fue lo mejor y lo peor?"
-msgstr ""
+msgstr "What was the best and the worst?"
 
 #: templates/sbk/passport.html:313
 msgid "Guardar Reseña"
-msgstr ""
+msgstr "Save Review"
 
 #: templates/sbk/passport.html:377
-#, fuzzy
-#| msgid "¿Estás seguro de que quieres dejar de seguir a"
 msgid "¿Seguro que quieres cancelar tu asistencia?"
-msgstr "Are you sure you want to unfollow"
+msgstr "Are you sure you want to cancel attendance?"
 
 #: templates/sbk/passport.html:449
 msgid "¡Gracias por tu valoración! Ayudará a otros bailarines."
-msgstr ""
+msgstr "Thanks for your rating! It will help other dancers."
 
 #: templates/socialaccount/login.html:21
 #, python-format
@@ -1787,20 +1729,20 @@ msgstr "Continue with %(provider_name)s"
 
 #: templates/zbe/home.html:35
 msgid "Diseño y gestión de Zonas de Bajas Emisiones"
-msgstr ""
+msgstr "Design and management of Low Emission Zones"
 
 #: templates/zbe/home.html:42
 msgid "Polígonos"
-msgstr ""
+msgstr "Polygons"
 
 #: templates/zbe/home.html:44
 msgid "Dibujar ZBE"
-msgstr ""
+msgstr "Draw LEZ"
 
 #: templates/zbe/home.html:53
 msgid "No hay ninguna zona trazada. Pulsa en dibujar para empezar."
-msgstr ""
+msgstr "No zone drawn yet. Click draw to start."
 
 #: templates/zbe/home.html:88
 msgid "Guardar Zonas"
-msgstr ""
+msgstr "Save Zones"

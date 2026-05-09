@@ -26,6 +26,7 @@ services:
 
   web:
     build: .
+    image: maps-app:latest
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
     depends_on:
@@ -35,7 +36,7 @@ services:
         condition: service_healthy
 
   worker:
-    build: .
+    image: maps-app:latest
     command: celery -A config worker -l info
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
@@ -46,7 +47,7 @@ services:
         condition: service_healthy
 
   beat:
-    build: .
+    image: maps-app:latest
     command: celery -A config beat -l info
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local

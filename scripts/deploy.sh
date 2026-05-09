@@ -10,9 +10,13 @@ if [[ ! -f .env.prod ]]; then
   exit 1
 fi
 
+# Force BuildKit so the cache mounts in the Dockerfile work everywhere.
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+
 COMPOSE="docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose.prod.yml"
 
-echo ">> Building web image..."
+echo ">> Building web image (worker/beat reuse the same image tag)..."
 $COMPOSE build web
 
 echo ">> Bringing db up..."
@@ -27,9 +31,6 @@ done
 
 echo ">> Running migrations..."
 $COMPOSE run --rm web python manage.py migrate --noinput
-
-echo ">> Collecting static files..."
-$COMPOSE run --rm web python manage.py collectstatic --noinput
 
 echo ">> Initializing app registry..."
 $COMPOSE run --rm web python manage.py init_apps

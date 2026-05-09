@@ -6,7 +6,8 @@
       "Bash(python c:/Users/imanol/projects/imanol/saas/maps/.audit_i18n.py)",
       "Bash(docker compose *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "PowerShell($env:DOCKER_BUILDKIT=1; $env:COMPOSE_DOCKER_CLI_BUILD=1; docker compose -f docker-compose.yml build web 2>&1 | Select-Object -Last 80)"
     ],
     "read": [
       "*"

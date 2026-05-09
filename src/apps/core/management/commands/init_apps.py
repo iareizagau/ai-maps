@@ -20,7 +20,7 @@ class Command(BaseCommand):
                 'slug': 'pintxos',
                 'name': 'Pintxos Maps',
                 'tagline': 'La guía definitiva de los mejores pintxos.',
-                'domain': 'https://ai.maps.eus/pintxo/',
+                'domain': 'https://ai.maps.eus/pintxos/',
                 'icon': 'utensils',
                 'primary_color': '#f97316', # Orange
                 'hero_title': 'Descubre el sabor local',

@@ -141,6 +141,7 @@ def events_geojson(request):
         .values(
             'id',
             'location',
+            'venue_id',
             'venue__location',
             'title_es', 'title_eu',
             'event_type_es', 'event_type_eu',
@@ -166,6 +167,7 @@ def events_geojson(request):
                 ],
             },
             'properties': {
+                'venue_id': row['venue_id'],
                 'title_es': row['title_es'],
                 'title_eu': row['title_eu'],
                 'event_type_es': row['event_type_es'],

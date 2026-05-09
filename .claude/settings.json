@@ -45,7 +45,9 @@
       "Bash(curl -s \"http://localhost:8000/\" -L -I)",
       "Bash(curl -s \"http://localhost:8000/eu/\" -I)",
       "Bash(curl -s \"http://localhost:8000/kultur/api/weather.json?lat=43.18&lng=-2.27\")",
-      "Bash(curl -s \"http://localhost:8000/kultur/\")"
+      "Bash(curl -s \"http://localhost:8000/kultur/\")",
+      "Bash(curl -s -o /tmp/page.html -w \"status=%{http_code} size=%{size_download}\\\\n\" \"http://localhost:8000/kultur/\")",
+      "Read(//tmp/**)"
     ],
     "read": [
       "*"

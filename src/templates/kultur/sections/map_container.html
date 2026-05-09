@@ -35,6 +35,21 @@
         </button>
     </div>
 
+    <!-- Venue Bottom Sheet (events at a single venue) -->
+    <div id="venue-sheet-backdrop" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[3000]" onclick="closeVenueSheet()"></div>
+    <div id="venue-sheet" class="hidden fixed bottom-0 left-0 right-0 md:left-auto md:right-4 md:bottom-4 md:max-w-md md:rounded-3xl rounded-t-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 z-[3001] max-h-[80vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex items-center justify-between">
+            <div class="min-w-0 flex-1 pr-3">
+                <p class="text-[10px] uppercase tracking-widest font-black text-slate-400" id="venue-sheet-count">--</p>
+                <p class="text-base font-bold text-slate-900 dark:text-slate-100 truncate" id="venue-sheet-title">--</p>
+            </div>
+            <button onclick="closeVenueSheet()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0">
+                <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div id="venue-sheet-body" class="p-3 space-y-2"></div>
+    </div>
+
     <!-- Weather Bottom Sheet -->
     <div id="weather-sheet-backdrop" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[3000]" onclick="toggleWeatherSheet()"></div>
     <div id="weather-sheet" class="hidden fixed bottom-0 left-0 right-0 md:left-auto md:right-4 md:bottom-4 md:max-w-md md:rounded-3xl rounded-t-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 z-[3001] max-h-[80vh] overflow-y-auto">

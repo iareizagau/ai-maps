@@ -16,10 +16,15 @@ import time
 
 import requests
 from django.contrib.gis.geos import Point
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
 from apps.kultur.models import Venue
+
+
+class NominatimRateLimited(Exception):
+    """Raised when Nominatim returns 429. Abort the run — continuing only
+    prolongs the ban. The next cron pass picks up where we left off."""
 
 NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search'
 USER_AGENT = 'MapsEus/1.0 kultur (https://maps.eus)'
@@ -60,20 +65,26 @@ class Command(BaseCommand):
         session.headers.update({'User-Agent': USER_AGENT})
 
         resolved = 0
-        for i, venue in enumerate(venues, 1):
-            label = f'{venue.name_es} / {venue.municipality}'
-            self.stdout.write(f'[{i}/{total}] {label}')
+        try:
+            for i, venue in enumerate(venues, 1):
+                label = f'{venue.name_es} / {venue.municipality}'
+                self.stdout.write(f'[{i}/{total}] {label}')
 
-            point = self._geocode(session, venue.name_es, venue.municipality)
-            if point is not None:
-                venue.location = point
-                venue.geocoding_source = Venue.SOURCE_NOMINATIM
-                venue.geocoded_at = timezone.now()
-                venue.save(update_fields=['location', 'geocoding_source', 'geocoded_at', 'updated_at'])
-                self.stdout.write(self.style.SUCCESS(f'  ✓ {point.y:.5f}, {point.x:.5f}'))
-                resolved += 1
-            else:
-                self.stdout.write(self.style.WARNING('  ✗ no match (kept municipality centroid)'))
+                point = self._geocode(session, venue.name_es, venue.municipality)
+                if point is not None:
+                    venue.location = point
+                    venue.geocoding_source = Venue.SOURCE_NOMINATIM
+                    venue.geocoded_at = timezone.now()
+                    venue.save(update_fields=['location', 'geocoding_source', 'geocoded_at', 'updated_at'])
+                    self.stdout.write(self.style.SUCCESS(f'  ✓ {point.y:.5f}, {point.x:.5f}'))
+                    resolved += 1
+                else:
+                    self.stdout.write(self.style.WARNING('  ✗ no match (kept municipality centroid)'))
+        except NominatimRateLimited as exc:
+            raise CommandError(
+                f'Aborted at {i}/{total} (resolved {resolved} so far): {exc}. '
+                f'Re-run later — the command is idempotent.'
+            )
 
         self.stdout.write(self.style.SUCCESS(
             f'Done. Resolved {resolved}/{total} venues.'
@@ -145,6 +156,19 @@ class Command(BaseCommand):
             params['bounded'] = 1
         try:
             r = session.get(NOMINATIM_URL, params=params, timeout=10)
+        except requests.RequestException as exc:
+            self.stdout.write(self.style.ERROR(f'  ! {exc}'))
+            return None
+
+        if r.status_code == 429:
+            # Hard-stop. Continuing would push the ban window further out and
+            # waste cycles on guaranteed failures. Surface Retry-After if set.
+            retry_after = r.headers.get('Retry-After', 'unknown')
+            raise NominatimRateLimited(
+                f'Nominatim returned 429 (Retry-After: {retry_after})'
+            )
+
+        try:
             r.raise_for_status()
             data = r.json()
         except (requests.RequestException, ValueError) as exc:

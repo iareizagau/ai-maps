@@ -1,0 +1,58 @@
+{% load i18n %}
+<c-vars url="" app_name="" icon="map-pin" accent="#f97316" headline="" subline="" meta="" is_live="" />
+
+<a href="{{ url }}"
+   aria-label="{{ app_name }}: {{ headline }}"
+   class="group relative overflow-hidden glass rounded-2xl p-5 border border-slate-200/50 dark:border-white/5 hover:border-[var(--accent)]/40 hover:-translate-y-1 hover:shadow-2xl transition-all duration-500 block"
+   style="--accent: {{ accent }};">
+
+    <!-- Decor blob: accent glow -->
+    <div class="absolute -right-8 -top-8 w-24 h-24 rounded-full blur-2xl opacity-10 group-hover:opacity-30 transition-opacity duration-500"
+         style="background-color: var(--accent);" aria-hidden="true"></div>
+
+    <div class="relative z-10">
+        <!-- Header: app badge + live indicator -->
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                      style="background-color: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent);">
+                    <i data-lucide="{{ icon }}" class="w-3.5 h-3.5"></i>
+                </span>
+                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 truncate">
+                    {{ app_name }}
+                </span>
+            </div>
+            {% if is_live %}
+            <span class="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest shrink-0"
+                  style="color: var(--accent);">
+                <span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background-color: var(--accent);"></span>
+                {% trans "Live" %}
+            </span>
+            {% endif %}
+        </div>
+
+        <!-- Headline -->
+        <p class="text-base font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 group-hover:text-[var(--accent)] transition-colors duration-300">
+            {{ headline }}
+        </p>
+
+        {% if subline %}
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed line-clamp-1">
+            {{ subline }}
+        </p>
+        {% endif %}
+
+        <!-- Footer: meta + arrow -->
+        <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-200/50 dark:border-white/5">
+            <span class="text-[10px] uppercase tracking-widest font-bold text-slate-400 truncate">
+                {% if meta %}{{ meta }}{% else %}{% trans "Ver detalle" %}{% endif %}
+            </span>
+            <span class="w-6 h-6 rounded-full flex items-center justify-center transition-colors duration-300 shrink-0 ml-2"
+                  style="background-color: transparent;">
+                <i data-lucide="arrow-right"
+                   class="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-all duration-300"
+                   style="--hover-color: var(--accent);"></i>
+            </span>
+        </div>
+    </div>
+</a>

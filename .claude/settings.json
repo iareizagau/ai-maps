@@ -4,7 +4,9 @@
       "Bash(curl -s http://127.0.0.1:8000/)",
       "Bash(python -c \"import django; print\\(django.get_version\\(\\)\\)\")",
       "Bash(python c:/Users/imanol/projects/imanol/saas/maps/.audit_i18n.py)",
-      "Bash(docker compose *)"
+      "Bash(docker compose *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ],
     "read": [
       "*"

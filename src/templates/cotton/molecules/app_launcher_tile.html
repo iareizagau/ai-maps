@@ -1,0 +1,15 @@
+{% load i18n %}
+<c-vars name="" icon="" url="" accent_color="#f97316" />
+
+<a href="{{ url }}"
+   aria-label="{% trans 'Abrir' %} {{ name }}"
+   class="group flex flex-col items-center gap-2 p-3 rounded-2xl hover:bg-white dark:hover:bg-slate-800/60 active:scale-95 transition-all duration-200"
+   style="--accent: {{ accent_color }};">
+    <span class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-105 group-hover:-rotate-3 transition-transform duration-300"
+          style="background-color: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent);">
+        <i data-lucide="{{ icon }}" class="w-6 h-6 sm:w-7 sm:h-7"></i>
+    </span>
+    <span class="text-[11px] sm:text-xs font-semibold text-slate-700 dark:text-slate-200 text-center line-clamp-1">
+        {{ name }}
+    </span>
+</a>

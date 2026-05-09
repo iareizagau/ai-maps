@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('kultur', '0004_remove_culturalevent_municipality_and_more'),
-        ('django_celery_beat', '0001_initial'),
+        ('django_celery_beat', '0018_improve_crontab_helptext'),
     ]
 
     operations = [

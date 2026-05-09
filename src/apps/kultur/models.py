@@ -8,8 +8,8 @@ class CulturalEvent(models.Model):
     description_es = models.TextField(_("Descripción (ES)"), blank=True, null=True)
     description_eu = models.TextField(_("Descripción (EU)"), blank=True, null=True)
     
-    start_date = models.DateTimeField(_("Fecha Inicio"), blank=True, null=True)
-    end_date = models.DateTimeField(_("Fecha Fin"), blank=True, null=True)
+    start_date = models.DateTimeField(_("Fecha Inicio"), blank=True, null=True, db_index=True)
+    end_date = models.DateTimeField(_("Fecha Fin"), blank=True, null=True, db_index=True)
     
     venue_name_es = models.CharField(_("Lugar (ES)"), max_length=500, blank=True, null=True)
     venue_name_eu = models.CharField(_("Lugar (EU)"), max_length=500, blank=True, null=True)

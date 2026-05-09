@@ -4,6 +4,7 @@
   integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
   crossorigin=""
 ></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
   const currentLang =
     JSON.parse(document.getElementById("current-language").textContent) || "es";
@@ -188,8 +189,10 @@
             .catch(err => console.error("Weather fetch failed", err));
     }
 
+    let updateListTimeout;
     map.on("moveend", () => {
-        updateList();
+        clearTimeout(updateListTimeout);
+        updateListTimeout = setTimeout(updateList, 200); // Debounce list rebuild during pan/zoom
         clearTimeout(weatherTimeout);
         weatherTimeout = setTimeout(updateWeatherContext, 1000); // Debounce weather API
     });
@@ -735,11 +738,7 @@
     }
 
     if (activeMoods.has('family')) {
-        const cat = (props.event_type_es || '').toLowerCase();
-        const title = (props.title_es || '').toLowerCase();
-        const desc = (props.description_es || '').toLowerCase();
-        const isFamily = cat.includes('taller') || cat.includes('infantil') || title.includes('infantil') || title.includes('niños') || title.includes('familia') || desc.includes('familia');
-        if (!isFamily) return false;
+        if (!props.is_family) return false;
     }
 
     if (activeMoods.has('night')) {
@@ -779,70 +778,76 @@
 
       if (geoJsonLayer) map.removeLayer(geoJsonLayer);
 
-      geoJsonLayer = L.geoJSON(filteredFeatures, {
-        pointToLayer: (feature, latlng) => {
-          const cat = feature.properties.event_type_es;
+      geoJsonLayer = L.markerClusterGroup({
+        chunkedLoading: true,
+        chunkInterval: 100,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        maxClusterRadius: 50,
+      });
+
+      const markers = [];
+      const iconCache = {};
+      const isMobile = window.innerWidth < 768;
+
+      for (const feature of filteredFeatures) {
+        const props = feature.properties;
+        const cat = props.event_type_es || "default";
+        const colors = categoryColors[cat] || categoryColors.default;
+
+        let icon = iconCache[cat];
+        if (!icon) {
           const svgIcon = iconMap[cat] || iconMap.default;
-          const colors = categoryColors[cat] || categoryColors.default;
-          const customIcon = L.divIcon({
+          icon = L.divIcon({
             className: "custom-map-marker",
-            html: `<div class="${colors.bg} text-white p-1.5 rounded-full shadow-lg border-2 border-white dark:border-slate-800 transition-transform hover:scale-110 flex items-center justify-center w-9 h-9">
-                                ${svgIcon}
-                               </div>`,
+            html: `<div class="${colors.bg} text-white p-1.5 rounded-full shadow-lg border-2 border-white dark:border-slate-800 transition-transform hover:scale-110 flex items-center justify-center w-9 h-9">${svgIcon}</div>`,
             iconSize: [36, 36],
             iconAnchor: [18, 18],
             popupAnchor: [0, -18],
           });
-          return L.marker(latlng, { icon: customIcon });
-        },
-        onEachFeature: (feature, layer) => {
-          const props = feature.properties;
-          const cat = props.event_type_es;
-          const colors = categoryColors[cat] || categoryColors.default;
-          const title =
-            props[titleField] || props.title_es || props.title_eu || "";
-          const typeLabel =
-            props[typeField] ||
-            props.event_type_es ||
-            props.event_type_eu ||
-            "Evento";
-          const venue = props[venueField] || props.venue_name_es || "";
-          const price = props[priceField] || "";
+          iconCache[cat] = icon;
+        }
 
-          let popupContent = `
-                        <div class="p-3 cursor-pointer min-w-[200px]" onclick="document.getElementById('event-card-${feature.id}')?.scrollIntoView({behavior:'smooth', block:'center'});">
-                            <span class="text-[9px] font-bold ${colors.text} mb-1 inline-block uppercase tracking-wide px-2 py-0.5 rounded-full ${colors.bgSoft}">${typeLabel}</span>
-                            <h3 class="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight mb-1" title="${title}">${title}</h3>
-                            <p class="text-[10px] text-slate-500 flex items-center gap-1">
-                                <svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                ${venue}
-                            </p>
-                            ${price ? `<p class="text-[10px] text-emerald-600 font-bold mt-1">${price}</p>` : ""}
-                        </div>`;
+        const coords = feature.geometry.coordinates;
+        const marker = L.marker([coords[1], coords[0]], { icon });
 
-          layer.bindPopup(popupContent, {
-            className: "minimal-popup",
-            closeButton: false,
-            autoPanPadding: [50, 50],
-          });
+        const title = props[titleField] || props.title_es || props.title_eu || "";
+        const typeLabel = props[typeField] || props.event_type_es || props.event_type_eu || "Evento";
+        const venue = props[venueField] || props.venue_name_es || "";
+        const price = props[priceField] || "";
+        const fid = feature.id;
 
-          layer.on("click", () => {
-            const card = document.getElementById(`event-card-${feature.id}`);
-            if (card) {
-              if (window.innerWidth < 768) {
-                const btn = document.getElementById("mobile-toggle-btn");
-                const btnText = document.getElementById("mobile-toggle-text");
-                if (btnText && btnText.innerText === t.seeList) {
-                  btn.click();
-                }
-                setTimeout(() => scrollAndHighlightCard(card), 100);
-              } else {
-                scrollAndHighlightCard(card);
-              }
-            }
-          });
-        },
-      }).addTo(map);
+        marker.bindPopup(
+          `<div class="p-3 cursor-pointer min-w-[200px]" onclick="document.getElementById('event-card-${fid}')?.scrollIntoView({behavior:'smooth', block:'center'});">
+            <span class="text-[9px] font-bold ${colors.text} mb-1 inline-block uppercase tracking-wide px-2 py-0.5 rounded-full ${colors.bgSoft}">${typeLabel}</span>
+            <h3 class="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight mb-1" title="${title}">${title}</h3>
+            <p class="text-[10px] text-slate-500 flex items-center gap-1">
+              <svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              ${venue}
+            </p>
+            ${price ? `<p class="text-[10px] text-emerald-600 font-bold mt-1">${price}</p>` : ""}
+          </div>`,
+          { className: "minimal-popup", closeButton: false, autoPanPadding: [50, 50] }
+        );
+
+        marker.on("click", () => {
+          const card = document.getElementById(`event-card-${fid}`);
+          if (!card) return;
+          if (isMobile) {
+            const btn = document.getElementById("mobile-toggle-btn");
+            const btnText = document.getElementById("mobile-toggle-text");
+            if (btnText && btnText.innerText === t.seeList) btn.click();
+            setTimeout(() => scrollAndHighlightCard(card), 100);
+          } else {
+            scrollAndHighlightCard(card);
+          }
+        });
+
+        markers.push(marker);
+      }
+
+      geoJsonLayer.addLayers(markers);
+      map.addLayer(geoJsonLayer);
 
       updateList();
     } catch (e) {
@@ -863,13 +868,135 @@
     }, 1500);
   }
 
+  const CARD_PAGE_SIZE = 30;
+  let listVisibleFeatures = [];
+  let listRenderedCount = 0;
+  let listObserver = null;
+
+  function buildCardElement(f) {
+    const props = f.properties;
+    const cat = props.event_type_es;
+    const colors = categoryColors[cat] || categoryColors.default;
+    const title = props[titleField] || props.title_es || props.title_eu || "";
+    const typeLabel =
+      props[typeField] ||
+      props.event_type_es ||
+      props.event_type_eu ||
+      t.cultural;
+    const venue = props[venueField] || props.venue_name_es || "";
+    const muni = props[municipalityField] || props.municipality_es || "";
+    const price = props[priceField] || "";
+    const hours = props[hoursField] || "";
+
+    let dateStr = t.unknownDate;
+    if (props.start_date) {
+      dateStr = new Date(props.start_date).toLocaleDateString(
+        currentLang === "eu" ? "eu-ES" : "es-ES",
+        { weekday: "short", month: "short", day: "numeric" },
+      );
+      if (hours) dateStr += ` • ${hours}`;
+    }
+
+    const el = document.createElement('div');
+    el.id = `event-card-${f.id}`;
+    el.className = `group flex flex-col bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border border-slate-200 dark:border-slate-700 h-full`;
+    el.innerHTML = `
+        <div class="relative h-40 w-full overflow-hidden">
+            ${props.image_url ? `
+                <img src="${props.image_url}" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='<div class=&quot;w-full h-full ${colors.bg} opacity-20&quot;></div>'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Evento">
+            ` : `
+                <div class="w-full h-full ${colors.bg} flex items-center justify-center opacity-20">
+                     ${iconMap[cat] || iconMap.default}
+                </div>
+            `}
+            <div class="absolute top-2 right-2">
+                <span class="text-[10px] font-bold ${colors.text} uppercase tracking-wider px-2 py-1 rounded-lg bg-white/90 dark:bg-slate-900/90 shadow-sm backdrop-blur-sm">
+                    ${typeLabel}
+                </span>
+            </div>
+            ${activeMoods.has('hot') ? `
+                <div class="absolute top-2 left-2 animate-bounce">
+                     <span class="bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg">✨</span>
+                </div>
+            ` : ''}
+        </div>
+        <div class="p-3 flex flex-col flex-1">
+            <h4 class="font-bold text-slate-900 dark:text-slate-100 leading-tight mb-1 line-clamp-2" title="${title}">${title}</h4>
+            <div class="mt-auto space-y-1.5">
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    ${dateStr}
+                </p>
+                <p class="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    ${muni || venue}
+                </p>
+                ${price ? `
+                <p class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    ${price}
+                </p>` : ''}
+            </div>
+        </div>
+    `;
+
+    el.onclick = () => {
+      const target = [f.geometry.coordinates[1], f.geometry.coordinates[0]];
+      geoJsonLayer.eachLayer((layer) => {
+        if (
+          layer.getLatLng().lat === target[0] &&
+          layer.getLatLng().lng === target[1]
+        ) {
+          geoJsonLayer.zoomToShowLayer(layer, () => layer.openPopup());
+        }
+      });
+    };
+    return el;
+  }
+
+  function appendNextPage(container) {
+    const end = Math.min(listRenderedCount + CARD_PAGE_SIZE, listVisibleFeatures.length);
+    const fragment = document.createDocumentFragment();
+    for (let i = listRenderedCount; i < end; i++) {
+      fragment.appendChild(buildCardElement(listVisibleFeatures[i]));
+    }
+    container.appendChild(fragment);
+    listRenderedCount = end;
+  }
+
+  function attachInfiniteScroll(container) {
+    if (listObserver) {
+      listObserver.disconnect();
+      listObserver = null;
+    }
+    if (listRenderedCount >= listVisibleFeatures.length) return;
+
+    const sentinel = document.createElement('div');
+    sentinel.className = 'col-span-full h-1';
+    container.appendChild(sentinel);
+
+    listObserver = new IntersectionObserver((entries) => {
+      if (!entries[0].isIntersecting) return;
+      sentinel.remove();
+      appendNextPage(container);
+      attachInfiniteScroll(container);
+    }, { rootMargin: '400px' });
+    listObserver.observe(sentinel);
+  }
+
   function updateList() {
     const bounds = map.getBounds();
     const container = document.getElementById("events-list");
     if (!container) return;
-    container.innerHTML = "";
 
-    const visibleFeatures = allFeatures.filter((f) => {
+    if (listObserver) {
+      listObserver.disconnect();
+      listObserver = null;
+    }
+    container.innerHTML = "";
+    listRenderedCount = 0;
+
+    listVisibleFeatures = allFeatures.filter((f) => {
       const latLng = L.latLng(
         f.geometry.coordinates[1],
         f.geometry.coordinates[0],
@@ -878,11 +1005,11 @@
     });
 
     const mobileCount = document.getElementById("mobile-count");
-    if (mobileCount) mobileCount.innerText = visibleFeatures.length;
+    if (mobileCount) mobileCount.innerText = listVisibleFeatures.length;
 
-    if (visibleFeatures.length === 0) {
+    if (listVisibleFeatures.length === 0) {
       container.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-40 text-center">
+                <div class="flex flex-col items-center justify-center h-40 text-center col-span-full">
                     <span class="text-4xl mb-2">🗺️</span>
                     <p class="text-slate-500 dark:text-slate-400">${t.noEvents}</p>
                     <p class="text-sm text-slate-400 mt-2">${t.tryZoom}</p>
@@ -891,94 +1018,8 @@
       return;
     }
 
-    visibleFeatures.forEach((f) => {
-      const props = f.properties;
-      const cat = props.event_type_es;
-      const colors = categoryColors[cat] || categoryColors.default;
-      const title = props[titleField] || props.title_es || props.title_eu || "";
-      const url = props[urlField] || props.url_es || props.url_eu || "#";
-      const typeLabel =
-        props[typeField] ||
-        props.event_type_es ||
-        props.event_type_eu ||
-        t.cultural;
-      const venue = props[venueField] || props.venue_name_es || "";
-      const muni = props[municipalityField] || props.municipality_es || "";
-      const price = props[priceField] || "";
-      const hours = props[hoursField] || "";
-      const purchaseUrl = props[purchaseUrlField] || "";
-
-      let dateStr = t.unknownDate;
-      if (props.start_date) {
-        dateStr = new Date(props.start_date).toLocaleDateString(
-          currentLang === "eu" ? "eu-ES" : "es-ES",
-          { weekday: "short", month: "short", day: "numeric" },
-        );
-        if (hours) dateStr += ` • ${hours}`;
-      }
-
-      const el = document.createElement('div');
-      el.id = `event-card-${f.id}`;
-      el.className = `group flex flex-col bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border border-slate-200 dark:border-slate-700 h-full`;
-      el.innerHTML = `
-          <div class="relative h-40 w-full overflow-hidden">
-              ${props.image_url ? `
-                  <img src="${props.image_url}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Evento">
-              ` : `
-                  <div class="w-full h-full ${colors.bg} flex items-center justify-center opacity-20">
-                       ${iconMap[cat] || iconMap.default}
-                  </div>
-              `}
-              <div class="absolute top-2 right-2">
-                  <span class="text-[10px] font-bold ${colors.text} uppercase tracking-wider px-2 py-1 rounded-lg bg-white/90 dark:bg-slate-900/90 shadow-sm backdrop-blur-sm">
-                      ${typeLabel}
-                  </span>
-              </div>
-              ${activeMoods.has('hot') ? `
-                  <div class="absolute top-2 left-2 animate-bounce">
-                       <span class="bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg">✨</span>
-                  </div>
-              ` : ''}
-          </div>
-          <div class="p-3 flex flex-col flex-1">
-              <h4 class="font-bold text-slate-900 dark:text-slate-100 leading-tight mb-1 line-clamp-2" title="${title}">${title}</h4>
-              
-              <div class="mt-auto space-y-1.5">
-                  <p class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                      ${dateStr}
-                  </p>
-                  <p class="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate flex items-center gap-1.5">
-                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                      ${muni || venue}
-                  </p>
-                  ${price ? `
-                  <p class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      ${price}
-                  </p>` : ''}
-              </div>
-          </div>
-      `;
-
-      el.onclick = () => {
-        map.flyTo([f.geometry.coordinates[1], f.geometry.coordinates[0]], 16, {
-          duration: 1,
-        });
-        setTimeout(() => {
-          geoJsonLayer.eachLayer((layer) => {
-            if (
-              layer.getLatLng().lat === f.geometry.coordinates[1] &&
-              layer.getLatLng().lng === f.geometry.coordinates[0]
-            ) {
-              layer.openPopup();
-            }
-          });
-        }, 1000);
-      };
-
-      container.appendChild(el);
-    });
+    appendNextPage(container);
+    attachInfiniteScroll(container);
   }
 
   window.surpriseMe = function () {
@@ -987,24 +1028,21 @@
 
     const randomFeature =
       visibleFeatures[Math.floor(Math.random() * visibleFeatures.length)];
-    map.flyTo(
-      [
-        randomFeature.geometry.coordinates[1],
-        randomFeature.geometry.coordinates[0],
-      ],
-      16,
-      { duration: 1.5 },
-    );
+    const target = [
+      randomFeature.geometry.coordinates[1],
+      randomFeature.geometry.coordinates[0],
+    ];
+
+    geoJsonLayer.eachLayer((layer) => {
+      if (
+        layer.getLatLng().lat === target[0] &&
+        layer.getLatLng().lng === target[1]
+      ) {
+        geoJsonLayer.zoomToShowLayer(layer, () => layer.openPopup());
+      }
+    });
 
     setTimeout(() => {
-      geoJsonLayer.eachLayer((layer) => {
-        if (
-          layer.getLatLng().lat === randomFeature.geometry.coordinates[1] &&
-          layer.getLatLng().lng === randomFeature.geometry.coordinates[0]
-        ) {
-          layer.openPopup();
-        }
-      });
       const card = document.getElementById(`event-card-${randomFeature.id}`);
       if (card) scrollAndHighlightCard(card);
     }, 1500);

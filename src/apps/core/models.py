@@ -85,4 +85,4 @@ class AppRegistry(models.Model):
         """
         if settings.DEBUG:
             return f"http://localhost:8000/{self.slug}/"
-        return f"https://{self.domain}"
+        return self.domain

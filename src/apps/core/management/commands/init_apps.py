@@ -10,7 +10,7 @@ class Command(BaseCommand):
                 'slug': 'inguru',
                 'name': 'Inguru',
                 'tagline': 'Datu Bizidunak: Monitorización ambiental.',
-                'domain': 'ai.maps.eus/inguru/',
+                'domain': 'https://ai.maps.eus/inguru/',
                 'icon': 'leaf',
                 'primary_color': '#10b981', # Emerald
                 'hero_title': 'Euskal Herriko airea',
@@ -20,7 +20,7 @@ class Command(BaseCommand):
                 'slug': 'pintxos',
                 'name': 'Pintxos Maps',
                 'tagline': 'La guía definitiva de los mejores pintxos.',
-                'domain': 'ai.maps.eus/pintxo/',
+                'domain': 'https://ai.maps.eus/pintxo/',
                 'icon': 'utensils',
                 'primary_color': '#f97316', # Orange
                 'hero_title': 'Descubre el sabor local',
@@ -30,7 +30,7 @@ class Command(BaseCommand):
                 'slug': 'kultur',
                 'name': 'Kultur Maps',
                 'tagline': 'Agenda cultural y eventos en vivo.',
-                'domain': 'ai.maps.eus/kultur/',
+                'domain': 'https://ai.maps.eus/kultur/',
                 'icon': 'music',
                 'primary_color': '#8b5cf6', # Violet
                 'hero_title': 'La cultura a tu alcance',
@@ -40,7 +40,7 @@ class Command(BaseCommand):
                 'slug': 'sbk',
                 'name': 'SBK Hub',
                 'tagline': 'Comunidad de Salsa, Bachata y Kizomba.',
-                'domain': '/sbk/',
+                'domain': 'https://ai.maps.eus/sbk/',
                 'icon': 'users',
                 'primary_color': '#ec4899', # Pink
                 'hero_title': 'Baila sin parar',
@@ -50,7 +50,7 @@ class Command(BaseCommand):
                 'slug': 'gailur',
                 'name': 'Gailur',
                 'tagline': 'Montañismo y Escalada en Euskadi.',
-                'domain': 'ai.maps.eus/gailur/',
+                'domain': 'https://ai.maps.eus/gailur/',
                 'icon': 'mountain',
                 'primary_color': '#10b981', # Emerald
                 'hero_title': 'Conquista cada cima',

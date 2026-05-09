@@ -1,13 +1,31 @@
 # syntax=docker/dockerfile:1.6
-FROM python:3.12-slim
 
+# ----------------------------------------------------------------------------
+# Stage 1: build frontend assets (Tailwind CSS + vendored JS).
+# ----------------------------------------------------------------------------
+FROM node:20-alpine AS frontend
+WORKDIR /build
+
+COPY package.json package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
+
+# Tailwind needs to scan templates and python files for class names.
+COPY tailwind.config.js postcss.config.js ./
+COPY scripts ./scripts
+COPY src ./src
+
+RUN npm run build
+
+# ----------------------------------------------------------------------------
+# Stage 2: Django app.
+# ----------------------------------------------------------------------------
+FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DJANGO_SETTINGS_MODULE=config.settings.prod \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# System deps. apt cache is mounted (BuildKit) so re-installs are near-instant
-# on incremental builds; the lists/archives never get baked into the image.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean && \
@@ -34,13 +52,16 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 WORKDIR /app
 
-# Python deps. pip cache is mounted so unchanged deps reuse downloaded wheels.
 COPY requirements.txt .
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r requirements.txt
 
-# App code (last layer so code-only changes invalidate nothing else).
 COPY src/ .
+
+# Pull built CSS + vendored JS from the frontend stage.
+COPY --from=frontend /build/src/static/css/app.css      ./static/css/app.css
+COPY --from=frontend /build/src/static/js/htmx.min.js   ./static/js/htmx.min.js
+COPY --from=frontend /build/src/static/js/alpine.min.js ./static/js/alpine.min.js
 
 # Bake collected static files into the image. Placeholder env vars only exist
 # for this RUN; collectstatic does not touch the DB.

@@ -19,7 +19,21 @@
       "Bash(npm install *)",
       "PowerShell(\\(Get-Item src\\\\manage.py\\).LastWriteTime = Get-Date; $sw = [Diagnostics.Stopwatch]::StartNew\\(\\); docker compose -f docker-compose.yml build web 2>&1 | Select-String -Pattern \"CACHED|DONE|exporting\" | Select-Object -Last 20; $sw.Stop\\(\\); Write-Output \"TOTAL: $\\($sw.Elapsed.TotalSeconds\\)s\")",
       "PowerShell($sw = [Diagnostics.Stopwatch]::StartNew\\(\\); docker compose -f docker-compose.yml build web 2>&1 | Select-String -Pattern \"CACHED|DONE|RUN|COPY\" | Select-Object -Last 25; $sw.Stop\\(\\); Write-Output \"TOTAL: $\\($sw.Elapsed.TotalSeconds\\)s\")",
-      "Bash(git update-index *)"
+      "Bash(git update-index *)",
+      "Bash(git check-ignore *)",
+      "Bash(docker --version)",
+      "Bash(docker buildx *)",
+      "Bash(docker run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'Build Tailwind CSS + vendor JS in Docker image *)",
+      "PowerShell(docker compose ps --format \"{{.Name}} {{.State}}\")",
+      "PowerShell(docker compose exec -T web python manage.py init_oauth 2>&1)",
+      "PowerShell(docker compose restart web 2>&1)",
+      "PowerShell(docker compose exec -T web sh -c \"env | grep -i google\" 2>&1)",
+      "PowerShell(docker compose exec -T web sh -c \"head -5 /app/.env\" 2>&1)",
+      "PowerShell(docker compose exec -T web sh -c \"grep -i google /app/.env\" 2>&1)",
+      "PowerShell(docker compose up -d --force-recreate web 2>&1)",
+      "PowerShell(docker compose exec -T web sh -c \"grep -E 'SITE_\\(DOMAIN|NAME\\)' /app/.env\" 2>&1)"
     ],
     "read": [
       "*"

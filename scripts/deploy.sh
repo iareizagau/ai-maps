@@ -35,6 +35,9 @@ $COMPOSE run --rm web python manage.py migrate --noinput
 echo ">> Initializing app registry..."
 $COMPOSE run --rm web python manage.py init_apps
 
+echo ">> Initializing OAuth (Site + SocialApp)..."
+$COMPOSE run --rm web python manage.py init_oauth
+
 echo ">> Starting services..."
 $COMPOSE up -d --remove-orphans
 

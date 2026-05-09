@@ -1,50 +1,63 @@
 # Configuración de Google Auth con Django Allauth
 
-Este documento detalla los pasos necesarios para configurar la autenticación de Google en el proyecto Maps.eus utilizando Docker.
+Setup idempotente: las credenciales viven en `.env` (local) y `.env.prod` (VPS).
+El comando `init_oauth` crea/actualiza el `Site` y el `SocialApp` automáticamente
+en cada deploy, así que un wipe de DB no rompe el login.
 
 ## 1. Google Cloud Console
 
-1.  Ve a [Google Cloud Console](https://console.cloud.google.com/).
-2.  Crea un nuevo proyecto o selecciona uno existente.
-3.  **Pantalla de consentimiento de OAuth**:
-    *   Configura el "User Type" (normalmente "External" para pruebas).
-    *   Añade los datos de la aplicación y tu email de soporte.
-    *   En "Scopes", añade `.../auth/userinfo.email` y `.../auth/userinfo.profile`.
-4.  **Credenciales**:
-    *   Haz clic en "Crear credenciales" -> "ID de cliente de OAuth".
-    *   Tipo de aplicación: **Aplicación web**.
-    *   Nombre: `Maps.eus Local`.
-    *   Orígenes de JavaScript autorizados: `http://localhost:8000`.
-    *   URIs de redireccionamiento autorizados: `http://localhost:8000/accounts/google/login/callback/`.
-5.  Copia el **Client ID** y el **Client Secret**.
+1. Ve a [Google Cloud Console](https://console.cloud.google.com/).
+2. Crea un proyecto o selecciona uno existente.
+3. **Pantalla de consentimiento de OAuth**:
+   - "User Type": External (para pruebas).
+   - Email de soporte y datos de la app.
+   - Scopes: `.../auth/userinfo.email` y `.../auth/userinfo.profile`.
+4. **Credenciales** → "Crear credenciales" → "ID de cliente de OAuth":
+   - Tipo: **Aplicación web**.
+   - Orígenes JS autorizados:
+     - Local: `http://localhost:8000`
+     - Prod: `https://ai.maps.eus`
+   - URIs de redirección:
+     - Local: `http://localhost:8000/accounts/google/login/callback/`
+     - Prod: `https://ai.maps.eus/accounts/google/login/callback/`
+5. Copia el **Client ID** y el **Client Secret**.
 
-## 2. Django Admin Setup
+## 2. Variables de entorno
 
-1.  Inicia el proyecto: `docker compose up -d`.
-2.  Accede a `http://localhost:8000/admin/`.
-3.  **Sitios (Sites)**:
-    *   Ve a la sección "Sites".
-    *   Edita el sitio existente (normalmente con ID 1).
-    *   Domain name: `localhost:8000`.
-    *   Display name: `Maps Local`.
-4.  **Aplicaciones Sociales (Social Applications)**:
-    *   Añade una nueva aplicación.
-    *   Provider: `Google`.
-    *   Name: `Google Login`.
-    *   Client id: (Pega el ID de Google).
-    *   Secret key: (Pega el Secret de Google).
-    *   Sites: Selecciona `localhost:8000` y muévelo a "Chosen sites".
+Añade a tu `.env` (local) y `.env.prod` (VPS):
 
-## 3. Pruebas
+```bash
+# Local
+SITE_DOMAIN=localhost:8000
+SITE_NAME=Maps Local
+GOOGLE_OAUTH_ID_CLIENTE=...
+GOOGLE_OAUTH_SECRET_KEY=...
 
-1.  Ve a `http://localhost:8000/accounts/login/`.
-2.  Deberías ver un enlace para entrar con Google.
-3.  Al hacer clic, te redirigirá a Google para autorizar la cuenta.
+# Prod
+SITE_DOMAIN=ai.maps.eus
+SITE_NAME=Maps
+GOOGLE_OAUTH_ID_CLIENTE=...
+GOOGLE_OAUTH_SECRET_KEY=...
+```
 
----
+## 3. Aplicar
 
-## Comandos Útiles
+```bash
+# Local
+docker compose exec web python manage.py init_oauth
 
-*   **Reconstruir contenedores**: `docker compose build`
-*   **Ejecutar migraciones**: `docker compose exec web python manage.py migrate`
-*   **Crear superusuario**: `docker compose exec web python manage.py createsuperuser`
+# Prod (se ejecuta solo en cada deploy via scripts/deploy.sh)
+```
+
+El comando es idempotente: puedes correrlo tantas veces como quieras.
+
+## 4. Probar
+
+1. Ve a `http://localhost:8000/accounts/login/` (o el dominio de prod).
+2. Click en "Sign in with Google".
+3. Autoriza la cuenta en Google y vuelves logueado.
+
+## Restaurar tras un wipe de DB
+
+Solo: `docker compose exec web python manage.py init_oauth`. Las credenciales se
+recrean a partir del `.env`. No hace falta entrar al admin.

@@ -4,6 +4,7 @@ from .models import User, PaymentMethod, Follow, AppRegistry, Subscription
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
+    search_fields = ('username', 'email', 'first_name', 'last_name')
     fieldsets = UserAdmin.fieldsets + (
         ('Profile', {'fields': ('phone', 'bio', 'avatar')}),
     )

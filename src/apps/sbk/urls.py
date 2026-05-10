@@ -18,7 +18,19 @@ urlpatterns = [
     path('pasaporte/', views.passport_view, name='passport'),
     path('go/<uuid:event_id>/', views.ticket_redirect, name='ticket_redirect'),
 
-    # DanceVenue claim + manage
+    # Phase 1 SEO Landings
+    path('esta-noche/', views.tonight_view, name='tonight'),
+    path('practica/', views.practice_view, name='practice'),
+    path('ciudad/<slug:city_slug>/', views.city_view, name='city'),
+    
+    # Phase 2 SEO Landings
+    path('directorio/', views.person_directory_view, name='person_directory'),
+    path('persona/<slug:slug>/', views.person_detail_view, name='person_detail'),
+    
+    # Venue claim + manage
     path('venue/<int:venue_id>/claim/', views.dance_venue_claim, name='dance_venue_claim'),
     path('venue/<int:venue_id>/manage/', views.dance_venue_manage, name='dance_venue_manage'),
+
+    # This MUST be last to avoid capturing literal slugs
+    path('<slug:type_slug>/', views.type_view, name='type'),
 ]

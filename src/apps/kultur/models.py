@@ -145,6 +145,8 @@ class KulturPrefs(models.Model):
     default_categories = models.JSONField(default=list, blank=True)
     default_moods = models.JSONField(default=list, blank=True)
     default_municipality = models.CharField(max_length=255, blank=True, default='')
+    digest_enabled = models.BooleanField(default=True)
+    digest_day_of_week = models.SmallIntegerField(default=3)  # 0=Mon..6=Sun, default Thursday
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

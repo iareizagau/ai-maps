@@ -1,3 +1,4 @@
+{% load i18n %}
 <c-vars title="Maps.eus" />
 
 <!DOCTYPE html>
@@ -67,6 +68,10 @@
         document.addEventListener('htmx:afterOnLoad', () => {
             lucide.createIcons();
         });
+        document.addEventListener('htmx:responseError', (event) => {
+            alert('{% trans "An error occurred while saving. Please try again." %}');
+        });
+
     </script>
     
     <style>

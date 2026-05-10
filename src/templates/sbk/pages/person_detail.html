@@ -1,0 +1,93 @@
+{% load i18n %}
+<c-layouts.main title="{{ page_title }}">
+    <div class="min-h-screen bg-slate-50 dark:bg-slate-900 pt-20 pb-12">
+        <div class="max-w-4xl mx-auto px-4">
+            <!-- Profile Card -->
+            <div class="bg-white dark:bg-slate-800 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-xl overflow-hidden mb-8">
+                <div class="h-48 bg-gradient-to-r from-rose-500 to-rose-600 relative">
+                    {% if person.is_verified %}
+                        <div class="absolute top-6 right-6 px-4 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-full flex items-center gap-2 text-white text-xs font-bold uppercase tracking-widest">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-white"></i>
+                            {% trans "Perfil Verificado" %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="px-8 pb-8 relative">
+                    <!-- Avatar -->
+                    <div class="absolute -top-24 left-8">
+                        <img src="{{ person.photo.url|default:'https://ui-avatars.com/api/?size=512&name='|add:person.name }}" 
+                             class="w-40 h-40 rounded-[2.5rem] border-8 border-white dark:border-slate-800 shadow-2xl object-cover">
+                    </div>
+
+                    <div class="pt-20 flex flex-col md:flex-row justify-between items-start gap-6">
+                        <div class="flex-1">
+                            <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight mb-2 uppercase">{{ person.name }}</h1>
+                            <div class="flex flex-wrap gap-2 mb-6">
+                                {% for role in person.roles %}
+                                    <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-black uppercase tracking-widest">
+                                        {{ role }}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 mb-8">
+                                <div class="flex items-center gap-3 text-slate-500">
+                                    <div class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+                                        <i data-lucide="map-pin" class="w-4 h-4"></i>
+                                    </div>
+                                    <span class="text-sm font-bold">{{ person.city }}, {{ person.country }}</span>
+                                </div>
+                                {% if person.instagram %}
+                                    <a href="https://instagram.com/{{ person.instagram }}" target="_blank" class="flex items-center gap-3 text-rose-600 hover:text-rose-700 transition-colors">
+                                        <div class="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center">
+                                            <i data-lucide="instagram" class="w-4 h-4"></i>
+                                        </div>
+                                        <span class="text-sm font-black">@{{ person.instagram }}</span>
+                                    </a>
+                                {% endif %}
+                            </div>
+
+                            {% if person.bio %}
+                                <div class="prose dark:prose-invert max-w-none">
+                                    <p class="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                                        {{ person.bio }}
+                                    </p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Events -->
+            <div>
+                <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-6 uppercase">
+                    {% trans "Dónde verle próximamente" %}
+                </h2>
+
+                {% if upcoming_events %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {% for e in upcoming_events %}
+                            <a href="{% url 'sbk:map' %}" class="bg-white dark:bg-slate-800 rounded-3xl p-5 border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4 hover:shadow-lg transition-shadow group">
+                                <img src="{{ e.image_url|default:'https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=400' }}" 
+                                     class="w-20 h-20 rounded-2xl object-cover shadow-sm">
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-bold text-slate-900 dark:text-white truncate group-hover:text-rose-600 transition-colors">{{ e.name }}</h3>
+                                    <p class="text-xs text-slate-500 font-medium mb-2">{{ e.city }} • {{ e.start_date|date:"j N" }}</p>
+                                    <span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase tracking-widest">
+                                        {{ e.get_event_type_display }}
+                                    </span>
+                                </div>
+                                <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300 group-hover:translate-x-1 transition-transform"></i>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="bg-white dark:bg-slate-800 rounded-3xl p-12 text-center border border-dashed border-slate-200 dark:border-slate-700">
+                        <p class="text-slate-500">{% trans "No hay eventos confirmados próximamente." %}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</c-layouts.main>

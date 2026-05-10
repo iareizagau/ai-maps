@@ -3,22 +3,26 @@ from django.contrib.gis.admin import GISModelAdmin
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from .models import Event, DanceVenue, VenueRating, DanceVenueClaim
+from .models import Event, DanceVenue, VenueRating, DanceVenueClaim, Person, EventOccurrence
+
+
+class EventOccurrenceInline(admin.TabularInline):
+    model = EventOccurrence
+    extra = 1
 
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ('name', 'city', 'start_date', 'event_type', 'primary_style', 'ticket_clicks', 'has_ticket_url', 'moderation_status')
-    list_filter = ('event_type', 'primary_style', 'moderation_status', 'is_verified', 'is_user_submitted')
+    list_display = ('name', 'city', 'start_date', 'event_type', 'primary_style', 'is_recurring', 'ticket_clicks', 'moderation_status')
+    list_filter = ('event_type', 'primary_style', 'is_recurring', 'moderation_status', 'is_verified', 'is_user_submitted')
     search_fields = ('name', 'city', 'country', 'address')
     ordering = ('-ticket_clicks', '-start_date')
     readonly_fields = ('id', 'goandance_id', 'ticket_clicks', 'report_count', 'created_at', 'updated_at')
     date_hierarchy = 'start_date'
     list_per_page = 50
-
-    @admin.display(description='Ticket', boolean=True, ordering='ticket_url')
-    def has_ticket_url(self, obj):
-        return bool(obj.ticket_url)
+    inlines = [EventOccurrenceInline]
+    filter_horizontal = ('teachers', 'djs', 'artists')
+    autocomplete_fields = ('organizer',)
 
 
 @admin.register(DanceVenue)
@@ -85,3 +89,12 @@ class DanceVenueClaimAdmin(admin.ModelAdmin):
             reviewed_by=request.user,
         )
         self.message_user(request, _("%(n)d claims rejected.") % {'n': n})
+
+
+@admin.register(Person)
+class PersonAdmin(admin.ModelAdmin):
+    list_display = ('name', 'city', 'country', 'is_verified', 'claimed_by')
+    list_filter = ('roles', 'is_verified', 'country')
+    search_fields = ('name', 'city', 'instagram', 'bio')
+    prepopulated_fields = {'slug': ('name',)}
+    autocomplete_fields = ('claimed_by',)

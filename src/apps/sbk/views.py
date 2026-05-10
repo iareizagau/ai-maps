@@ -4,7 +4,7 @@ from django.http import JsonResponse, HttpResponseRedirect, HttpResponseBadReque
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST, require_GET
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Q, Count
 from django.utils.translation import gettext_lazy as _
 import json
 from apps.core.entitlements import has_entitlement
@@ -12,7 +12,7 @@ from .forms import DanceVenueClaimForm, DanceVenueManageForm
 from .models import (
     Event, UserEvent, UserEventStatus, EventReview, DanceProfile,
     EventNotice, CheckIn, VibeReport, EventType,
-    DanceVenue, DanceVenueClaim,
+    DanceVenue, DanceVenueClaim, Person, EventOccurrence
 )
 from django.utils import timezone
 from datetime import timedelta
@@ -20,25 +20,142 @@ from django.conf import settings
 
 def map_view(request):
     """
-    Main view that renders the Leaflet map and Passport UI.
+    Main map interface with SEO context.
     """
     context = {
+        'page_title': _('SBK Hub - Mapa de Festivales y Socials'),
         'OPENWEATHERMAP_API_KEY': settings.OPENWEATHERMAP_API_KEY
     }
     return render(request, 'sbk/pages/home/map.html', context)
 
+def tonight_view(request):
+    """
+    SEO Landing: Events happening tonight.
+    """
+    today = timezone.now().date()
+    count = Event.objects.filter(start_date__date=today).count()
+    
+    context = {
+        'page_filter': 'tonight',
+        'page_title': _('SBK esta noche: Festivales y Sociales hoy | SBK Hub'),
+        'page_h1': _('%d eventos para bailar hoy') % count if count > 0 else _('SBK esta noche'),
+        'meta_description': _('¿Dónde bailar esta noche? Lista actualizada de sesiones sociales, talleres y fiestas SBK para hoy.'),
+        'OPENWEATHERMAP_API_KEY': settings.OPENWEATHERMAP_API_KEY
+    }
+    return render(request, 'sbk/pages/home/map.html', context)
+
+def type_view(request, type_slug):
+    """
+    SEO Landing: Events filtered by type.
+    """
+    type_map = {
+        'festivales': ('festival', _('Próximos Festivales SBK'), _('Calendario de congresos y festivales internacionales de Bachata, Salsa y Kizomba.')),
+        'socials': ('party', _('Sesiones Sociales y Fiestas SBK'), _('Encuentra los mejores sociales para bailar durante la semana.')),
+        'talleres': ('workshop', _('Talleres y Bootcamps SBK'), _('Mejora tu estilo con los mejores talleres intensivos.')),
+    }
+    
+    if type_slug not in type_map:
+        return redirect('sbk:map')
+        
+    db_type, h1, meta = type_map[type_slug]
+    
+    context = {
+        'page_filter': db_type,
+        'page_title': f"{h1} | SBK Hub",
+        'page_h1': h1,
+        'meta_description': meta,
+        'OPENWEATHERMAP_API_KEY': settings.OPENWEATHERMAP_API_KEY
+    }
+    return render(request, 'sbk/pages/home/map.html', context)
+
+def city_view(request, city_slug):
+    """
+    SEO Landing: Events in a specific city.
+    """
+    from django.utils.text import slugify
+    events = Event.objects.all()
+    city_name = "Desconocida"
+    target_event = None
+    
+    for e in events:
+        if slugify(e.city) == city_slug:
+            target_event = e
+            city_name = e.city
+            break
+            
+    if not target_event:
+        return redirect('sbk:map')
+
+    context = {
+        'page_filter': f'city:{city_slug}',
+        'page_title': _('SBK en %s: Dónde bailar Salsa y Bachata') % city_name,
+        'page_h1': _('Eventos SBK en %s') % city_name,
+        'meta_description': _('Descubre todos los eventos de baile en %s. Festivales, sociales y academias en un solo mapa.') % city_name,
+        'initial_center': [target_event.lat, target_event.lng],
+        'initial_zoom': 11,
+        'OPENWEATHERMAP_API_KEY': settings.OPENWEATHERMAP_API_KEY
+    }
+    return render(request, 'sbk/pages/home/map.html', context)
+
+def practice_view(request):
+    """
+    Matchmaking landing: shows people looking for partners or roommates.
+    """
+    now = timezone.now()
+    seekers = UserEvent.objects.filter(
+        Q(looking_for_dance_partner=True) | Q(looking_for_roommate=True),
+        event__end_date__gte=now
+    ).select_related('user', 'event').order_by('event__start_date')
+
+    context = {
+        'seekers': seekers,
+        'page_title': _('Busca pareja de baile o habitación | SBK Hub'),
+        'page_h1': _('Comunidad SBK'),
+        'meta_description': _('Conecta con otros bailadores. Encuentra pareja para talleres o compañeros para compartir alojamiento.'),
+    }
+    return render(request, 'sbk/pages/practice.html', context)
+
+def person_directory_view(request):
+    """
+    SEO Landing: Directory of verified people.
+    """
+    people = Person.objects.filter(is_verified=True).order_by('name')
+    context = {
+        'people': people,
+        'page_title': _('Directorio de Artistas y DJs SBK | SBK Hub'),
+        'page_h1': _('Artistas de la Comunidad'),
+        'meta_description': _('Conoce a los mejores DJs, profesores y artistas de la escena SBK internacional.'),
+    }
+    return render(request, 'sbk/pages/directory.html', context)
+
+def person_detail_view(request, slug):
+    """
+    SEO Landing: Profile of a specific person.
+    """
+    person = get_object_or_404(Person, slug=slug)
+    now = timezone.now()
+    upcoming_events = Event.objects.filter(
+        Q(teachers=person) | Q(djs=person) | Q(artists=person) | Q(organizer=person),
+        end_date__gte=now
+    ).distinct().order_by('start_date')
+    
+    context = {
+        'person': person,
+        'upcoming_events': upcoming_events,
+        'page_title': _('%s | Artista SBK Hub') % person.name,
+        'page_h1': person.name,
+        'meta_description': person.bio[:160] if person.bio else _('Perfil oficial de %s en SBK Hub.') % person.name,
+    }
+    return render(request, 'sbk/pages/person_detail.html', context)
+
+@require_GET
 def events_json(request):
     """
     Returns events as JSON for the Leaflet map.
     """
-    # Filter out rejected or highly reported events
-    from django.utils import timezone
-    from datetime import timedelta
-    
     now = timezone.now()
     yesterday = now - timedelta(days=1)
     
-    # Filter: Upcoming events or those that ended very recently (24h margin for reviews)
     events = Event.objects.prefetch_related('reviews', 'checkins', 'vibe_reports').filter(
         moderation_status__in=['pending', 'verified']
     ).filter(
@@ -46,7 +163,6 @@ def events_json(request):
         models.Q(end_date__isnull=True, start_date__gte=yesterday)
     ).exclude(report_count__gte=3)
     
-    # If user is logged in, get their event statuses
     user_statuses = {}
     if request.user.is_authenticated:
         user_events = UserEvent.objects.filter(user=request.user)
@@ -55,15 +171,10 @@ def events_json(request):
             
     data = []
     for e in events:
-        # Calculate review stats
         reviews = e.reviews.all()
         avg_rating = sum(r.overall_rating for r in reviews) / len(reviews) if reviews else None
         
-        # Pulse Data (Live)
-        now = timezone.now()
         four_hours_ago = now - timedelta(hours=4)
-        
-        # Timing metadata
         is_happening = False
         is_recent_past = False
         
@@ -78,7 +189,6 @@ def events_json(request):
         vibe_summary = None
         if is_happening:
             active_checkins = e.checkins.filter(created_at__gte=four_hours_ago).count()
-            # Calculate recent vibe
             recent_vibes = e.vibe_reports.filter(created_at__gte=four_hours_ago)
             if recent_vibes.exists():
                 count = recent_vibes.count()
@@ -92,7 +202,7 @@ def events_json(request):
         data.append({
             'id': str(e.id),
             'name': e.name,
-            'description': e.short_description or e.description[:200],
+            'description': e.short_description or e.description[:200] if e.description else "",
             'start_date': e.start_date.isoformat() if e.start_date else None,
             'end_date': e.end_date.isoformat() if e.end_date else None,
             'event_type': e.event_type,
@@ -123,7 +233,7 @@ def events_json(request):
 @login_required
 def toggle_event_status(request, event_id):
     """
-    Toggle the user's status for a specific event (interested -> going -> none).
+    Toggle the user's status for a specific event.
     """
     try:
         data = json.loads(request.body)
@@ -137,30 +247,24 @@ def toggle_event_status(request, event_id):
         return JsonResponse({'error': 'Invalid status'}, status=400)
         
     if target_status is None:
-        # Remove the UserEvent if status is null/none
         UserEvent.objects.filter(user=request.user, event=event).delete()
         return JsonResponse({'status': None})
         
-    # Update or create the UserEvent
     user_event, created = UserEvent.objects.update_or_create(
         user=request.user,
         event=event,
         defaults={'status': target_status}
     )
     
-    # Auto-verification logic
     if event.is_user_submitted and not event.is_verified:
-        # If 3 or more people are "GOING", mark as verified
         going_count = UserEvent.objects.filter(event=event, status=UserEventStatus.GOING).count()
         if going_count >= 3:
             event.is_verified = True
             event.moderation_status = 'verified'
             event.save()
-            # Reward the original submitter for a verified quality event (+100 XP)
             if event.submitted_by:
                 add_xp(event.submitted_by, 100)
     
-    # Reward user for confirm going (+5 XP)
     if target_status == UserEventStatus.GOING:
         add_xp(request.user, 5)
             
@@ -175,28 +279,19 @@ def passport_view(request):
     User's personal dashboard (Pasaporte Bailador).
     """
     user_events = UserEvent.objects.filter(user=request.user).select_related('event').order_by('event__start_date')
-    
-    # Split into upcoming and past based on current date
-    from django.utils import timezone
     now = timezone.now()
     
     going_events = [ue for ue in user_events if ue.status == UserEventStatus.GOING and ue.event.start_date and ue.event.start_date >= now]
     interested_events = [ue for ue in user_events if ue.status == UserEventStatus.INTERESTED and ue.event.start_date and ue.event.start_date >= now]
     past_events = [ue for ue in user_events if ue.event.start_date and ue.event.start_date < now]
     
-    # Also update 'going' to 'went' automatically if past
     for ue in past_events:
         if ue.status == UserEventStatus.GOING:
             ue.status = UserEventStatus.WENT
             ue.save()
             
-    # We re-calculate after update just in case
     went_events = [ue for ue in past_events if ue.status == UserEventStatus.WENT]
-    
-    # Get User Rank
     profile, _ = DanceProfile.objects.get_or_create(user=request.user)
-    
-    # Get Leaderboard
     leaderboard = DanceProfile.objects.select_related('user').order_by('-points')[:10]
     
     context = {
@@ -205,7 +300,7 @@ def passport_view(request):
         'went_events': went_events,
         'profile': profile,
         'leaderboard': leaderboard,
-        'UserEventStatus': UserEventStatus, # Pass class for status checking in templates
+        'UserEventStatus': UserEventStatus,
         'stats_countries': len(set([ue.event.country for ue in user_events if ue.event.country])),
         'stats_total_events': len(went_events),
         'user_points': profile.points,
@@ -227,8 +322,6 @@ def toggle_matchmaking(request, event_id):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
         
     event = get_object_or_404(Event, id=event_id)
-    
-    # User must be "GOING" to the event to seek a partner or roommate
     user_event = get_object_or_404(UserEvent, user=request.user, event=event)
     
     if field == 'roommate':
@@ -242,18 +335,13 @@ def toggle_matchmaking(request, event_id):
         
     return JsonResponse({'error': 'Invalid field'}, status=400)
 
+@login_required
+@require_GET
 def event_community_api(request, event_id):
     """
-    Returns the list of users going to or interested in an event,
-    along with their matchmaking preferences.
+    Returns users going to an event and board notices.
     """
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Debes iniciar sesión para ver la comunidad.'}, status=403)
-        
     event = get_object_or_404(Event, id=event_id)
-    
-    # We only show people who are "GOING" or "INTERESTED"
-    # To protect some privacy, maybe only GOING. Let's show GOING for now.
     user_events = UserEvent.objects.filter(
         event=event, 
         status=UserEventStatus.GOING
@@ -261,12 +349,9 @@ def event_community_api(request, event_id):
     
     community = []
     for ue in user_events:
-        # Don't show the current user in the community list to themselves
         if ue.user == request.user:
             continue
-            
         profile, _ = DanceProfile.objects.get_or_create(user=ue.user)
-            
         community.append({
             'username': ue.user.username,
             'avatar_url': getattr(ue.user, 'avatar_url', None) or f"https://ui-avatars.com/api/?name={ue.user.username}&background=random",
@@ -277,7 +362,6 @@ def event_community_api(request, event_id):
             'points': profile.points,
         })
         
-    # Get Notices
     notices_qs = EventNotice.objects.filter(event=event).select_related('user').order_by('-created_at')
     notices = []
     for n in notices_qs:
@@ -303,10 +387,6 @@ def event_community_api(request, event_id):
 @login_required
 def submit_event_review(request, event_id):
     event = get_object_or_404(Event, id=event_id)
-    
-    # Optional: ensure user actually went. If they are reviewing, they should have went.
-    # user_event = get_object_or_404(UserEvent, user=request.user, event=event, status=UserEventStatus.WENT)
-    
     try:
         data = json.loads(request.body)
         review, created = EventReview.objects.update_or_create(
@@ -321,10 +401,8 @@ def submit_event_review(request, event_id):
                 'comment': data.get('comment', '')[:1000]
             }
         )
-        # Reward for review (+15 XP)
         if created:
             add_xp(request.user, 15)
-            
         return JsonResponse({'status': 'success', 'message': 'Reseña guardada correctamente'})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
@@ -333,10 +411,9 @@ def submit_event_review(request, event_id):
 @login_required
 def submit_local_social(request):
     """
-    Allows a user to submit a local social or party with support for image upload.
+    Allows a user to submit a local social.
     """
     try:
-        # Check if it's multipart (file upload) or JSON
         if request.content_type == 'application/json':
             data = json.loads(request.body)
             poster = None
@@ -356,9 +433,6 @@ def submit_local_social(request):
             return JsonResponse({'error': 'Faltan campos obligatorios'}, status=400)
             
         from django.utils.dateparse import parse_datetime
-        from django.utils import timezone
-        
-        # Simple parsing
         start_date = parse_datetime(f"{date_str}T22:00:00Z")
         if not start_date:
             start_date = timezone.now()
@@ -377,10 +451,7 @@ def submit_local_social(request):
             is_user_submitted=True,
             submitted_by=request.user
         )
-        
-        # Reward for submission (+50 XP)
         add_xp(request.user, 50)
-        
         return JsonResponse({'status': 'success', 'message': '¡Social añadido con éxito!', 'event_id': str(event.id)})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
@@ -388,21 +459,13 @@ def submit_local_social(request):
 @require_POST
 @login_required
 def report_event(request, event_id):
-    """
-    Increments report count for an event.
-    """
     event = get_object_or_404(Event, id=event_id)
     event.report_count += 1
-    
-    # If 3 or more reports, we hide it (filtered in events_json)
     event.save()
-    return JsonResponse({'status': 'success', 'message': 'Reporte enviado. Gracias por ayudar a la comunidad.'})
+    return JsonResponse({'status': 'success', 'message': 'Reporte enviado.'})
 
 @require_GET
 def ticket_redirect(request, event_id):
-    """
-    Affiliate-tracking redirect: increments ticket_clicks and sends user to ticket_url.
-    """
     event = get_object_or_404(Event, id=event_id)
     if not event.ticket_url:
         return HttpResponseBadRequest("No ticket URL")
@@ -417,28 +480,20 @@ def add_xp(user, amount):
 @require_POST
 @login_required
 def submit_event_notice(request, event_id):
-    """
-    Submit a matching notice (partner, transport, etc.)
-    """
     event = get_object_or_404(Event, id=event_id)
     try:
         data = json.loads(request.body)
         category = data.get('category', 'other')
         message = data.get('message', '').strip()
-        
         if not message:
             return JsonResponse({'error': 'El mensaje no puede estar vacío'}, status=400)
-            
         notice = EventNotice.objects.create(
             event=event,
             user=request.user,
             category=category,
             message=message[:250]
         )
-        
-        # Reward (+10 XP)
         add_xp(request.user, 10)
-        
         return JsonResponse({'status': 'success', 'message': 'Anuncio publicado correctamente'})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
@@ -446,77 +501,50 @@ def submit_event_notice(request, event_id):
 @require_POST
 @login_required
 def check_in(request, event_id):
-    """
-    Check-in to an event (only if physically there - handled by client-side GPS)
-    """
     event = get_object_or_404(Event, id=event_id)
     now = timezone.now()
-
-    # Validation: Only allow check-in if event is happening today/now
     if event.start_date:
-        start_margin = event.start_date - timedelta(hours=2) # 2h before
-        end_bound = event.end_date or (event.start_date + timedelta(hours=10)) # 10h total if no end
-        
+        start_margin = event.start_date - timedelta(hours=2)
+        end_bound = event.end_date or (event.start_date + timedelta(hours=10))
         if now < start_margin:
-            return JsonResponse({'error': 'Demasiado pronto. El check-in abre 2 horas antes del inicio.'}, status=400)
+            return JsonResponse({'error': 'Demasiado pronto.'}, status=400)
         if now > end_bound:
-            return JsonResponse({'error': 'El evento ya ha finalizado o no está activo hoy.'}, status=400)
+            return JsonResponse({'error': 'El evento ya ha finalizado.'}, status=400)
     
-    # Check if already checked in today (approx)
     checkin, created = CheckIn.objects.get_or_create(event=event, user=request.user)
-    
-    # Streak Logic
     today = timezone.now().date()
     profile, _ = DanceProfile.objects.get_or_create(user=request.user)
     
     if created:
         if profile.last_checkin_date:
             diff = (today - profile.last_checkin_date).days
-            if diff == 1: # Consecutive day
+            if diff == 1:
                 profile.current_streak += 1
-            elif diff > 1: # Broke streak
+            elif diff > 1:
                 profile.current_streak = 1
-            # if diff == 0, already checked in today (streak stays same)
         else:
             profile.current_streak = 1
-            
         profile.last_checkin_date = today
         if profile.current_streak > profile.max_streak:
             profile.max_streak = profile.current_streak
-        
-        add_xp(request.user, 10) # Base Reward
-        
-        # Streak Bonus XP
-        if profile.current_streak >= 3:
-            bonus = profile.current_streak * 5
-            add_xp(request.user, bonus)
-            msg = f'¡Check-in realizado! +10 XP. ¡Racha de {profile.current_streak} días! (+{bonus} XP Bonus)'
-        else:
-            msg = '¡Check-in realizado! +10 XP'
-            
+        add_xp(request.user, 10)
         profile.save()
-        return JsonResponse({'status': 'success', 'message': msg})
+        return JsonResponse({'status': 'success', 'message': '¡Check-in realizado!'})
     else:
-        # Update timestamp to refresh the 4-hour window
         checkin.created_at = timezone.now()
         checkin.save()
-        return JsonResponse({'status': 'success', 'message': 'Has refrescado tu presencia en el evento'})
+        return JsonResponse({'status': 'success', 'message': 'Has refrescado tu presencia'})
 
 @require_POST
 @login_required
 def submit_vibe_report(request, event_id):
-    """
-    Submit a real-time vibe report
-    """
     event = get_object_or_404(Event, id=event_id)
     now = timezone.now()
-    
-    # Validation: Only allow reporting if event is happening now
     if event.start_date:
-        start_margin = event.start_date - timedelta(hours=1) # 1h before start
+        start_margin = event.start_date - timedelta(hours=1)
         end_bound = event.end_date or (event.start_date + timedelta(hours=12))
         if now < start_margin or now > end_bound:
-            return JsonResponse({'error': 'Solo puedes reportar el ambiente durante el transcurso del evento.'}, status=400)
+            return JsonResponse({'error': 'Solo puedes reportar el ambiente durante el evento.'}, status=400)
 
     try:
         data = json.loads(request.body)
@@ -527,31 +555,23 @@ def submit_vibe_report(request, event_id):
             crowd_score=data.get('crowd', 3),
             ac_score=data.get('ac', 3)
         )
-        add_xp(request.user, 15) # Reward for reporting
-        return JsonResponse({'status': 'success', 'message': '¡Vibe reportada! +15 XP'})
+        add_xp(request.user, 15)
+        return JsonResponse({'status': 'success', 'message': '¡Vibe reportada!'})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
-
-
-# ---------------------------------------------------------------------------
-# DanceVenue claim + manage flow (B2B Pro Venue)
-# ---------------------------------------------------------------------------
 
 @login_required
 def dance_venue_claim(request, venue_id):
     venue = get_object_or_404(DanceVenue, id=venue_id)
-
     if venue.claimed_by_id:
         if venue.claimed_by_id == request.user.id:
             return redirect('sbk:dance_venue_manage', venue_id=venue.id)
         messages.error(request, _("This venue is already claimed."))
         return redirect('account_app_panel', slug='sbk')
-
     existing = DanceVenueClaim.objects.filter(venue=venue, claimant=request.user).first()
     if existing and existing.status == DanceVenueClaim.Status.PENDING:
-        messages.info(request, _("You already submitted a claim for this venue. We're reviewing it."))
+        messages.info(request, _("You already submitted a claim for this venue."))
         return redirect('account_app_panel', slug='sbk')
-
     if request.method == 'POST':
         form = DanceVenueClaimForm(request.POST, instance=existing)
         if form.is_valid():
@@ -559,26 +579,18 @@ def dance_venue_claim(request, venue_id):
             claim.venue = venue
             claim.claimant = request.user
             claim.status = DanceVenueClaim.Status.PENDING
-            claim.decided_at = None
-            claim.reviewed_by = None
             claim.save()
-            messages.success(request, _("Claim submitted. We'll get back to you within 48h."))
+            messages.success(request, _("Claim submitted."))
             return redirect('account_app_panel', slug='sbk')
     else:
-        form = DanceVenueClaimForm(instance=existing, initial={
-            'contact_email': request.user.email,
-            'contact_phone': getattr(request.user, 'phone', '') or '',
-        })
-
+        form = DanceVenueClaimForm(instance=existing, initial={'contact_email': request.user.email})
     return render(request, 'sbk/claim.html', {'venue': venue, 'form': form})
-
 
 @login_required
 def dance_venue_manage(request, venue_id):
     venue = get_object_or_404(DanceVenue, id=venue_id)
     if venue.claimed_by_id != request.user.id and not request.user.is_staff:
         return HttpResponseForbidden(_("You don't manage this venue."))
-
     if request.method == 'POST':
         form = DanceVenueManageForm(request.POST, instance=venue)
         if form.is_valid():
@@ -587,10 +599,4 @@ def dance_venue_manage(request, venue_id):
             return redirect('sbk:dance_venue_manage', venue_id=venue.id)
     else:
         form = DanceVenueManageForm(instance=venue)
-
-    return render(request, 'sbk/manage.html', {
-        'venue': venue,
-        'form': form,
-        'has_analytics': has_entitlement(request.user, 'sbk', 'analytics_dashboard'),
-        'has_priority': has_entitlement(request.user, 'sbk', 'priority_listing'),
-    })
+    return render(request, 'sbk/manage.html', {'venue': venue, 'form': form})

@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.gis.db import models as gis_models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from django.contrib.postgres.fields import ArrayField
 import uuid
 
 class DanceStyle(models.TextChoices):
@@ -17,12 +18,29 @@ class EventType(models.TextChoices):
     PARTY = 'party', 'Party / Social'
     WORKSHOP = 'workshop', 'Workshop / Bootcamp'
 
-class Artist(models.Model):
+class Person(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
-    role = models.CharField(max_length=100, help_text="e.g., Dancer, DJ, Singer")
-    instagram_handle = models.CharField(max_length=100, blank=True, null=True)
-    country = models.CharField(max_length=100, blank=True, null=True)
+    slug = models.SlugField(max_length=255, unique=True)
+    bio = models.TextField(blank=True)
+    photo = models.ImageField(upload_to='sbk/people/', blank=True, null=True)
+    instagram = models.CharField(max_length=100, blank=True)
+    country = models.CharField(max_length=100, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+
+    class Role(models.TextChoices):
+        DJ = 'dj', 'DJ'
+        TEACHER = 'teacher', 'Teacher'
+        ORGANIZER = 'organizer', 'Organizer'
+        DANCER = 'dancer', 'Dancer'
+        VIDEOGRAPHER = 'videographer', 'Videographer'
+
+    roles = ArrayField(models.CharField(max_length=20, choices=Role.choices), default=list, blank=True)
+
+    # Claim flow
+    claimed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='claimed_profiles')
+    is_verified = models.BooleanField(default=False)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -36,8 +54,13 @@ class Event(models.Model):
     description = models.TextField(blank=True)
     short_description = models.TextField(blank=True)
     
-    start_date = models.DateTimeField()
-    end_date = models.DateTimeField()
+    # Recurring events (Phase 2.2)
+    is_recurring = models.BooleanField(default=False)
+    recurrence_rule = models.CharField(max_length=255, blank=True, help_text="iCalendar RRULE")
+    
+    # Legacy dates (to be moved to occurrences)
+    start_date = models.DateTimeField(null=True, blank=True)
+    end_date = models.DateTimeField(null=True, blank=True)
     
     event_type = models.CharField(max_length=50, choices=EventType.choices, default=EventType.FESTIVAL)
     primary_style = models.CharField(max_length=50, choices=DanceStyle.choices, default=DanceStyle.MIXED)
@@ -62,7 +85,11 @@ class Event(models.Model):
     # Cost Estimation
     estimated_pass_price = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     
-    artists = models.ManyToManyField(Artist, related_name='events', blank=True)
+    # Relations (Phase 2.1)
+    organizer = models.ForeignKey(Person, on_delete=models.SET_NULL, null=True, blank=True, related_name='organized_events')
+    teachers = models.ManyToManyField(Person, related_name='teaching_events', blank=True)
+    djs = models.ManyToManyField(Person, related_name='dj_events', blank=True)
+    artists = models.ManyToManyField(Person, related_name='performing_events', blank=True)
     
     # User Submissions (Waze approach)
     is_user_submitted = models.BooleanField(default=False)
@@ -83,6 +110,26 @@ class Event(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.city})"
+
+class EventOccurrence(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='occurrences')
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField(null=True, blank=True)
+    cancelled = models.BooleanField(default=False)
+    override_venue = models.CharField(max_length=255, blank=True) # punctual change
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['event', 'start_date']),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=['event', 'start_date'], name='uniq_occurrence')
+        ]
+        ordering = ['start_date']
+
+    def __str__(self):
+        return f"{self.event.name} @ {self.start_date}"
 
 class EventReview(models.Model):
     RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]

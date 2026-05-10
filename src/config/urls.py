@@ -3,6 +3,15 @@ from django.http import HttpResponse
 from django.urls import path, include
 from django.conf import settings
 from apps.core.api import api
+from django.contrib.sitemaps.views import sitemap
+from apps.sbk.sitemaps import SbkCitySitemap, SbkTypeSitemap, SbkStaticSitemap, SbkPersonSitemap
+
+sitemaps = {
+    'sbk_cities': SbkCitySitemap,
+    'sbk_types': SbkTypeSitemap,
+    'sbk_static': SbkStaticSitemap,
+    'sbk_people': SbkPersonSitemap,
+}
 
 
 def healthz(request):
@@ -19,6 +28,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('i18n/', include('django.conf.urls.i18n')),
     path('api/', api.urls),
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
 ]
 
 urlpatterns += [

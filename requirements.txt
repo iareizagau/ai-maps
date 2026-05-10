@@ -29,5 +29,8 @@ celery[redis]>=5.4
 redis>=5.0
 django-celery-beat>=2.6
 
+# Email
+django-anymail[brevo]
+
 # Debugging
 debugpy

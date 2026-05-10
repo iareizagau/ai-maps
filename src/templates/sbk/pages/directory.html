@@ -1,0 +1,43 @@
+{% load i18n %}
+<c-layouts.main title="{{ page_title }}">
+    <div class="min-h-screen bg-slate-50 dark:bg-slate-900 pt-20 pb-12">
+        <div class="max-w-6xl mx-auto px-4">
+            <!-- Header -->
+            <div class="mb-12">
+                <h1 class="text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">
+                    {{ page_h1 }}
+                </h1>
+                <p class="text-slate-500 dark:text-slate-400">
+                    {% trans "Conoce a los impulsores de la escena SBK en nuestra comunidad." %}
+                </p>
+            </div>
+
+            <!-- Directory Grid -->
+            {% if people %}
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    {% for person in people %}
+                        <a href="{% url 'sbk:person_detail' person.slug %}" class="group bg-white dark:bg-slate-800 rounded-3xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-500 text-center">
+                            <div class="relative w-24 h-24 mx-auto mb-4 overflow-hidden rounded-2xl">
+                                <img src="{{ person.photo.url|default:'https://ui-avatars.com/api/?size=256&name='|add:person.name }}" 
+                                     class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                                {% if person.is_verified %}
+                                    <div class="absolute bottom-1 right-1 w-6 h-6 bg-blue-500 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-white">
+                                        <i data-lucide="check" class="w-3.5 h-3.5 stroke-[3]"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <h3 class="font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-rose-600 transition-colors">{{ person.name }}</h3>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                                {{ person.roles.0|default:"Artist" }}
+                            </p>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="bg-white dark:bg-slate-800 rounded-3xl p-12 text-center border border-dashed border-slate-200 dark:border-slate-700">
+                    <p class="text-slate-500">{% trans "Aún no hay perfiles verificados en el directorio." %}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</c-layouts.main>

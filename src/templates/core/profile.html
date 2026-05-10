@@ -61,9 +61,7 @@
                             <h3 class="text-2xl font-bold text-white">{% trans "Personal Data" %}</h3>
                             <p class="text-sm text-gray-400">{% trans "Manage your basic identity information." %}</p>
                         </div>
-                        <div id="profile-form-container">
-                            {% include 'core/partials/profile_form.html' %}
-                        </div>
+                        {% include 'core/partials/profile_form.html' %}
                     </c-atoms.card>
                 </div>
 
@@ -75,9 +73,7 @@
                                 <h3 class="text-2xl font-bold text-white">{% trans "Change Username" %}</h3>
                                 <p class="text-sm text-gray-400">{% trans "Your unique identifier on the platform." %}</p>
                             </div>
-                            <div id="username-form-container">
-                                {% include 'core/partials/username_form.html' %}
-                            </div>
+                            {% include 'core/partials/username_form.html' %}
                         </c-atoms.card>
 
                         <c-atoms.card variant="glass" class="p-8 space-y-8">
@@ -85,10 +81,9 @@
                                 <h3 class="text-2xl font-bold text-white">{% trans "Update Password" %}</h3>
                                 <p class="text-sm text-gray-400">{% trans "Keep your account secure with a strong password." %}</p>
                             </div>
-                            <div id="password-form-container">
-                                {% include 'core/partials/password_form.html' %}
-                            </div>
+                            {% include 'core/partials/password_form.html' %}
                         </c-atoms.card>
+
                     </div>
                 </div>
 

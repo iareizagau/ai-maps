@@ -1,7 +1,7 @@
 import requests
 from datetime import datetime
 from django.core.management.base import BaseCommand
-from apps.sbk.models import Event, Artist, EventType, DanceStyle
+from apps.sbk.models import Event, Person, EventOccurrence, EventType, DanceStyle
 
 class Command(BaseCommand):
     help = 'Load SBK events from Go&Dance API'
@@ -121,8 +121,8 @@ class Command(BaseCommand):
                     'name': name,
                     'description': description,
                     'short_description': short_description,
-                    'start_date': start_date,
-                    'end_date': end_date,
+                    'start_date': start_date, # Deprecated soon
+                    'end_date': end_date, # Deprecated soon
                     'event_type': event_type,
                     'primary_style': primary_style,
                     'address': formatted_address,
@@ -133,6 +133,13 @@ class Command(BaseCommand):
                     'image_url': image_url,
                     'ticket_url': ticket_url,
                 }
+            )
+            
+            # Phase 2.2: Create/Update occurrence
+            EventOccurrence.objects.update_or_create(
+                event=event,
+                start_date=start_date,
+                defaults={'end_date': end_date}
             )
             
             if created:

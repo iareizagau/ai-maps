@@ -1,29 +1,59 @@
 {% load i18n %}
-<form hx-post="{% url 'update_profile' %}" hx-target="#profile-form-container" class="space-y-6">
-    {% csrf_token %}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="space-y-2">
-            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "First Name" %}</label>
-            {{ user_form.first_name }}
+
+<div id="profile-form-container">
+    {% if messages %}
+        <div class="space-y-2 mb-6">
+            {% for message in messages %}
+                <div class="flex items-center gap-3 p-4 {% if message.tags == 'success' %}bg-green-500/10 border border-green-500/20 text-green-500{% else %}bg-red-500/10 border border-red-500/20 text-red-500{% endif %} rounded-2xl text-sm font-bold animate-in fade-in slide-in-from-top-4 duration-300">
+                    <i data-lucide="{% if message.tags == 'success' %}check-circle{% else %}alert-circle{% endif %}" class="h-5 w-5"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form hx-post="{% url 'update_profile' %}" hx-target="#profile-form-container" hx-swap="outerHTML" class="space-y-6">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "First Name" %}</label>
+                {{ user_form.first_name }}
+                {% if user_form.first_name.errors %}
+                    <p class="text-xs text-red-500 mt-1">{{ user_form.first_name.errors.0 }}</p>
+                {% endif %}
+            </div>
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "Last Name" %}</label>
+                {{ user_form.last_name }}
+                {% if user_form.last_name.errors %}
+                    <p class="text-xs text-red-500 mt-1">{{ user_form.last_name.errors.0 }}</p>
+                {% endif %}
+            </div>
         </div>
         <div class="space-y-2">
-            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "Last Name" %}</label>
-            {{ user_form.last_name }}
+            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "Email" %}</label>
+            {{ user_form.email }}
+            {% if user_form.email.errors %}
+                <p class="text-xs text-red-500 mt-1">{{ user_form.email.errors.0 }}</p>
+            {% endif %}
         </div>
-    </div>
-    <div class="space-y-2">
-        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "Email" %}</label>
-        {{ user_form.email }}
-    </div>
-    <div class="space-y-2">
-        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "Phone" %}</label>
-        {{ user_form.phone }}
-    </div>
-    <div class="space-y-2">
-        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "Bio" %}</label>
-        {{ user_form.bio }}
-    </div>
-    <c-atoms.button variant="primary" type="submit" class="w-full py-4">
-        {% trans "Save Changes" %}
-    </c-atoms.button>
-</form>
+        <div class="space-y-2">
+            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "Phone" %}</label>
+            {{ user_form.phone }}
+            {% if user_form.phone.errors %}
+                <p class="text-xs text-red-500 mt-1">{{ user_form.phone.errors.0 }}</p>
+            {% endif %}
+        </div>
+        <div class="space-y-2">
+            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{% trans "Bio" %}</label>
+            {{ user_form.bio }}
+            {% if user_form.bio.errors %}
+                <p class="text-xs text-red-500 mt-1">{{ user_form.bio.errors.0 }}</p>
+            {% endif %}
+        </div>
+        <c-atoms.button variant="primary" type="submit" class="w-full py-4">
+            {% trans "Save Changes" %}
+        </c-atoms.button>
+    </form>
+</div>
+

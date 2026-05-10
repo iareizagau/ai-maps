@@ -11,8 +11,13 @@ env = environ.Env(
 # BASE_DIR is src/
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# Load .env file
-environ.Env.read_env(os.path.join(BASE_DIR.parent, '.env'))
+# Load .env file (try multiple locations for local vs docker)
+ENV_FILE = os.path.join(BASE_DIR.parent, '.env') # Local
+if not os.path.exists(ENV_FILE):
+    ENV_FILE = os.path.join(BASE_DIR, '.env') # Docker / Alternative
+
+if os.path.exists(ENV_FILE):
+    environ.Env.read_env(ENV_FILE)
 
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
@@ -28,6 +33,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     'django.contrib.gis',
     'django.contrib.sites',
     
@@ -36,6 +42,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'ninja',
     'django_celery_beat',
+    'anymail',
     
     # Allauth
     'allauth',
@@ -205,3 +212,11 @@ CELERY_TASK_SOFT_TIME_LIMIT = 60 * 25
 CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# Email & Anymail (Brevo)
+ANYMAIL = {
+    "BREVO_API_KEY": env("BREVO_API_KEY", default=""),
+}
+EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="Maps.eus <noreply@maps.eus>")
+SERVER_EMAIL = DEFAULT_FROM_EMAIL

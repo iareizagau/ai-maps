@@ -1,0 +1,716 @@
+{% load i18n %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    let allEvents = [];
+    let geoJsonLayer = null;
+    let map;
+    
+    // Unified State
+    let filters = {
+        style: 'all',
+        type: '{{ page_filter|default:"all" }}',
+        moods: new Set(),
+        search: '',
+        dateRange: '{% if page_filter == "tonight" %}today{% else %}all{% endif %}', // all, today, weekend, custom
+        customDates: null
+    };
+    
+    // Handle city filter from URL slug
+    const pageFilterRaw = '{{ page_filter|default:"" }}';
+    let citySlug = null;
+    if (pageFilterRaw.startsWith('city:')) {
+        citySlug = pageFilterRaw.split(':')[1];
+        filters.type = 'all'; // City landing shows all types by default
+    }
+
+    let isListView = false;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Lucide Icons
+        lucide.createIcons();
+        
+        // Initialize Map
+        const initialCenter = [{% if initial_center %}{{ initial_center.0 }}, {{ initial_center.1 }}{% else %}46.0, 10.0{% endif %}];
+        const initialZoom = {% if initial_zoom %}{{ initial_zoom }}{% else %}4{% endif %};
+        map = L.map('map', {zoomControl: false, scrollWheelZoom: true}).setView(initialCenter, initialZoom);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        const lightTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors', subdomains: 'abcd', maxZoom: 20
+        });
+        const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors', subdomains: 'abcd', maxZoom: 20
+        });
+
+        function updateMapTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                map.removeLayer(lightTiles);
+                darkTiles.addTo(map);
+            } else {
+                map.removeLayer(darkTiles);
+                lightTiles.addTo(map);
+            }
+        }
+        updateMapTheme();
+        new MutationObserver(() => updateMapTheme()).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+        // Initialize Flatpickr
+        flatpickr("#date-range-picker", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            locale: "es",
+            disableMobile: "true",
+            onChange: function(selectedDates) {
+                if (selectedDates.length === 2) {
+                    filters.dateRange = 'custom';
+                    filters.customDates = selectedDates;
+                    document.getElementById('custom-date-btn').classList.add('bg-rose-500', 'text-white');
+                    renderMapAndList();
+                }
+            }
+        });
+
+        // Load Events
+        fetch('{% url "sbk:events_json" %}')
+            .then(response => response.json())
+            .then(data => {
+                allEvents = data.events || [];
+                extractStyles();
+                
+                // Apply initial UI state based on filters
+                if (filters.type !== 'all') {
+                    document.querySelectorAll('#mood-filters [data-filter]').forEach(btn => {
+                        if (btn.dataset.filter === filters.type) btn.classList.remove('opacity-60');
+                        else btn.classList.add('opacity-60');
+                    });
+                }
+                if (filters.dateRange !== 'all') {
+                     document.querySelectorAll('#date-filters .filter-btn').forEach(btn => {
+                        if (btn.dataset.filter === filters.dateRange) {
+                            btn.classList.remove('inactive'); btn.classList.add('active', 'bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900');
+                        } else {
+                            btn.classList.add('inactive'); btn.classList.remove('active', 'bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900');
+                        }
+                    });
+                }
+
+                renderMapAndList();
+                updateWeather();
+            });
+
+        // Update list and weather when map moves
+        map.on('moveend', () => {
+            updateList();
+            updateWeather();
+        });
+
+        // Map click handler for Social Mode
+        map.on('click', function(e) {
+            if (window.addingSocialMode) {
+                window.toggleAddSocialMode();
+                document.getElementById('social-lat').value = e.latlng.lat;
+                document.getElementById('social-lng').value = e.latlng.lng;
+                openAddSocialModal();
+            }
+        });
+    });
+
+    // --- Icon & Style Config ---
+    const styleMap = {
+        'bachata': { icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s-8 6-8 12c0 4.4 3.6 8 8 8s8-3.6 8-8c0-6-8-12-8-12z"/></svg>', name: 'Bachata' },
+        'salsa': { icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>', name: 'Salsa' },
+        'kizomba': { icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>', name: 'Kizomba' },
+        'urbankiz': { icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5h4a2 2 0 1 1 0 4h-4V5Z"/><path d="M10 9v11"/><path d="M6 9h4"/></svg>', name: 'Urban Kiz' },
+        'mixed': { icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>', name: 'SBK' },
+        'default': { icon: '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>', name: 'Evento' }
+    };
+
+    const styleColors = {
+        'bachata': { bg: 'bg-rose-500', text: 'text-rose-500', border: 'border-l-rose-500', bgSoft: 'bg-rose-500/10' },
+        'salsa': { bg: 'bg-red-500', text: 'text-red-500', border: 'border-l-red-500', bgSoft: 'bg-red-500/10' },
+        'kizomba': { bg: 'bg-indigo-500', text: 'text-indigo-500', border: 'border-l-indigo-500', bgSoft: 'bg-indigo-500/10' },
+        'urbankiz': { bg: 'bg-violet-500', text: 'text-violet-500', border: 'border-l-violet-500', bgSoft: 'bg-violet-500/10' },
+        'mixed': { bg: 'bg-amber-500', text: 'text-amber-500', border: 'border-l-amber-500', bgSoft: 'bg-amber-500/10' },
+        'default': { bg: 'bg-slate-500', text: 'text-slate-500', border: 'border-l-slate-500', bgSoft: 'bg-slate-500/10' }
+    };
+
+    // --- Logic Functions ---
+
+    function extractStyles() {
+        const styles = new Set();
+        allEvents.forEach(e => { if (e.primary_style) styles.add(e.primary_style); });
+        const container = document.getElementById('style-filters');
+        Array.from(styles).sort().forEach(style => {
+            const btn = document.createElement('button');
+            const info = styleMap[style] || { name: style };
+            btn.className = 'filter-btn inactive px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm';
+            btn.innerHTML = info.name;
+            btn.onclick = () => setStyle(style);
+            btn.dataset.filter = style;
+            container.appendChild(btn);
+        });
+    }
+
+    window.updateSearch = function(val) {
+        filters.search = val.toLowerCase();
+        // Sync inputs
+        const searchInput = document.getElementById('event-search');
+        const mobileSearchInput = document.getElementById('mobile-event-search');
+        if (searchInput) searchInput.value = val;
+        if (mobileSearchInput) mobileSearchInput.value = val;
+        renderMapAndList();
+    };
+
+    window.toggleFilters = function() {
+        const strip = document.getElementById('filter-strip');
+        const btn = document.getElementById('filters-toggle-btn');
+        if (strip.classList.contains('max-h-0')) {
+            strip.classList.remove('max-h-0', 'border-0');
+            strip.classList.add('max-h-[800px]', 'border-b', 'border-slate-100', 'dark:border-slate-800');
+            if (btn) btn.classList.add('bg-rose-50', 'text-rose-600', 'border-rose-200');
+        } else {
+            strip.classList.add('max-h-0', 'border-0');
+            strip.classList.remove('max-h-[800px]', 'border-b', 'border-slate-100', 'dark:border-slate-800');
+            if (btn) btn.classList.remove('bg-rose-50', 'text-rose-600', 'border-rose-200');
+        }
+    };
+
+    window.toggleMobileFilters = function() {
+        if (!isListView) {
+            window.setViewMode('list');
+        }
+        setTimeout(() => window.toggleFilters(), 100);
+    };
+
+    window.setStyle = function(style) {
+        filters.style = style;
+        document.querySelectorAll('#style-filters .filter-btn').forEach(btn => {
+            if (btn.dataset.filter === style) {
+                btn.className = 'filter-btn active px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white shadow-md';
+            } else {
+                btn.className = 'filter-btn inactive px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-500';
+            }
+        });
+        renderMapAndList();
+    };
+
+    window.toggleType = function(type) {
+        filters.type = (filters.type === type) ? 'all' : type;
+        document.querySelectorAll('#mood-filters [data-filter]').forEach(btn => {
+            if (btn.dataset.filter === filters.type) btn.classList.remove('opacity-60');
+            else btn.classList.add('opacity-60');
+        });
+        renderMapAndList();
+    };
+
+    window.toggleMood = function(mood) {
+        if (filters.moods.has(mood)) filters.moods.delete(mood);
+        else filters.moods.add(mood);
+        
+        document.querySelectorAll('#mood-filters [data-mood]').forEach(btn => {
+            if (filters.moods.has(btn.dataset.mood)) btn.classList.remove('opacity-60');
+            else btn.classList.add('opacity-60');
+        });
+        renderMapAndList();
+    };
+
+    window.setDate = function(range) {
+        filters.dateRange = range;
+        document.querySelectorAll('#date-filters .filter-btn').forEach(btn => {
+            if (btn.dataset.filter === range) {
+                btn.classList.remove('inactive'); btn.classList.add('active', 'bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900');
+            } else {
+                btn.classList.add('inactive'); btn.classList.remove('active', 'bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900');
+            }
+        });
+        const customDateBtn = document.getElementById('custom-date-btn');
+        if (customDateBtn) customDateBtn.classList.remove('bg-rose-500', 'text-white');
+        renderMapAndList();
+    };
+
+    window.setViewMode = function(mode) {
+        isListView = (mode === 'list');
+        const sidebar = document.getElementById('sidebar');
+        const mapContainer = document.getElementById('map-container');
+        const btnMap = document.getElementById('view-map');
+        const btnList = document.getElementById('view-list');
+        const mobileBtnText = document.getElementById('mobile-toggle-text');
+
+        if (isListView) {
+            if (sidebar) {
+                sidebar.classList.remove('hidden', 'md:w-3/5', 'lg:w-[60%]', 'xl:w-[65%]');
+                sidebar.classList.add('flex', 'w-full');
+            }
+            if (mapContainer) mapContainer.classList.add('hidden');
+            if (btnList) btnList.className = "p-1 rounded-md transition-all bg-white dark:bg-slate-700 shadow-sm text-rose-600";
+            if (btnMap) btnMap.className = "p-1 rounded-md transition-all text-slate-500 hover:text-slate-700 dark:hover:text-slate-300";
+            if (mobileBtnText) mobileBtnText.innerText = 'Ver mapa';
+            const eventsList = document.getElementById('events-list');
+            if (eventsList) eventsList.scrollTop = 0;
+        } else {
+            if (sidebar) {
+                sidebar.classList.remove('flex', 'w-full');
+                sidebar.classList.add('hidden', 'md:flex', 'md:w-3/5', 'lg:w-[60%]', 'xl:w-[65%]');
+            }
+            if (mapContainer) mapContainer.classList.remove('hidden');
+            if (btnMap) btnMap.className = "p-1 rounded-md transition-all bg-white dark:bg-slate-700 shadow-sm text-rose-600";
+            if (btnList) btnList.className = "p-1 rounded-md transition-all text-slate-500 hover:text-slate-700 dark:hover:text-slate-300";
+            if (mobileBtnText) mobileBtnText.innerText = 'Ver eventos';
+            setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+        }
+    };
+
+    // Mobile toggle shortcut
+    document.getElementById('mobile-toggle-btn')?.addEventListener('click', () => {
+        window.setViewMode(isListView ? 'map' : 'list');
+    });
+
+    function matchesFilters(e) {
+        // Style
+        if (filters.style !== 'all' && e.primary_style !== filters.style) return false;
+        
+        // Type (Live, Festival, Social)
+        if (filters.type === 'live' && !(e.pulse?.active_checkins > 0)) return false;
+        if (filters.type !== 'all' && filters.type !== 'live' && e.event_type !== filters.type) return false;
+        
+        // Moods
+        if (filters.moods.has('workshop') && e.event_type !== 'workshop') return false;
+        
+        // Search
+        if (filters.search && !e.name.toLowerCase().includes(filters.search) && !e.city.toLowerCase().includes(filters.search)) return false;
+        
+        // City slug filter
+        if (citySlug) {
+            const slugify = str => str.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+            if (!e.city || slugify(e.city) !== citySlug) return false;
+        }
+
+        // Date
+        if (filters.dateRange !== 'all') {
+            const eventDate = new Date(e.start_date);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            
+            if (filters.dateRange === 'today') {
+                if (eventDate.toDateString() !== today.toDateString()) return false;
+            } else if (filters.dateRange === 'weekend') {
+                const day = today.getDay(); // 0 is Sun
+                const diffToFri = (day <= 5) ? (5 - day) : 0;
+                const fri = new Date(today); fri.setDate(today.getDate() + diffToFri);
+                const sun = new Date(fri); sun.setDate(fri.getDate() + 2); sun.setHours(23,59,59,999);
+                if (eventDate < fri || eventDate > sun) return false;
+            } else if (filters.dateRange === 'custom' && filters.customDates) {
+                const start = filters.customDates[0];
+                const end = filters.customDates[1] || start;
+                const endWithTime = new Date(end);
+                endWithTime.setHours(23,59,59,999);
+                if (eventDate < start || eventDate > endWithTime) return false;
+            }
+        }
+
+        return true;
+    }
+
+    function renderMapAndList() {
+        const filteredEvents = allEvents.filter(matchesFilters);
+        if (geoJsonLayer && map) map.removeLayer(geoJsonLayer);
+        
+        const geoJsonData = {
+            type: "FeatureCollection",
+            features: filteredEvents.map(e => ({
+                type: "Feature",
+                geometry: { type: "Point", coordinates: [e.lng, e.lat] },
+                properties: e,
+                id: e.id
+            }))
+        };
+        
+        if (map) {
+            geoJsonLayer = L.geoJSON(geoJsonData, {
+                pointToLayer: (feature, latlng) => {
+                    const props = feature.properties;
+                    const colors = styleColors[props.primary_style] || styleColors.default;
+                    const info = styleMap[props.primary_style] || styleMap.default;
+                    
+                    const isVerified = props.is_verified;
+                    const unverifiedBadge = !isVerified ? '<div class="absolute -top-1 -right-1 bg-amber-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white dark:border-slate-800 shadow-sm">?</div>' : '';
+                    
+                    const customIcon = L.divIcon({
+                        className: 'custom-map-marker',
+                        html: `<div class="${colors.bg} text-white rounded-full shadow-lg border-2 border-white dark:border-slate-800 transition-transform hover:scale-110 flex items-center justify-center w-10 h-10 shadow-rose-500/50 relative ${!isVerified ? 'opacity-80' : ''}">
+                                ${props.pulse?.active_checkins > 0 ? '<div class="pulse-marker-inner absolute inset-0"></div>' : ''}
+                                <div class="relative z-10 w-5 h-5">${info.icon}</div>
+                                ${unverifiedBadge}
+                               </div>`,
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 20],
+                        popupAnchor: [0, -20]
+                    });
+                    return L.marker(latlng, { icon: customIcon });
+                },
+                onEachFeature: (feature, layer) => {
+                    const props = feature.properties;
+                    const colors = styleColors[props.primary_style] || styleColors.default;
+                    const styleName = (styleMap[props.primary_style] || {}).name || props.primary_style;
+                    
+                    const popupTicket = props.ticket_url ? `<a href="/sbk/go/${feature.id}/" target="_blank" rel="noopener sponsored" onclick="event.stopPropagation()" class="mt-2 block text-center px-2 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity">🎟 ${props.price_info || '{% translate "Entrada" %}'}</a>` : '';
+                    layer.bindPopup(`
+                        <div class="p-2 cursor-pointer" onclick="document.getElementById('event-card-${feature.id}')?.scrollIntoView({behavior:'smooth', block:'center'});">
+                            <span class="text-[9px] font-black ${colors.text} mb-1 inline-block uppercase tracking-widest">${styleName}</span>
+                            <h3 class="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight max-w-[180px] truncate">${props.name}</h3>
+                            ${popupTicket}
+                        </div>`, { className: 'minimal-popup', closeButton: false });
+                }
+            }).addTo(map);
+        }
+
+        updateList();
+    }
+
+    function updateList() {
+        if (!map) return;
+        const bounds = map.getBounds();
+        const container = document.getElementById('events-list');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        const visibleEvents = allEvents.filter(e => {
+            const latLng = L.latLng(e.lat, e.lng);
+            return matchesFilters(e) && bounds.contains(latLng);
+        });
+
+        const mobileCount = document.getElementById('mobile-count');
+        if (mobileCount) mobileCount.innerText = visibleEvents.length;
+
+        if (visibleEvents.length === 0) {
+            container.innerHTML = `<div class="col-span-full flex flex-col items-center justify-center h-64 opacity-50"><i data-lucide="map-pin-off" class="w-12 h-12 mb-2"></i><p>{% translate "Nada por aquí..." %}</p></div>`;
+            lucide.createIcons();
+            return;
+        }
+
+        visibleEvents.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+        visibleEvents.forEach(e => {
+            const colors = styleColors[e.primary_style] || styleColors.default;
+            const styleName = (styleMap[e.primary_style] || {}).name || e.primary_style;
+            const isPast = e.is_recent_past;
+            
+            const card = document.createElement('div');
+            card.id = `event-card-${e.id}`;
+            card.className = `group relative bg-white dark:bg-slate-800 rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col ${isPast ? 'opacity-70' : ''}`;
+            const priceBadge = e.price_info ? `<span class="px-3 py-1 rounded-full bg-emerald-500/90 backdrop-blur-md border border-white/30 text-[10px] font-black text-white uppercase tracking-widest shadow-lg">${e.price_info}</span>` : '';
+            const ticketBtn = e.ticket_url ? `
+                        <a href="/sbk/go/${e.id}/" target="_blank" rel="noopener sponsored" onclick="event.stopPropagation()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-[10px] font-black uppercase tracking-widest text-center hover:scale-[1.02] transition-all shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-1.5">
+                            <i data-lucide="ticket" class="w-3 h-3"></i> {% translate "Entrada" %}
+                        </a>` : '';
+            const goingBtnClass = e.user_status === 'going' ? 'bg-emerald-500 text-white' : (e.ticket_url ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' : 'bg-rose-600 text-white');
+            const goingLabel = e.user_status === 'going' ? '✓ {% translate "Voy" %}' : '{% translate "¡Voy!" %}';
+            card.innerHTML = `
+                <div class="relative h-48 overflow-hidden">
+                    <img src="${e.image_url || 'https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=800'}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                    <div class="absolute top-3 left-3 flex gap-2">
+                        <span class="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[10px] font-black text-white uppercase tracking-widest">${styleName}</span>
+                    </div>
+                    <div class="absolute top-3 right-3 flex flex-col items-end gap-2">
+                        ${priceBadge}
+                        ${e.is_verified ? 
+                            '<span class="px-3 py-1 rounded-full bg-blue-500/90 backdrop-blur-md border border-white/30 text-[9px] font-black text-white uppercase tracking-widest shadow-lg flex items-center gap-1">✓ Verificado</span>' : 
+                            '<span class="px-3 py-1 rounded-full bg-amber-500/90 backdrop-blur-md border border-white/30 text-[9px] font-black text-white uppercase tracking-widest shadow-lg flex items-center gap-1">? Pendiente</span>'}
+                    </div>
+                    <div class="absolute bottom-3 left-3 right-3 text-white">
+                        <h4 class="font-black text-lg leading-tight line-clamp-2 uppercase tracking-tighter">${e.name}</h4>
+                    </div>
+                </div>
+                <div class="p-4 flex-1 flex flex-col justify-between gap-4">
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                            <span class="text-[11px] font-bold">${new Date(e.start_date).toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'short'})}</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                            <span class="text-[11px] font-bold truncate">${e.city}</span>
+                        </div>
+                        ${e.pulse?.active_checkins > 0 ? `
+                        <div class="flex items-center gap-2 text-rose-500 animate-pulse">
+                            <div class="w-2 h-2 rounded-full bg-rose-500"></div>
+                            <span class="text-[10px] font-black uppercase">${e.pulse.active_checkins} {% translate "BAILANDO AHORA" %}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="event.stopPropagation(); window.openCommunityModal('${e.id}')" class="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-colors">{% translate "Comunidad" %}</button>
+                        <button onclick="event.stopPropagation(); window.toggleStatus('${e.id}', 'going')" class="flex-1 py-2.5 rounded-xl ${goingBtnClass} text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all">${goingLabel}</button>
+                        ${ticketBtn}
+                    </div>
+                </div>
+            `;
+            card.onclick = () => {
+                if (window.innerWidth < 768) window.setViewMode('map');
+                if (map) map.flyTo([e.lat, e.lng], 15, { duration: 1 });
+            };
+            container.appendChild(card);
+        });
+        lucide.createIcons();
+    }
+
+    function updateWeather() {
+        if (allEvents.length === 0 || !map) return;
+        const center = map.getCenter();
+        const API_KEY = '{{ OPENWEATHERMAP_API_KEY }}';
+        if (!API_KEY) return;
+        fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${center.lat}&lon=${center.lng}&units=metric&appid=${API_KEY}`)
+            .then(r => r.json())
+            .then(data => {
+                const temp = Math.round(data.main.temp);
+                const icon = getWeatherIcon(data.weather[0].main);
+                const weatherTemp = document.getElementById('weather-temp');
+                const weatherIcon = document.getElementById('weather-icon');
+                const weatherLoc = document.getElementById('weather-location');
+                const weatherWidget = document.getElementById('weather-widget');
+                if (weatherTemp) weatherTemp.innerText = `${temp}°`;
+                if (weatherIcon) weatherIcon.innerText = icon;
+                if (weatherLoc) weatherLoc.innerText = data.name;
+                if (weatherWidget) weatherWidget.classList.remove('hidden');
+            });
+    }
+
+    function getWeatherIcon(condition) {
+        const icons = { 'Clear': '☀️', 'Clouds': '☁️', 'Rain': '🌧️', 'Snow': '❄️', 'Thunderstorm': '⛈️' };
+        return icons[condition] || '⛅';
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    window.toggleStatus = function(eventId, status) {
+        const csrftoken = getCookie('csrftoken');
+        if (!csrftoken) {
+            alert("Inicia sesión para usar el Pasaporte Bailador.");
+            window.location.href = "{% url 'account_login' %}?next={{ request.path }}";
+            return;
+        }
+        const event = allEvents.find(e => e.id === eventId);
+        if (!event) return;
+        const oldStatus = event.user_status;
+        event.user_status = (oldStatus === status) ? null : status;
+        updateList();
+        fetch(`/sbk/api/events/${eventId}/status/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+            body: JSON.stringify({ status: event.user_status })
+        }).catch(() => { event.user_status = oldStatus; updateList(); });
+    };
+
+    window.openCommunityModal = function(eventId) {
+        const modal = document.getElementById('community-modal');
+        const content = document.getElementById('community-modal-content');
+        if (!modal || !content) return;
+        window.currentCommunityEventId = eventId;
+        window.switchCommunityTab('list');
+        modal.classList.remove('hidden'); modal.classList.add('flex');
+        setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); content.classList.add('scale-100', 'opacity-100'); }, 10);
+        const listContainer = document.getElementById('community-modal-list');
+        if (listContainer) listContainer.innerHTML = '<div class="flex justify-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600"></div></div>';
+        fetch(`/sbk/api/events/${eventId}/community/`)
+            .then(r => r.json())
+            .then(data => { window.communityData = data; renderCommunityList(); renderCommunityBoard(); });
+    };
+
+    window.closeCommunityModal = function() {
+        const modal = document.getElementById('community-modal');
+        const content = document.getElementById('community-modal-content');
+        if (!modal || !content) return;
+        content.classList.remove('scale-100', 'opacity-100'); content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200);
+    };
+
+    window.switchCommunityTab = function(tab) {
+        const listTab = document.getElementById('community-list-tab');
+        const boardTab = document.getElementById('community-board-tab');
+        const btnList = document.getElementById('tab-list');
+        const btnBoard = document.getElementById('tab-board');
+        if (!listTab || !boardTab || !btnList || !btnBoard) return;
+        if (tab === 'list') {
+            listTab.classList.remove('hidden'); boardTab.classList.add('hidden');
+            btnList.className = "flex-1 py-3 text-sm font-bold border-b-2 border-rose-500 text-rose-600";
+            btnBoard.className = "flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700";
+        } else {
+            listTab.classList.add('hidden'); boardTab.classList.remove('hidden');
+            btnBoard.className = "flex-1 py-3 text-sm font-bold border-b-2 border-rose-500 text-rose-600";
+            btnList.className = "flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700";
+        }
+    };
+
+    function renderCommunityList() {
+        const listContainer = document.getElementById('community-modal-list');
+        if (!listContainer) return;
+        const data = window.communityData;
+        if (!data.community || data.community.length === 0) {
+            listContainer.innerHTML = `<div class="text-center py-8"><p class="text-slate-500">{% trans "Nadie apuntado aún." %}</p></div>`;
+            return;
+        }
+        let html = '<div class="space-y-4">';
+        data.community.forEach(user => {
+            html += `<div class="flex items-center gap-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                <img src="${user.avatar_url}" class="w-12 h-12 rounded-full">
+                <div class="flex-1 min-w-0"><h4 class="font-bold">@${user.username}</h4><p class="text-[10px] uppercase font-black text-slate-400">${user.rank}</p></div>
+                <button class="px-3 py-1.5 text-xs font-bold text-white bg-slate-900 dark:bg-white dark:text-slate-900 rounded-lg" onclick="alert('Instagram: @${user.username}')">{% trans "Contactar" %}</button>
+            </div>`;
+        });
+        listContainer.innerHTML = html + '</div>';
+    }
+
+    function renderCommunityBoard() {
+        const boardContainer = document.getElementById('community-modal-board');
+        if (!boardContainer) return;
+        const data = window.communityData;
+        if (!data.notices || data.notices.length === 0) {
+            boardContainer.innerHTML = `<div class="text-center py-8"><p class="text-slate-500">{% trans "El tablón está vacío." %}</p></div>`;
+            return;
+        }
+        let html = '';
+        data.notices.forEach(n => {
+            html += `<div class="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 mb-3">
+                <div class="flex justify-between mb-2"><span class="text-[10px] font-bold text-rose-600">${n.category_display}</span><span class="text-[10px] text-slate-400">${n.created_at}</span></div>
+                <p class="text-sm italic mb-3">"${n.message}"</p>
+                <div class="flex items-center gap-2"><img src="${n.avatar_url}" class="w-5 h-5 rounded-full"><span class="text-xs font-bold">@${n.username}</span></div>
+            </div>`;
+        });
+        boardContainer.innerHTML = html;
+    }
+
+    window.postNotice = function() {
+        const eventId = window.currentCommunityEventId;
+        const categoryInput = document.getElementById('notice-category');
+        const messageInput = document.getElementById('notice-message');
+        if (!messageInput || !messageInput.value) return;
+        fetch(`/sbk/api/events/${eventId}/notice/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ category: categoryInput.value, message: messageInput.value })
+        }).then(() => { messageInput.value = ''; openCommunityModal(eventId); });
+    };
+
+    window.addingSocialMode = false;
+    window.toggleAddSocialMode = function() {
+        {% if not request.user.is_authenticated %}
+        window.location.href = "{% url 'account_login' %}?next={{ request.path }}"; return;
+        {% endif %}
+        window.addingSocialMode = !window.addingSocialMode;
+        const toast = document.getElementById('add-social-toast');
+        const btn = document.getElementById('btn-add-social');
+        if (window.addingSocialMode) {
+            if (toast) toast.classList.remove('opacity-0');
+            if (btn) { btn.classList.add('bg-rose-800'); btn.innerHTML = `Cancelar`; }
+            if (map) map._container.style.cursor = 'crosshair';
+        } else {
+            if (toast) toast.classList.add('opacity-0');
+            if (btn) { btn.classList.remove('bg-rose-800'); btn.innerHTML = `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> {% translate "Añadir Social" %}`; }
+            if (map) map._container.style.cursor = '';
+        }
+        lucide.createIcons();
+    };
+
+    window.openAddSocialModal = function() {
+        const modal = document.getElementById('add-social-modal');
+        const content = document.getElementById('add-social-modal-content');
+        if (!modal || !content) return;
+        modal.classList.remove('hidden'); modal.classList.add('flex');
+        setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); content.classList.add('scale-100', 'opacity-100'); }, 10);
+    };
+
+    window.closeAddSocialModal = function() {
+        const modal = document.getElementById('add-social-modal');
+        const content = document.getElementById('add-social-modal-content');
+        if (!modal || !content) return;
+        content.classList.remove('scale-100', 'opacity-100'); content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200);
+    };
+
+    window.submitAddSocial = function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btn-submit-social');
+        if (btn) { btn.disabled = true; btn.innerText = 'Publicando...'; }
+        const formData = new FormData();
+        formData.append('name', document.getElementById('social-name').value);
+        formData.append('primary_style', document.getElementById('social-style').value);
+        formData.append('date', document.getElementById('social-date').value);
+        formData.append('price_info', document.getElementById('social-price').value);
+        formData.append('atmosphere', document.getElementById('social-atmosphere').value);
+        formData.append('lat', document.getElementById('social-lat').value);
+        formData.append('lng', document.getElementById('social-lng').value);
+        const posterFile = document.getElementById('social-poster').files[0];
+        if (posterFile) formData.append('poster', posterFile);
+        fetch('{% url "sbk:submit_local_social" %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            body: formData
+        }).then(() => { closeAddSocialModal(); window.location.reload(); });
+    };
+
+    window.previewPoster = function(input) {
+        const preview = document.getElementById('poster-preview');
+        const placeholder = document.getElementById('poster-upload-placeholder');
+        if (input.files && input.files[0] && preview && placeholder) {
+            const reader = new FileReader();
+            reader.onload = e => { preview.src = e.target.result; preview.classList.remove('hidden'); placeholder.classList.add('hidden'); };
+            reader.readAsDataURL(input.files[0]);
+        }
+    };
+
+    window.doCheckIn = function(eventId) {
+        if (!confirm("¿Confirmas que estás físicamente en este local?")) return;
+        fetch(`/sbk/api/events/${eventId}/checkin/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        }).then(() => window.location.reload());
+    };
+
+    window.openVibeModal = function(eventId, eventName) {
+        const idInput = document.getElementById('vibe-event-id');
+        const titleText = document.getElementById('vibe-modal-title');
+        const modal = document.getElementById('vibe-modal');
+        const content = document.getElementById('vibe-modal-content');
+        if (idInput) idInput.value = eventId;
+        if (titleText) titleText.innerText = eventName;
+        if (modal && content) {
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); content.classList.add('scale-100', 'opacity-100'); }, 10);
+        }
+    };
+
+    window.closeVibeModal = function() {
+        const modal = document.getElementById('vibe-modal');
+        const content = document.getElementById('vibe-modal-content');
+        if (!modal || !content) return;
+        content.classList.remove('scale-100', 'opacity-100'); content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200);
+    };
+
+    window.submitVibe = function(e) {
+        e.preventDefault();
+        const eventId = document.getElementById('vibe-event-id').value;
+        const musicChecked = document.querySelector('input[name="music"]:checked');
+        const crowdChecked = document.querySelector('input[name="crowd"]:checked');
+        if (!musicChecked || !crowdChecked) return;
+        fetch(`/sbk/api/events/${eventId}/vibe/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ music: musicChecked.value, crowd: crowdChecked.value })
+        }).then(() => { closeVibeModal(); window.location.reload(); });
+    };
+</script>

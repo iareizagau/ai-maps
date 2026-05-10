@@ -64,3 +64,34 @@ def save_zones(request):
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     
     return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
+
+def check_location(request):
+    """
+    Checks if a given lat/lng is inside any ZBE.
+    """
+    lat = request.GET.get('lat')
+    lng = request.GET.get('lng')
+    
+    if not lat or not lng:
+        return JsonResponse({'status': 'error', 'message': 'Faltan coordenadas'}, status=400)
+    
+    try:
+        from django.contrib.gis.geos import Point
+        pnt = Point(float(lng), float(lat), srid=4326)
+        
+        # Find the first ZBE that contains the point
+        zone = LowEmissionZone.objects.filter(geom__contains=pnt).first()
+        
+        if zone:
+            return JsonResponse({
+                'inside': True,
+                'zone_name': zone.name,
+                'description': zone.description
+            })
+        else:
+            return JsonResponse({
+                'inside': False
+            })
+            
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

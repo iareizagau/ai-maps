@@ -437,6 +437,16 @@ def submit_local_social(request):
         if not start_date:
             start_date = timezone.now()
             
+        # Trust-Based Logic (Waze approach)
+        moderation_status = 'pending'
+        is_verified = False
+        
+        # Auto-verify if user is a Verified Person (Organizer/Teacher) or Staff
+        person_profile = Person.objects.filter(claimed_by=request.user, is_verified=True).first()
+        if person_profile or request.user.is_staff:
+            moderation_status = 'verified'
+            is_verified = True
+            
         event = Event.objects.create(
             name=name,
             start_date=start_date,
@@ -449,9 +459,13 @@ def submit_local_social(request):
             atmosphere=atmosphere,
             poster=poster,
             is_user_submitted=True,
-            submitted_by=request.user
+            submitted_by=request.user,
+            moderation_status=moderation_status,
+            is_verified=is_verified
         )
-        add_xp(request.user, 50)
+        
+        xp_amount = 100 if is_verified else 50
+        add_xp(request.user, xp_amount)
         return JsonResponse({'status': 'success', 'message': '¡Social añadido con éxito!', 'event_id': str(event.id)})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)

@@ -1,0 +1,181 @@
+{% load i18n %}
+<!-- Community Modal -->
+<div id="community-modal" class="fixed inset-0 z-[4000] hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all scale-95 opacity-0" id="community-modal-content">
+        <div class="flex border-b border-slate-100 dark:border-slate-700">
+            <button onclick="switchCommunityTab('list')" id="tab-list" class="flex-1 py-3 text-sm font-bold border-b-2 border-rose-500 text-rose-600">{% translate "Bailadores" %}</button>
+            <button onclick="switchCommunityTab('board')" id="tab-board" class="flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700">{% translate "Tablón Quedadas" %}</button>
+        </div>
+        
+        <div class="max-h-[60vh] overflow-y-auto">
+            <!-- List Tab Content -->
+            <div id="community-list-tab" class="p-6">
+                <div id="community-modal-list">
+                    <div class="flex justify-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Board Tab Content -->
+            <div id="community-board-tab" class="hidden p-6">
+                <div id="notice-form-container" class="mb-6 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">{% translate "Publicar un anuncio" %}</h4>
+                    <div class="space-y-3">
+                        <select id="notice-category" class="w-full text-xs font-bold border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 p-2 outline-none focus:ring-2 focus:ring-rose-500">
+                            <option value="partner">🤝 {% translate "Buscar Pareja" %}</option>
+                            <option value="transport">🚗 {% translate "Compartir Coche" %}</option>
+                            <option value="dinner">🥘 {% translate "Cena / Quedada" %}</option>
+                            <option value="other">✨ {% translate "Otros" %}</option>
+                        </select>
+                        <textarea id="notice-message" class="w-full text-sm border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 p-2 outline-none focus:ring-2 focus:ring-rose-500" rows="2" placeholder="{% translate 'Ej: Busco pareja para el taller de bachata de las 11:00...' %}"></textarea>
+                        <button onclick="postNotice()" class="w-full py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm transition-colors">{% translate "Publicar en el Tablón" %}</button>
+                    </div>
+                </div>
+                <div id="community-modal-board" class="space-y-4">
+                    <!-- Notices will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Social Modal -->
+<div id="add-social-modal" class="fixed inset-0 z-[4000] hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-95 opacity-0" id="add-social-modal-content">
+        <div class="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-rose-50 dark:bg-rose-900/10">
+            <div>
+                <h3 class="text-xl font-bold text-rose-900 dark:text-rose-100 flex items-center gap-2">📍 {% translate "Añadir Social" %}</h3>
+                <p class="text-sm text-rose-700 dark:text-rose-400 font-medium">{% translate "Registra una fiesta local en el mapa" %}</p>
+            </div>
+            <button onclick="closeAddSocialModal()" class="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <form id="add-social-form" onsubmit="submitAddSocial(event)">
+                <input type="hidden" id="social-lat">
+                <input type="hidden" id="social-lng">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{% translate "Nombre de la fiesta / local" %}</label>
+                        <input type="text" id="social-name" required class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-500 outline-none" placeholder="{% translate 'Ej: Jueves Salsero en The Host' %}">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{% translate "Estilo Principal" %}</label>
+                        <select id="social-style" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-500 outline-none">
+                            <option value="mixed">SBK / Mixto</option>
+                            <option value="bachata">Bachata</option>
+                            <option value="salsa">Salsa</option>
+                            <option value="kizomba">Kizomba</option>
+                            <option value="urbankiz">Urban Kiz</option>
+                        </select>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{% translate "Fecha" %}</label>
+                            <input type="date" id="social-date" required class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{% translate "Precio (aprox)" %}</label>
+                            <input type="text" id="social-price" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-500 outline-none" placeholder="{% translate 'Ej: 10€ c/copa' %}">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{% translate "Ambiente / Notas" %}</label>
+                        <input type="text" id="social-atmosphere" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-500 outline-none" placeholder="{% translate 'Ej: Social puro, mucha bachata, relax...' %}">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{% translate "Cartel del evento (Opcional)" %}</label>
+                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-lg hover:border-rose-400 transition-colors cursor-pointer relative" onclick="document.getElementById('social-poster').click()">
+                            <div class="space-y-1 text-center" id="poster-upload-placeholder">
+                                <svg class="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <div class="flex text-sm text-slate-600 dark:text-slate-400">
+                                    <span class="relative cursor-pointer font-medium text-rose-600 hover:text-rose-500">{% translate "Subir un archivo" %}</span>
+                                    <p class="pl-1">{% translate "o arrastra y suelta" %}</p>
+                                </div>
+                                <p class="text-xs text-slate-500">{% trans "PNG, JPG, GIF hasta 5MB" %}</p>
+                            </div>
+                            <img id="poster-preview" class="absolute inset-0 w-full h-full object-contain hidden rounded-lg bg-slate-100 dark:bg-slate-900">
+                            <input id="social-poster" name="poster" type="file" class="sr-only" accept="image/*" onchange="previewPoster(this)">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-end">
+                    <button type="button" onclick="closeAddSocialModal()" class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 mr-2">{% translate "Cancelar" %}</button>
+                    <button type="submit" id="btn-submit-social" class="px-6 py-2 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-md transition-colors">
+                        {% translate "Publicar Evento" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Vibe Modal -->
+<div id="vibe-modal" class="fixed inset-0 z-[4500] hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-95 opacity-0" id="vibe-modal-content">
+        <div class="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-rose-50 dark:bg-rose-900/10">
+            <div>
+                <h3 class="text-xl font-bold text-rose-900 dark:text-rose-100 flex items-center gap-2">🔥 {% trans "Vibe Check" %}</h3>
+                <p class="text-sm text-rose-700 dark:text-rose-400 font-medium" id="vibe-modal-title"></p>
+            </div>
+            <button onclick="closeVibeModal()" class="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <form id="vibe-form" onsubmit="submitVibe(event)" class="space-y-6">
+                <input type="hidden" id="vibe-event-id">
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">{% translate "¿Cómo está la música?" %}</label>
+                    <div class="flex justify-between gap-2">
+                        <label class="flex-1 text-center cursor-pointer group">
+                            <input type="radio" name="music" value="1" class="hidden peer">
+                            <div class="p-3 rounded-xl border-2 border-transparent bg-slate-50 dark:bg-slate-700 peer-checked:border-rose-500 peer-checked:bg-rose-50 dark:peer-checked:bg-rose-900/20 transition-all text-2xl">😴</div>
+                        </label>
+                        <label class="flex-1 text-center cursor-pointer group">
+                            <input type="radio" name="music" value="3" checked class="hidden peer">
+                            <div class="p-3 rounded-xl border-2 border-transparent bg-slate-50 dark:bg-slate-700 peer-checked:border-rose-500 peer-checked:bg-rose-50 dark:peer-checked:bg-rose-900/20 transition-all text-2xl">🆗</div>
+                        </label>
+                        <label class="flex-1 text-center cursor-pointer group">
+                            <input type="radio" name="music" value="5" class="hidden peer">
+                            <div class="p-3 rounded-xl border-2 border-transparent bg-slate-50 dark:bg-slate-700 peer-checked:border-rose-500 peer-checked:bg-rose-50 dark:peer-checked:bg-rose-900/20 transition-all text-2xl">🔥</div>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">{% translate "¿Espacio en pista?" %}</label>
+                    <div class="flex justify-between gap-2">
+                        <label class="flex-1 text-center cursor-pointer group">
+                            <input type="radio" name="crowd" value="1" class="hidden peer">
+                            <div class="p-3 rounded-xl border-2 border-transparent bg-slate-50 dark:bg-slate-700 peer-checked:border-rose-500 peer-checked:bg-rose-50 dark:peer-checked:bg-rose-900/20 transition-all text-2xl">🕺</div>
+                        </label>
+                        <label class="flex-1 text-center cursor-pointer group">
+                            <input type="radio" name="crowd" value="3" checked class="hidden peer">
+                            <div class="p-3 rounded-xl border-2 border-transparent bg-slate-50 dark:bg-slate-700 peer-checked:border-rose-500 peer-checked:bg-rose-50 dark:peer-checked:bg-rose-900/20 transition-all text-2xl">💃</div>
+                        </label>
+                        <label class="flex-1 text-center cursor-pointer group">
+                            <input type="radio" name="crowd" value="5" class="hidden peer">
+                            <div class="p-3 rounded-xl border-2 border-transparent bg-slate-50 dark:bg-slate-700 peer-checked:border-rose-500 peer-checked:bg-rose-50 dark:peer-checked:bg-rose-900/20 transition-all text-2xl">🥪</div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-lg transition-all transform active:scale-95">
+                    {% translate "Enviar reporte de Vibe" %}
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

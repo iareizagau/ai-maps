@@ -1,0 +1,60 @@
+{% load i18n %}
+<!-- Improved Filter Strip (Collapsed by default) -->
+<div id="filter-strip" class="bg-white dark:bg-slate-900 transition-all duration-300 overflow-hidden max-h-0 p-0 border-0">
+    <div class="p-4 space-y-6">
+        <!-- Thumb-Ready Moods Grid -->
+        <div>
+            <div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 px-1">{% translate "Experiencias" %}</div>
+            <div class="grid grid-cols-3 gap-2" id="mood-filters">
+                <button onclick="toggleType('live')" data-filter="live" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-rose-100 dark:border-rose-900/30 bg-rose-50/50 dark:bg-rose-900/10 text-rose-700 dark:text-rose-400 transition-all cursor-pointer">
+                    <span class="text-xl mb-1">🔥</span>
+                    <span class="text-[10px] font-bold">LIVE</span>
+                </button>
+                <button onclick="toggleType('festival')" data-filter="festival" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-amber-100 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-400 transition-all cursor-pointer">
+                    <span class="text-xl mb-1">🎉</span>
+                    <span class="text-[10px] font-bold">{% translate "Festivales" %}</span>
+                </button>
+                <button onclick="toggleType('party')" data-filter="party" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-purple-100 dark:border-purple-900/30 bg-purple-50/50 dark:bg-purple-900/10 text-purple-700 dark:text-purple-400 transition-all cursor-pointer">
+                    <span class="text-xl mb-1">🪩</span>
+                    <span class="text-[10px] font-bold">{% translate "Social" %}</span>
+                </button>
+                <button onclick="toggleMood('workshop')" data-mood="workshop" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-blue-100 dark:border-blue-900/30 bg-blue-50/50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400 transition-all cursor-pointer">
+                    <span class="text-xl mb-1">👟</span>
+                    <span class="text-[10px] font-bold">{% translate "Talleres" %}</span>
+                </button>
+                <button onclick="toggleMood('premium')" data-mood="premium" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/50 dark:bg-emerald-900/10 text-emerald-700 dark:text-emerald-400 transition-all cursor-pointer">
+                    <span class="text-xl mb-1">💎</span>
+                    <span class="text-[10px] font-bold">{% translate "Premium" %}</span>
+                </button>
+                <button onclick="toggleMood('outdoor')" data-mood="outdoor" class="mood-btn opacity-60 flex flex-col items-center justify-center p-3 rounded-2xl border border-sky-100 dark:border-sky-900/30 bg-sky-50/50 dark:bg-sky-900/10 text-sky-700 dark:text-sky-400 transition-all cursor-pointer">
+                    <span class="text-xl mb-1">🌴</span>
+                    <span class="text-[10px] font-bold">{% translate "Exterior" %}</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Styles (Visual List) -->
+        <div>
+            <div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">{% translate "Estilos de baile" %}</div>
+            <div class="flex flex-wrap gap-2" id="style-filters">
+                <button class="filter-btn active px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2" data-filter="all" onclick="setStyle('all')">
+                    🌎 {% translate "Todos" %}
+                </button>
+            </div>
+        </div>
+
+        <!-- Date Selection -->
+        <div>
+            <div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">{% translate "Cuándo bailar" %}</div>
+            <div class="grid grid-cols-4 gap-2" id="date-filters">
+                <button class="filter-btn active py-2.5 rounded-xl text-[10px] font-black uppercase transition-all border border-slate-200 dark:border-slate-700" data-filter="all" onclick="setDate('all')">{% translate "Siempre" %}</button>
+                <button class="filter-btn inactive py-2.5 rounded-xl text-[10px] font-black uppercase transition-all border border-slate-200 dark:border-slate-700" data-filter="today" onclick="setDate('today')">{% translate "Hoy" %}</button>
+                <button class="filter-btn inactive py-2.5 rounded-xl text-[10px] font-black uppercase transition-all border border-slate-200 dark:border-slate-700" data-filter="weekend" onclick="setDate('weekend')">{% translate "Finde" %}</button>
+                <button id="custom-date-btn" class="py-2.5 rounded-xl text-[10px] font-black uppercase transition-all border border-rose-500/30 text-rose-600 bg-rose-500/5 relative">
+                    {% translate "Rango" %}
+                    <input type="text" id="date-range-picker" class="absolute inset-0 opacity-0 cursor-pointer">
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

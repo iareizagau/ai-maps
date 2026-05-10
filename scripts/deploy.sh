@@ -19,6 +19,8 @@ COMPOSE="docker compose --env-file .env.prod -f docker-compose.yml -f docker-com
 echo ">> Building web image (worker/beat reuse the same image tag)..."
 $COMPOSE build web
 
+echo ">> Current commit: $(git rev-parse HEAD)"
+
 echo ">> Bringing db up..."
 $COMPOSE up -d db
 
@@ -39,7 +41,10 @@ echo ">> Initializing OAuth (Site + SocialApp)..."
 $COMPOSE run --rm web python manage.py init_oauth
 
 echo ">> Starting services..."
-$COMPOSE up -d --remove-orphans
+$COMPOSE up -d --force-recreate --remove-orphans
+
+echo ">> Status of maps services:"
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" | grep maps
 
 echo ">> Pruning dangling images..."
 docker image prune -f

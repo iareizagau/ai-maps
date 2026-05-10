@@ -39,19 +39,39 @@ class Command(BaseCommand):
                 if not geometry:
                     continue
 
+                geom_type = geometry.get('type')
+                if geom_type not in ['Polygon', 'MultiPolygon']:
+                    self.stdout.write(self.style.WARNING(f'  [Saltado] Tipo de geometría {geom_type} no compatible con ZBE.'))
+                    continue
+
                 # Try common name fields
-                name = properties.get('Izena') or properties.get('zona_zbe') or properties.get('name') or properties.get('nombre')
+                name = properties.get('Izena') or properties.get('zona_zbe') or properties.get('Nombre') or properties.get('name') or properties.get('nombre')
                 if not name:
                     name = os.path.splitext(filename)[0].replace('_', ' ').title()
                 
                 # Combine extra properties into description
                 description_parts = [f"Fuente: {filename}"]
                 for k, v in properties.items():
-                    if k.lower() not in ['izena', 'zona_zbe', 'name', 'nombre', 'fid', 'objectid']:
+                    if k.lower() not in ['izena', 'zona_zbe', 'nombre', 'name', 'fid', 'objectid']:
                         description_parts.append(f"{k}: {v}")
                 description = "\n".join(description_parts)
                 
                 try:
+                    # Fix malformed nesting (some exporters add extra brackets)
+                    def get_depth(l):
+                        if isinstance(l, list) and len(l) > 0:
+                            return 1 + get_depth(l[0])
+                        return 0
+                    
+                    coords = geometry.get('coordinates', [])
+                    depth = get_depth(coords)
+                    
+                    # Polygon should have depth 3, MultiPolygon depth 4
+                    if geom_type == 'Polygon' and depth == 4:
+                        geometry['type'] = 'MultiPolygon'
+                    elif geom_type == 'MultiPolygon' and depth == 3:
+                        geometry['type'] = 'Polygon'
+
                     # Convert geometry to GEOS object
                     geom = GEOSGeometry(json.dumps(geometry))
                     
@@ -65,6 +85,9 @@ class Command(BaseCommand):
                     # Ensure it's a MultiPolygon
                     if isinstance(geom, Polygon):
                         geom = MultiPolygon(geom)
+                    elif not isinstance(geom, MultiPolygon):
+                         self.stdout.write(self.style.WARNING(f'  [Saltado] Geometría no es Polygon/MultiPolygon: {name}'))
+                         continue
                     
                     # Create or update
                     zone, created = LowEmissionZone.objects.update_or_create(

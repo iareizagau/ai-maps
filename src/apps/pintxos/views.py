@@ -1,10 +1,16 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.urls import reverse
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import cache_control
 import json
-from .models import Restaurant, Dish
+
+from apps.core.entitlements import has_entitlement
+from .forms import RestaurantClaimForm, RestaurantManageForm
+from .models import Restaurant, Dish, RestaurantClaim
 from . import selectors
 
 
@@ -111,6 +117,73 @@ def dish_rate(request, dish_id):
     dish = get_object_or_404(Dish, id=dish_id)
     context = {'dish': dish}
     return render(request, 'pintxos/dish_rate.html', context)
+
+
+@login_required
+def restaurant_claim(request, restaurant_id):
+    """Submit ownership claim for a venue. Admin reviews."""
+    restaurant = get_object_or_404(Restaurant, id=restaurant_id)
+
+    if restaurant.claimed_by_id:
+        if restaurant.claimed_by_id == request.user.id:
+            return redirect('pintxos:restaurant_manage', restaurant_id=restaurant.id)
+        messages.error(request, _("This venue is already claimed."))
+        return redirect('pintxos:restaurant_detail', restaurant_id=restaurant.id)
+
+    existing = RestaurantClaim.objects.filter(
+        restaurant=restaurant, claimant=request.user
+    ).first()
+    if existing and existing.status == RestaurantClaim.Status.PENDING:
+        messages.info(request, _("You already submitted a claim for this venue. We're reviewing it."))
+        return redirect('account_app_panel', slug='pintxos')
+
+    if request.method == 'POST':
+        form = RestaurantClaimForm(request.POST, instance=existing)
+        if form.is_valid():
+            claim = form.save(commit=False)
+            claim.restaurant = restaurant
+            claim.claimant = request.user
+            claim.status = RestaurantClaim.Status.PENDING
+            claim.decided_at = None
+            claim.reviewed_by = None
+            claim.save()
+            messages.success(request, _("Claim submitted. We'll get back to you within 48h."))
+            return redirect('account_app_panel', slug='pintxos')
+    else:
+        form = RestaurantClaimForm(instance=existing, initial={
+            'contact_email': request.user.email,
+            'contact_phone': getattr(request.user, 'phone', '') or '',
+        })
+
+    return render(request, 'pintxos/claim.html', {
+        'restaurant': restaurant,
+        'form': form,
+    })
+
+
+@login_required
+def restaurant_manage(request, restaurant_id):
+    """Manage a venue you own. Free claim = edit basics. Pro = analytics + more."""
+    restaurant = get_object_or_404(Restaurant, id=restaurant_id)
+    if restaurant.claimed_by_id != request.user.id and not request.user.is_staff:
+        return HttpResponseForbidden(_("You don't manage this venue."))
+
+    if request.method == 'POST':
+        form = RestaurantManageForm(request.POST, instance=restaurant)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Venue updated."))
+            return redirect('pintxos:restaurant_manage', restaurant_id=restaurant.id)
+    else:
+        form = RestaurantManageForm(instance=restaurant)
+
+    return render(request, 'pintxos/manage.html', {
+        'restaurant': restaurant,
+        'form': form,
+        'dishes': restaurant.dishes.all(),
+        'has_analytics': has_entitlement(request.user, 'pintxos', 'analytics_dashboard'),
+        'has_priority': has_entitlement(request.user, 'pintxos', 'priority_listing'),
+    })
 
 
 def comanda(request):

@@ -56,7 +56,17 @@ class Command(BaseCommand):
                 'hero_title': 'Conquista cada cima',
                 'description': 'Gestión de salidas de monte y reseñas de vías de escalada con croquis.',
                 'is_featured': True
-            }
+            },
+            {
+                'slug': 'zbe',
+                'name': 'ZBE Maps',
+                'tagline': 'Zonas de Bajas Emisiones de Euskadi.',
+                'domain': 'https://ai.maps.eus/zbe/',
+                'icon': 'car',
+                'primary_color': '#22c55e', # Green
+                'hero_title': 'Conoce las ZBE',
+                'description': 'Visualiza las Zonas de Bajas Emisiones para planificar tus desplazamientos.'
+            },
         ]
 
         for app_data in apps:

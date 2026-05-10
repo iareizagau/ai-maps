@@ -1,23 +1,10 @@
 from django.conf import settings
 from django_hosts import patterns, host
 
-if settings.DEBUG:
-    # Development: use path-based routing (localhost/pintxos/, localhost/bidaiak/, etc.)
-    host_patterns = patterns(
-        '',
-        host(r'localhost', 'config.urls', name='localhost'),
-        host(r'127\.0\.0\.1', 'config.urls', name='localhost-ip'),
-    )
-else:
-    # Production: use subdomain-based routing
-    host_patterns = patterns(
-        '',
-        host(r'ai', settings.ROOT_URLCONF, name='ai'),
-        host(r'bidaiak', 'apps.bidaiak.urls', name='bidaiak'),
-        host(r'pintxos', 'apps.pintxos.urls', name='pintxos'),
-        host(r'sbk', 'apps.sbk.urls', name='sbk'),
-        host(r'kultur', 'apps.kultur.urls', name='kultur'),
-        host(r'inguru', 'apps.inguru.urls', name='inguru'),
-        host(r'gailur', 'apps.gailur.urls', name='gailur'),
-        host(r'zbe', 'apps.zbe.urls', name='zbe'),
-    )
+# Path-based routing for now (every host falls through to config.urls, which
+# mounts each app at /<slug>/). When we move to subdomains, replace this with
+# per-host routing: host(r'pintxos', 'apps.pintxos.urls', ...), etc.
+host_patterns = patterns(
+    '',
+    host(r'.*', settings.ROOT_URLCONF, name='default'),
+)

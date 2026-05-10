@@ -1,0 +1,132 @@
+{% load i18n %}
+
+<c-layouts.account title="{% trans 'My SBK' %}" current="apps">
+    <div class="space-y-8">
+
+        {% if profile %}
+        <c-atoms.card variant="glass" class="p-8 space-y-2">
+            <div class="flex items-baseline justify-between gap-4">
+                <h2 class="text-2xl font-bold">{{ profile.get_rank }}</h2>
+                <span class="text-sm text-gray-500">{{ profile.points }} XP</span>
+            </div>
+            <div class="grid grid-cols-3 gap-4 text-center pt-4 border-t border-white/5">
+                <div>
+                    <div class="text-3xl font-black text-primary">{{ profile.level }}</div>
+                    <div class="text-xs uppercase tracking-widest text-gray-500 mt-1">{% trans "Level" %}</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-black text-primary">{{ profile.current_streak }}</div>
+                    <div class="text-xs uppercase tracking-widest text-gray-500 mt-1">{% trans "Streak (days)" %}</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-black text-primary">{{ profile.max_streak }}</div>
+                    <div class="text-xs uppercase tracking-widest text-gray-500 mt-1">{% trans "Best streak" %}</div>
+                </div>
+            </div>
+        </c-atoms.card>
+        {% endif %}
+
+        <c-atoms.card variant="glass" class="p-8 space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold">{% trans "Venues you manage" %}</h2>
+            </div>
+            {% if claimed %}
+                <ul class="divide-y divide-white/5">
+                    {% for v in claimed %}
+                    <li class="py-3 flex items-center justify-between">
+                        <div>
+                            <div class="font-bold">{{ v.name }}</div>
+                            <div class="text-xs text-gray-500">{{ v.city }} · {{ v.get_venue_type_display }}</div>
+                        </div>
+                        <a href="{% url 'sbk:dance_venue_manage' v.id %}" class="text-sm font-bold text-primary hover:underline">{% trans "Manage" %} →</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-sm text-gray-500">{% trans "You don't manage any venue yet." %}</p>
+            {% endif %}
+        </c-atoms.card>
+
+        {% if pending_claims %}
+        <c-atoms.card variant="glass" class="p-8 space-y-4">
+            <h2 class="text-xl font-bold">{% trans "Pending claims" %}</h2>
+            <ul class="divide-y divide-white/5">
+                {% for c in pending_claims %}
+                <li class="py-3 flex items-center justify-between">
+                    <div>
+                        <span class="font-bold">{{ c.venue.name }}</span>
+                        <span class="text-xs text-gray-500 ml-2">{% trans "submitted" %} {{ c.created_at|date:"d M Y" }}</span>
+                    </div>
+                    <span class="text-xs uppercase tracking-widest bg-amber-500/20 text-amber-500 px-2 py-1 rounded">{% trans "under review" %}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </c-atoms.card>
+        {% endif %}
+
+        {% if rejected_claims %}
+        <c-atoms.card variant="glass" class="p-8 space-y-4">
+            <h2 class="text-xl font-bold">{% trans "Rejected claims" %}</h2>
+            <ul class="divide-y divide-white/5">
+                {% for c in rejected_claims %}
+                <li class="py-3">
+                    <div class="font-bold">{{ c.venue.name }}</div>
+                    {% if c.admin_notes %}<div class="text-xs text-gray-500 mt-1">{{ c.admin_notes }}</div>{% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </c-atoms.card>
+        {% endif %}
+
+        <c-atoms.card variant="glass" class="p-8 space-y-4">
+            <h2 class="text-xl font-bold">{% trans "Upcoming events" %} <span class="text-sm font-normal text-gray-500">({{ upcoming|length }})</span></h2>
+            {% if upcoming %}
+                <ul class="divide-y divide-white/5">
+                    {% for ue in upcoming %}
+                    <li class="py-3 flex items-center justify-between gap-4">
+                        <div class="min-w-0">
+                            <div class="font-bold truncate">{{ ue.event.name }}</div>
+                            <div class="text-xs text-gray-500 truncate">
+                                {{ ue.event.city }} · {{ ue.event.start_date|date:"d M Y" }}
+                            </div>
+                        </div>
+                        <span class="text-xs uppercase tracking-widest bg-primary/10 text-primary px-2 py-1 rounded whitespace-nowrap capitalize">{{ ue.get_status_display }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-sm text-gray-500">{% blocktrans %}No upcoming events. Mark some as interested or going from the SBK map.{% endblocktrans %}</p>
+            {% endif %}
+        </c-atoms.card>
+
+        {% if past %}
+        <c-atoms.card variant="glass" class="p-8 space-y-4">
+            <h2 class="text-xl font-bold">{% trans "Recent past events" %}</h2>
+            <ul class="divide-y divide-white/5">
+                {% for ue in past %}
+                <li class="py-3 flex items-center justify-between gap-4">
+                    <div class="min-w-0">
+                        <span class="font-bold block truncate">{{ ue.event.name }}</span>
+                        <div class="text-xs text-gray-500 truncate">{{ ue.event.city }} · {{ ue.event.start_date|date:"d M Y" }}</div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </c-atoms.card>
+        {% endif %}
+
+        {% if notices %}
+        <c-atoms.card variant="glass" class="p-8 space-y-4">
+            <h2 class="text-xl font-bold">{% trans "Your notices" %}</h2>
+            <ul class="divide-y divide-white/5">
+                {% for n in notices %}
+                <li class="py-3">
+                    <div class="text-xs text-gray-500">{{ n.event.name }} · {{ n.created_at|date:"d M Y" }}</div>
+                    <div class="text-sm">{{ n.get_category_display }}: {{ n.message }}</div>
+                </li>
+                {% endfor %}
+            </ul>
+        </c-atoms.card>
+        {% endif %}
+    </div>
+</c-layouts.account>

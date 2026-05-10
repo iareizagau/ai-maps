@@ -11,7 +11,12 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # timescale/timescaledb-ha:pg15 stores its data in /home/postgres/pgdata/data
+      # (verified with SHOW data_directory). Mounting the named volume there is
+      # the only way persistence survives `docker compose run` recreating the
+      # container. The legacy /var/lib/postgresql/data path used by stock postgres
+      # images is wrong for this image.
+      - postgres_data:/home/postgres/pgdata/data
       - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
 
   redis:

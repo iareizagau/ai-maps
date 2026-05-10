@@ -15,6 +15,7 @@
 
     <c-slot name="extra_js">
         {{ request.LANGUAGE_CODE|json_script:"current-language" }}
+        {{ request.user.is_authenticated|json_script:"is-authenticated" }}
         <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
         <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
         <script src="https://unpkg.com/lucide@latest"></script>

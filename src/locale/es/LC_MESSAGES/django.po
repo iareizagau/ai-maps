@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-09 16:48+0200\n"
+"POT-Creation-Date: 2026-05-10 13:23+0200\n"
 "PO-Revision-Date: 2026-04-27 23:15+0200\n"
 "Last-Translator: Antigravity AI\n"
 "Language-Team: Spanish\n"
@@ -110,7 +110,7 @@ msgstr ""
 "valoraciones te ayudarán a decidir mejor."
 
 #: apps/core/templates/core/partials/user_search_results.html:23
-#: templates/core/profile.html:159
+#: templates/account/social.html:43 templates/core/profile.html:159
 msgid "Following"
 msgstr "Siguiendo"
 
@@ -142,113 +142,244 @@ msgstr "Aguas de Consumo"
 msgid "Meteorología (Euskalmet)"
 msgstr "Meteorología (Euskalmet)"
 
-#: apps/kultur/models.py:5
-msgid "ID Origen"
-msgstr "ID Origen"
+#: apps/kultur/account.py:23
+#, python-format
+msgid "%(n)d events saved"
+msgstr "%(n)d eventos guardados"
 
-#: apps/kultur/models.py:5
-msgid "ID from the Euskadi API"
-msgstr "ID de la API de Euskadi"
+#: apps/kultur/account.py:24
+msgid "Upcoming"
+msgstr "Próximos"
 
-#: apps/kultur/models.py:6
-msgid "Título (ES)"
-msgstr "Título (ES)"
+#: apps/kultur/account.py:25
+msgid "Past"
+msgstr "Pasados"
 
-#: apps/kultur/models.py:7
-msgid "Título (EU)"
-msgstr "Título (EU)"
+#: apps/kultur/account.py:26 apps/pintxos/account.py:32 apps/sbk/account.py:41
+msgid "View detail"
+msgstr "Ver detalle"
 
-#: apps/kultur/models.py:8
-msgid "Descripción (ES)"
-msgstr "Descripción (ES)"
+#: apps/kultur/models.py:20
+#, fuzzy
+#| msgid "Nombre"
+msgid "Nombre (ES)"
+msgstr "Nombre"
 
-#: apps/kultur/models.py:9
-msgid "Descripción (EU)"
-msgstr "Descripción (EU)"
+#: apps/kultur/models.py:21
+#, fuzzy
+#| msgid "Nombre"
+msgid "Nombre (EU)"
+msgstr "Nombre"
 
-#: apps/kultur/models.py:11
-msgid "Fecha Inicio"
-msgstr "Fecha Inicio"
-
-#: apps/kultur/models.py:12
-msgid "Fecha Fin"
-msgstr "Fecha Fin"
-
-#: apps/kultur/models.py:14
-msgid "Lugar (ES)"
-msgstr "Lugar (ES)"
-
-#: apps/kultur/models.py:15
-msgid "Lugar (EU)"
-msgstr "Lugar (EU)"
-
-#: apps/kultur/models.py:16
-msgid "Municipio (ES)"
+#: apps/kultur/models.py:22
+#, fuzzy
+#| msgid "Municipio (ES)"
+msgid "Municipio"
 msgstr "Municipio (ES)"
 
-#: apps/kultur/models.py:17
-msgid "Municipio (EU)"
-msgstr "Municipio (EU)"
-
-#: apps/kultur/models.py:18
+#: apps/kultur/models.py:23 apps/kultur/models.py:61
 msgid "Provincia"
 msgstr "Provincia"
 
-#: apps/kultur/models.py:19
-msgid "Tipo/Categoría (ES)"
-msgstr "Tipo/Categoría (ES)"
-
-#: apps/kultur/models.py:20
-msgid "Tipo/Categoría (EU)"
-msgstr "Tipo/Categoría (EU)"
-
-#: apps/kultur/models.py:22
-msgid "Horario (ES)"
-msgstr "Horario (ES)"
-
-#: apps/kultur/models.py:23
-msgid "Horario (EU)"
-msgstr "Horario (EU)"
-
-#: apps/kultur/models.py:24
-msgid "Precio (ES)"
-msgstr "Precio (ES)"
-
-#: apps/kultur/models.py:25
-msgid "Precio (EU)"
-msgstr "Precio (EU)"
-
-#: apps/kultur/models.py:28
-msgid "URL (ES)"
-msgstr "URL (ES)"
-
-#: apps/kultur/models.py:29
-msgid "URL (EU)"
-msgstr "URL (EU)"
-
-#: apps/kultur/models.py:31
-msgid "URL Compra (ES)"
-msgstr "URL Compra (ES)"
-
-#: apps/kultur/models.py:32
-msgid "URL Compra (EU)"
-msgstr "URL Compra (EU)"
-
-#: apps/kultur/models.py:35
-msgid "Imagen"
-msgstr "Imagen"
-
-#: apps/kultur/models.py:38
+#: apps/kultur/models.py:24 apps/kultur/models.py:81
 msgid "Ubicación"
 msgstr "Ubicación"
 
-#: apps/kultur/models.py:44
+#: apps/kultur/models.py:26
+msgid "Origen geocoding"
+msgstr ""
+
+#: apps/kultur/models.py:28
+msgid "Geocodificado en"
+msgstr ""
+
+#: apps/kultur/models.py:34 apps/kultur/models.py:89
+#, fuzzy
+#| msgid "Lugar (ES)"
+msgid "Lugar"
+msgstr "Lugar (ES)"
+
+#: apps/kultur/models.py:35
+msgid "Lugares"
+msgstr ""
+
+#: apps/kultur/models.py:48
+msgid "ID Origen"
+msgstr "ID Origen"
+
+#: apps/kultur/models.py:48
+msgid "ID from the Euskadi API"
+msgstr "ID de la API de Euskadi"
+
+#: apps/kultur/models.py:49
+msgid "Título (ES)"
+msgstr "Título (ES)"
+
+#: apps/kultur/models.py:50
+msgid "Título (EU)"
+msgstr "Título (EU)"
+
+#: apps/kultur/models.py:51
+msgid "Descripción (ES)"
+msgstr "Descripción (ES)"
+
+#: apps/kultur/models.py:52
+msgid "Descripción (EU)"
+msgstr "Descripción (EU)"
+
+#: apps/kultur/models.py:54
+msgid "Fecha Inicio"
+msgstr "Fecha Inicio"
+
+#: apps/kultur/models.py:55
+msgid "Fecha Fin"
+msgstr "Fecha Fin"
+
+#: apps/kultur/models.py:57
+msgid "Lugar (ES)"
+msgstr "Lugar (ES)"
+
+#: apps/kultur/models.py:58
+msgid "Lugar (EU)"
+msgstr "Lugar (EU)"
+
+#: apps/kultur/models.py:59
+msgid "Municipio (ES)"
+msgstr "Municipio (ES)"
+
+#: apps/kultur/models.py:60
+msgid "Municipio (EU)"
+msgstr "Municipio (EU)"
+
+#: apps/kultur/models.py:62
+msgid "Tipo/Categoría (ES)"
+msgstr "Tipo/Categoría (ES)"
+
+#: apps/kultur/models.py:63
+msgid "Tipo/Categoría (EU)"
+msgstr "Tipo/Categoría (EU)"
+
+#: apps/kultur/models.py:65
+msgid "Horario (ES)"
+msgstr "Horario (ES)"
+
+#: apps/kultur/models.py:66
+msgid "Horario (EU)"
+msgstr "Horario (EU)"
+
+#: apps/kultur/models.py:67
+msgid "Precio (ES)"
+msgstr "Precio (ES)"
+
+#: apps/kultur/models.py:68
+msgid "Precio (EU)"
+msgstr "Precio (EU)"
+
+#: apps/kultur/models.py:71
+msgid "URL (ES)"
+msgstr "URL (ES)"
+
+#: apps/kultur/models.py:72
+msgid "URL (EU)"
+msgstr "URL (EU)"
+
+#: apps/kultur/models.py:74
+msgid "URL Compra (ES)"
+msgstr "URL Compra (ES)"
+
+#: apps/kultur/models.py:75
+msgid "URL Compra (EU)"
+msgstr "URL Compra (EU)"
+
+#: apps/kultur/models.py:78
+msgid "Imagen"
+msgstr "Imagen"
+
+#: apps/kultur/models.py:96
 msgid "Evento Cultural"
 msgstr "Evento Cultural"
 
-#: apps/kultur/models.py:45
+#: apps/kultur/models.py:97
 msgid "Eventos Culturales"
 msgstr "Eventos Culturales"
+
+#: apps/kultur/models.py:131
+msgid "Cultural event favorite"
+msgstr "Evento cultural favorito"
+
+#: apps/kultur/models.py:132
+msgid "Cultural event favorites"
+msgstr "Eventos culturales favoritos"
+
+#: apps/kultur/models.py:151 apps/kultur/models.py:152
+msgid "Kultur preferences"
+msgstr "Preferencias kultur"
+
+#: apps/pintxos/account.py:21 apps/sbk/account.py:26
+#, python-format
+msgid "%(n)d venues managed"
+msgstr "%(n)d negocios gestionados"
+
+#: apps/pintxos/account.py:23 apps/sbk/account.py:28
+msgid "Claim under review"
+msgstr "Reclamo en revisión"
+
+#: apps/pintxos/account.py:25
+msgid "ratings"
+msgstr "valoraciones"
+
+#: apps/pintxos/account.py:25
+msgid "favorites"
+msgstr "favoritos"
+
+#: apps/pintxos/account.py:30
+msgid "Ratings"
+msgstr "Valoraciones"
+
+#: apps/pintxos/account.py:31 templates/pintxos/account_panel.html:77
+msgid "Favorites"
+msgstr "Favoritos"
+
+#: apps/pintxos/admin.py:99
+msgid "Approve selected claims (sets Restaurant.claimed_by)"
+msgstr "Aprobar reclamos seleccionados (asigna Restaurant.claimed_by)"
+
+#: apps/pintxos/admin.py:110 apps/sbk/admin.py:78
+#, python-format
+msgid "%(n)d claims approved."
+msgstr "%(n)d reclamos aprobados."
+
+#: apps/pintxos/admin.py:112 apps/sbk/admin.py:80
+msgid "Reject selected claims"
+msgstr "Rechazar reclamos seleccionados"
+
+#: apps/pintxos/admin.py:119 apps/sbk/admin.py:87
+#, python-format
+msgid "%(n)d claims rejected."
+msgstr "%(n)d reclamos rechazados."
+
+#: apps/pintxos/forms.py:15 apps/sbk/forms.py:15
+msgid "Verification method"
+msgstr "Método de verificación"
+
+#: apps/pintxos/forms.py:16 apps/sbk/forms.py:16
+msgid "Evidence and notes"
+msgstr "Pruebas y notas"
+
+#: apps/pintxos/forms.py:17 apps/sbk/forms.py:17
+msgid "Best contact phone"
+msgstr "Mejor teléfono de contacto"
+
+#: apps/pintxos/forms.py:18 apps/sbk/forms.py:18
+msgid "Best contact email"
+msgstr "Mejor email de contacto"
+
+#: apps/pintxos/forms.py:21 apps/sbk/forms.py:21
+msgid ""
+"Tell us your role at the venue and any details that help us verify ownership."
+msgstr ""
+"Cuéntanos tu rol en el negocio y cualquier detalle que ayude a verificar la "
+"titularidad."
 
 #: apps/pintxos/models.py:55
 msgid "Bar"
@@ -262,45 +393,159 @@ msgstr "Restaurante"
 msgid "Txoko"
 msgstr "Txoko"
 
-#: apps/pintxos/models.py:113
+#: apps/pintxos/models.py:121
 msgid "Tortilla"
 msgstr "Tortilla"
 
-#: apps/pintxos/models.py:114
+#: apps/pintxos/models.py:122
 msgid "Croquetas"
 msgstr "Croquetas"
 
-#: apps/pintxos/models.py:115
+#: apps/pintxos/models.py:123
 msgid "Calamares"
 msgstr "Calamares"
 
-#: apps/pintxos/models.py:116
+#: apps/pintxos/models.py:124
 msgid "Comida Mexicana"
 msgstr "Comida Mexicana"
 
-#: apps/pintxos/models.py:117
+#: apps/pintxos/models.py:125
 msgid "Patatas Bravas"
 msgstr "Patatas Bravas"
 
-#: apps/pintxos/models.py:118
+#: apps/pintxos/models.py:126
 msgid "Tarta de Queso Horno"
 msgstr "Tarta de Queso Horno"
 
-#: apps/pintxos/models.py:119
+#: apps/pintxos/models.py:127
 msgid "Tarta de Queso Frío"
 msgstr "Tarta de Queso Frío"
 
-#: apps/pintxos/models.py:120
+#: apps/pintxos/models.py:128
 msgid "Hamburguesa"
 msgstr "Hamburguesa"
 
-#: apps/pintxos/models.py:121
+#: apps/pintxos/models.py:129
 msgid "Pizza"
 msgstr "Pizza"
 
-#: apps/pintxos/models.py:122
+#: apps/pintxos/models.py:130
 msgid "Sushi"
 msgstr "Sushi"
+
+#: apps/pintxos/models.py:212 apps/sbk/models.py:278
+msgid "Pending"
+msgstr "Pendiente"
+
+#: apps/pintxos/models.py:213 apps/sbk/models.py:279
+msgid "Approved"
+msgstr "Aprobado"
+
+#: apps/pintxos/models.py:214 apps/sbk/models.py:280
+msgid "Rejected"
+msgstr "Rechazado"
+
+#: apps/pintxos/models.py:215 apps/sbk/models.py:281
+msgid "Revoked"
+msgstr "Revocado"
+
+#: apps/pintxos/models.py:218 apps/sbk/models.py:284
+msgid "Phone call"
+msgstr "Llamada telefónica"
+
+#: apps/pintxos/models.py:219 apps/sbk/models.py:285
+msgid "Domain email"
+msgstr "Email del dominio"
+
+#: apps/pintxos/models.py:220 apps/sbk/models.py:286
+msgid "Document upload"
+msgstr "Subir documento"
+
+#: apps/pintxos/models.py:221 apps/sbk/models.py:287
+msgid "Other"
+msgstr "Otro"
+
+#: apps/pintxos/models.py:229 apps/sbk/models.py:295
+msgid "Free-text proof: role, contact details, supporting info."
+msgstr "Prueba en texto libre: rol, datos de contacto, información de apoyo."
+
+#: apps/pintxos/models.py:233 apps/sbk/models.py:299
+msgid "Internal notes left by the reviewer."
+msgstr "Notas internas del revisor."
+
+#: apps/pintxos/views.py:130 apps/sbk/views.py:547
+msgid "This venue is already claimed."
+msgstr "Este negocio ya está reclamado."
+
+#: apps/pintxos/views.py:137 apps/sbk/views.py:552
+msgid "You already submitted a claim for this venue. We're reviewing it."
+msgstr "Ya enviaste un reclamo para este negocio. Lo estamos revisando."
+
+#: apps/pintxos/views.py:150 apps/sbk/views.py:565
+msgid "Claim submitted. We'll get back to you within 48h."
+msgstr "Reclamo enviado. Te responderemos en menos de 48 h."
+
+#: apps/pintxos/views.py:169 apps/sbk/views.py:580
+msgid "You don't manage this venue."
+msgstr "No gestionas este negocio."
+
+#: apps/pintxos/views.py:175 apps/sbk/views.py:586
+msgid "Venue updated."
+msgstr "Negocio actualizado."
+
+#: apps/sbk/account.py:30
+msgid "Dancer"
+msgstr "Bailador/a"
+
+#: apps/sbk/account.py:39
+msgid "Confirmed"
+msgstr "Confirmado"
+
+#: apps/sbk/account.py:40 templates/sbk/account_panel.html:19
+msgid "Streak (days)"
+msgstr "Racha (días)"
+
+#: apps/sbk/admin.py:66
+msgid "Approve selected claims (sets DanceVenue.claimed_by)"
+msgstr "Aprobar reclamos seleccionados (asigna DanceVenue.claimed_by)"
+
+#: apps/sbk/models.py:186
+msgid "Academy"
+msgstr "Academia"
+
+#: apps/sbk/models.py:187
+msgid "Social room"
+msgstr "Sala social"
+
+#: apps/sbk/models.py:188
+msgid "Bar with dance night"
+msgstr "Bar con noche bailable"
+
+#: apps/sbk/models.py:189
+msgid "Multi-purpose"
+msgstr "Multi-uso"
+
+#: apps/sbk/models.py:203
+msgid "List of style codes: salsa, bachata, kizomba, ..."
+msgstr "Lista de códigos de estilo: salsa, bachata, kizomba, ..."
+
+#: apps/sbk/models.py:204
+msgid ""
+"Free-form: e.g. {\"mon\":{\"class\":[\"bachata-19h\"]},\"wed\":{\"social\":"
+"[\"21h-2h\"]}}"
+msgstr "Formato libre: p. ej. {\"mon\":{\"class\":[\"bachata-19h\"]},\"wed\":{\"social\":[\"21h-2h\"]}}"
+
+#: apps/sbk/models.py:224
+msgid "Verified owner. Set when a DanceVenueClaim is approved."
+msgstr "Titular verificado. Se asigna al aprobar un DanceVenueClaim."
+
+#: apps/sbk/models.py:251
+msgid "1: slippery/sticky, 5: perfect"
+msgstr "1: resbaladizo/pegajoso, 5: perfecto"
+
+#: apps/sbk/models.py:253
+msgid "1: empty, 5: packed"
+msgstr "1: vacío, 5: lleno"
 
 #: apps/zbe/models.py:5
 msgid "Nombre de la Zona"
@@ -321,6 +566,71 @@ msgstr "Zona de Bajas Emisiones"
 #: apps/zbe/models.py:14 templates/zbe/home.html:2
 msgid "Zonas de Bajas Emisiones"
 msgstr "Zonas de Bajas Emisiones"
+
+#: templates/account/apps_hub.html:3 templates/account/apps_hub.html:6
+#: templates/cotton/layouts/account.html:34
+msgid "My Apps"
+msgstr "Mis apps"
+
+#: templates/account/apps_hub.html:7
+msgid "What you do across the Maps.eus ecosystem."
+msgstr "Lo que haces en el ecosistema Maps.eus."
+
+#: templates/account/apps_hub.html:27
+msgid "Nothing yet. Start using an app and it will appear here."
+msgstr "Aún no hay nada. Empieza a usar una app y aparecerá aquí."
+
+#: templates/account/billing.html:3 templates/cotton/layouts/account.html:39
+msgid "Billing & Plans"
+msgstr "Facturación y planes"
+
+#: templates/account/billing.html:7
+msgid "Active subscriptions"
+msgstr "Suscripciones activas"
+
+#: templates/account/billing.html:8
+msgid "Your plan in each app."
+msgstr "Tu plan en cada app."
+
+#: templates/account/billing.html:18
+msgid "renews"
+msgstr "se renueva"
+
+#: templates/account/billing.html:24
+msgid "You're on the free tier in every app."
+msgstr "Estás en el plan gratuito en todas las apps."
+
+#: templates/account/billing.html:29
+msgid "Compare plans"
+msgstr "Comparar planes"
+
+#: templates/account/billing.html:30 templates/account/privacy.html:16
+#: templates/account/privacy.html:24
+msgid "soon"
+msgstr "próximamente"
+
+#: templates/account/billing.html:38 templates/core/profile.html:41
+#: templates/core/profile.html:100
+msgid "Payment Methods"
+msgstr "Métodos de Pago"
+
+#: templates/account/billing.html:39 templates/core/profile.html:101
+msgid "Manage your credit cards and billing information."
+msgstr "Gestiona tus tarjetas de crédito e información de facturación."
+
+#: templates/account/billing.html:42 templates/core/profile.html:104
+msgid "Add Card"
+msgstr "Añadir Tarjeta"
+
+#: templates/account/identity.html:3 templates/account/identity.html:6
+#: templates/core/profile.html:25 templates/core/profile.html:61
+#: templates/cotton/layouts/account.html:24
+msgid "Personal Data"
+msgstr "Datos Personales"
+
+#: templates/account/identity.html:7 templates/core/profile.html:62
+msgid "Manage your basic identity information."
+msgstr "Gestiona tu información de identidad básica."
 
 #: templates/account/login.html:5 templates/account/login.html:67
 #: templates/account/signup.html:66 templates/socialaccount/login.html:4
@@ -364,9 +674,61 @@ msgstr "Cerrar Sesión"
 msgid "Are you sure you want to sign out?"
 msgstr "¿Estás seguro de que quieres cerrar sesión?"
 
-#: templates/account/logout.html:32 templates/socialaccount/login.html:40
+#: templates/account/logout.html:32 templates/pintxos/claim.html:25
+#: templates/sbk/claim.html:25 templates/socialaccount/login.html:40
 msgid "Cancel"
 msgstr "Cancelar"
+
+#: templates/account/privacy.html:3 templates/cotton/layouts/account.html:49
+msgid "Privacy"
+msgstr "Privacidad"
+
+#: templates/account/privacy.html:6
+msgid "Privacy & Data"
+msgstr "Privacidad y datos"
+
+#: templates/account/privacy.html:7
+msgid "Export your data, manage consents, or delete your account."
+msgstr "Exporta tus datos, gestiona consentimientos o elimina tu cuenta."
+
+#: templates/account/privacy.html:13
+msgid "Export my data"
+msgstr "Exportar mis datos"
+
+#: templates/account/privacy.html:14
+msgid "Download a JSON archive with everything we store about you."
+msgstr "Descarga un archivo JSON con todo lo que almacenamos sobre ti."
+
+#: templates/account/privacy.html:21
+msgid "Delete my account"
+msgstr "Eliminar mi cuenta"
+
+#: templates/account/privacy.html:22
+msgid ""
+"This is permanent. All your favorites, ratings and plans will be removed."
+msgstr "Es permanente. Tus favoritos, valoraciones y planes se eliminarán."
+
+#: templates/account/security.html:3 templates/core/profile.html:33
+#: templates/cotton/layouts/account.html:29
+msgid "Account & Security"
+msgstr "Cuenta y Seguridad"
+
+#: templates/account/security.html:7
+#: templates/core/partials/username_form.html:9 templates/core/profile.html:75
+msgid "Change Username"
+msgstr "Cambiar Nombre de Usuario"
+
+#: templates/account/security.html:8 templates/core/profile.html:76
+msgid "Your unique identifier on the platform."
+msgstr "Tu identificador único en la plataforma."
+
+#: templates/account/security.html:17 templates/core/profile.html:85
+msgid "Update Password"
+msgstr "Actualizar Contraseña"
+
+#: templates/account/security.html:18 templates/core/profile.html:86
+msgid "Keep your account secure with a strong password."
+msgstr "Mantén tu cuenta segura con una contraseña fuerte."
 
 #: templates/account/signup.html:11 templates/account/signup.html:55
 msgid "Create Account"
@@ -383,6 +745,31 @@ msgstr "O regístrate con"
 #: templates/account/signup.html:64
 msgid "Already have an account?"
 msgstr "¿Ya tienes una cuenta?"
+
+#: templates/account/social.html:3 templates/core/profile.html:49
+#: templates/cotton/layouts/account.html:44
+msgid "Social & Trust"
+msgstr "Social y Confianza"
+
+#: templates/account/social.html:8 templates/core/profile.html:120
+msgid "Build your Circle"
+msgstr "Construye tu Círculo"
+
+#: templates/account/social.html:9 templates/core/profile.html:121
+msgid "Search for other experts and friends to follow."
+msgstr "Busca otros expertos y amigos a los que seguir."
+
+#: templates/account/social.html:14 templates/core/profile.html:126
+msgid "Search by username..."
+msgstr "Buscar por nombre de usuario..."
+
+#: templates/account/social.html:33 templates/core/profile.html:149
+msgid "Descubrir Expertos"
+msgstr "Descubrir Expertos"
+
+#: templates/account/social.html:44 templates/core/profile.html:160
+msgid "People you are currently following across different apps."
+msgstr "Personas a las que sigues actualmente en diferentes apps."
 
 #: templates/core/partials/expert_suggestions.html:15
 msgid "Top Contributor"
@@ -440,73 +827,13 @@ msgstr "Guardar Cambios"
 msgid "New Username"
 msgstr "Nuevo Nombre de Usuario"
 
-#: templates/core/partials/username_form.html:9 templates/core/profile.html:75
-msgid "Change Username"
-msgstr "Cambiar Nombre de Usuario"
-
 #: templates/core/profile.html:3
 msgid "Control Panel"
 msgstr "Panel de Control"
 
-#: templates/core/profile.html:25 templates/core/profile.html:61
-msgid "Personal Data"
-msgstr "Datos Personales"
-
-#: templates/core/profile.html:33
-msgid "Account & Security"
-msgstr "Cuenta y Seguridad"
-
-#: templates/core/profile.html:41 templates/core/profile.html:100
-msgid "Payment Methods"
-msgstr "Métodos de Pago"
-
-#: templates/core/profile.html:49
-msgid "Social & Trust"
-msgstr "Social y Confianza"
-
-#: templates/core/profile.html:62
-msgid "Manage your basic identity information."
-msgstr "Gestiona tu información de identidad básica."
-
-#: templates/core/profile.html:76
-msgid "Your unique identifier on the platform."
-msgstr "Tu identificador único en la plataforma."
-
-#: templates/core/profile.html:85
-msgid "Update Password"
-msgstr "Actualizar Contraseña"
-
-#: templates/core/profile.html:86
-msgid "Keep your account secure with a strong password."
-msgstr "Mantén tu cuenta segura con una contraseña fuerte."
-
-#: templates/core/profile.html:101
-msgid "Manage your credit cards and billing information."
-msgstr "Gestiona tus tarjetas de crédito e información de facturación."
-
-#: templates/core/profile.html:104
-msgid "Add Card"
-msgstr "Añadir Tarjeta"
-
-#: templates/core/profile.html:120
-msgid "Build your Circle"
-msgstr "Construye tu Círculo"
-
-#: templates/core/profile.html:121
-msgid "Search for other experts and friends to follow."
-msgstr "Busca otros expertos y amigos a los que seguir."
-
-#: templates/core/profile.html:126
-msgid "Search by username..."
-msgstr "Buscar por nombre de usuario..."
-
-#: templates/core/profile.html:149
-msgid "Descubrir Expertos"
-msgstr "Descubrir Expertos"
-
-#: templates/core/profile.html:160
-msgid "People you are currently following across different apps."
-msgstr "Personas a las que sigues actualmente en diferentes apps."
+#: templates/cotton/layouts/account.html:19
+msgid "Account navigation"
+msgstr "Navegación de cuenta"
 
 #: templates/cotton/molecules/app_launcher_tile.html:5
 msgid "Abrir"
@@ -740,6 +1067,8 @@ msgid "Mejor Plan"
 msgstr "Mejor Plan"
 
 #: templates/gailur/home.html:295
+#: templates/kultur/sections/map_container.html:70
+#: templates/kultur/sections/map_container.html:78
 msgid "Cargando..."
 msgstr "Cargando..."
 
@@ -879,11 +1208,63 @@ msgstr "En vivo"
 msgid "Próximamente"
 msgstr "Próximamente"
 
+#: templates/kultur/account_panel.html:3
+msgid "My culture"
+msgstr "Mi cultura"
+
+#: templates/kultur/account_panel.html:8 templates/sbk/account_panel.html:82
+msgid "Upcoming events"
+msgstr "Próximos eventos"
+
+#: templates/kultur/account_panel.html:9
+msgid "Find more"
+msgstr "Buscar más"
+
+#: templates/kultur/account_panel.html:32
+msgid ""
+"Nothing on the horizon. Save events from the kultur map and they'll appear "
+"here."
+msgstr ""
+"Nada a la vista. Guarda eventos desde el mapa kultur y aparecerán aquí."
+
+#: templates/kultur/account_panel.html:38
+msgid "Past favorites"
+msgstr "Favoritos pasados"
+
+#: templates/kultur/account_panel.html:57
+msgid "Your defaults"
+msgstr "Tus valores por defecto"
+
+#: templates/kultur/account_panel.html:58
+msgid "learnt from your activity"
+msgstr "aprendidos de tu actividad"
+
+#: templates/kultur/account_panel.html:63
+msgid "Categories"
+msgstr "Categorías"
+
+#: templates/kultur/account_panel.html:71
+msgid "Moods"
+msgstr "Vibes"
+
+#: templates/kultur/account_panel.html:79
+msgid "Municipality"
+msgstr "Municipio"
+
+#: templates/kultur/account_panel.html:84
+msgid ""
+"We haven't learnt your defaults yet. Use the kultur map and they'll be saved "
+"automatically."
+msgstr ""
+"Aún no hemos aprendido tus valores por defecto. Usa el mapa kultur y se "
+"guardarán automáticamente."
+
 #: templates/kultur/sections/map_container.html:12
 msgid "Busca eventos..."
 msgstr "Busca eventos..."
 
 #: templates/kultur/sections/map_container.html:31
+#: templates/kultur/sections/map_container.html:58
 msgid "Clima en"
 msgstr "Clima en"
 
@@ -891,7 +1272,17 @@ msgstr "Clima en"
 msgid "..."
 msgstr "..."
 
-#: templates/kultur/sections/map_container.html:41
+#: templates/kultur/sections/map_container.html:68
+msgid "Tu finde por el tiempo"
+msgstr ""
+
+#: templates/kultur/sections/map_container.html:76
+#, fuzzy
+#| msgid "Próximos"
+msgid "Próximos días"
+msgstr "Próximos"
+
+#: templates/kultur/sections/map_container.html:87
 msgid "Ver lista"
 msgstr "Ver lista"
 
@@ -972,6 +1363,84 @@ msgstr "Cargando eventos en el mapa..."
 #: templates/kultur/sections/map_sidebar.html:107
 msgid "¡Sorpréndeme!"
 msgstr "¡Sorpréndeme!"
+
+#: templates/pintxos/account_panel.html:3
+msgid "My pintxos"
+msgstr "Mis pintxos"
+
+#: templates/pintxos/account_panel.html:8 templates/sbk/account_panel.html:31
+msgid "Venues you manage"
+msgstr "Negocios que gestionas"
+
+#: templates/pintxos/account_panel.html:18 templates/pintxos/manage.html:3
+#: templates/sbk/account_panel.html:41 templates/sbk/manage.html:3
+msgid "Manage"
+msgstr "Gestionar"
+
+#: templates/pintxos/account_panel.html:23
+msgid ""
+"You don't manage any venue yet. Find your bar and click on \"Claim your "
+"venue\"."
+msgstr ""
+"Aún no gestionas ningún negocio. Encuentra tu bar y pulsa \"Reclama tu "
+"negocio\"."
+
+#: templates/pintxos/account_panel.html:29 templates/sbk/account_panel.html:52
+msgid "Pending claims"
+msgstr "Reclamos pendientes"
+
+#: templates/pintxos/account_panel.html:35 templates/sbk/account_panel.html:58
+msgid "submitted"
+msgstr "enviado"
+
+#: templates/pintxos/account_panel.html:37 templates/sbk/account_panel.html:60
+msgid "under review"
+msgstr "en revisión"
+
+#: templates/pintxos/account_panel.html:46 templates/sbk/account_panel.html:69
+msgid "Rejected claims"
+msgstr "Reclamos rechazados"
+
+#: templates/pintxos/account_panel.html:59
+msgid "Your activity"
+msgstr "Tu actividad"
+
+#: templates/pintxos/account_panel.html:62
+msgid "Recent ratings"
+msgstr "Valoraciones recientes"
+
+#: templates/pintxos/account_panel.html:73
+msgid "No ratings yet."
+msgstr "Aún no hay valoraciones."
+
+#: templates/pintxos/account_panel.html:88
+msgid "No favorites yet."
+msgstr "Aún no hay favoritos."
+
+#: templates/pintxos/claim.html:3
+msgid "Claim your venue"
+msgstr "Reclama tu negocio"
+
+#: templates/pintxos/claim.html:7 templates/sbk/claim.html:7
+msgid "Venue claim"
+msgstr "Reclamo de negocio"
+
+#: templates/pintxos/claim.html:8 templates/sbk/claim.html:8
+msgid "Claim"
+msgstr "Reclamar"
+
+#: templates/pintxos/claim.html:9 templates/sbk/claim.html:9
+msgid ""
+"Tell us how to verify ownership. We default to a phone call to the number "
+"published on the venue's profile. Approval usually takes under 48h."
+msgstr ""
+"Indícanos cómo podemos verificar la titularidad. Por defecto llamamos al "
+"número publicado en el perfil del negocio. La aprobación suele llevar menos "
+"de 48 h."
+
+#: templates/pintxos/claim.html:26 templates/sbk/claim.html:26
+msgid "Submit claim"
+msgstr "Enviar reclamo"
 
 #: templates/pintxos/comanda.html:3 templates/pintxos/comanda.html:16
 #: templates/pintxos/comanda_camarero.html:6
@@ -1368,6 +1837,78 @@ msgstr "¡Éxito!"
 msgid "Restaurant submitted for approval."
 msgstr "Restaurante enviado para aprobación."
 
+#: templates/pintxos/manage.html:8 templates/sbk/manage.html:8
+msgid "Venue management"
+msgstr "Gestión del negocio"
+
+#: templates/pintxos/manage.html:12 templates/sbk/manage.html:12
+msgid "Verified owner"
+msgstr "Titular verificado"
+
+#: templates/pintxos/manage.html:15
+msgid "View public page"
+msgstr "Ver página pública"
+
+#: templates/pintxos/manage.html:19 templates/sbk/manage.html:19
+msgid "Edit venue"
+msgstr "Editar negocio"
+
+#: templates/pintxos/manage.html:31 templates/sbk/manage.html:31
+msgid "Save changes"
+msgstr "Guardar cambios"
+
+#: templates/pintxos/manage.html:38
+msgid "Dishes"
+msgstr "Platos"
+
+#: templates/pintxos/manage.html:39
+msgid "Add dish"
+msgstr "Añadir plato"
+
+#: templates/pintxos/manage.html:51
+msgid "No dishes yet."
+msgstr "Aún no hay platos."
+
+#: templates/pintxos/manage.html:57 templates/sbk/manage.html:38
+msgid "Analytics"
+msgstr "Analítica"
+
+#: templates/pintxos/manage.html:58
+msgid "Profile views, popular dishes and conversion will appear here."
+msgstr "Aquí verás las visitas al perfil, los platos populares y la conversión."
+
+#: templates/pintxos/manage.html:64 templates/sbk/manage.html:45
+msgid "Pro Venue"
+msgstr "Pro Venue"
+
+#: templates/pintxos/manage.html:65
+msgid ""
+"Unlock analytics, priority listing in local search, promotions and review "
+"replies."
+msgstr ""
+"Desbloquea analítica, prioridad en búsqueda local, promociones y respuestas "
+"a reseñas."
+
+#: templates/pintxos/manage.html:67 templates/sbk/manage.html:48
+msgid "· Profile-view and click analytics"
+msgstr "· Analítica de visitas y clics al perfil"
+
+#: templates/pintxos/manage.html:68 templates/sbk/manage.html:49
+msgid "· Priority listing among verified venues"
+msgstr "· Prioridad entre los negocios verificados"
+
+#: templates/pintxos/manage.html:69
+msgid "· Promotional banners on your dishes"
+msgstr "· Banners promocionales en tus platos"
+
+#: templates/pintxos/manage.html:70 templates/sbk/manage.html:51
+msgid "· Reply to reviews"
+msgstr "· Responder a reseñas"
+
+#: templates/pintxos/manage.html:74 templates/sbk/manage.html:55
+msgid "Upgrade"
+msgstr "Mejorar plan"
+
 #: templates/pintxos/partials/leaderboard_content.html:11
 msgid "No ratings found in this circle yet."
 msgstr "Aún no hay valoraciones en este círculo."
@@ -1384,17 +1925,85 @@ msgstr "No se han encontrado bocados coincidentes"
 msgid "Try adjusting your filters or searching in a different area."
 msgstr "Prueba a ajustar los filtros o a buscar en otra zona."
 
-#: templates/pintxos/restaurant_detail.html:43
+#: templates/pintxos/restaurant_detail.html:42
+msgid "Manage your venue"
+msgstr "Gestionar tu negocio"
+
+#: templates/pintxos/restaurant_detail.html:47
+msgid "Verified venue"
+msgstr "Negocio verificado"
+
+#: templates/pintxos/restaurant_detail.html:54
+msgid "Are you the owner? Claim your venue"
+msgstr "¿Eres el dueño? Reclama tu negocio"
+
+#: templates/pintxos/restaurant_detail.html:57
+msgid "Are you the owner? Log in to claim it"
+msgstr "¿Eres el dueño? Inicia sesión para reclamarlo"
+
+#: templates/pintxos/restaurant_detail.html:68
 msgid "Pintxos & Dishes"
 msgstr "Pintxos y Platos"
 
-#: templates/pintxos/restaurant_detail.html:50
+#: templates/pintxos/restaurant_detail.html:75
 msgid "Add Dish"
 msgstr "Añadir Plato"
 
-#: templates/pintxos/restaurant_detail.html:54
+#: templates/pintxos/restaurant_detail.html:79
 msgid "Login to Add Dish"
 msgstr "Inicia sesión para añadir plato"
+
+#: templates/sbk/account_panel.html:3
+msgid "My SBK"
+msgstr "Mi SBK"
+
+#: templates/sbk/account_panel.html:15
+msgid "Level"
+msgstr "Nivel"
+
+#: templates/sbk/account_panel.html:23
+msgid "Best streak"
+msgstr "Mejor racha"
+
+#: templates/sbk/account_panel.html:46
+#, fuzzy
+#| msgid "You don't manage this venue."
+msgid "You don't manage any venue yet."
+msgstr "No gestionas este negocio."
+
+#: templates/sbk/account_panel.html:98
+msgid "No upcoming events. Mark some as interested or going from the SBK map."
+msgstr "No hay eventos próximos. Marca algunos como \"interesado\" o \"voy\" desde el mapa SBK."
+
+#: templates/sbk/account_panel.html:104
+msgid "Recent past events"
+msgstr "Eventos recientes pasados"
+
+#: templates/sbk/account_panel.html:120
+msgid "Your notices"
+msgstr "Tus avisos"
+
+#: templates/sbk/claim.html:3
+msgid "Claim your dance venue"
+msgstr "Reclama tu sala de baile"
+
+#: templates/sbk/manage.html:15
+msgid "Back to my dashboard"
+msgstr "Volver a mi panel"
+
+#: templates/sbk/manage.html:39
+msgid "Profile views, popular nights and conversion will appear here."
+msgstr "Aquí verás las visitas al perfil, las noches populares y la conversión."
+
+#: templates/sbk/manage.html:46
+msgid ""
+"Unlock analytics, priority listing in dance search, promotions and review "
+"replies."
+msgstr "Desbloquea analítica, prioridad en búsqueda de baile, promociones y respuestas a reseñas."
+
+#: templates/sbk/manage.html:50
+msgid "· Promotional banners on your nights"
+msgstr "· Banners promocionales en tus noches"
 
 #: templates/sbk/pages/home/map.html:109
 msgid "Busca eventos, salas o ciudades..."
@@ -1565,35 +2174,41 @@ msgstr "¿Espacio en pista?"
 msgid "Enviar reporte de Vibe"
 msgstr "Enviar reporte de Vibe"
 
-#: templates/sbk/pages/home/map.html:756
+#: templates/sbk/pages/home/map.html:732 templates/sbk/pages/home/map.html:775
+#, fuzzy
+#| msgid "En el radar"
+msgid "Entrada"
+msgstr "En el radar"
+
+#: templates/sbk/pages/home/map.html:758
 msgid "Nada por aquí..."
 msgstr "Nada por aquí..."
 
-#: templates/sbk/pages/home/map.html:794
-msgid "BAILANDO AHORA"
-msgstr "BAILANDO AHORA"
-
-#: templates/sbk/pages/home/map.html:800
-msgid "Comunidad"
-msgstr "Comunidad"
-
-#: templates/sbk/pages/home/map.html:801
+#: templates/sbk/pages/home/map.html:778
 msgid "Voy"
 msgstr "Voy"
 
-#: templates/sbk/pages/home/map.html:801
+#: templates/sbk/pages/home/map.html:778
 msgid "¡Voy!"
 msgstr "¡Voy!"
 
-#: templates/sbk/pages/home/map.html:913
+#: templates/sbk/pages/home/map.html:806
+msgid "BAILANDO AHORA"
+msgstr "BAILANDO AHORA"
+
+#: templates/sbk/pages/home/map.html:812
+msgid "Comunidad"
+msgstr "Comunidad"
+
+#: templates/sbk/pages/home/map.html:926
 msgid "Nadie apuntado aún."
 msgstr "Nadie apuntado aún."
 
-#: templates/sbk/pages/home/map.html:921
+#: templates/sbk/pages/home/map.html:934
 msgid "Contactar"
 msgstr "Contactar"
 
-#: templates/sbk/pages/home/map.html:931
+#: templates/sbk/pages/home/map.html:944
 msgid "El tablón está vacío."
 msgstr "El tablón está vacío."
 

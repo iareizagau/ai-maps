@@ -1,10 +1,19 @@
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.http import JsonResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from django.db import models
+from django.db.models import F
+from django.utils.translation import gettext_lazy as _
 import json
-from .models import Event, UserEvent, UserEventStatus, EventReview, DanceProfile, EventNotice, CheckIn, VibeReport, EventType
+from apps.core.entitlements import has_entitlement
+from .forms import DanceVenueClaimForm, DanceVenueManageForm
+from .models import (
+    Event, UserEvent, UserEventStatus, EventReview, DanceProfile,
+    EventNotice, CheckIn, VibeReport, EventType,
+    DanceVenue, DanceVenueClaim,
+)
 from django.utils import timezone
 from datetime import timedelta
 from django.conf import settings
@@ -389,6 +398,17 @@ def report_event(request, event_id):
     event.save()
     return JsonResponse({'status': 'success', 'message': 'Reporte enviado. Gracias por ayudar a la comunidad.'})
 
+@require_GET
+def ticket_redirect(request, event_id):
+    """
+    Affiliate-tracking redirect: increments ticket_clicks and sends user to ticket_url.
+    """
+    event = get_object_or_404(Event, id=event_id)
+    if not event.ticket_url:
+        return HttpResponseBadRequest("No ticket URL")
+    Event.objects.filter(pk=event.pk).update(ticket_clicks=F('ticket_clicks') + 1)
+    return HttpResponseRedirect(event.ticket_url)
+
 def add_xp(user, amount):
     profile, created = DanceProfile.objects.get_or_create(user=user)
     profile.points += amount
@@ -511,3 +531,66 @@ def submit_vibe_report(request, event_id):
         return JsonResponse({'status': 'success', 'message': '¡Vibe reportada! +15 XP'})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+
+# ---------------------------------------------------------------------------
+# DanceVenue claim + manage flow (B2B Pro Venue)
+# ---------------------------------------------------------------------------
+
+@login_required
+def dance_venue_claim(request, venue_id):
+    venue = get_object_or_404(DanceVenue, id=venue_id)
+
+    if venue.claimed_by_id:
+        if venue.claimed_by_id == request.user.id:
+            return redirect('sbk:dance_venue_manage', venue_id=venue.id)
+        messages.error(request, _("This venue is already claimed."))
+        return redirect('account_app_panel', slug='sbk')
+
+    existing = DanceVenueClaim.objects.filter(venue=venue, claimant=request.user).first()
+    if existing and existing.status == DanceVenueClaim.Status.PENDING:
+        messages.info(request, _("You already submitted a claim for this venue. We're reviewing it."))
+        return redirect('account_app_panel', slug='sbk')
+
+    if request.method == 'POST':
+        form = DanceVenueClaimForm(request.POST, instance=existing)
+        if form.is_valid():
+            claim = form.save(commit=False)
+            claim.venue = venue
+            claim.claimant = request.user
+            claim.status = DanceVenueClaim.Status.PENDING
+            claim.decided_at = None
+            claim.reviewed_by = None
+            claim.save()
+            messages.success(request, _("Claim submitted. We'll get back to you within 48h."))
+            return redirect('account_app_panel', slug='sbk')
+    else:
+        form = DanceVenueClaimForm(instance=existing, initial={
+            'contact_email': request.user.email,
+            'contact_phone': getattr(request.user, 'phone', '') or '',
+        })
+
+    return render(request, 'sbk/claim.html', {'venue': venue, 'form': form})
+
+
+@login_required
+def dance_venue_manage(request, venue_id):
+    venue = get_object_or_404(DanceVenue, id=venue_id)
+    if venue.claimed_by_id != request.user.id and not request.user.is_staff:
+        return HttpResponseForbidden(_("You don't manage this venue."))
+
+    if request.method == 'POST':
+        form = DanceVenueManageForm(request.POST, instance=venue)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Venue updated."))
+            return redirect('sbk:dance_venue_manage', venue_id=venue.id)
+    else:
+        form = DanceVenueManageForm(instance=venue)
+
+    return render(request, 'sbk/manage.html', {
+        'venue': venue,
+        'form': form,
+        'has_analytics': has_entitlement(request.user, 'sbk', 'analytics_dashboard'),
+        'has_priority': has_entitlement(request.user, 'sbk', 'priority_listing'),
+    })

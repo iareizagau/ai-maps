@@ -38,6 +38,50 @@ class Follow(models.Model):
     def __str__(self):
         return f"{self.follower} follows {self.followed} in {self.app_context}"
 
+class Subscription(models.Model):
+    """
+    Per-app subscription tier for a user.
+
+    `app_slug='*'` is a wildcard bundle that overrides per-app subs.
+    """
+    TIER_FREE = 'free'
+    TIER_PLUS = 'plus'
+    TIER_PRO = 'pro'
+    TIER_CHOICES = [
+        (TIER_FREE, 'Free'),
+        (TIER_PLUS, 'Plus'),
+        (TIER_PRO, 'Pro'),
+    ]
+
+    STATUS_ACTIVE = 'active'
+    STATUS_PAST_DUE = 'past_due'
+    STATUS_CANCELED = 'canceled'
+    STATUS_CHOICES = [
+        (STATUS_ACTIVE, 'Active'),
+        (STATUS_PAST_DUE, 'Past due'),
+        (STATUS_CANCELED, 'Canceled'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
+    app_slug = models.CharField(max_length=50, db_index=True, help_text="App slug or '*' for the cross-app bundle")
+    tier = models.CharField(max_length=16, choices=TIER_CHOICES, default=TIER_FREE)
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=STATUS_ACTIVE)
+    stripe_customer_id = models.CharField(max_length=64, blank=True)
+    stripe_subscription_id = models.CharField(max_length=64, blank=True)
+    current_period_end = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'app_slug'], name='uniq_user_app_sub'),
+        ]
+        indexes = [models.Index(fields=['user', 'status'])]
+
+    def __str__(self):
+        return f"{self.user.username} {self.app_slug}/{self.tier} ({self.status})"
+
+
 class AppRegistry(models.Model):
     """
     Central registry for all sub-apps in the ecosystem.

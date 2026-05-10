@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.gis.db import models as gis_models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 import uuid
@@ -52,6 +53,7 @@ class Event(models.Model):
     image_url = models.URLField(max_length=500, blank=True, null=True)
     poster = models.ImageField(upload_to='sbk/posters/', blank=True, null=True)
     ticket_url = models.URLField(max_length=500, blank=True, null=True)
+    ticket_clicks = models.PositiveIntegerField(default=0)
     
     # Trust & Info (Waze approach)
     price_info = models.CharField(max_length=100, blank=True, null=True, help_text="e.g. 10€ with drink")
@@ -173,3 +175,143 @@ class VibeReport(models.Model):
     crowd_score = models.IntegerField(default=3) # 1-5 (1=Empty, 5=Packed)
     ac_score = models.IntegerField(default=3) # 1-5 (1=Sauna, 5=Cold)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+# ---------------------------------------------------------------------------
+# DanceVenue: persistent venues for SBK dancing (academies, social rooms,
+# bars with weekly dance nights). Distinct from Event (one-off festivals).
+# ---------------------------------------------------------------------------
+
+class DanceVenueType(models.TextChoices):
+    ACADEMY = 'academy', _('Academy')
+    SOCIAL = 'social', _('Social room')
+    BAR = 'bar', _('Bar with dance night')
+    MULTI = 'multi', _('Multi-purpose')
+
+
+class DanceVenue(models.Model):
+    name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True)
+    description = models.TextField(blank=True)
+
+    location = gis_models.PointField(srid=4326, null=True, blank=True)
+    address = models.CharField(max_length=300)
+    city = models.CharField(max_length=100, db_index=True)
+    country = models.CharField(max_length=100, default='Euskadi')
+
+    venue_type = models.CharField(max_length=20, choices=DanceVenueType.choices, default=DanceVenueType.MULTI)
+    styles = models.JSONField(default=list, blank=True, help_text=_("List of style codes: salsa, bachata, kizomba, ..."))
+    weekly_schedule = models.JSONField(default=dict, blank=True, help_text=_('Free-form: e.g. {"mon":{"class":["bachata-19h"]},"wed":{"social":["21h-2h"]}}'))
+
+    website = models.URLField(blank=True)
+    instagram = models.CharField(max_length=100, blank=True)
+    image_url = models.URLField(max_length=500, blank=True)
+
+    avg_rating = models.FloatField(default=0)
+    rating_count = models.IntegerField(default=0)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='created_dance_venues',
+    )
+    claimed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='claimed_dance_venues',
+        help_text=_('Verified owner. Set when a DanceVenueClaim is approved.'),
+    )
+    is_verified = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['city', 'venue_type']),
+        ]
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} ({self.city})"
+
+    def update_rating(self):
+        agg = self.ratings.aggregate(avg=models.Avg('overall'), count=models.Count('id'))
+        self.avg_rating = agg['avg'] or 0
+        self.rating_count = agg['count'] or 0
+        self.save(update_fields=['avg_rating', 'rating_count'])
+
+
+class VenueRating(models.Model):
+    venue = models.ForeignKey(DanceVenue, on_delete=models.CASCADE, related_name='ratings')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='dance_venue_ratings')
+    overall = models.IntegerField()
+    floor_quality = models.IntegerField(null=True, blank=True, help_text=_('1: slippery/sticky, 5: perfect'))
+    music_quality = models.IntegerField(null=True, blank=True)
+    crowd_level = models.IntegerField(null=True, blank=True, help_text=_('1: empty, 5: packed'))
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('venue', 'user')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} → {self.venue.name}: {self.overall}/5"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.venue.update_rating()
+
+    def delete(self, *args, **kwargs):
+        venue = self.venue
+        super().delete(*args, **kwargs)
+        venue.update_rating()
+
+
+class DanceVenueClaim(models.Model):
+    """Ownership claim for a DanceVenue. Same flow as pintxos.RestaurantClaim."""
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', _('Pending')
+        APPROVED = 'approved', _('Approved')
+        REJECTED = 'rejected', _('Rejected')
+        REVOKED = 'revoked', _('Revoked')
+
+    class Method(models.TextChoices):
+        PHONE = 'phone', _('Phone call')
+        EMAIL = 'email', _('Domain email')
+        DOCUMENT = 'document', _('Document upload')
+        OTHER = 'other', _('Other')
+
+    venue = models.ForeignKey(DanceVenue, on_delete=models.CASCADE, related_name='claims')
+    claimant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sbk_claims')
+
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING, db_index=True)
+    method = models.CharField(max_length=16, choices=Method.choices, default=Method.PHONE)
+
+    evidence = models.TextField(blank=True, help_text=_('Free-text proof: role, contact details, supporting info.'))
+    contact_phone = models.CharField(max_length=30, blank=True)
+    contact_email = models.EmailField(blank=True)
+
+    admin_notes = models.TextField(blank=True, help_text=_('Internal notes left by the reviewer.'))
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='reviewed_dance_venue_claims',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    decided_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['venue', 'claimant'], name='uniq_dance_venue_claimant'),
+        ]
+        indexes = [models.Index(fields=['status', '-created_at'])]
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.claimant.username} -> {self.venue.name} ({self.status})"

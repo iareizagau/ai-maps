@@ -1,0 +1,88 @@
+{% load i18n %}
+
+<c-layouts.account title="{% trans 'My culture' %}" current="apps">
+    <div class="space-y-8">
+
+        <c-atoms.card variant="glass" class="p-8 space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold">{% trans "Upcoming events" %} <span class="text-sm font-normal text-gray-500">({{ upcoming|length }})</span></h2>
+                <a href="/kultur/" class="text-sm font-bold text-primary hover:underline">{% trans "Find more" %} →</a>
+            </div>
+
+            {% if upcoming %}
+                <ul class="divide-y divide-white/5">
+                    {% for fav in upcoming %}
+                    <li class="py-3 flex items-center justify-between gap-4">
+                        <div class="min-w-0">
+                            <a href="/kultur/?event={{ fav.event.id }}" class="font-bold hover:underline block truncate">
+                                {{ fav.event.title_es|default:fav.event.title_eu }}
+                            </a>
+                            <div class="text-xs text-gray-500 truncate">
+                                {% if fav.event.venue %}{{ fav.event.venue.name_es }} ·{% endif %}
+                                {{ fav.event.start_date|date:"d M Y H:i" }}
+                            </div>
+                        </div>
+                        <span class="text-xs uppercase tracking-widest bg-primary/10 text-primary px-2 py-1 rounded whitespace-nowrap">
+                            {{ fav.event.start_date|timeuntil }}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-sm text-gray-500">{% trans "Nothing on the horizon. Save events from the kultur map and they'll appear here." %}</p>
+            {% endif %}
+        </c-atoms.card>
+
+        {% if past %}
+        <c-atoms.card variant="glass" class="p-8 space-y-4">
+            <h2 class="text-xl font-bold">{% trans "Past favorites" %} <span class="text-sm font-normal text-gray-500">({{ past|length }})</span></h2>
+            <ul class="divide-y divide-white/5">
+                {% for fav in past %}
+                <li class="py-3 flex items-center justify-between gap-4">
+                    <div class="min-w-0">
+                        <span class="font-bold block truncate">{{ fav.event.title_es|default:fav.event.title_eu }}</span>
+                        <div class="text-xs text-gray-500 truncate">
+                            {% if fav.event.venue %}{{ fav.event.venue.name_es }} ·{% endif %}
+                            {{ fav.event.start_date|date:"d M Y" }}
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </c-atoms.card>
+        {% endif %}
+
+        <c-atoms.card variant="glass" class="p-8 space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold">{% trans "Your defaults" %}</h2>
+                <span class="text-xs text-gray-500">{% trans "learnt from your activity" %}</span>
+            </div>
+            {% if prefs %}
+                <dl class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                        <dt class="text-xs uppercase tracking-widest text-gray-500">{% trans "Categories" %}</dt>
+                        <dd class="mt-1">
+                            {% if prefs.default_categories %}
+                                {% for c in prefs.default_categories %}<span class="inline-block bg-white/5 px-2 py-0.5 rounded mr-1 text-xs">{{ c }}</span>{% endfor %}
+                            {% else %}<span class="text-gray-500">—</span>{% endif %}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs uppercase tracking-widest text-gray-500">{% trans "Moods" %}</dt>
+                        <dd class="mt-1">
+                            {% if prefs.default_moods %}
+                                {% for m in prefs.default_moods %}<span class="inline-block bg-white/5 px-2 py-0.5 rounded mr-1 text-xs">{{ m }}</span>{% endfor %}
+                            {% else %}<span class="text-gray-500">—</span>{% endif %}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs uppercase tracking-widest text-gray-500">{% trans "Municipality" %}</dt>
+                        <dd class="mt-1">{{ prefs.default_municipality|default:"—" }}</dd>
+                    </div>
+                </dl>
+            {% else %}
+                <p class="text-sm text-gray-500">{% trans "We haven't learnt your defaults yet. Use the kultur map and they'll be saved automatically." %}</p>
+            {% endif %}
+        </c-atoms.card>
+    </div>
+</c-layouts.account>

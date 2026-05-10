@@ -27,7 +27,7 @@
             <!-- Auth Links (Desktop) -->
             <div class="hidden sm:flex items-center gap-4">
                 {% if user.is_authenticated %}
-                    <a href="{% url 'profile' %}" class="flex items-center gap-2 group">
+                    <a href="{% url 'account_identity' %}" class="flex items-center gap-2 group">
                         <div class="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-[10px] font-bold text-primary group-hover:bg-primary group-hover:text-white transition-all">
                             {{ user.username|first|upper }}
                         </div>
@@ -78,7 +78,7 @@
             </div>
             {% if user.is_authenticated %}
                 <div class="px-4 flex items-center justify-between">
-                    <a href="{% url 'profile' %}" class="flex items-center gap-2">
+                    <a href="{% url 'account_identity' %}" class="flex items-center gap-2">
                         <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] font-bold text-white">
                             {{ user.username|first|upper }}
                         </div>

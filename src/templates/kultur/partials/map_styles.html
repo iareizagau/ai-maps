@@ -1,5 +1,12 @@
 <style>
     #map { height: calc(100vh - 64px); width: 100%; z-index: 1; }
+
+    /* Favorite heart */
+    .fav-btn { color: #94a3b8; transition: color 120ms, transform 120ms; }
+    .fav-btn:hover { color: #f43f5e; transform: scale(1.1); }
+    .fav-btn.is-fav { color: #f43f5e; }
+    .fav-btn.is-fav:hover { color: #e11d48; }
+
     /* Minimal Popup Styles */
     .minimal-popup .leaflet-popup-content-wrapper { border-radius: 0.75rem; padding: 0.25rem; overflow: hidden; }
     .minimal-popup .leaflet-popup-content { margin: 0; width: max-content !important; min-width: 120px; }

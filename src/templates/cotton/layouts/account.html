@@ -1,0 +1,61 @@
+<c-vars title="Mi cuenta" current="identity" />
+{% load i18n %}
+
+<c-layouts.main title="{{ title }}">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-12">
+
+            <aside class="lg:col-span-1 space-y-4">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-2xl font-bold text-white shadow-lg shadow-primary/20">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold">{{ user.username }}</h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ user.email }}</p>
+                    </div>
+                </div>
+
+                <nav class="space-y-2" aria-label="{% trans 'Account navigation' %}">
+                    {% with active='bg-primary text-white shadow-primary/20 shadow-lg' inactive='bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-white/10' base='w-full flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all text-left' %}
+
+                    <a href="{% url 'account_identity' %}" class="{{ base }} {% if current == 'identity' %}{{ active }}{% else %}{{ inactive }}{% endif %}" {% if current == 'identity' %}aria-current="page"{% endif %}>
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        {% trans "Personal Data" %}
+                    </a>
+
+                    <a href="{% url 'account_security' %}" class="{{ base }} {% if current == 'security' %}{{ active }}{% else %}{{ inactive }}{% endif %}" {% if current == 'security' %}aria-current="page"{% endif %}>
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                        {% trans "Account & Security" %}
+                    </a>
+
+                    <a href="{% url 'account_apps' %}" class="{{ base }} {% if current == 'apps' %}{{ active }}{% else %}{{ inactive }}{% endif %}" {% if current == 'apps' %}aria-current="page"{% endif %}>
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                        {% trans "My Apps" %}
+                    </a>
+
+                    <a href="{% url 'account_billing' %}" class="{{ base }} {% if current == 'billing' %}{{ active }}{% else %}{{ inactive }}{% endif %}" {% if current == 'billing' %}aria-current="page"{% endif %}>
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                        {% trans "Billing & Plans" %}
+                    </a>
+
+                    <a href="{% url 'account_social' %}" class="{{ base }} {% if current == 'social' %}{{ active }}{% else %}{{ inactive }}{% endif %}" {% if current == 'social' %}aria-current="page"{% endif %}>
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                        {% trans "Social & Trust" %}
+                    </a>
+
+                    <a href="{% url 'account_privacy' %}" class="{{ base }} {% if current == 'privacy' %}{{ active }}{% else %}{{ inactive }}{% endif %}" {% if current == 'privacy' %}aria-current="page"{% endif %}>
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                        {% trans "Privacy" %}
+                    </a>
+
+                    {% endwith %}
+                </nav>
+            </aside>
+
+            <div class="lg:col-span-3">
+                {{ slot }}
+            </div>
+        </div>
+    </div>
+</c-layouts.main>

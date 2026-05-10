@@ -1,0 +1,25 @@
+{% load i18n %}
+
+<c-layouts.account title="{% trans 'Account & Security' %}" current="security">
+    <div class="space-y-8">
+        <c-atoms.card variant="glass" class="p-8 space-y-8">
+            <div>
+                <h3 class="text-2xl font-bold">{% trans "Change Username" %}</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{% trans "Your unique identifier on the platform." %}</p>
+            </div>
+            <div id="username-form-container">
+                {% include 'core/partials/username_form.html' %}
+            </div>
+        </c-atoms.card>
+
+        <c-atoms.card variant="glass" class="p-8 space-y-8">
+            <div>
+                <h3 class="text-2xl font-bold">{% trans "Update Password" %}</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{% trans "Keep your account secure with a strong password." %}</p>
+            </div>
+            <div id="password-form-container">
+                {% include 'core/partials/password_form.html' %}
+            </div>
+        </c-atoms.card>
+    </div>
+</c-layouts.account>

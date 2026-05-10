@@ -51,7 +51,11 @@
       "Bash(curl -s \"http://localhost:8000/kultur/\" -o /tmp/page.html -w \"status=%{http_code} size=%{size_download}\\\\n\" --compressed)",
       "Bash(curl -s \"http://localhost:8000/kultur/\" --compressed -o -)",
       "Bash(curl -s \"http://localhost:8000/kultur/?_=$\\(date +%s\\)\" --compressed -o /tmp/page2.html -w \"status=%{http_code} size=%{size_download}\\\\n\")",
-      "Bash(curl -s \"http://localhost:8000/kultur/\" --compressed -o /tmp/page3.html -w \"status=%{http_code} size=%{size_download}\\\\n\")"
+      "Bash(curl -s \"http://localhost:8000/kultur/\" --compressed -o /tmp/page3.html -w \"status=%{http_code} size=%{size_download}\\\\n\")",
+      "Bash(python -c \"import py_compile, sys; files=['src/apps/core/models.py','src/apps/core/admin.py','src/apps/core/entitlements.py','src/apps/core/account_panels.py','src/apps/core/account_views.py','src/apps/core/urls.py','src/apps/core/migrations/0007_subscription.py','src/apps/sbk/account.py','src/apps/pintxos/account.py']; [py_compile.compile\\(f, doraise=True\\) for f in files]; print\\('OK'\\)\")",
+      "Bash(docker version *)",
+      "Bash(python scripts/_fix_account_translations.py)",
+      "WebFetch(domain:www.bachatacalendar.co.uk)"
     ],
     "read": [
       "*"

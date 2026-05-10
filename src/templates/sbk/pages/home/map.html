@@ -729,10 +729,12 @@
                         const colors = styleColors[props.primary_style] || styleColors.default;
                         const styleName = (styleMap[props.primary_style] || {}).name || props.primary_style;
                         
+                        const popupTicket = props.ticket_url ? `<a href="/sbk/go/${feature.id}/" target="_blank" rel="noopener sponsored" onclick="event.stopPropagation()" class="mt-2 block text-center px-2 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity">🎟 ${props.price_info || '{% translate "Entrada" %}'}</a>` : '';
                         layer.bindPopup(`
                             <div class="p-2 cursor-pointer" onclick="document.getElementById('event-card-${feature.id}')?.scrollIntoView({behavior:'smooth', block:'center'});">
                                 <span class="text-[9px] font-black ${colors.text} mb-1 inline-block uppercase tracking-widest">${styleName}</span>
                                 <h3 class="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight max-w-[180px] truncate">${props.name}</h3>
+                                ${popupTicket}
                             </div>`, { className: 'minimal-popup', closeButton: false });
                     }
                 }).addTo(map);
@@ -767,12 +769,22 @@
                     const card = document.createElement('div');
                     card.id = `event-card-${e.id}`;
                     card.className = `group relative bg-white dark:bg-slate-800 rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col ${isPast ? 'opacity-70' : ''}`;
+                    const priceBadge = e.price_info ? `<span class="px-3 py-1 rounded-full bg-emerald-500/90 backdrop-blur-md border border-white/30 text-[10px] font-black text-white uppercase tracking-widest shadow-lg">${e.price_info}</span>` : '';
+                    const ticketBtn = e.ticket_url ? `
+                                <a href="/sbk/go/${e.id}/" target="_blank" rel="noopener sponsored" onclick="event.stopPropagation()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-[10px] font-black uppercase tracking-widest text-center hover:scale-[1.02] transition-all shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-1.5">
+                                    <i data-lucide="ticket" class="w-3 h-3"></i> {% translate "Entrada" %}
+                                </a>` : '';
+                    const goingBtnClass = e.user_status === 'going' ? 'bg-emerald-500 text-white' : (e.ticket_url ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' : 'bg-rose-600 text-white');
+                    const goingLabel = e.user_status === 'going' ? '✓ {% translate "Voy" %}' : '{% translate "¡Voy!" %}';
                     card.innerHTML = `
                         <div class="relative h-48 overflow-hidden">
                             <img src="${e.image_url || 'https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=800'}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                             <div class="absolute top-3 left-3 flex gap-2">
                                 <span class="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[10px] font-black text-white uppercase tracking-widest">${styleName}</span>
+                            </div>
+                            <div class="absolute top-3 right-3 flex gap-2">
+                                ${priceBadge}
                             </div>
                             <div class="absolute bottom-3 left-3 right-3 text-white">
                                 <h4 class="font-black text-lg leading-tight line-clamp-2 uppercase tracking-tighter">${e.name}</h4>
@@ -795,10 +807,11 @@
                                 </div>
                                 ` : ''}
                             </div>
-                            
+
                             <div class="flex gap-2">
                                 <button onclick="event.stopPropagation(); window.openCommunityModal('${e.id}')" class="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-colors">{% translate "Comunidad" %}</button>
-                                <button onclick="event.stopPropagation(); window.toggleStatus('${e.id}', 'going')" class="flex-1 py-2.5 rounded-xl ${e.user_status === 'going' ? 'bg-emerald-500 text-white' : 'bg-rose-600 text-white'} text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-lg shadow-rose-500/20">${e.user_status === 'going' ? '✓ {% translate "Voy" %}' : '{% translate "¡Voy!" %}'}</button>
+                                <button onclick="event.stopPropagation(); window.toggleStatus('${e.id}', 'going')" class="flex-1 py-2.5 rounded-xl ${goingBtnClass} text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all">${goingLabel}</button>
+                                ${ticketBtn}
                             </div>
                         </div>
                     `;

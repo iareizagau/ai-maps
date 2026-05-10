@@ -1,0 +1,61 @@
+{% load i18n %}
+
+<c-layouts.main title="{% trans 'Manage' %} {{ venue.name }}">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <span class="text-[10px] font-bold text-primary uppercase tracking-widest">{% trans "Venue management" %}</span>
+                <h1 class="text-2xl sm:text-3xl font-bold mt-1">{{ venue.name }}</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 inline-flex items-center gap-2">
+                    <svg class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    {% trans "Verified owner" %}
+                </p>
+            </div>
+            <a href="{% url 'account_app_panel' slug='sbk' %}" class="text-xs text-gray-500 hover:underline">{% trans "Back to my dashboard" %} →</a>
+        </div>
+
+        <c-atoms.card variant="glass" class="p-8 space-y-6">
+            <h2 class="text-xl font-bold">{% trans "Edit venue" %}</h2>
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="space-y-2">
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-bold">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<p class="text-xs text-gray-500">{{ field.help_text }}</p>{% endif %}
+                    {% for error in field.errors %}<p class="text-xs text-red-500">{{ error }}</p>{% endfor %}
+                </div>
+                {% endfor %}
+                <div class="pt-4 border-t border-white/5 flex justify-end">
+                    <c-atoms.button variant="primary" type="submit">{% trans "Save changes" %}</c-atoms.button>
+                </div>
+            </form>
+        </c-atoms.card>
+
+        {% if has_analytics %}
+        <c-atoms.card variant="glass" class="p-8 space-y-4">
+            <h2 class="text-xl font-bold">{% trans "Analytics" %} <span class="text-[10px] uppercase bg-primary/20 text-primary px-2 py-0.5 rounded ml-1">PRO</span></h2>
+            <p class="text-sm text-gray-500">{% trans "Profile views, popular nights and conversion will appear here." %}</p>
+        </c-atoms.card>
+        {% else %}
+        <c-atoms.card variant="glass" class="p-8 space-y-4">
+            <div class="flex items-start justify-between gap-6">
+                <div>
+                    <h2 class="text-xl font-bold">{% trans "Pro Venue" %} <span class="text-[10px] uppercase bg-primary/20 text-primary px-2 py-0.5 rounded ml-1">20€/mes</span></h2>
+                    <p class="text-sm text-gray-500 mt-2">{% trans "Unlock analytics, priority listing in dance search, promotions and review replies." %}</p>
+                    <ul class="text-sm text-gray-500 dark:text-gray-400 mt-3 space-y-1">
+                        <li>{% trans "· Profile-view and click analytics" %}</li>
+                        <li>{% trans "· Priority listing among verified venues" %}</li>
+                        <li>{% trans "· Promotional banners on your nights" %}</li>
+                        <li>{% trans "· Reply to reviews" %}</li>
+                    </ul>
+                </div>
+                <a href="{% url 'account_billing' %}?upgrade=sbk_pro" class="inline-flex items-center gap-2 bg-primary hover:bg-primary_hover text-white px-5 py-2.5 rounded-full text-xs font-bold transition-all shadow-lg shadow-primary/20 whitespace-nowrap">
+                    {% trans "Upgrade" %}
+                </a>
+            </div>
+        </c-atoms.card>
+        {% endif %}
+    </div>
+</c-layouts.main>

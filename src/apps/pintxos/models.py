@@ -66,6 +66,14 @@ class Restaurant(BaseModel):
     category = models.CharField(max_length=20, choices=Category.choices)
     hours = models.JSONField(default=dict, blank=True)  # {"mon": "10-22", "tue": "10-22", ...}
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    claimed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='claimed_pintxos_venues',
+        help_text='Verified owner. Set when a RestaurantClaim is approved.',
+    )
     approved = models.BooleanField(default=False)  # Moderación
     avg_rating = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(5)])
     rating_count = models.IntegerField(default=0)
@@ -192,3 +200,52 @@ class DishFavorite(models.Model):
 
     def __str__(self):
         return f"{self.user.username} ♥ {self.dish.name}"
+
+
+class RestaurantClaim(models.Model):
+    """
+    Ownership claim for a Restaurant. The bar's owner submits a claim, an admin
+    verifies (default: phone call to the published number) and approves. On
+    approval, Restaurant.claimed_by is set to the claimant.
+    """
+    class Status(models.TextChoices):
+        PENDING = 'pending', _('Pending')
+        APPROVED = 'approved', _('Approved')
+        REJECTED = 'rejected', _('Rejected')
+        REVOKED = 'revoked', _('Revoked')
+
+    class Method(models.TextChoices):
+        PHONE = 'phone', _('Phone call')
+        EMAIL = 'email', _('Domain email')
+        DOCUMENT = 'document', _('Document upload')
+        OTHER = 'other', _('Other')
+
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='claims')
+    claimant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pintxos_claims')
+
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING, db_index=True)
+    method = models.CharField(max_length=16, choices=Method.choices, default=Method.PHONE)
+
+    evidence = models.TextField(blank=True, help_text=_('Free-text proof: role, contact details, supporting info.'))
+    contact_phone = models.CharField(max_length=30, blank=True)
+    contact_email = models.EmailField(blank=True)
+
+    admin_notes = models.TextField(blank=True, help_text=_('Internal notes left by the reviewer.'))
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='reviewed_pintxos_claims',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    decided_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['restaurant', 'claimant'], name='uniq_restaurant_claimant'),
+        ]
+        indexes = [models.Index(fields=['status', '-created_at'])]
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.claimant.username} -> {self.restaurant.name} ({self.status})"

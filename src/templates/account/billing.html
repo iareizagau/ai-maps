@@ -1,0 +1,51 @@
+{% load i18n %}
+
+<c-layouts.account title="{% trans 'Billing & Plans' %}" current="billing">
+    <div class="space-y-8">
+        <c-atoms.card variant="glass" class="p-8 space-y-6">
+            <div>
+                <h3 class="text-2xl font-bold">{% trans "Active subscriptions" %}</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{% trans "Your plan in each app." %}</p>
+            </div>
+
+            {% if subscriptions %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for sub in subscriptions %}
+                    <div class="rounded-xl border border-white/10 bg-white/5 p-5 flex items-center justify-between">
+                        <div>
+                            <div class="text-xs uppercase tracking-widest text-gray-500">{{ sub.app_slug }}</div>
+                            <div class="text-lg font-bold capitalize">{{ sub.get_tier_display }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ sub.get_status_display }}{% if sub.current_period_end %} · {% trans "renews" %} {{ sub.current_period_end|date:"d M Y" }}{% endif %}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-sm text-gray-500 dark:text-gray-400">{% trans "You're on the free tier in every app." %}</p>
+            {% endif %}
+
+            <div class="pt-4 border-t border-white/5">
+                <a href="#" class="inline-flex items-center gap-2 text-sm font-bold text-primary opacity-50 cursor-not-allowed" aria-disabled="true">
+                    {% trans "Compare plans" %}
+                    <span class="text-xs uppercase tracking-widest bg-white/5 px-2 py-1 rounded">{% trans "soon" %}</span>
+                </a>
+            </div>
+        </c-atoms.card>
+
+        <c-atoms.card variant="glass" class="p-8 space-y-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-2xl font-bold">{% trans "Payment Methods" %}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{% trans "Manage your credit cards and billing information." %}</p>
+                </div>
+                <c-atoms.button variant="primary" hx-post="{% url 'add_payment_method' %}" hx-target="#payment-methods-container" hx-swap="innerHTML">
+                    {% trans "Add Card" %}
+                </c-atoms.button>
+            </div>
+
+            <div id="payment-methods-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% include 'core/partials/payment_methods.html' %}
+            </div>
+        </c-atoms.card>
+    </div>
+</c-layouts.account>

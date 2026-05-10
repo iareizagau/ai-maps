@@ -1,0 +1,94 @@
+{% load i18n %}
+
+<c-layouts.account title="{% trans 'My pintxos' %}" current="apps">
+    <div class="space-y-8">
+
+        <c-atoms.card variant="glass" class="p-8 space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold">{% trans "Venues you manage" %}</h2>
+            </div>
+            {% if claimed %}
+                <ul class="divide-y divide-white/5">
+                    {% for r in claimed %}
+                    <li class="py-3 flex items-center justify-between">
+                        <div>
+                            <a href="{% url 'pintxos:restaurant_detail' r.id %}" class="font-bold hover:underline">{{ r.name }}</a>
+                            <div class="text-xs text-gray-500">{{ r.address }}</div>
+                        </div>
+                        <a href="{% url 'pintxos:restaurant_manage' r.id %}" class="text-sm font-bold text-primary hover:underline">{% trans "Manage" %} →</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-sm text-gray-500">{% blocktrans %}You don't manage any venue yet. Find your bar and click on "Claim your venue".{% endblocktrans %}</p>
+            {% endif %}
+        </c-atoms.card>
+
+        {% if pending_claims %}
+        <c-atoms.card variant="glass" class="p-8 space-y-4">
+            <h2 class="text-xl font-bold">{% trans "Pending claims" %}</h2>
+            <ul class="divide-y divide-white/5">
+                {% for c in pending_claims %}
+                <li class="py-3 flex items-center justify-between">
+                    <div>
+                        <span class="font-bold">{{ c.restaurant.name }}</span>
+                        <span class="text-xs text-gray-500 ml-2">{% trans "submitted" %} {{ c.created_at|date:"d M Y" }}</span>
+                    </div>
+                    <span class="text-xs uppercase tracking-widest bg-amber-500/20 text-amber-500 px-2 py-1 rounded">{% trans "under review" %}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </c-atoms.card>
+        {% endif %}
+
+        {% if rejected_claims %}
+        <c-atoms.card variant="glass" class="p-8 space-y-4">
+            <h2 class="text-xl font-bold">{% trans "Rejected claims" %}</h2>
+            <ul class="divide-y divide-white/5">
+                {% for c in rejected_claims %}
+                <li class="py-3">
+                    <div class="font-bold">{{ c.restaurant.name }}</div>
+                    {% if c.admin_notes %}<div class="text-xs text-gray-500 mt-1">{{ c.admin_notes }}</div>{% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </c-atoms.card>
+        {% endif %}
+
+        <c-atoms.card variant="glass" class="p-8 space-y-4">
+            <h2 class="text-xl font-bold">{% trans "Your activity" %}</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <div class="text-xs uppercase tracking-widest text-gray-500 mb-2">{% trans "Recent ratings" %}</div>
+                    {% if ratings %}
+                        <ul class="space-y-2">
+                            {% for r in ratings %}
+                            <li class="text-sm">
+                                <a href="{% url 'pintxos:dish_detail' r.dish.id %}" class="hover:underline">{{ r.dish.name }}</a>
+                                <span class="text-xs text-gray-500">· {{ r.rating }}★ · {{ r.created_at|date:"d M" }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-sm text-gray-500">{% trans "No ratings yet." %}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <div class="text-xs uppercase tracking-widest text-gray-500 mb-2">{% trans "Favorites" %}</div>
+                    {% if favs %}
+                        <ul class="space-y-2">
+                            {% for f in favs %}
+                            <li class="text-sm">
+                                <a href="{% url 'pintxos:dish_detail' f.dish.id %}" class="hover:underline">{{ f.dish.name }}</a>
+                                <span class="text-xs text-gray-500">· {{ f.dish.restaurant.name }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-sm text-gray-500">{% trans "No favorites yet." %}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </c-atoms.card>
+    </div>
+</c-layouts.account>

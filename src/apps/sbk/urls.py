@@ -16,4 +16,9 @@ urlpatterns = [
     path('api/events/<uuid:event_id>/checkin/', views.check_in, name='check_in'),
     path('api/events/<uuid:event_id>/vibe/', views.submit_vibe_report, name='submit_vibe_report'),
     path('pasaporte/', views.passport_view, name='passport'),
+    path('go/<uuid:event_id>/', views.ticket_redirect, name='ticket_redirect'),
+
+    # DanceVenue claim + manage
+    path('venue/<int:venue_id>/claim/', views.dance_venue_claim, name='dance_venue_claim'),
+    path('venue/<int:venue_id>/manage/', views.dance_venue_manage, name='dance_venue_manage'),
 ]

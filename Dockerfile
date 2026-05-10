@@ -63,6 +63,10 @@ COPY --from=frontend /build/src/static/css/app.css      ./static/css/app.css
 COPY --from=frontend /build/src/static/js/htmx.min.js   ./static/js/htmx.min.js
 COPY --from=frontend /build/src/static/js/alpine.min.js ./static/js/alpine.min.js
 
+# Compile .po -> .mo so translations bundled in the image are runtime-ready.
+# Failures are fatal: missing .mo means missing translations in production.
+RUN python manage.py compilemessages
+
 # Bake collected static files into the image. Placeholder env vars only exist
 # for this RUN; collectstatic does not touch the DB.
 RUN mkdir -p static && \

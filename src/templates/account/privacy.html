@@ -1,0 +1,28 @@
+{% load i18n %}
+
+<c-layouts.account title="{% trans 'Privacy' %}" current="privacy">
+    <c-atoms.card variant="glass" class="p-8 space-y-6">
+        <div>
+            <h3 class="text-2xl font-bold">{% trans "Privacy & Data" %}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{% trans "Export your data, manage consents, or delete your account." %}</p>
+        </div>
+
+        <div class="space-y-4">
+            <div class="rounded-xl border border-white/10 bg-white/5 p-5 flex items-center justify-between">
+                <div>
+                    <div class="font-bold">{% trans "Export my data" %}</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">{% trans "Download a JSON archive with everything we store about you." %}</div>
+                </div>
+                <span class="text-xs uppercase tracking-widest bg-white/5 px-2 py-1 rounded">{% trans "soon" %}</span>
+            </div>
+
+            <div class="rounded-xl border border-red-500/20 bg-red-500/5 p-5 flex items-center justify-between">
+                <div>
+                    <div class="font-bold text-red-500">{% trans "Delete my account" %}</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">{% trans "This is permanent. All your favorites, ratings and plans will be removed." %}</div>
+                </div>
+                <span class="text-xs uppercase tracking-widest bg-white/5 px-2 py-1 rounded">{% trans "soon" %}</span>
+            </div>
+        </div>
+    </c-atoms.card>
+</c-layouts.account>

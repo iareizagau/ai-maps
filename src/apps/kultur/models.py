@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.gis.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -106,3 +107,49 @@ class CulturalEvent(models.Model):
     @property
     def lng(self):
         return self.location.x if self.location else None
+
+
+class EventFavorite(models.Model):
+    """A user's saved cultural event. Powers retention loops (digest, reminders, panel)."""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='kultur_favs',
+    )
+    event = models.ForeignKey(
+        CulturalEvent,
+        on_delete=models.CASCADE,
+        related_name='favorited_by',
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'event'], name='uniq_user_event_fav'),
+        ]
+        indexes = [models.Index(fields=['user', '-created_at'])]
+        verbose_name = _("Cultural event favorite")
+        verbose_name_plural = _("Cultural event favorites")
+
+    def __str__(self):
+        return f"{self.user.username} ♥ {self.event}"
+
+
+class KulturPrefs(models.Model):
+    """Implicit preferences learnt from user activity. Used as defaults when no URL state."""
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='kultur_prefs',
+    )
+    default_categories = models.JSONField(default=list, blank=True)
+    default_moods = models.JSONField(default=list, blank=True)
+    default_municipality = models.CharField(max_length=255, blank=True, default='')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Kultur preferences")
+        verbose_name_plural = _("Kultur preferences")
+
+    def __str__(self):
+        return f"prefs({self.user.username})"

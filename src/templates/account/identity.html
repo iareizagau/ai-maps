@@ -1,0 +1,13 @@
+{% load i18n %}
+
+<c-layouts.account title="{% trans 'Personal Data' %}" current="identity">
+    <c-atoms.card variant="glass" class="p-8 space-y-8">
+        <div>
+            <h3 class="text-2xl font-bold">{% trans "Personal Data" %}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{% trans "Manage your basic identity information." %}</p>
+        </div>
+        <div id="profile-form-container">
+            {% include 'core/partials/profile_form.html' %}
+        </div>
+    </c-atoms.card>
+</c-layouts.account>

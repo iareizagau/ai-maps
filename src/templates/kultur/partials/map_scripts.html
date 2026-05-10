@@ -79,6 +79,312 @@
   let map;
   let isListView = false;
 
+  // -------- URL state --------
+  // Filters/zoom/center/open-event are reflected in the querystring so the URL
+  // is shareable and a refresh keeps state. We use replaceState (not pushState)
+  // so we don't pollute back/forward history with every filter tick.
+  let openEventId = null;
+  let openVenueKey = null;
+  let suppressUrlWrite = false;
+  let urlWriteTimeout = null;
+
+  function fmtDate(d) {
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${m}-${day}`;
+  }
+
+  function writeUrlState() {
+    if (suppressUrlWrite) return;
+    clearTimeout(urlWriteTimeout);
+    urlWriteTimeout = setTimeout(() => {
+      const p = new URLSearchParams();
+      if (currentCategory && currentCategory !== "all") p.set("cat", currentCategory);
+      if (currentDate && currentDate !== "all") {
+        if (currentDate === "today" || currentDate === "weekend") {
+          p.set("date", currentDate);
+        } else if (currentDate.start && currentDate.end) {
+          p.set("date", `${fmtDate(currentDate.start)}:${fmtDate(currentDate.end)}`);
+        }
+      }
+      if (activeMoods.size > 0) p.set("mood", [...activeMoods].join(","));
+      if (currentSearch) p.set("q", currentSearch);
+      if (map) {
+        const c = map.getCenter();
+        p.set("z", String(map.getZoom()));
+        p.set("lat", c.lat.toFixed(5));
+        p.set("lng", c.lng.toFixed(5));
+      }
+      if (openEventId != null) p.set("event", String(openEventId));
+      if (openVenueKey) p.set("venue", openVenueKey);
+      // Favs serialized only when the favs mood is active so a shared URL
+      // explicitly carries the wishlist as part of the experience, not as
+      // an always-visible PII-ish leak.
+      if (activeMoods.has("favs") && favs.size > 0) {
+        p.set("favs", [...favs].join(","));
+      }
+      const qs = p.toString();
+      const url = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+      history.replaceState(null, "", url);
+    }, 200);
+  }
+
+  function readUrlState() {
+    const p = new URLSearchParams(window.location.search);
+    const s = {};
+    if (p.has("cat")) s.cat = p.get("cat");
+    if (p.has("date")) {
+      const v = p.get("date");
+      if (v === "today" || v === "weekend") {
+        s.date = v;
+      } else if (v.includes(":")) {
+        const [from, to] = v.split(":");
+        const start = new Date(from + "T00:00:00");
+        const end = new Date(to + "T23:59:59");
+        if (!isNaN(start) && !isNaN(end)) s.date = { start, end };
+      }
+    }
+    if (p.has("mood")) s.moods = p.get("mood").split(",").filter(Boolean);
+    if (p.has("q")) s.q = p.get("q");
+    if (p.has("z") && p.has("lat") && p.has("lng")) {
+      const z = +p.get("z"), lat = +p.get("lat"), lng = +p.get("lng");
+      if (Number.isFinite(z) && Number.isFinite(lat) && Number.isFinite(lng)) {
+        s.view = { z, lat, lng };
+      }
+    }
+    if (p.has("event")) {
+      const id = +p.get("event");
+      if (Number.isFinite(id)) s.event = id;
+    }
+    if (p.has("venue")) s.venue = p.get("venue");
+    if (p.has("favs")) {
+      s.favs = p.get("favs").split(",").map(Number).filter(Number.isFinite);
+    }
+    return s;
+  }
+
+  function applyUrlState(s) {
+    // Suppress URL writes while we mutate state from the URL itself —
+    // otherwise we'd race with replaceState during initial setup.
+    suppressUrlWrite = true;
+
+    if (s.cat) currentCategory = s.cat;
+    if (s.date) currentDate = s.date;
+    if (s.moods) s.moods.forEach(m => activeMoods.add(m));
+    if (s.q) {
+      currentSearch = s.q.toLowerCase();
+      const main = document.getElementById("event-search");
+      const mob = document.getElementById("mobile-event-search");
+      if (main) main.value = s.q;
+      if (mob) mob.value = s.q;
+    }
+    if (s.favs && s.favs.length) {
+      // Imported favs union with whatever is already in localStorage —
+      // a shared link adds events to my wishlist, doesn't replace it.
+      s.favs.forEach(id => favs.add(id));
+      saveFavs();
+    }
+
+    suppressUrlWrite = false;
+  }
+
+  // -------- Auth + API helpers --------
+  const IS_AUTH = (() => {
+    try { return JSON.parse(document.getElementById("is-authenticated").textContent); }
+    catch (e) { return false; }
+  })();
+
+  function getCookie(name) {
+    const m = document.cookie.match(new RegExp('(^|; )' + name + '=([^;]+)'));
+    return m ? decodeURIComponent(m[2]) : "";
+  }
+
+  async function apiFetch(method, path, body) {
+    const opts = {
+      method,
+      credentials: "same-origin",
+      headers: { "Accept": "application/json" },
+    };
+    if (body !== undefined) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(body);
+    }
+    if (method !== "GET") {
+      opts.headers["X-CSRFToken"] = getCookie("csrftoken");
+    }
+    const res = await fetch(path, opts);
+    if (!res.ok) throw new Error(`${method} ${path} -> ${res.status}`);
+    return res.status === 204 ? null : res.json();
+  }
+
+  // -------- Favorites --------
+  // Anonymous users: localStorage. Authenticated: server API. At login, the
+  // local set is merged into the server (sync endpoint) and localStorage cleared.
+  const FAV_KEY = "kultur:favs";
+  let favs = new Set();
+
+  function loadLocalFavs() {
+    try {
+      const raw = localStorage.getItem(FAV_KEY);
+      if (raw) favs = new Set(JSON.parse(raw));
+    } catch (e) {
+      console.error("Bad favs in localStorage", e);
+      favs = new Set();
+    }
+  }
+
+  function saveLocalFavs() {
+    try {
+      localStorage.setItem(FAV_KEY, JSON.stringify([...favs]));
+    } catch (e) {
+      console.error("Could not persist favs", e);
+    }
+  }
+
+  // Backwards-compat shim — many callers still invoke loadFavs(). For anonymous
+  // users it's a sync localStorage read, for authed users it's a no-op (the real
+  // load happens in the async boot sequence).
+  function loadFavs() {
+    if (!IS_AUTH) loadLocalFavs();
+  }
+
+  function saveFavs() {
+    // Only used by anonymous flow; the API path saves per-toggle.
+    if (!IS_AUTH) saveLocalFavs();
+  }
+
+  async function loadFavsFromServer() {
+    try {
+      const data = await apiFetch("GET", "/api/kultur/favs/");
+      favs = new Set(data.ids || []);
+    } catch (e) {
+      console.error("Failed to load server favs", e);
+      favs = new Set();
+    }
+  }
+
+  async function syncLocalFavsToServer() {
+    let local = [];
+    try {
+      const raw = localStorage.getItem(FAV_KEY);
+      if (raw) local = JSON.parse(raw) || [];
+    } catch (_) {}
+    if (!local.length) return;
+    try {
+      const data = await apiFetch("POST", "/api/kultur/favs/sync/", { ids: local });
+      favs = new Set(data.ids || []);
+      localStorage.removeItem(FAV_KEY);
+    } catch (e) {
+      console.error("Fav sync failed; keeping localStorage as fallback", e);
+    }
+  }
+
+  function isFav(id) { return favs.has(id); }
+
+  function paintHearts(eventId) {
+    document.querySelectorAll(`[data-fav-id="${eventId}"]`).forEach(el => {
+      const on = isFav(eventId);
+      el.classList.toggle("is-fav", on);
+      const svg = el.querySelector("svg");
+      if (svg) svg.setAttribute("fill", on ? "currentColor" : "none");
+    });
+  }
+
+  window.toggleFav = function (eventId) {
+    const wasFav = favs.has(eventId);
+    // Optimistic flip
+    if (wasFav) favs.delete(eventId); else favs.add(eventId);
+    paintHearts(eventId);
+    updateFavCount();
+    if (activeMoods.has("favs")) renderMapAndList();
+
+    if (IS_AUTH) {
+      const op = wasFav
+        ? apiFetch("DELETE", `/api/kultur/favs/${eventId}/`)
+        : apiFetch("POST",   `/api/kultur/favs/${eventId}/`);
+      op.catch(err => {
+        console.error("toggleFav API failed, reverting", err);
+        if (wasFav) favs.add(eventId); else favs.delete(eventId);
+        paintHearts(eventId);
+        updateFavCount();
+        if (activeMoods.has("favs")) renderMapAndList();
+      });
+    } else {
+      saveLocalFavs();
+    }
+
+    writeUrlState();
+  };
+
+  function favHeartHtml(eventId) {
+    const on = isFav(eventId);
+    return `<button type="button" onclick="event.stopPropagation(); toggleFav(${eventId})" data-fav-id="${eventId}" class="fav-btn ${on ? 'is-fav' : ''} p-1.5 rounded-full hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors flex-shrink-0" aria-label="Toggle favorite"><svg class="w-4 h-4" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>`;
+  }
+
+  function updateFavCount() {
+    const badge = document.getElementById("fav-count-badge");
+    if (!badge) return;
+    if (favs.size > 0) {
+      badge.textContent = favs.size > 99 ? "99+" : String(favs.size);
+      badge.classList.remove("hidden");
+    } else {
+      badge.classList.add("hidden");
+    }
+  }
+
+  // -------- Implicit preferences (F5) --------
+  // Authenticated users: when filters change, debounce a PATCH so the server
+  // remembers the user's defaults. On next visit, those defaults pre-populate
+  // when the URL itself carries no state.
+  let prefsLoaded = false;
+  let prefsSaveTimeout = null;
+  let cachedPrefs = null;
+
+  async function loadPrefs() {
+    if (!IS_AUTH) return null;
+    try {
+      cachedPrefs = await apiFetch("GET", "/api/kultur/prefs/");
+      prefsLoaded = true;
+      return cachedPrefs;
+    } catch (e) {
+      console.error("loadPrefs failed", e);
+      return null;
+    }
+  }
+
+  function applyPrefsAsDefaults(prefs) {
+    // Only run if URL has no overriding state — the URL beats stored prefs.
+    if (!prefs) return;
+    if (prefs.default_categories?.length && currentCategory === "all") {
+      currentCategory = prefs.default_categories[0];
+    }
+    if (prefs.default_moods?.length && activeMoods.size === 0) {
+      prefs.default_moods.forEach(m => activeMoods.add(m));
+    }
+    if (prefs.default_municipality && !currentSearch) {
+      currentSearch = prefs.default_municipality.toLowerCase();
+      const main = document.getElementById("event-search");
+      const mob = document.getElementById("mobile-event-search");
+      if (main) main.value = prefs.default_municipality;
+      if (mob) mob.value = prefs.default_municipality;
+    }
+  }
+
+  function savePrefsDebounced() {
+    if (!IS_AUTH || !prefsLoaded) return;
+    clearTimeout(prefsSaveTimeout);
+    prefsSaveTimeout = setTimeout(() => {
+      const payload = {
+        default_categories: currentCategory && currentCategory !== "all" ? [currentCategory] : [],
+        default_moods: [...activeMoods].filter(m => m !== "favs"),
+        default_municipality: currentSearch || "",
+      };
+      apiFetch("PATCH", "/api/kultur/prefs/", payload)
+        .then(p => { cachedPrefs = p; })
+        .catch(err => console.error("savePrefs failed", err));
+    }, 1500);
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     map = L.map("map", { zoomControl: false }).setView([43.0, -2.5], 9);
     L.control.zoom({ position: "bottomright" }).addTo(map);
@@ -115,29 +421,78 @@
       { attributes: true, attributeFilter: ["class"] },
     );
 
-    // Fetch Data
-    fetch('{% url "kultur:events_geojson" %}')
-      .then((r) => r.json())
-      .then((data) => {
-        const geojsonData = typeof data === "string" ? JSON.parse(data) : data;
-        allFeatures = geojsonData.features || [];
+    // Boot sequence:
+    //   1. Load favs (server if authed; localStorage otherwise) and sync any
+    //      pending local favs to the server post-login.
+    //   2. Load implicit prefs from server and apply as defaults *only* if the
+    //      URL has no overriding state.
+    //   3. Apply URL state on top — URL always wins.
+    //   4. Fetch GeoJSON, render. If URL carries a view, setView(); else fit bounds.
+    (async () => {
+      // Step 1: favs
+      if (IS_AUTH) {
+        await syncLocalFavsToServer();   // merges localStorage -> server, then clears local
+        await loadFavsFromServer();
+      } else {
+        loadLocalFavs();
+      }
+      updateFavCount();
 
-        extractCategories();
-        renderMapAndList();
+      // Step 2 + 3: prefs as defaults, then URL on top
+      const urlState = readUrlState();
+      const urlHasFilterState = !!(urlState.cat || urlState.date || urlState.moods || urlState.q || urlState.favs);
 
-        if (allFeatures.length > 0) {
-          // fit bounds initially
-          const lats = allFeatures.map((f) => f.geometry.coordinates[1]);
-          const lngs = allFeatures.map((f) => f.geometry.coordinates[0]);
-          map.fitBounds(
-            [
-              [Math.min(...lats), Math.min(...lngs)],
-              [Math.max(...lats), Math.max(...lngs)],
-            ],
-            { padding: [50, 50] },
-          );
-        }
-      });
+      if (IS_AUTH && !urlHasFilterState) {
+        const prefs = await loadPrefs();
+        applyPrefsAsDefaults(prefs);
+      } else if (IS_AUTH) {
+        // Still load prefs so savePrefsDebounced has a baseline, but don't apply.
+        await loadPrefs();
+      }
+      applyUrlState(urlState);
+
+      // Step 4: data + initial viewport
+      fetch('{% url "kultur:events_geojson" %}')
+        .then((r) => r.json())
+        .then((data) => {
+          const geojsonData = typeof data === "string" ? JSON.parse(data) : data;
+          allFeatures = geojsonData.features || [];
+
+          extractCategories();
+          renderMapAndList();
+
+          if (urlState.view) {
+            // URL beats fit-bounds: respects shared links and refreshes.
+            map.setView([urlState.view.lat, urlState.view.lng], urlState.view.z);
+          } else if (allFeatures.length > 0) {
+            const lats = allFeatures.map((f) => f.geometry.coordinates[1]);
+            const lngs = allFeatures.map((f) => f.geometry.coordinates[0]);
+            map.fitBounds(
+              [
+                [Math.min(...lats), Math.min(...lngs)],
+                [Math.max(...lats), Math.max(...lngs)],
+              ],
+              { padding: [50, 50] },
+            );
+          }
+
+          // Reopen popup / venue sheet if URL referenced one.
+          if (urlState.venue) {
+            // openVenueSheet runs after markers are added by renderMapAndList.
+            setTimeout(() => openVenueSheet(urlState.venue), 0);
+          } else if (urlState.event != null) {
+            setTimeout(() => {
+              geoJsonLayer && geoJsonLayer.eachLayer(layer => {
+                // Best-effort: open the marker whose card matches the event id.
+                // Single-event markers carry a popup; cluster markers won't.
+                if (layer.getPopup && layer.getPopup() && layer.getPopup().getContent().includes(`event-card-${urlState.event}`)) {
+                  geoJsonLayer.zoomToShowLayer(layer, () => layer.openPopup());
+                }
+              });
+            }, 0);
+          }
+        });
+    })();
 
     // Weather and Location Context — fetched server-side, cached per ~11km cell
     let weatherTimeout;
@@ -338,6 +693,7 @@
         const customBtn = document.getElementById('custom-date-btn');
         if (customBtn) customBtn.classList.add('bg-primary/20');
         renderMapAndList();
+        writeUrlState();
         toggleWeatherSheet();
     };
 
@@ -347,6 +703,7 @@
         updateListTimeout = setTimeout(updateList, 200); // Debounce list rebuild during pan/zoom
         clearTimeout(weatherTimeout);
         weatherTimeout = setTimeout(updateWeatherContext, 1000); // Debounce weather API
+        writeUrlState();
     });
 
     // Initial weather load after data is fetched
@@ -376,6 +733,8 @@
         document.getElementById('event-search').value = val;
         currentSearch = val.toLowerCase();
         renderMapAndList();
+        writeUrlState();
+        savePrefsDebounced();
     };
 
     window.toggleMobileFilters = function() {
@@ -725,6 +1084,8 @@
       });
 
     renderMapAndList();
+    writeUrlState();
+    savePrefsDebounced();
   };
 
     // Initialize Flatpickr
@@ -754,7 +1115,7 @@
 
   window.setDate = function (dateFilter) {
     currentDate = dateFilter;
-    
+
     // Reset custom button style
     document.getElementById('custom-date-btn').classList.remove('bg-primary/20', 'ring-2', 'ring-primary');
 
@@ -768,6 +1129,7 @@
       }
     });
     renderMapAndList();
+    writeUrlState();
   };
 
   const indoorCategories = [
@@ -811,11 +1173,15 @@
     });
 
     renderMapAndList();
+    writeUrlState();
+    savePrefsDebounced();
   };
 
   window.updateSearch = function () {
     currentSearch = document.getElementById("event-search").value.toLowerCase();
     renderMapAndList();
+    writeUrlState();
+    savePrefsDebounced();
   };
 
   function matchesFilters(feature) {
@@ -1016,17 +1382,25 @@
           const fid = feature.id;
 
           marker.bindPopup(
-            `<div class="p-3 cursor-pointer min-w-[200px]" onclick="document.getElementById('event-card-${fid}')?.scrollIntoView({behavior:'smooth', block:'center'});">
-              <span class="text-[9px] font-bold ${colors.text} mb-1 inline-block uppercase tracking-wide px-2 py-0.5 rounded-full ${colors.bgSoft}">${typeLabel}</span>
-              <h3 class="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight mb-1" title="${title}">${title}</h3>
-              <p class="text-[10px] text-slate-500 flex items-center gap-1">
-                <svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                ${venue}
-              </p>
-              ${price ? `<p class="text-[10px] text-emerald-600 font-bold mt-1">${price}</p>` : ""}
+            `<div class="p-3 min-w-[200px]">
+              <div class="flex items-start justify-between gap-2 mb-1">
+                <span class="text-[9px] font-bold ${colors.text} inline-block uppercase tracking-wide px-2 py-0.5 rounded-full ${colors.bgSoft}">${typeLabel}</span>
+                ${favHeartHtml(fid)}
+              </div>
+              <div class="cursor-pointer" onclick="document.getElementById('event-card-${fid}')?.scrollIntoView({behavior:'smooth', block:'center'});">
+                <h3 class="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight mb-1" title="${title}">${title}</h3>
+                <p class="text-[10px] text-slate-500 flex items-center gap-1">
+                  <svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  ${venue}
+                </p>
+                ${price ? `<p class="text-[10px] text-emerald-600 font-bold mt-1">${price}</p>` : ""}
+              </div>
             </div>`,
             { className: "minimal-popup", closeButton: false, autoPanPadding: [50, 50] }
           );
+
+          marker.on("popupopen", () => { openEventId = fid; writeUrlState(); });
+          marker.on("popupclose", () => { if (openEventId === fid) { openEventId = null; writeUrlState(); } });
 
           marker.on("click", () => {
             const card = document.getElementById(`event-card-${fid}`);
@@ -1118,7 +1492,8 @@
                      ${iconMap[cat] || iconMap.default}
                 </div>
             `}
-            <div class="absolute top-2 right-2">
+            <div class="absolute top-2 right-2 flex items-center gap-1">
+                <span class="bg-white/90 dark:bg-slate-900/90 rounded-lg shadow-sm backdrop-blur-sm">${favHeartHtml(f.id)}</span>
                 <span class="text-[10px] font-bold ${colors.text} uppercase tracking-wider px-2 py-1 rounded-lg bg-white/90 dark:bg-slate-900/90 shadow-sm backdrop-blur-sm">
                     ${typeLabel}
                 </span>
@@ -1273,25 +1648,32 @@
         ? `<img src="${props.image_url}" loading="lazy" class="w-14 h-14 rounded-xl object-cover flex-shrink-0" alt="">`
         : `<div class="w-14 h-14 rounded-xl ${colors.bg} opacity-20 flex-shrink-0"></div>`;
       return `
-        <button type="button" onclick="goToEventCard(${ev.id})" class="w-full flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left">
+        <div role="button" tabindex="0" onclick="goToEventCard(${ev.id})" class="w-full flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer">
           ${thumb}
           <div class="min-w-0 flex-1">
             <span class="text-[9px] font-bold ${colors.text} uppercase tracking-wide ${colors.bgSoft} px-1.5 py-0.5 rounded inline-block mb-0.5">${typeLabel}</span>
             <p class="font-bold text-sm text-slate-900 dark:text-slate-100 leading-tight line-clamp-2">${title}</p>
             <p class="text-[11px] text-slate-500 mt-0.5">${dateStr}${price ? ' · <span class="text-emerald-600 font-bold">' + price + '</span>' : ''}</p>
           </div>
+          ${favHeartHtml(ev.id)}
           <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-        </button>
+        </div>
       `;
     }).join('');
 
     sheet.classList.remove('hidden');
     backdrop.classList.remove('hidden');
+    openVenueKey = groupKey;
+    writeUrlState();
   };
 
   window.closeVenueSheet = function () {
     document.getElementById('venue-sheet')?.classList.add('hidden');
     document.getElementById('venue-sheet-backdrop')?.classList.add('hidden');
+    if (openVenueKey !== null) {
+      openVenueKey = null;
+      writeUrlState();
+    }
   };
 
   window.previewCategory = function (cat) {

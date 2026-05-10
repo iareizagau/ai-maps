@@ -21,12 +21,6 @@ RUN npm run build
 # Stage 2: Django app.
 # ----------------------------------------------------------------------------
 FROM python:3.12-slim
-
-# Label so `docker image prune --filter label=com.maps.project=maps` only
-# touches our images on shared VPSs. Don't change the value — scripts/deploy.sh
-# filters by it.
-LABEL com.maps.project=maps
-
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DJANGO_SETTINGS_MODULE=config.settings.prod \
@@ -68,14 +62,6 @@ COPY src/ .
 COPY --from=frontend /build/src/static/css/app.css      ./static/css/app.css
 COPY --from=frontend /build/src/static/js/htmx.min.js   ./static/js/htmx.min.js
 COPY --from=frontend /build/src/static/js/alpine.min.js ./static/js/alpine.min.js
-
-# Compile .po -> .mo so translations bundled in the image are runtime-ready.
-# Failures are fatal: missing .mo means missing translations in production.
-# Placeholder env vars only exist for this RUN; compilemessages does not touch the DB.
-RUN SECRET_KEY=build-placeholder \
-    DATABASE_URL=postgres://x:x@localhost/x \
-    ALLOWED_HOSTS=localhost \
-    python manage.py compilemessages
 
 # Bake collected static files into the image. Placeholder env vars only exist
 # for this RUN; collectstatic does not touch the DB.

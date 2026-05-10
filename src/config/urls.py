@@ -1,9 +1,18 @@
 from django.contrib import admin
+from django.http import HttpResponse
 from django.urls import path, include
 from django.conf import settings
 from apps.core.api import api
 
+
+def healthz(request):
+    # Cheap liveness probe used by deploy.sh post-up. Intentionally avoids DB
+    # access — DB readiness is already gated by compose healthcheck.
+    return HttpResponse("ok", content_type="text/plain")
+
+
 urlpatterns = [
+    path('healthz/', healthz),
     # Auth
     path('', include('apps.core.urls')),
     path('accounts/', include('allauth.urls')),

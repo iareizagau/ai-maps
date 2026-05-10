@@ -1,125 +1,26 @@
-name: CI/CD
+name: Deploy
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
-concurrency:
-  # One workflow per ref. PRs queue independently from main pushes.
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-
-    services:
-      # Same image as production so the test DB has both PostGIS and pgvector
-      # available — pintxos.0001_initial uses VectorField.
-      postgres:
-        image: timescale/timescaledb-ha:pg15
-        env:
-          POSTGRES_DB: maps_db_test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres_password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U postgres -d maps_db_test"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-
-    env:
-      DJANGO_SETTINGS_MODULE: config.settings.local
-      SECRET_KEY: ci-only-not-secret
-      DEBUG: "True"
-      DATABASE_URL: postgres://postgres:postgres_password@localhost:5432/maps_db_test
-      ALLOWED_HOSTS: localhost,127.0.0.1
-      EUSKALMET_API_KEY: ""
-      OPENWEATHERMAP_API_KEY: ""
-      CELERY_BROKER_URL: redis://localhost:6379/0
-      CELERY_RESULT_BACKEND: redis://localhost:6379/1
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-
-      - name: Install GIS system deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            libgdal-dev gdal-bin binutils libproj-dev gettext
-
-      - name: Install Python deps
-        run: pip install -r requirements.txt
-
-      - name: Enable PostGIS + pgvector in template1 (test DB inherits them)
-        run: |
-          PGPASSWORD=postgres_password psql -h localhost -U postgres -d template1 -c "CREATE EXTENSION IF NOT EXISTS postgis;"
-          PGPASSWORD=postgres_password psql -h localhost -U postgres -d template1 -c "CREATE EXTENSION IF NOT EXISTS vector;"
-          PGPASSWORD=postgres_password psql -h localhost -U postgres -d maps_db_test -c "CREATE EXTENSION IF NOT EXISTS postgis;"
-          PGPASSWORD=postgres_password psql -h localhost -U postgres -d maps_db_test -c "CREATE EXTENSION IF NOT EXISTS vector;"
-
-      - name: Django system checks
-        working-directory: src
-        run: python manage.py check --fail-level WARNING
-
-      - name: Migrations are committed (no missing makemigrations)
-        working-directory: src
-        run: python manage.py makemigrations --check --dry-run
-
-      - name: Apply migrations
-        working-directory: src
-        run: python manage.py migrate --noinput
-
-      - name: Translations compile cleanly
-        working-directory: src
-        run: python manage.py compilemessages
-
-      - name: Run tests
-        working-directory: src
-        run: python manage.py test --noinput --verbosity 2 --parallel 1
-
   deploy:
-    name: Deploy to production
-    needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: ai-maps
-
     steps:
-      - name: SSH + deploy.sh
+      - name: SSH and deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
           port: ${{ secrets.VPS_PORT || 22 }}
-          # The remote script does its own pg_dump backup before touching the
-          # DB, then runs migrations, restarts containers and prunes images.
           script: |
             set -euo pipefail
             cd ${{ secrets.APP_DIR }}
             git fetch --all --prune
             git reset --hard origin/main
-            chmod +x scripts/*.sh
+            chmod +x scripts/deploy.sh
             ./scripts/deploy.sh

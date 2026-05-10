@@ -1,18 +1,19 @@
 services:
   db:
-    container_name: maps_db_prod
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-maps_db}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env.prod}
+    mem_limit: ${DB_MEM_LIMIT:-1g}
+    cpus: ${DB_CPUS:-1.0}
 
   redis:
-    container_name: maps_redis_prod
     restart: unless-stopped
+    mem_limit: ${REDIS_MEM_LIMIT:-192m}
+    cpus: ${REDIS_CPUS:-0.25}
 
   web:
-    container_name: maps_web_prod
     restart: unless-stopped
     command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile - --error-logfile -
     ports:
@@ -21,19 +22,23 @@ services:
       - .env.prod
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.prod
+    mem_limit: ${WEB_MEM_LIMIT:-768m}
+    cpus: ${WEB_CPUS:-1.0}
 
   worker:
-    container_name: maps_worker_prod
     restart: unless-stopped
     env_file:
       - .env.prod
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.prod
+    mem_limit: ${WORKER_MEM_LIMIT:-768m}
+    cpus: ${WORKER_CPUS:-1.0}
 
   beat:
-    container_name: maps_beat_prod
     restart: unless-stopped
     env_file:
       - .env.prod
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.prod
+    mem_limit: ${BEAT_MEM_LIMIT:-128m}
+    cpus: ${BEAT_CPUS:-0.25}

@@ -11,10 +11,15 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-DB_CONTAINER="${DB_CONTAINER:-maps_db_prod}"
+COMPOSE_PROJECT="${COMPOSE_PROJECT_NAME:-maps}"
 
-if ! docker inspect "$DB_CONTAINER" >/dev/null 2>&1; then
-  echo "ERROR: container $DB_CONTAINER not found" >&2
+# Resolve the db container by compose label so container_name is not pinned.
+DB_CONTAINER="${DB_CONTAINER:-$(docker ps -q \
+  --filter "label=com.docker.compose.project=$COMPOSE_PROJECT" \
+  --filter "label=com.docker.compose.service=db" | head -n1)}"
+
+if [[ -z "$DB_CONTAINER" ]] || ! docker inspect "$DB_CONTAINER" >/dev/null 2>&1; then
+  echo "ERROR: db container not found for project '$COMPOSE_PROJECT'" >&2
   exit 1
 fi
 

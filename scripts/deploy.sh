@@ -23,7 +23,7 @@ if [[ ! -f .env.prod ]]; then
   exit 1
 fi
 
-DB_CONTAINER="${DB_CONTAINER:-maps_db_prod}"
+COMPOSE_PROJECT="${COMPOSE_PROJECT_NAME:-maps}"
 DB_NAME="${POSTGRES_DB:-maps_db}"
 DB_USER="${POSTGRES_USER:-postgres}"
 BACKUP_DIR="${BACKUP_DIR:-./backups}"
@@ -35,6 +35,14 @@ export COMPOSE_DOCKER_CLI_BUILD=1
 
 COMPOSE="docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose.prod.yml"
 
+# Resolve the running container ID for a compose service via labels. Avoids
+# hardcoded container_name collisions on shared VPSs.
+resolve_container() {
+  docker ps -q \
+    --filter "label=com.docker.compose.project=$COMPOSE_PROJECT" \
+    --filter "label=com.docker.compose.service=$1" | head -n1
+}
+
 mkdir -p "$BACKUP_DIR"
 
 echo ">> [1/8] Building web image (worker/beat reuse the same image tag)..."
@@ -44,6 +52,11 @@ echo ">> [2/8] Bringing db + redis up..."
 $COMPOSE up -d db redis
 
 echo ">> [3/8] Waiting for db to become healthy..."
+DB_CONTAINER="${DB_CONTAINER:-$(resolve_container db)}"
+if [[ -z "$DB_CONTAINER" ]]; then
+  echo "ERROR: could not resolve db container after compose up" >&2
+  exit 1
+fi
 HEALTHY=0
 for _ in {1..60}; do
   status=$(docker inspect -f '{{.State.Health.Status}}' "$DB_CONTAINER" 2>/dev/null || echo "starting")
@@ -91,7 +104,8 @@ echo ">> [7/8] Rolling services to new image..."
 $COMPOSE up -d --remove-orphans
 
 echo ">> [8/8] Pruning dangling images + old backups (keep last $BACKUP_RETENTION)..."
-docker image prune -f
-ls -t "$BACKUP_DIR"/pre-deploy-*.dump 2>/dev/null | tail -n +$((BACKUP_RETENTION + 1)) | xargs -r rm -f
+# Filter by our LABEL so we don't touch other projects' images on the host.
+docker image prune -f --filter "label=com.maps.project=maps"
+ls "$BACKUP_DIR"/pre-deploy-*.dump 2>/dev/null | sort -r | tail -n +$((BACKUP_RETENTION + 1)) | xargs -r rm -f
 
 echo ">> Deploy complete. Backup: $BACKUP_FILE"

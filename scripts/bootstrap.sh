@@ -28,4 +28,4 @@ echo ">> Triggering gailur.import_and_geocode via celery..."
 $COMPOSE exec -T worker celery -A config call gailur.import_and_geocode || echo "WARN: gailur.import_and_geocode dispatch failed"
 
 echo ">> Bootstrap dispatched. Tasks running async; check worker logs for progress."
-echo ">> docker logs -f maps_worker_prod"
+echo ">> $COMPOSE logs -f worker"

@@ -13,7 +13,7 @@ if [[ ! -f .env.prod ]]; then
   exit 1
 fi
 
-DB_CONTAINER="${DB_CONTAINER:-maps_db_prod}"
+COMPOSE_PROJECT="${COMPOSE_PROJECT_NAME:-maps}"
 DB_NAME="${POSTGRES_DB:-maps_db}"
 DB_USER="${POSTGRES_USER:-postgres}"
 BACKUP_DIR="${BACKUP_DIR:-./backups}"
@@ -21,8 +21,13 @@ LABEL="${1:-manual}"
 
 mkdir -p "$BACKUP_DIR"
 
-if ! docker inspect "$DB_CONTAINER" >/dev/null 2>&1; then
-  echo "ERROR: container $DB_CONTAINER not found." >&2
+# Resolve the db container by compose label so container_name is not pinned.
+DB_CONTAINER="${DB_CONTAINER:-$(docker ps -q \
+  --filter "label=com.docker.compose.project=$COMPOSE_PROJECT" \
+  --filter "label=com.docker.compose.service=db" | head -n1)}"
+
+if [[ -z "$DB_CONTAINER" ]] || ! docker inspect "$DB_CONTAINER" >/dev/null 2>&1; then
+  echo "ERROR: db container not found for project '$COMPOSE_PROJECT'." >&2
   echo "       Is the stack up? docker compose ps" >&2
   exit 1
 fi

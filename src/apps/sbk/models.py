@@ -21,12 +21,12 @@ class EventType(models.TextChoices):
 class Person(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
-    slug = models.SlugField(max_length=255, unique=True)
+    slug = models.SlugField(max_length=255, unique=True, null=True)
     bio = models.TextField(blank=True)
     photo = models.ImageField(upload_to='sbk/people/', blank=True, null=True)
-    instagram = models.CharField(max_length=100, blank=True)
-    country = models.CharField(max_length=100, blank=True)
-    city = models.CharField(max_length=100, blank=True)
+    instagram = models.CharField(max_length=100, blank=True, default='')
+    country = models.CharField(max_length=100, blank=True, default='')
+    city = models.CharField(max_length=100, blank=True, default='')
 
     class Role(models.TextChoices):
         DJ = 'dj', 'DJ'

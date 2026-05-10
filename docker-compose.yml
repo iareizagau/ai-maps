@@ -1,7 +1,7 @@
 # Pinning the compose project name keeps volumes/networks namespaced as
-# `maps_*` regardless of the working directory. Required on shared VPSs where
+# `ai-maps_*` regardless of the working directory. Required on shared VPSs where
 # CI may check out the repo under a different path.
-name: maps
+name: ai-maps
 
 services:
   db:

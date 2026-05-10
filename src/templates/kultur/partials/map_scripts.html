@@ -1333,8 +1333,23 @@
         chunkedLoading: true,
         chunkInterval: 100,
         spiderfyOnMaxZoom: false,
+        zoomToBoundsOnClick: false,
         showCoverageOnHover: false,
         maxClusterRadius: 50,
+      });
+
+      // Custom cluster click: if all children share the same coordinate
+      // (events falling back to a municipal centroid), zoomToBounds is a
+      // no-op — spiderfy immediately instead of forcing the user to click
+      // twice and ride the map to maxZoom first.
+      geoJsonLayer.on("clusterclick", (e) => {
+        const cluster = e.layer;
+        const b = cluster.getBounds();
+        if (b.getNorthEast().equals(b.getSouthWest())) {
+          cluster.spiderfy();
+        } else {
+          cluster.zoomToBounds();
+        }
       });
 
       // Group features by venue so each venue becomes a single marker

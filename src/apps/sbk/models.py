@@ -20,12 +20,26 @@ class EventType(models.TextChoices):
 
 class Person(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=100, default='')
+    last_name = models.CharField(max_length=100, blank=True, default='')
+    artistic_name = models.CharField(max_length=100, blank=True, default='')
+    name = models.CharField(max_length=255, default='', help_text="Full display name (auto-generated if empty)")
+    
     slug = models.SlugField(max_length=255, unique=True, null=True)
     bio = models.TextField(blank=True)
     photo = models.ImageField(upload_to='sbk/people/', blank=True, null=True)
+    
+    # Social & Contact
     instagram = models.CharField(max_length=100, blank=True, default='')
-    country = models.CharField(max_length=100, blank=True, default='')
+    tiktok = models.CharField(max_length=100, blank=True, default='')
+    youtube_url = models.URLField(blank=True, null=True)
+    facebook = models.CharField(max_length=100, blank=True, default='')
+    website = models.URLField(blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, default='')
+
+    # Location
+    country = models.CharField(max_length=100, blank=True, default='Spain')
     city = models.CharField(max_length=100, blank=True, default='')
 
     class Role(models.TextChoices):
@@ -34,14 +48,29 @@ class Person(models.Model):
         ORGANIZER = 'organizer', 'Organizer'
         DANCER = 'dancer', 'Dancer'
         VIDEOGRAPHER = 'videographer', 'Videographer'
+        PROMOTER = 'promoter', 'Promoter'
 
     roles = ArrayField(models.CharField(max_length=20, choices=Role.choices), default=list, blank=True)
+    styles = ArrayField(models.CharField(max_length=20, choices=DanceStyle.choices), default=list, blank=True)
 
     # Claim flow
     claimed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='claimed_profiles')
     is_verified = models.BooleanField(default=False)
     
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.name:
+            if self.artistic_name:
+                self.name = self.artistic_name
+            else:
+                self.name = f"{self.first_name} {self.last_name}".strip()
+        
+        if not self.slug:
+            from django.utils.text import slugify
+            self.slug = slugify(self.name)
+            
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -283,6 +312,14 @@ class DanceVenue(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.city})"
+
+    @property
+    def lat(self):
+        return self.location.y if self.location else None
+
+    @property
+    def lng(self):
+        return self.location.x if self.location else None
 
     def update_rating(self):
         agg = self.ratings.aggregate(avg=models.Avg('overall'), count=models.Count('id'))

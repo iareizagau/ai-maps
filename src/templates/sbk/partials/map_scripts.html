@@ -70,33 +70,38 @@
             }
         });
 
-        // Load Events
-        fetch('{% url "sbk:events_json" %}')
-            .then(response => response.json())
-            .then(data => {
-                allEvents = data.events || [];
-                extractStyles();
-                
-                // Apply initial UI state based on filters
-                if (filters.type !== 'all') {
-                    document.querySelectorAll('#mood-filters [data-filter]').forEach(btn => {
-                        if (btn.dataset.filter === filters.type) btn.classList.remove('opacity-60');
-                        else btn.classList.add('opacity-60');
-                    });
-                }
-                if (filters.dateRange !== 'all') {
-                     document.querySelectorAll('#date-filters .filter-btn').forEach(btn => {
-                        if (btn.dataset.filter === filters.dateRange) {
-                            btn.classList.remove('inactive'); btn.classList.add('active', 'bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900');
-                        } else {
-                            btn.classList.add('inactive'); btn.classList.remove('active', 'bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900');
-                        }
-                    });
-                }
+        // Load Events & Venues
+        Promise.all([
+            fetch('{% url "sbk:events_json" %}').then(r => r.json()),
+            fetch('{% url "sbk:venues_json" %}').then(r => r.json())
+        ]).then(([eventsData, venuesData]) => {
+            const events = eventsData.events || [];
+            const venues = venuesData.venues || [];
+            
+            // Merge them
+            allEvents = [...events, ...venues];
+            extractStyles();
+            
+            // Apply initial UI state based on filters
+            if (filters.type !== 'all') {
+                document.querySelectorAll('#mood-filters [data-filter]').forEach(btn => {
+                    if (btn.dataset.filter === filters.type) btn.classList.remove('opacity-60');
+                    else btn.classList.add('opacity-60');
+                });
+            }
+            if (filters.dateRange !== 'all') {
+                 document.querySelectorAll('#date-filters .filter-btn').forEach(btn => {
+                    if (btn.dataset.filter === filters.dateRange) {
+                        btn.classList.remove('inactive'); btn.classList.add('active', 'bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900');
+                    } else {
+                        btn.classList.add('inactive'); btn.classList.remove('active', 'bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900');
+                    }
+                });
+            }
 
-                renderMapAndList();
-                updateWeather();
-            });
+            renderMapAndList();
+            updateWeather();
+        });
 
         // Update list and weather when map moves
         map.on('moveend', () => {
@@ -266,6 +271,24 @@
     });
 
     function matchesFilters(e) {
+        // Must have coordinates to show on map
+        if (!e.lat || !e.lng) return false;
+        
+        // Handle Venues vs Events
+        if (e.is_venue) {
+            // Venue-specific filters
+            if (filters.type !== 'all' && filters.type !== 'academy') return false;
+            if (filters.type === 'academy' && e.venue_type !== 'academy') return false;
+            if (filters.style !== 'all' && !e.styles.includes(filters.style)) return false;
+            if (filters.search && !e.name.toLowerCase().includes(filters.search) && !e.city.toLowerCase().includes(filters.search)) return false;
+            // Venues are permanent, ignore dateRange filters
+            if (filters.dateRange !== 'all') return false;
+            return true;
+        }
+
+        // Event-specific filters
+        if (filters.type === 'academy') return false; // Don't show events in academy mode
+        
         // Style
         if (filters.style !== 'all' && e.primary_style !== filters.style) return false;
         
@@ -375,6 +398,7 @@
         container.innerHTML = '';
         
         const visibleEvents = allEvents.filter(e => {
+            if (!e.lat || !e.lng) return false;
             const latLng = L.latLng(e.lat, e.lng);
             return matchesFilters(e) && bounds.contains(latLng);
         });
@@ -388,34 +412,59 @@
             return;
         }
 
-        visibleEvents.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+        visibleEvents.sort((a, b) => {
+            if (a.is_venue && !b.is_venue) return 1;
+            if (!a.is_venue && b.is_venue) return -1;
+            if (a.start_date && b.start_date) return new Date(a.start_date) - new Date(b.start_date);
+            return 0;
+        });
+        
         visibleEvents.forEach(e => {
             const colors = styleColors[e.primary_style] || styleColors.default;
             const styleName = (styleMap[e.primary_style] || {}).name || e.primary_style;
             const isPast = e.is_recent_past;
+            const isVenue = e.is_venue;
             
             const card = document.createElement('div');
             card.id = `event-card-${e.id}`;
             card.className = `group relative bg-white dark:bg-slate-800 rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col ${isPast ? 'opacity-70' : ''}`;
+            
             const priceBadge = e.price_info ? `<span class="px-3 py-1 rounded-full bg-emerald-500/90 backdrop-blur-md border border-white/30 text-[10px] font-black text-white uppercase tracking-widest shadow-lg">${e.price_info}</span>` : '';
-            const ticketBtn = e.ticket_url ? `
+            
+            const ticketBtn = (!isVenue && e.ticket_url) ? `
                         <a href="/sbk/go/${e.id}/" target="_blank" rel="noopener sponsored" onclick="event.stopPropagation()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-[10px] font-black uppercase tracking-widest text-center hover:scale-[1.02] transition-all shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-1.5">
                             <i data-lucide="ticket" class="w-3 h-3"></i> {% translate "Entrada" %}
                         </a>` : '';
-            const goingBtnClass = e.user_status === 'going' ? 'bg-emerald-500 text-white' : (e.ticket_url ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' : 'bg-rose-600 text-white');
-            const goingLabel = e.user_status === 'going' ? '✓ {% translate "Voy" %}' : '{% translate "¡Voy!" %}';
+            
+            const actionBtns = isVenue ? `
+                        <a href="/sbk/venue/${e.id.split('_')[1]}/manage/" onclick="event.stopPropagation()" class="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest text-center hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30">{% translate "Ver Academia" %}</a>
+            ` : `
+                        <button onclick="event.stopPropagation(); window.openCommunityModal('${e.id}')" class="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-colors">{% translate "Comunidad" %}</button>
+                        <button onclick="event.stopPropagation(); window.toggleStatus('${e.id}', 'going')" class="flex-1 py-2.5 rounded-xl ${e.user_status === 'going' ? 'bg-emerald-500 text-white' : (e.ticket_url ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' : 'bg-rose-600 text-white')} text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all">${e.user_status === 'going' ? '✓ {% translate "Voy" %}' : '{% translate "¡Voy!" %}'}</button>
+            `;
+
+            const dateInfo = isVenue ? `
+                        <div class="flex items-center gap-2 text-indigo-500">
+                            <i data-lucide="school" class="w-3.5 h-3.5"></i>
+                            <span class="text-[11px] font-bold uppercase">{% translate "Academia de baile" %}</span>
+                        </div>
+            ` : `
+                        <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                            <span class="text-[11px] font-bold">${new Date(e.start_date).toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'short'})}</span>
+                        </div>
+            `;
+
             card.innerHTML = `
                 <div class="relative h-48 overflow-hidden">
                     <img src="${e.image_url || 'https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=800'}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                     <div class="absolute top-3 left-3 flex gap-2">
-                        <span class="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[10px] font-black text-white uppercase tracking-widest">${styleName}</span>
+                        <span class="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[10px] font-black text-white uppercase tracking-widest">${isVenue ? 'ACADEMIA' : styleName}</span>
                     </div>
                     <div class="absolute top-3 right-3 flex flex-col items-end gap-2">
                         ${priceBadge}
-                        ${e.is_verified ? 
-                            '<span class="px-3 py-1 rounded-full bg-blue-500/90 backdrop-blur-md border border-white/30 text-[9px] font-black text-white uppercase tracking-widest shadow-lg flex items-center gap-1">✓ Verificado</span>' : 
-                            '<span class="px-3 py-1 rounded-full bg-amber-500/90 backdrop-blur-md border border-white/30 text-[9px] font-black text-white uppercase tracking-widest shadow-lg flex items-center gap-1">? Pendiente</span>'}
+                        <span class="px-3 py-1 rounded-full bg-blue-500/90 backdrop-blur-md border border-white/30 text-[9px] font-black text-white uppercase tracking-widest shadow-lg flex items-center gap-1">✓ Verificado</span>
                     </div>
                     <div class="absolute bottom-3 left-3 right-3 text-white">
                         <h4 class="font-black text-lg leading-tight line-clamp-2 uppercase tracking-tighter">${e.name}</h4>
@@ -423,25 +472,14 @@
                 </div>
                 <div class="p-4 flex-1 flex flex-col justify-between gap-4">
                     <div class="space-y-2">
-                        <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-                            <span class="text-[11px] font-bold">${new Date(e.start_date).toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'short'})}</span>
-                        </div>
+                        ${dateInfo}
                         <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                             <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
                             <span class="text-[11px] font-bold truncate">${e.city}</span>
                         </div>
-                        ${e.pulse?.active_checkins > 0 ? `
-                        <div class="flex items-center gap-2 text-rose-500 animate-pulse">
-                            <div class="w-2 h-2 rounded-full bg-rose-500"></div>
-                            <span class="text-[10px] font-black uppercase">${e.pulse.active_checkins} {% translate "BAILANDO AHORA" %}</span>
-                        </div>
-                        ` : ''}
                     </div>
-
                     <div class="flex gap-2">
-                        <button onclick="event.stopPropagation(); window.openCommunityModal('${e.id}')" class="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-colors">{% translate "Comunidad" %}</button>
-                        <button onclick="event.stopPropagation(); window.toggleStatus('${e.id}', 'going')" class="flex-1 py-2.5 rounded-xl ${goingBtnClass} text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all">${goingLabel}</button>
+                        ${actionBtns}
                         ${ticketBtn}
                     </div>
                 </div>

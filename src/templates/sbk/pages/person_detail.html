@@ -15,7 +15,7 @@
                 <div class="px-8 pb-8 relative">
                     <!-- Avatar -->
                     <div class="absolute -top-24 left-8">
-                        <img src="{{ person.photo.url|default:'https://ui-avatars.com/api/?size=512&name='|add:person.name }}" 
+                        <img src="{% if person.photo and person.photo.name %}{{ person.photo.url }}{% else %}https://ui-avatars.com/api/?size=512&name={{ person.name|urlencode }}{% endif %}" 
                              class="w-40 h-40 rounded-[2.5rem] border-8 border-white dark:border-slate-800 shadow-2xl object-cover">
                     </div>
 

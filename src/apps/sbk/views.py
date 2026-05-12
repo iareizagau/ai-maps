@@ -229,6 +229,34 @@ def events_json(request):
         
     return JsonResponse({'events': data})
 
+@require_GET
+def venues_json(request):
+    """
+    Returns dance venues as JSON for the Leaflet map.
+    """
+    venues = DanceVenue.objects.filter(is_verified=True)
+    
+    data = []
+    for v in venues:
+        data.append({
+            'id': f"venue_{v.id}",
+            'name': v.name,
+            'description': v.description[:200] if v.description else "",
+            'venue_type': v.venue_type,
+            'styles': v.styles,
+            'primary_style': v.styles[0] if v.styles else 'mixed',
+            'lat': float(v.lat) if hasattr(v, 'lat') and v.lat else None,
+            'lng': float(v.lng) if hasattr(v, 'lng') and v.lng else None,
+            'city': v.city,
+            'country': v.country,
+            'image_url': v.image_url,
+            'is_verified': True,
+            'avg_rating': v.avg_rating,
+            'review_count': v.rating_count,
+            'is_venue': True
+        })
+    return JsonResponse({'venues': data})
+
 @require_POST
 @login_required
 def toggle_event_status(request, event_id):

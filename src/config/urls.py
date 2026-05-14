@@ -39,6 +39,7 @@ urlpatterns += [
     path('inguru/', include('apps.inguru.urls')),
     path('gailur/', include('apps.gailur.urls')),
     path('zbe/', include('apps.zbe.urls')),
+    path('adventure/', include('apps.adventure.urls')),
 ]
 if settings.DEBUG:
     from django.conf.urls.static import static

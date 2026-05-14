@@ -67,6 +67,16 @@ class Command(BaseCommand):
                 'hero_title': 'Conoce las ZBE',
                 'description': 'Visualiza las Zonas de Bajas Emisiones para planificar tus desplazamientos.'
             },
+            {
+                'slug': 'adventure',
+                'name': 'Adventure Lab',
+                'tagline': 'Rutas inteligentes de bikepacking y montaña.',
+                'domain': 'https://ai.maps.eus/adventure/',
+                'icon': 'compass',
+                'primary_color': '#d97706', # Amber
+                'hero_title': 'Tu próxima aventura empieza aquí',
+                'description': 'Calcula rutas personalizadas para bikepacking, senderismo y escalada usando pgRouting.'
+            },
         ]
 
         for app_data in apps:

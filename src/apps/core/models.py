@@ -125,8 +125,8 @@ class AppRegistry(models.Model):
         """
         Devuelve la URL absoluta dependiendo del entorno.
         En producción (DEBUG=False): Usa el subdominio configurado (ej. https://kultur.maps.eus).
-        En desarrollo (DEBUG=True): Usa el enrutamiento por rutas locales (ej. http://localhost:8000/kultur/).
+        En desarrollo (DEBUG=True): Usa el enrutamiento por rutas locales (ej. http://localhost:9000/kultur/).
         """
         if settings.DEBUG:
-            return f"http://localhost:8000/{self.slug}/"
+            return f"http://localhost:9000/{self.slug}/"
         return self.domain

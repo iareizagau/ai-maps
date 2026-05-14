@@ -1,0 +1,559 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<link href="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    #map { height: calc(100vh - 120px); width: 100%; border-radius: 12px; }
+    .adventure-controls {
+        position: absolute; top: 20px; left: 20px; z-index: 10;
+        background: white; padding: 15px; border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        display: flex; flex-direction: column; gap: 12px;
+        width: 300px;
+    }
+    .dark .adventure-controls { background: #1f2937; color: white; }
+    
+    .profile-panel {
+        position: absolute; bottom: 20px; left: 20px; right: 20px;
+        height: 180px; background: white; z-index: 10;
+        padding: 15px; border-radius: 12px;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+        transition: transform 0.3s ease-in-out;
+    }
+    .profile-panel.collapsed { transform: translateY(220px); }
+    .dark .profile-panel { background: #111827; }
+    
+    .toggle-profile-btn {
+        position: absolute; top: -40px; right: 0;
+        background: white; border: none; padding: 8px 12px;
+        border-radius: 8px 8px 0 0; cursor: pointer;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1); font-weight: bold;
+    }
+    .dark .toggle-profile-btn { background: #111827; color: white; }
+    
+    .surface-bar {
+        display: flex; height: 10px; border-radius: 5px; overflow: hidden;
+        background: #eee; margin-top: 5px;
+    }
+    .surface-segment { height: 100%; }
+    .type-asphalt { background: #4b5563; } /* Gray */
+    .type-unpaved { background: #92400e; } /* Brown */
+    .type-cycleway { background: #059669; } /* Green */
+    .type-other { background: #9ca3af; } /* Light Gray */
+
+    .marker-label {
+        width: 32px; height: 32px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: grab; transition: transform 0.2s;
+    }
+    .marker-label:active { cursor: grabbing; transform: scale(1.1); }
+
+    /* Estilo Pin de Inicio */
+    .pin-start {
+        background: #10b981; border: 3px solid white;
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        box-shadow: -2px 2px 5px rgba(0,0,0,0.3);
+    }
+    .pin-start::after {
+        content: ''; width: 8px; height: 8px; background: white;
+        border-radius: 50%; transform: rotate(45deg);
+    }
+
+    /* Estilo Pin de Fin */
+    .pin-end {
+        background: #ef4444; border: 3px solid white;
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        box-shadow: -2px 2px 5px rgba(0,0,0,0.3);
+    }
+    .pin-end::after {
+        content: ''; width: 8px; height: 8px; background: white;
+        border-radius: 50%; transform: rotate(45deg);
+    }
+
+    /* Puntos intermedios */
+    .marker-mid {
+        background: white; border: 3px solid #f59e0b;
+        border-radius: 50%; width: 22px; height: 22px;
+        font-size: 10px; font-weight: bold; color: #b45309;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="relative w-full">
+    <div class="adventure-controls">
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-bold">🗺️ Adventure Planner</h2>
+            <span class="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full font-bold">BETA</span>
+        </div>
+        
+        <p class="text-xs opacity-70">
+            Click para añadir puntos. Arrastra para ajustar.
+        </p>
+        
+        <div class="flex gap-2">
+            <select id="profile" class="flex-1 p-2 rounded border dark:bg-gray-800 dark:border-gray-700 text-sm">
+                <option value="bikepacking">🚲 Bikepacking</option>
+                <option value="hiking">🥾 Hiking / Trekking</option>
+            </select>
+            <button id="close-route" class="px-3 py-2 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 rounded-md text-sm font-bold" title="Cerrar Circular">🔄</button>
+            <button id="clear" class="px-3 py-2 bg-gray-200 dark:bg-gray-700 rounded-md text-sm">🗑️</button>
+        </div>
+
+        <div id="stats-panel" class="hidden space-y-3">
+            <hr class="border-gray-100 dark:border-gray-800">
+            <div class="flex justify-between text-sm">
+                <span>Distancia</span>
+                <span class="font-bold"><span id="dist-val">0</span> km</span>
+            </div>
+            <div class="flex justify-between text-xs opacity-80">
+                <span>Desnivel</span>
+                <div>
+                    <span class="text-green-600 font-bold">+<span id="gain-val">0</span>m</span>
+                    <span class="text-red-600 font-bold ml-2">-<span id="loss-val">0</span>m</span>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[10px] uppercase font-bold opacity-50">Tipo de Superficie</label>
+                <div class="surface-bar" id="surface-bar"></div>
+                <div id="surface-legend" class="grid grid-cols-2 gap-1 mt-2 text-[10px]"></div>
+            </div>
+
+            <button id="download-gpx" class="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md font-bold text-sm transition">
+                📥 Descargar GPX
+            </button>
+        </div>
+    </div>
+
+    <div id="map"></div>
+    <div class="profile-panel collapsed" id="profile-container">
+        <button class="toggle-profile-btn" id="toggle-profile">📈 Perfil de Elevación</button>
+        <canvas id="elevation-chart"></canvas>
+    </div>
+</div>
+
+<script>
+    const map = new maplibregl.Map({
+        container: 'map',
+        style: {
+            'version': 8,
+            'sources': {
+                'osm': {
+                    'type': 'raster',
+                    'tiles': ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                    'tileSize': 256,
+                    'attribution': '&copy; OpenStreetMap contributors'
+                }
+            },
+            'layers': [{ 'id': 'osm-layer', 'type': 'raster', 'source': 'osm' }]
+        },
+        center: [-1.981, 43.318],
+        zoom: 13
+    });
+
+    map.on('moveend', fetchFountains);
+    map.on('load', fetchFountains);
+
+    async function fetchFountains() {
+        const bounds = map.getBounds();
+        const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
+        
+        try {
+            const response = await fetch(`/api/adventure/fountains?bbox=${bbox}`);
+            const data = await response.json();
+            
+            if (!map.getSource('fountains')) {
+                map.addSource('fountains', { type: 'geojson', data: data });
+                map.addLayer({
+                    'id': 'fountains-layer',
+                    'type': 'circle',
+                    'source': 'fountains',
+                    'paint': {
+                        'circle-radius': 5,
+                        'circle-color': '#06b6d4', // Cyan 500 (Color agua)
+                        'circle-stroke-width': 1.5,
+                        'circle-stroke-color': '#ffffff'
+                    }
+                });
+
+                // Popup para las fuentes
+                const fountainPopup = new maplibregl.Popup({ closeButton: false });
+                map.on('mouseenter', 'fountains-layer', (e) => {
+                    const props = e.features[0].properties;
+                    fountainPopup.setLngLat(e.lngLat)
+                        .setHTML(`<strong>${props.name}</strong>`)
+                        .addTo(map);
+                });
+                map.on('mouseleave', 'fountains-layer', () => fountainPopup.remove());
+            } else {
+                map.getSource('fountains').setData(data);
+            }
+        } catch (e) { console.error("Error cargando fuentes:", e); }
+    }
+
+    let waypoints = []; // List of [lng, lat]
+    let markers = [];
+    let hoverMarker = null; // Marcador global para sincronización con gráfica
+    let currentRouteData = null;
+
+    map.on('click', (e) => {
+        const lngLat = [e.lngLat.lng, e.lngLat.lat];
+        addWaypoint(lngLat);
+    });
+
+    function addWaypoint(lngLat) {
+        waypoints.push(lngLat);
+        const index = waypoints.length - 1;
+
+        const el = document.createElement('div');
+        el.className = 'marker-label';
+        el.innerHTML = waypoints.length;
+        if (index === 0) el.style.borderColor = 'green';
+
+        const marker = new maplibregl.Marker({ element: el, draggable: true })
+            .setLngLat(lngLat)
+            .addTo(map);
+
+        marker.on('drag', () => {
+            const newPos = marker.getLngLat();
+            waypoints[index] = [newPos.lng, newPos.lat];
+            throttledCalculate();
+        });
+
+        markers.push(marker);
+        if (waypoints.length >= 2) {
+            calculateFullRoute();
+        }
+    }
+
+    // Función para limitar la frecuencia de peticiones (Throttle)
+    let throttleTimeout = null;
+    function throttledCalculate() {
+        if (throttleTimeout) return;
+        throttleTimeout = setTimeout(() => {
+            calculateFullRoute();
+            throttleTimeout = null;
+        }, 150); // 150ms entre cálculos para fluidez total sin saturar
+    }
+
+    let elevationChart = null;
+
+    async function calculateFullRoute() {
+        if (waypoints.length < 2) return;
+
+        const profile = document.getElementById('profile').value;
+        const coordsParam = waypoints.map(p => `${p[0]},${p[1]}`).join(';');
+        const url = `/api/adventure/route?coords=${coordsParam}&profile=${profile}`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            currentRouteData = data;
+
+            if (data.error) return;
+
+            updateMapRoute(data, profile);
+            updateStats(data);
+            updateElevationChart(data);
+        } catch (e) { console.error(e); }
+    }
+
+    document.getElementById('toggle-profile').addEventListener('click', () => {
+        document.getElementById('profile-container').classList.toggle('collapsed');
+    });
+
+    function updateElevationChart(data) {
+        document.getElementById('profile-container').classList.remove('collapsed');
+        
+        const labels = [];
+        const elevations = [];
+        const chartCoords = [];
+        
+        let currentDist = 0;
+        let cumulativeGain = 0;
+        let cumulativeLoss = 0;
+        let lastEle = 50 + Math.random() * 100;
+
+        data.features.forEach((f, i) => {
+            const coord = f.geometry.coordinates[0];
+            currentDist += f.properties.cost;
+            const noise = (Math.random() - 0.48) * (f.properties.cost / 10);
+            let newEle = lastEle + noise;
+            if (newEle < 0) newEle = 0;
+
+            if (newEle > lastEle) cumulativeGain += (newEle - lastEle);
+            else cumulativeLoss += (lastEle - newEle);
+
+            if (i % 2 === 0) {
+                labels.push(`${(currentDist/1000).toFixed(2)}km`);
+                elevations.push(Math.round(newEle));
+                chartCoords.push(coord);
+            }
+            lastEle = newEle;
+        });
+
+        document.getElementById('gain-val').innerText = Math.round(cumulativeGain);
+        document.getElementById('loss-val').innerText = Math.round(cumulativeLoss);
+
+        // Crear marcador de seguimiento si no existe
+        if (!hoverMarker) {
+            const el = document.createElement('div');
+            el.id = 'hover-dot';
+            el.style.width = '14px';
+            el.style.height = '14px';
+            el.style.background = '#ffffff'; // Blanco nuclear
+            el.style.border = '4px solid #f59e0b'; // Ámbar grueso
+            el.style.borderRadius = '50%';
+            el.style.boxShadow = '0 0 15px #f59e0b'; // Brillo ámbar
+            el.style.zIndex = '1000';
+            el.style.display = 'none';
+            
+            hoverMarker = new maplibregl.Marker({ element: el })
+                .setLngLat([0,0])
+                .addTo(map);
+        }
+
+        const ctx = document.getElementById('elevation-chart').getContext('2d');
+        if (elevationChart) elevationChart.destroy();
+
+        elevationChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Elevación',
+                    data: elevations,
+                    borderColor: '#d97706',
+                    backgroundColor: 'rgba(217, 119, 6, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                onHover: (event, chartElement) => {
+                    const dot = hoverMarker.getElement();
+                    if (chartElement.length > 0) {
+                        const index = chartElement[0].index;
+                        const coord = chartCoords[index];
+                        if (coord) {
+                            hoverMarker.setLngLat(coord);
+                            dot.style.display = 'block';
+                        }
+                    } else {
+                        dot.style.display = 'none';
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
+                scales: {
+                    x: { display: true, ticks: { maxTicksLimit: 8, font: { size: 9 } } },
+                    y: { beginAtZero: false, ticks: { font: { size: 9 } } }
+                },
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: { enabled: true }
+                }
+            }
+        });
+    }
+
+    function updateMapRoute(data, profile) {
+        if (map.getSource('route')) {
+            map.getSource('route').setData(data);
+        } else {
+            map.addSource('route', { 'type': 'geojson', 'data': data });
+            map.addLayer({
+                'id': 'route-layer', 'type': 'line', 'source': 'route',
+                'layout': { 'line-join': 'round', 'line-cap': 'round' },
+                'paint': {
+                    'line-color': [
+                        'match', ['get', 'highway_type'],
+                        ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'residential', 'living_street', 'service'], '#4b5563', // Asphalt
+                        ['track', 'path', 'bridleway'], '#92400e', // Unpaved
+                        'cycleway', '#10b981', // Cycleway
+                        '#d97706' // Default Adventure Amber
+                    ],
+                    'line-width': 6,
+                    'line-opacity': 0.8
+                }
+            });
+
+            // Inserción dinámica al hacer clic en la ruta
+            map.on('click', 'route-layer', (e) => {
+                // Prevenir que el clic en el mapa cree un punto al final
+                e.originalEvent.stopPropagation();
+                
+                const props = e.features[0].properties;
+                const segmentIndex = props.segment_index;
+                const lngLat = [e.lngLat.lng, e.lngLat.lat];
+                
+                // Insertamos el nuevo punto en la posición correcta
+                waypoints.splice(segmentIndex + 1, 0, lngLat);
+                
+                // Redibujamos todos los marcadores
+                refreshMarkers();
+                calculateFullRoute();
+            });
+
+            const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false });
+            map.on('mousemove', 'route-layer', (e) => {
+                map.getCanvas().style.cursor = 'crosshair';
+                const props = e.features[0].properties;
+                const content = `<strong>${props.name || 'Senda sin nombre'}</strong><br>Superficie: ${props.highway_type}<br><span class="text-[10px] text-gray-500">Haz clic para añadir punto de paso</span>`;
+                popup.setLngLat(e.lngLat).setHTML(content).addTo(map);
+            });
+            map.on('mouseleave', 'route-layer', () => {
+                map.getCanvas().style.cursor = '';
+                popup.remove();
+            });
+        }
+    }
+
+    function refreshMarkers() {
+        markers.forEach(m => m.remove());
+        markers = [];
+        waypoints.forEach((lngLat, i) => {
+            const el = document.createElement('div');
+            el.className = 'marker-label';
+            
+            const isFirst = (i === 0);
+            const isLast = (i === waypoints.length - 1 && waypoints.length > 1);
+
+            let anchor = 'center';
+            if (isFirst) {
+                el.classList.add('pin-start');
+                anchor = 'bottom';
+            } else if (isLast) {
+                const dist = Math.abs(waypoints[0][0] - lngLat[0]) + Math.abs(waypoints[0][1] - lngLat[1]);
+                if (dist < 0.0001) {
+                    el.classList.add('pin-start'); // Reusamos estilo pero con icono circular si quieres
+                    el.innerHTML = '🔄';
+                    el.style.transform = 'none';
+                    el.style.borderRadius = '50%';
+                    anchor = 'center';
+                } else {
+                    el.classList.add('pin-end');
+                    anchor = 'bottom';
+                }
+            } else {
+                el.classList.add('marker-mid');
+                el.innerHTML = i + 1;
+                anchor = 'center';
+            }
+
+            const marker = new maplibregl.Marker({ element: el, draggable: true, anchor: anchor })
+                .setLngLat(lngLat)
+                .addTo(map);
+
+            marker.on('drag', () => {
+                waypoints[i] = [marker.getLngLat().lng, marker.getLngLat().lat];
+                throttledCalculate();
+            });
+            
+            markers.push(marker);
+        });
+    }
+
+    function updateStats(data) {
+        document.getElementById('stats-panel').classList.remove('hidden');
+        document.getElementById('dist-val').innerText = (data.metadata.total_cost / 1000).toFixed(2);
+
+        // Calculate surfaces
+        const stats = { asphalt: 0, unpaved: 0, cycleway: 0, other: 0 };
+        let totalLen = 0;
+
+        data.features.forEach(f => {
+            const type = f.properties.highway_type;
+            const len = f.properties.cost;
+            totalLen += len;
+
+            if (['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'residential', 'living_street', 'service'].includes(type)) {
+                stats.asphalt += len;
+            } else if (['track', 'path', 'bridleway'].includes(type)) {
+                stats.unpaved += len;
+            } else if (type === 'cycleway') {
+                stats.cycleway += len;
+            } else {
+                stats.other += len;
+            }
+        });
+
+        // Update UI Bar
+        const bar = document.getElementById('surface-bar');
+        bar.innerHTML = '';
+        const legend = document.getElementById('surface-legend');
+        legend.innerHTML = '';
+
+        Object.entries(stats).forEach(([key, val]) => {
+            if (val === 0) return;
+            const pct = (val / totalLen) * 100;
+            
+            const seg = document.createElement('div');
+            seg.className = `surface-segment type-${key}`;
+            seg.style.width = `${pct}%`;
+            seg.title = `${key}: ${pct.toFixed(1)}%`;
+            bar.appendChild(seg);
+
+            const legItem = document.createElement('div');
+            legItem.innerHTML = `<span class="inline-block w-2 h-2 rounded-full type-${key} mr-1"></span> ${key}: ${pct.toFixed(0)}%`;
+            legend.appendChild(legItem);
+        });
+    }
+
+    document.getElementById('close-route').addEventListener('click', () => {
+        if (waypoints.length < 2) return;
+        
+        // Añadimos una copia del primer punto al final
+        const firstPoint = [...waypoints[0]];
+        waypoints.push(firstPoint);
+        
+        refreshMarkers();
+        calculateFullRoute();
+    });
+
+    document.getElementById('clear').addEventListener('click', () => {
+        waypoints = [];
+        markers.forEach(m => m.remove());
+        markers = [];
+        if (map.getLayer('route-layer')) map.removeLayer('route-layer');
+        if (map.getSource('route')) map.removeSource('route');
+        document.getElementById('stats-panel').classList.add('hidden');
+        currentRouteData = null;
+    });
+
+    document.getElementById('download-gpx').addEventListener('click', () => {
+        if (!currentRouteData) return;
+        // Simple GPX generator (simplified)
+        let gpx = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Maps.eus Adventure">
+<trk><name>Mi Ruta de Aventura</name><trkseg>`;
+        
+        currentRouteData.features.forEach(f => {
+            f.geometry.coordinates.forEach(c => {
+                gpx += `<trkpt lat="${c[1]}" lon="${c[0]}"></trkpt>`;
+            });
+        });
+        
+        gpx += `</trkseg></trk></gpx>`;
+        
+        const blob = new Blob([gpx], { type: 'application/gpx+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ruta_adventure.gpx';
+        a.click();
+    });
+</script>
+{% endblock %}

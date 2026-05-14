@@ -15,10 +15,10 @@ en cada deploy, así que un wipe de DB no rompe el login.
 4. **Credenciales** → "Crear credenciales" → "ID de cliente de OAuth":
    - Tipo: **Aplicación web**.
    - Orígenes JS autorizados:
-     - Local: `http://localhost:8000`
+     - Local: `http://localhost:9000`
      - Prod: `https://ai.maps.eus`
    - URIs de redirección:
-     - Local: `http://localhost:8000/accounts/google/login/callback/`
+     - Local: `http://localhost:9000/accounts/google/login/callback/`
      - Prod: `https://ai.maps.eus/accounts/google/login/callback/`
 5. Copia el **Client ID** y el **Client Secret**.
 
@@ -28,7 +28,7 @@ Añade a tu `.env` (local) y `.env.prod` (VPS):
 
 ```bash
 # Local
-SITE_DOMAIN=localhost:8000
+SITE_DOMAIN=localhost:9000
 SITE_NAME=Maps Local
 GOOGLE_OAUTH_ID_CLIENTE=...
 GOOGLE_OAUTH_SECRET_KEY=...
@@ -53,7 +53,7 @@ El comando es idempotente: puedes correrlo tantas veces como quieras.
 
 ## 4. Probar
 
-1. Ve a `http://localhost:8000/accounts/login/` (o el dominio de prod).
+1. Ve a `http://localhost:9000/accounts/login/` (o el dominio de prod).
 2. Click en "Sign in with Google".
 3. Autoriza la cuenta en Google y vuelves logueado.
 

@@ -10,7 +10,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         env = environ.Env()
 
-        site_domain = env('SITE_DOMAIN', default='localhost:8000')
+        site_domain = env('SITE_DOMAIN', default='localhost:9000')
         site_name = env('SITE_NAME', default='Maps Local')
         google_client_id = env('GOOGLE_OAUTH_ID_CLIENTE', default='')
         google_client_secret = env('GOOGLE_OAUTH_SECRET_KEY', default='')

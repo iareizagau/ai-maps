@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto p-4 md:p-8">
+    <div class="flex justify-between items-end mb-8">
+        <div>
+            <h1 class="text-3xl font-bold dark:text-white">Explorar</h1>
+            <p class="text-gray-600 dark:text-gray-400">Descubre las últimas rutas de la comunidad</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'dashboard_view' %}" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition">Mis Rutas</a>
+            <a href="{% url 'map_view' %}" class="bg-emerald-600 text-white px-4 py-2 rounded font-bold hover:bg-emerald-700 transition">Nueva Ruta</a>
+        </div>
+    </div>
+
+    {% if not routes %}
+    <div class="text-center py-16 bg-gray-50 dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+        <div class="text-4xl mb-4">🌍</div>
+        <h3 class="text-xl font-bold dark:text-white mb-2">Aún no hay rutas públicas</h3>
+        <p class="text-gray-500 mb-4">¡Sé el primero en compartir una aventura con la comunidad!</p>
+    </div>
+    {% else %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for route in routes %}
+        <div class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col hover:shadow-md transition">
+            
+            <!-- User Header -->
+            <div class="p-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-700">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
+                        {{ route.user.username|make_list|first|upper }}
+                    </div>
+                    <div>
+                        <div class="font-bold text-sm dark:text-white leading-tight">{{ route.user.username }}</div>
+                        <div class="text-[10px] text-gray-500">{{ route.created_at|timesince }} hace</div>
+                    </div>
+                </div>
+                
+                {% if request.user.is_authenticated and request.user != route.user %}
+                    {% if route.user.id in following_ids %}
+                    <button class="follow-btn border border-emerald-600 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold hover:bg-emerald-50 dark:hover:bg-emerald-900 transition" data-user-id="{{ route.user.id }}">Siguiendo</button>
+                    {% else %}
+                    <button class="follow-btn bg-emerald-600 text-white px-3 py-1 rounded-full text-xs font-bold hover:bg-emerald-700 transition" data-user-id="{{ route.user.id }}">Seguir</button>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- Mini-map placeholder / Thumbnail -->
+            <div class="h-32 bg-gray-200 dark:bg-gray-900 relative overflow-hidden flex items-center justify-center">
+                <div class="text-5xl opacity-80">{{ route.profile|yesno:"🚲,🥾"|default:"🏕️" }}</div>
+            </div>
+            
+            <div class="p-5 flex-1 flex flex-col">
+                <h3 class="font-bold text-lg dark:text-white mb-1">{{ route.name }}</h3>
+                <p class="text-xs text-gray-500 mb-4 line-clamp-2 flex-1">{{ route.description|default:"Sin descripción" }}</p>
+                
+                <div class="grid grid-cols-3 gap-2 mb-4 border-y border-gray-100 dark:border-gray-700 py-3">
+                    <div class="text-center">
+                        <div class="text-[10px] uppercase font-bold text-gray-400">Distancia</div>
+                        <div class="font-black dark:text-white">{{ route.distance_km|floatformat:1 }} km</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-[10px] uppercase font-bold text-gray-400">Desnivel+</div>
+                        <div class="font-black text-emerald-600">+{{ route.elevation_gain|floatformat:0 }}m</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-[10px] uppercase font-bold text-gray-400">Desnivel-</div>
+                        <div class="font-black text-red-500">-{{ route.elevation_loss|floatformat:0 }}m</div>
+                    </div>
+                </div>
+
+                <a href="{% url 'route_detail' route.id %}" class="w-full text-center bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-sm font-bold py-2 rounded transition dark:text-white block mt-auto">Ver Detalle</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('.follow-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const button = e.target;
+            const userId = button.dataset.userId;
+            button.disabled = true;
+            
+            try {
+                // Obtenemos el token CSRF de las cookies (Django usa csrftoken)
+                const csrfToken = document.cookie.split('; ')
+                    .find(row => row.startsWith('csrftoken='))
+                    ?.split('=')[1];
+
+                const res = await fetch(`/api/adventure/users/${userId}/follow`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+                
+                const data = await res.json();
+                if(data.success) {
+                    if(data.is_following) {
+                        button.textContent = "Siguiendo";
+                        button.className = "follow-btn border border-emerald-600 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold hover:bg-emerald-50 dark:hover:bg-emerald-900 transition";
+                    } else {
+                        button.textContent = "Seguir";
+                        button.className = "follow-btn bg-emerald-600 text-white px-3 py-1 rounded-full text-xs font-bold hover:bg-emerald-700 transition";
+                    }
+                } else {
+                    alert(data.error || "Error al seguir al usuario");
+                }
+            } catch (err) {
+                alert("Error de red");
+            } finally {
+                button.disabled = false;
+            }
+        });
+    });
+</script>
+{% endblock %}

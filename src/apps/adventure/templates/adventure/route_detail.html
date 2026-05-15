@@ -1,0 +1,442 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<!-- MapLibre GL JS -->
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<div style="height: 60vh; min-height: 500px;" class="w-full relative bg-gray-200 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+    <!-- Mapa Detalle 3D -->
+    <div id="route-map" class="w-full h-full absolute inset-0 z-0"></div>
+    
+    <!-- Floating Glass Header (Title & Stats) -->
+    <div class="absolute top-4 md:top-8 left-4 md:left-8 z-10 max-w-sm md:max-w-md w-full">
+        <div class="bg-white bg-opacity-90 dark:bg-black dark:bg-opacity-80 backdrop-blur-lg border border-white border-opacity-40 dark:border-white dark:border-opacity-10 p-6 md:p-8 rounded-3xl shadow-2xl">
+            <a href="javascript:history.back()" class="text-xs font-bold text-gray-500 hover:text-emerald-600 mb-4 flex items-center gap-2 uppercase tracking-widest transition-colors w-max">
+                <span class="text-lg leading-none">←</span> Volver al Hub
+            </a>
+            
+            <h1 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white leading-tight mb-3">{{ route.name }}</h1>
+            <p class="text-gray-600 dark:text-gray-300 text-sm font-medium mb-8 leading-relaxed line-clamp-3">{{ route.description|default:"Sin descripción." }}</p>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white bg-opacity-60 dark:bg-black dark:bg-opacity-50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm transition hover:shadow-md">
+                    <p class="text-[10px] uppercase font-black text-gray-400 tracking-widest mb-1">Distancia</p>
+                    <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400">{{ route.distance_km|floatformat:1 }}<span class="text-sm text-gray-400 font-bold ml-1">km</span></p>
+                </div>
+                <div class="bg-white bg-opacity-60 dark:bg-black dark:bg-opacity-50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm transition hover:shadow-md">
+                    <p class="text-[10px] uppercase font-black text-gray-400 tracking-widest mb-1">Desnivel Pos.</p>
+                    <p class="text-2xl font-black text-blue-600 dark:text-blue-400">+{{ route.elevation_gain|floatformat:0 }}<span class="text-sm text-gray-400 font-bold ml-1">m</span></p>
+                </div>
+            </div>
+
+            <div class="mt-6 flex items-center justify-between text-xs font-bold text-gray-400 px-2">
+                <span class="flex items-center gap-2">
+                    <div class="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 text-xs">👤</div>
+                    {{ route.user.username }}
+                </span>
+                <span class="flex items-center gap-2">
+                    📅 {{ route.created_at|date:"d M, Y" }}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cinematic Overlay -->
+    <div id="cinematic-overlay" class="hidden absolute inset-0 z-40 bg-black bg-opacity-60 backdrop-blur-md flex-col items-center justify-center p-4 transition-opacity duration-500 opacity-0">
+        <div class="bg-white bg-opacity-10 dark:bg-black dark:bg-opacity-40 border border-white border-opacity-20 p-8 rounded-3xl max-w-lg w-full shadow-2xl backdrop-blur-xl transform transition-transform scale-95" id="cinematic-card">
+            <div class="flex items-center gap-4 mb-6">
+                <div id="cinematic-icon" class="text-4xl bg-white bg-opacity-20 p-4 rounded-full shadow-inner">📸</div>
+                <div>
+                    <h3 id="cinematic-title" class="text-2xl font-black text-white drop-shadow-md tracking-tight">Lugar Épico</h3>
+                    <p id="cinematic-author" class="text-sm text-gray-300 font-bold mt-1">por usuario</p>
+                </div>
+            </div>
+            <img id="cinematic-image" src="" alt="Intel" class="w-full h-56 object-cover rounded-2xl mb-6 hidden shadow-2xl border border-white border-opacity-10">
+            <p id="cinematic-desc" class="text-white text-opacity-90 text-lg font-medium mb-8 drop-shadow-md leading-relaxed">...</p>
+            <button id="cinematic-continue" class="w-full py-4 bg-white hover:bg-gray-100 text-black font-black rounded-2xl uppercase tracking-widest transition-all hover:scale-105 shadow-xl">Continuar Vuelo ✈️</button>
+        </div>
+    </div>
+
+    <!-- Botón Volar -->
+    <button id="btn-flyover" disabled class="absolute bottom-6 md:bottom-10 right-6 md:right-10 bg-gray-500 text-white px-6 py-4 rounded-full font-black text-sm flex items-center gap-3 shadow-2xl z-50 cursor-not-allowed pointer-events-none opacity-50 transition-all hover:scale-105 uppercase tracking-widest border border-white border-opacity-10">
+        ⏳ Cargando Mapa...
+    </button>
+</div>
+
+<div class="max-w-7xl mx-auto p-4 md:p-8 mt-4 md:mt-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Estadísticas de Superficie -->
+        <div class="lg:col-span-2">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xl">⛰️</div>
+                    <h3 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Análisis del Terreno</h3>
+                </div>
+                
+                <p class="text-sm text-gray-500 font-medium mb-6">Estimación de las superficies que componen el trazado basada en datos de OpenStreetMap.</p>
+                
+                <!-- Mockup de barras de progreso -->
+                <div class="w-full h-6 flex rounded-xl overflow-hidden mb-5 shadow-inner">
+                    <div class="bg-gray-800 dark:bg-gray-600 h-full w-[60%] hover:brightness-110 transition cursor-help" title="Asfalto: 60%"></div>
+                    <div class="bg-amber-600 h-full w-[30%] hover:brightness-110 transition cursor-help" title="Pista / Tierra: 30%"></div>
+                    <div class="bg-emerald-500 h-full w-[10%] hover:brightness-110 transition cursor-help" title="Carril Bici / Sendero: 10%"></div>
+                </div>
+                
+                <div class="flex flex-wrap gap-6 text-sm font-bold text-gray-500 dark:text-gray-400">
+                    <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-gray-800 dark:bg-gray-600 shadow-sm border border-black border-opacity-10"></span> Asfalto <span class="text-gray-400 font-normal">60%</span></div>
+                    <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-amber-600 shadow-sm border border-black border-opacity-10"></span> Pista Forestal <span class="text-gray-400 font-normal">30%</span></div>
+                    <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-emerald-500 shadow-sm border border-black border-opacity-10"></span> Sendero <span class="text-gray-400 font-normal">10%</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Inteligencia Logística (POIs) -->
+        <div class="lg:col-span-1">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition sticky top-8">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl">🎒</div>
+                    <h3 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Logística</h3>
+                </div>
+                <p class="text-xs text-gray-500 mb-8 font-medium px-1">Análisis táctico: Puntos clave cruzando PostGIS (radio 200m)</p>
+                
+                <div class="space-y-6">
+                    {% if not pois %}
+                    <div class="text-center py-10 bg-gray-50 dark:bg-gray-900 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
+                        <div class="text-4xl mb-3 opacity-50">🌵</div>
+                        <p class="text-sm font-black text-gray-600 dark:text-gray-300">Ruta Aislada</p>
+                        <p class="text-xs mt-2 px-6 text-gray-400 font-medium">Prepárate bien. No hemos detectado fuentes de agua ni refugios cercanos.</p>
+                    </div>
+                    {% else %}
+                        
+                        <!-- Resumen -->
+                        <div class="grid grid-cols-2 gap-3 mb-6">
+                            {% for type_name, count in poi_counts.items %}
+                            <div class="bg-gray-50 dark:bg-gray-900 dark:bg-opacity-50 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center transition hover:bg-gray-100">
+                                <div class="text-3xl font-black text-emerald-600 dark:text-emerald-400 mb-1">{{ count }}</div>
+                                <div class="text-[10px] uppercase font-black text-gray-500 tracking-widest text-center leading-tight">{{ type_name }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <hr class="border-gray-100 dark:border-gray-700 mb-6">
+
+                        <!-- Listado -->
+                        <div style="max-height: 300px;" class="overflow-y-auto pr-3 space-y-3 custom-scrollbar">
+                            {% for poi in pois %}
+                            <div class="flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-2xl transition group cursor-default">
+                                <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-sm border transition-transform group-hover:scale-110
+                                    {% if poi.poi_type == 'water' %} bg-blue-50 text-blue-600 border-blue-100
+                                    {% elif poi.poi_type == 'shelter' %} bg-amber-50 text-amber-600 border-amber-100
+                                    {% elif poi.poi_type == 'cafe' %} bg-orange-50 text-orange-600 border-orange-100
+                                    {% elif poi.poi_type == 'station' %} bg-purple-50 text-purple-600 border-purple-100
+                                    {% else %} bg-gray-50 text-gray-600 border-gray-100 {% endif %}
+                                ">
+                                    <span class="text-lg">
+                                        {% if poi.poi_type == 'water' %} 💧
+                                        {% elif poi.poi_type == 'shelter' %} ⛺
+                                        {% elif poi.poi_type == 'cafe' %} ☕
+                                        {% elif poi.poi_type == 'station' %} 🚉
+                                        {% else %} 📍 {% endif %}
+                                    </span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-black text-sm text-gray-900 dark:text-white leading-tight group-hover:text-emerald-600 transition-colors">{{ poi.name|default:"Punto sin nombre" }}</div>
+                                    <div class="text-[10px] text-gray-400 uppercase font-black tracking-wider mt-1">{{ poi.get_poi_type_display }}</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Custom Scrollbar for POI list */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent; 
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1; 
+    border-radius: 10px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #475569; 
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    console.log("Iniciando renderizado del mapa 3D...");
+    
+    // El string de python se convierte en objeto JS gracias a la falta de comillas
+    const routeGeoJSON = {{ route_geojson|safe }};
+    console.log("GeoJSON cargado:", routeGeoJSON);
+    
+    // MapLibre init
+    const map = new maplibregl.Map({
+        container: 'route-map',
+        style: {
+            'version': 8,
+            'sources': {
+                'osm': {
+                    'type': 'raster',
+                    'tiles': ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                    'tileSize': 256,
+                    'attribution': '&copy; OpenStreetMap contributors'
+                },
+                'terrainSource': {
+                    'type': 'raster-dem',
+                    'url': 'https://demotiles.maplibre.org/terrain-tiles/tiles.json',
+                    'tileSize': 256
+                }
+            },
+            'layers': [{ 'id': 'osm-layer', 'type': 'raster', 'source': 'osm' }],
+            'terrain': {
+                'source': 'terrainSource',
+                'exaggeration': 1.5
+            }
+        },
+        center: [-1.981, 43.318],
+        zoom: 13,
+        pitch: 60,
+        bearing: -20
+    });
+
+    map.on('error', (e) => {
+        console.error("MapLibre Error:", e);
+    });
+
+    let intelDrops = [];
+
+    // Marker interactivo de Ghost eliminado temporalmente
+
+
+    map.on('load', async () => {
+        console.log("Mapa base cargado. Añadiendo ruta...");
+        
+        // Full route backdrop (faint)
+        map.addSource('route-full', {
+            'type': 'geojson',
+            'data': routeGeoJSON
+        });
+        map.addLayer({
+            'id': 'route-full-line',
+            'type': 'line',
+            'source': 'route-full',
+            'layout': { 'line-join': 'round', 'line-cap': 'round' },
+            'paint': { 'line-color': '#9ca3af', 'line-width': 4, 'line-opacity': 0.3 }
+        });
+
+        // Progressive active route
+        map.addSource('route', {
+            'type': 'geojson',
+            'data': routeGeoJSON // Al principio mostramos todo
+        });
+
+        // Glowing backdrop line
+        map.addLayer({
+            'id': 'route-glow',
+            'type': 'line',
+            'source': 'route',
+            'layout': { 'line-join': 'round', 'line-cap': 'round' },
+            'paint': { 'line-color': '#f59e0b', 'line-width': 12, 'line-blur': 10, 'line-opacity': 0.6 }
+        });
+
+        // Main line
+        map.addLayer({
+            'id': 'route-line',
+            'type': 'line',
+            'source': 'route',
+            'layout': { 'line-join': 'round', 'line-cap': 'round' },
+            'paint': { 'line-color': '#b45309', 'line-width': 5 }
+        });
+
+        // Fit bounds
+        const coordinates = routeGeoJSON.coordinates.flat(1);
+        if (coordinates.length > 0) {
+            const bounds = coordinates.reduce(function(bounds, coord) {
+                return bounds.extend(coord);
+            }, new maplibregl.LngLatBounds(coordinates[0], coordinates[0]));
+
+            map.fitBounds(bounds, { padding: 40, pitch: 45 });
+        }
+
+        // Fetch Intel Drops
+        try {
+            const res = await fetch(`/api/adventure/intel/route/{{ route.id }}`);
+            const data = await res.json();
+            if (data.success && data.intel.length > 0) {
+                intelDrops = data.intel;
+                intelDrops.forEach(intel => {
+                    intel.shown = false; // flag for cinematic playback
+                    
+                    let icon = '📍';
+                    if (intel.type === 'warning') icon = '⚠️';
+                    else if (intel.type === 'water_dry') icon = '🏜️';
+                    else if (intel.type === 'water_ok') icon = '💧';
+                    else if (intel.type === 'shelter_ok') icon = '⛺';
+                    else if (intel.type === 'shelter_bad') icon = '🏚️';
+                    else if (intel.type === 'surface_mud') icon = '💩';
+                    else if (intel.type === 'surface_snow') icon = '❄️';
+                    else if (intel.type === 'photo_epic') icon = '📸';
+
+                    const el = document.createElement('div');
+                    el.className = 'text-xl filter drop-shadow bg-white/80 rounded-full w-8 h-8 flex items-center justify-center border border-gray-300 cursor-pointer hover:scale-125 transition-transform z-10';
+                    if (!intel.is_fresh) el.classList.add('opacity-50', 'grayscale');
+                    el.innerText = icon;
+                    
+                    // Simple click to show popup manually
+                    el.addEventListener('click', () => {
+                        showCinematicOverlay(intel);
+                    });
+
+                    new maplibregl.Marker({ element: el })
+                        .setLngLat([intel.lng, intel.lat])
+                        .addTo(map);
+                });
+            }
+        } catch (err) {
+            console.error("No se pudo cargar Intel Drops", err);
+        }
+
+        // Enable Flyover button
+        const btnFly = document.getElementById('btn-flyover');
+        if (btnFly) {
+            btnFly.disabled = false;
+            btnFly.classList.remove('bg-gray-500', 'cursor-not-allowed', 'pointer-events-none', 'opacity-50');
+            btnFly.classList.add('bg-gray-900', 'dark:bg-black', 'cursor-pointer', 'pointer-events-auto', 'opacity-100');
+            btnFly.innerText = '✈️ Volar Ruta 3D';
+            console.log("Listo para volar.");
+        }
+    });
+
+    // Cinematic Overlay Functions
+    const overlay = document.getElementById('cinematic-overlay');
+    const overlayCard = document.getElementById('cinematic-card');
+    let isPaused = false;
+    let flyoverRaf = null;
+    let flyoverIndex = 0;
+    let flyoverCoords = [];
+
+    function showCinematicOverlay(intel) {
+        document.getElementById('cinematic-icon').innerText = getIconForType(intel.type);
+        document.getElementById('cinematic-title').innerText = intel.type_display;
+        document.getElementById('cinematic-author').innerText = 'por ' + intel.user;
+        document.getElementById('cinematic-desc').innerText = intel.description || 'Sin descripción';
+        
+        const imgEl = document.getElementById('cinematic-image');
+        if (intel.image_url) {
+            imgEl.src = intel.image_url;
+            imgEl.classList.remove('hidden');
+        } else {
+            imgEl.src = '';
+            imgEl.classList.add('hidden');
+        }
+
+        overlay.classList.remove('hidden');
+        overlay.classList.add('flex');
+        // Small delay for fade transition
+        setTimeout(() => {
+            overlay.classList.remove('opacity-0');
+            overlayCard.classList.remove('scale-95');
+            overlayCard.classList.add('scale-100');
+        }, 10);
+    }
+
+    function hideCinematicOverlay() {
+        overlay.classList.add('opacity-0');
+        overlayCard.classList.remove('scale-100');
+        overlayCard.classList.add('scale-95');
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+            document.getElementById('telemetry-hud').classList.remove('opacity-0'); // restore HUD
+        }, 500);
+    }
+
+    function getIconForType(type) {
+        if (type === 'warning') return '⚠️';
+        if (type === 'photo_epic') return '📸';
+        if (type === 'water_dry') return '🏜️';
+        if (type === 'water_ok') return '💧';
+        if (type === 'surface_mud') return '💩';
+        if (type === 'surface_snow') return '❄️';
+        return '📍';
+    }
+
+    document.getElementById('cinematic-continue').addEventListener('click', () => {
+        hideCinematicOverlay();
+        if (isPaused) {
+            isPaused = false;
+            // Resume flyover
+            animationStep();
+        }
+    });
+
+    const animationStep = () => {
+        if (isPaused) return;
+        if (flyoverIndex >= flyoverCoords.length) {
+            document.getElementById('btn-flyover').style.display = 'flex'; // show button again
+            intelDrops.forEach(i => i.shown = false); // reset
+            return; 
+        }
+
+        const currentPos = flyoverCoords[flyoverIndex];
+
+        // Check if near any unshown Intel Drop
+        let hitIntel = intelDrops.find(i => !i.shown && Math.hypot(i.lng - currentPos[0], i.lat - currentPos[1]) < 0.00045);
+        
+        if (hitIntel) {
+            hitIntel.shown = true;
+            isPaused = true;
+            
+            // Adjust camera slightly to look at the point better
+            map.easeTo({
+                center: [hitIntel.lng, hitIntel.lat],
+                zoom: 16.5,
+                pitch: 65,
+                duration: 1000
+            });
+            
+            setTimeout(() => {
+                showCinematicOverlay(hitIntel);
+            }, 1000);
+            return; // stop RAF loop until unpaused
+        }
+
+        map.easeTo({
+            center: currentPos,
+            zoom: 16,
+            pitch: 60,
+            bearing: (flyoverIndex * 0.5) % 360,
+            duration: 200,
+            easing: t => t
+        });
+
+        flyoverIndex += 2; // skip coords
+        flyoverRaf = requestAnimationFrame(animationStep);
+    };
+
+    // Flyover Initialization
+    document.getElementById('btn-flyover').addEventListener('click', (e) => {
+        e.target.style.display = 'none'; // hide button while flying
+        flyoverCoords = routeGeoJSON.coordinates.flat(1);
+        if (flyoverCoords.length === 0) return;
+        
+        flyoverIndex = 0;
+        isPaused = false;
+        
+        animationStep();
+    });
+</script>
+{% endblock %}

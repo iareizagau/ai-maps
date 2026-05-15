@@ -6,6 +6,7 @@ from apps.pintxos.api import router as pintxos_router
 from apps.inguru.api import router as inguru_router
 from apps.kultur.api import router as kultur_router
 from apps.adventure.api import router as adventure_router
+from apps.solar.api import router as solar_router
 
 api = NinjaAPI(title="Maps.eus API", version="1.0.0")
 
@@ -41,3 +42,4 @@ api.add_router("/pintxos", pintxos_router)
 api.add_router("/inguru", inguru_router)
 api.add_router("/kultur", kultur_router)
 api.add_router("/adventure", adventure_router)
+api.add_router("/solar", solar_router)

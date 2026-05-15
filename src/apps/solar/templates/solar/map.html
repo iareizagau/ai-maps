@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link href="https://cdn.osmbuildings.org/4.1.1/OSMBuildings.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    body { font-family: 'Outfit', sans-serif; background: #f1f5f9; overflow: hidden; }
+    #map { height: 100vh; width: 100%; position: relative; }
+    
+    .floating-panel {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 340px;
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(16px) saturate(160%);
+        -webkit-backdrop-filter: blur(16px) saturate(160%);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 24px;
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    .panel-header {
+        padding: 16px 20px;
+        background: #0f172a;
+        color: white;
+        border-radius: 24px 24px 0 0;
+    }
+
+    .panel-body { padding: 16px; }
+
+    /* Layout Compacto de KPIs */
+    .kpi-strip {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 16px;
+        background: rgba(255, 255, 255, 0.5);
+        padding: 10px;
+        border-radius: 16px;
+        border: 1px solid white;
+    }
+
+    .kpi-item { text-align: left; }
+    .kpi-label { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 2px; }
+    .kpi-value { font-weight: 800; font-size: 0.95rem; color: #0f172a; display: block; }
+
+    .energy-badge {
+        background: #22c55e;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 10px;
+        font-weight: 900;
+    }
+
+    .main-metric {
+        margin-bottom: 16px;
+        padding: 14px;
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        border-radius: 18px;
+        color: #78350f;
+    }
+
+    .chart-box {
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 18px;
+        padding: 12px;
+        border: 1px solid white;
+    }
+
+    .btn-pro {
+        background: #4f46e5;
+        color: white;
+        padding: 14px;
+        border-radius: 16px;
+        font-weight: 800;
+        font-size: 0.8rem;
+        width: 100%;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-pro:hover { transform: scale(1.02); background: #4338ca; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .animate-fade { animation: fadeIn 0.4s ease-out forwards; }
+    .solar-controls {
+        background: rgba(15, 23, 42, 0.05);
+        padding: 12px;
+        border-radius: 18px;
+        margin-top: 12px;
+        border: 1px solid rgba(0,0,0,0.03);
+    }
+    .control-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .control-row:last-child { margin-bottom: 0; }
+    input[type=range] { flex: 1; accent-color: #4f46e5; height: 4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="map"></div>
+
+<div class="floating-panel">
+    <div class="panel-header">
+        <div class="flex justify-between items-center">
+            <div>
+                <h4 class="m-0 font-black text-sm tracking-tight">SOLAR CORE</h4>
+                <p class="m-0 text-[8px] text-indigo-400 font-bold uppercase">Shadow Engine v3.0</p>
+            </div>
+            <div class="energy-badge">GRADE A</div>
+        </div>
+    </div>
+    <div class="panel-body">
+        <div id="building-info">
+            <div class="text-center py-6 animate-fade">
+                <div class="text-4xl mb-4">☀️</div>
+                <p class="text-[11px] text-gray-500 font-medium px-4">Selecciona un edificio para ver el reporte.</p>
+            </div>
+        </div>
+
+        <!-- Nueva sección de sombras -->
+        <div class="solar-controls">
+            <p class="text-[9px] font-black text-slate-400 uppercase mb-3 tracking-widest text-center">Solar Time Machine</p>
+            <div class="control-row">
+                <span class="text-[10px] font-bold w-8">Hora</span>
+                <input type="range" id="hour-slider" min="0" max="23" value="12">
+                <span id="hour-val" class="text-[10px] font-black w-6">12h</span>
+            </div>
+            <div class="control-row">
+                <span class="text-[10px] font-bold w-8">Mes</span>
+                <input type="range" id="month-slider" min="0" max="11" value="5">
+                <span id="month-val" class="text-[10px] font-black w-6">JUN</span>
+            </div>
+            
+            <!-- Botones de Escenario Rápido -->
+            <div class="flex gap-2 mt-3">
+                <button onclick="setScenario('winter')" class="flex-1 text-[8px] font-black py-2 rounded-lg border border-slate-200 hover:bg-slate-800 hover:text-white transition-all uppercase">Winter Solstice</button>
+                <button onclick="setScenario('summer')" class="flex-1 text-[8px] font-black py-2 rounded-lg border border-slate-200 hover:bg-slate-800 hover:text-white transition-all uppercase">Summer Solstice</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.osmbuildings.org/4.1.1/OSMBuildings.js"></script>
+<script>
+    var osmb = new OSMBuildings({
+        container: 'map',
+        position: { latitude: 43.3183, longitude: -1.9812 },
+        zoom: 17,
+        minZoom: 15,
+        maxZoom: 20,
+        tilt: 40,
+        rotation: 0,
+        attribution: '© Data <a href="https://openstreetmap.org/copyright/">OpenStreetMap</a> © Map <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>'
+    });
+
+    osmb.addMapTiles('https://tile-a.openstreetmap.fr/hot/{z}/{x}/{y}.png');
+    
+    // Reactivamos la capa oficial como base para que el usuario vea edificios de inmediato
+    osmb.addGeoJSONTiles('https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json');
+
+    // Intentar aplicar estilo, pero con seguridad
+    try {
+        if (typeof osmb.setStyle === 'function') {
+            osmb.setStyle({
+                color: function(props) {
+                    return (props && props.color) ? props.color : 'rgba(255, 255, 255, 0.9)';
+                }
+            });
+        }
+    } catch (e) {
+        console.warn('No se pudo aplicar el estilo dinámico:', e);
+    }
+
+    osmb.setDate(new Date());
+
+    var localBuildings = {};
+
+    function fetchLocalBuildings() {
+        var bounds = osmb.getBounds();
+        if (!bounds || bounds.w === undefined) return;
+        
+        var bbox = [bounds.w, bounds.s, bounds.e, bounds.n].join(',');
+        
+        fetch(`/api/solar/buildings?bbox=${bbox}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.features && Array.isArray(data.features)) {
+                    osmb.addGeoJSON(data);
+                    data.features.forEach(f => {
+                        localBuildings[f.id] = f.properties;
+                    });
+                }
+            });
+    }
+
+    fetchLocalBuildings();
+    osmb.on('change', function() {
+        clearTimeout(window.moveTimeout);
+        window.moveTimeout = setTimeout(fetchLocalBuildings, 400);
+    });
+
+    function handleMapInteraction(x, y) {
+        var pos = osmb.unproject(x, y);
+        if (!pos) return;
+        
+        fetch(`/api/solar/building-at?lat=${pos.latitude}&lon=${pos.longitude}`)
+            .then(res => res.json())
+            .then(info => {
+                const panel = document.getElementById('building-info');
+                if (!panel) return;
+
+                if (info.error) {
+                    panel.innerHTML = `<div class="text-center py-4 animate-fade"><p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Esperando Selección...</p></div>`;
+                    return;
+                }
+                
+                var content = `
+                    <div class="animate-fade">
+                        <div class="flex justify-between items-end mb-4">
+                            <div>
+                                <p class="text-[8px] font-black text-indigo-500 uppercase tracking-tighter mb-0">Detected Geometry</p>
+                                <h3 class="text-xl font-black text-slate-900 m-0">${info.roof_area ? parseFloat(info.roof_area).toFixed(2) : '---'} <span class="text-xs font-normal text-slate-400">m²</span></h3>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[8px] font-bold text-slate-300 uppercase m-0">ID: ${info.id}</p>
+                            </div>
+                        </div>`;
+                
+                if (info.solar && info.solar.annual_generation) {
+                    const s = info.solar;
+                    const efficiency = s.annual_generation / (info.roof_area || 1);
+                    let grade = 'C';
+                    let gradeColor = '#f59e0b';
+                    if (efficiency > 200) { grade = 'A'; gradeColor = '#22c55e'; }
+                    else if (efficiency > 150) { grade = 'B'; gradeColor = '#84cc16'; }
+                    
+                    // Update Grade Badge in Header
+                    const badge = document.querySelector('.energy-badge');
+                    if (badge) {
+                        badge.innerText = `GRADE ${grade}`;
+                        badge.style.background = gradeColor;
+                    }
+
+                    content += `
+                        <div class="kpi-strip">
+                            <div class="kpi-item">
+                                <span class="kpi-label">Ahorro</span>
+                                <span class="kpi-value">€${parseFloat(s.kpis.annual_savings).toFixed(2)}</span>
+                            </div>
+                            <div class="kpi-item" style="border-left: 1px solid rgba(0,0,0,0.05); padding-left: 10px;">
+                                <span class="kpi-label">CO₂ Offset</span>
+                                <span class="kpi-value">${parseFloat(s.kpis.co2_offset).toFixed(2)}kg</span>
+                            </div>
+                            <div class="kpi-item" style="border-left: 1px solid rgba(0,0,0,0.05); padding-left: 10px;">
+                                <span class="kpi-label">Retorno</span>
+                                <span class="kpi-value">${parseFloat(s.kpis.roi_years).toFixed(2)}a</span>
+                            </div>
+                        </div>
+
+                        <div class="main-metric">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-[9px] font-black uppercase opacity-60 mb-0">Total Yield</p>
+                                    <p class="text-2xl font-black m-0">${Math.round(s.annual_generation).toLocaleString()} <span class="text-xs font-bold opacity-60">kWh/y</span></p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[9px] font-black uppercase opacity-60 mb-0">Capacity</p>
+                                    <p class="text-sm font-black m-0">${parseFloat(s.peak_power).toFixed(2)} <span class="text-[10px]">kWp</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-box">
+                            <p class="text-[9px] font-black text-gray-400 uppercase mb-2 tracking-widest text-center">Energy Profile</p>
+                            <canvas id="monthlyChart" height="120"></canvas>
+                        </div>
+                    `;
+                    panel.innerHTML = content;
+                    
+                    setTimeout(() => {
+                        const ctx = document.getElementById('monthlyChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: ['E','F','M','A','M','J','J','A','S','O','N','D'],
+                                datasets: [{
+                                    data: s.monthly_data,
+                                    backgroundColor: gradeColor,
+                                    borderRadius: 4,
+                                    barPercentage: 0.6
+                                }]
+                            },
+                            options: {
+                                plugins: { legend: { display: false } },
+                                scales: {
+                                    y: { display: false, beginAtZero: true },
+                                    x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 8, weight: '700' }, color: '#94a3b8' } }
+                                }
+                            }
+                        });
+                    }, 50);
+                } else {
+                    content += `
+                        <div class="bg-slate-50 rounded-2xl p-4 border border-dashed border-slate-200 text-center">
+                            <p class="text-[11px] text-slate-500 font-medium mb-4">No analysis found for this roof.</p>
+                            <button onclick="calculateSolar(event, '${info.id}')" class="btn-pro">
+                                RUN ANALYTICS
+                            </button>
+                        </div>
+                    `;
+                    panel.innerHTML = content;
+                }
+            });
+    }
+
+    var lastClickX, lastClickY;
+    osmb.on('pointerdown', function(e) {
+        lastClickX = Math.round(e.x || (e.detail && e.detail.x));
+        lastClickY = Math.round(e.y || (e.detail && e.detail.y));
+        handleMapInteraction(lastClickX, lastClickY);
+    });
+
+    // --- Lógica de Sombras (Solar Time Machine) ---
+    const hourSlider = document.getElementById('hour-slider');
+    const monthSlider = document.getElementById('month-slider');
+    const hourVal = document.getElementById('hour-val');
+    const monthVal = document.getElementById('month-val');
+    const months = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+
+    function updateSolarTime() {
+        const hour = parseInt(hourSlider.value);
+        const month = parseInt(monthSlider.value);
+        
+        hourVal.innerText = `${hour}h`;
+        monthVal.innerText = months[month];
+        
+        const date = new Date();
+        date.setMonth(month);
+        date.setHours(hour);
+        date.setMinutes(0);
+        
+        console.log('Simulando sombras para:', date);
+        osmb.setDate(date);
+    }
+
+    hourSlider.addEventListener('input', updateSolarTime);
+    monthSlider.addEventListener('input', updateSolarTime);
+    
+    // Inicializar a la hora actual
+    const now = new Date();
+    hourSlider.value = now.getHours();
+    monthSlider.value = now.getMonth();
+    updateSolarTime();
+
+    window.setScenario = function(type) {
+        if (type === 'winter') {
+            hourSlider.value = 12;
+            monthSlider.value = 11; // Diciembre
+        } else if (type === 'summer') {
+            hourSlider.value = 12;
+            monthSlider.value = 5; // Junio
+        }
+        updateSolarTime();
+    };
+
+    window.calculateSolar = function(event, id) {
+        const button = event.target.closest('button');
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = `⏳ Calculando...`;
+        }
+        fetch(`/api/solar/calculate/${id}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    fetchLocalBuildings();
+                    setTimeout(() => { if (lastClickX) handleMapInteraction(lastClickX, lastClickY); }, 1500);
+                }
+            });
+    };
+</script>
+{% endblock %}

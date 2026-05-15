@@ -77,6 +77,16 @@ class Command(BaseCommand):
                 'hero_title': 'Tu próxima aventura empieza aquí',
                 'description': 'Calcula rutas personalizadas para bikepacking, senderismo y escalada usando pgRouting.'
             },
+            {
+                'slug': 'solar',
+                'name': 'Solar 3D',
+                'tagline': 'Mapa de Potencial Fotovoltaico.',
+                'domain': 'https://ai.maps.eus/solar/',
+                'icon': 'sun',
+                'primary_color': '#facc15', # Yellow
+                'hero_title': 'Energía limpia para tu tejado',
+                'description': 'Visualiza el potencial solar de tu edificio en 3D y calcula tus ahorros con PVGIS.'
+            },
         ]
 
         for app_data in apps:

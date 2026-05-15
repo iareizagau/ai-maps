@@ -44,42 +44,33 @@
     .type-other { background: #9ca3af; } /* Light Gray */
 
     .marker-label {
-        width: 32px; height: 32px;
         display: flex; align-items: center; justify-content: center;
         cursor: grab; transition: transform 0.2s;
     }
     .marker-label:active { cursor: grabbing; transform: scale(1.1); }
 
-    /* Estilo Pin de Inicio */
-    .pin-start {
-        background: #10b981; border: 3px solid white;
-        border-radius: 50% 50% 50% 0;
-        transform: rotate(-45deg);
-        box-shadow: -2px 2px 5px rgba(0,0,0,0.3);
+    /* Estilo Bandera de Inicio */
+    .flag-start {
+        width: 36px; height: 36px;
+        filter: drop-shadow(0px 3px 4px rgba(0,0,0,0.4));
+        transform-origin: bottom left;
     }
-    .pin-start::after {
-        content: ''; width: 8px; height: 8px; background: white;
-        border-radius: 50%; transform: rotate(45deg);
-    }
+    .flag-start svg { width: 100%; height: 100%; }
 
-    /* Estilo Pin de Fin */
-    .pin-end {
-        background: #ef4444; border: 3px solid white;
-        border-radius: 50% 50% 50% 0;
-        transform: rotate(-45deg);
-        box-shadow: -2px 2px 5px rgba(0,0,0,0.3);
+    /* Estilo Bandera de Fin */
+    .flag-end {
+        width: 36px; height: 36px;
+        filter: drop-shadow(0px 3px 4px rgba(0,0,0,0.4));
+        transform-origin: bottom left;
     }
-    .pin-end::after {
-        content: ''; width: 8px; height: 8px; background: white;
-        border-radius: 50%; transform: rotate(45deg);
-    }
+    .flag-end svg { width: 100%; height: 100%; }
 
     /* Puntos intermedios */
     .marker-mid {
         background: white; border: 3px solid #f59e0b;
-        border-radius: 50%; width: 22px; height: 22px;
-        font-size: 10px; font-weight: bold; color: #b45309;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        border-radius: 50%; width: 28px; height: 28px;
+        font-size: 13px; font-weight: bold; color: #b45309;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.3);
     }
 </style>
 {% endblock %}
@@ -88,13 +79,22 @@
 <div class="relative w-full">
     <div class="adventure-controls">
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-bold">🗺️ Adventure Planner</h2>
-            <span class="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full font-bold">BETA</span>
+            <h2 class="text-xl font-bold flex items-center gap-2">
+                🗺️ Adventure Planner
+                <span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold uppercase">Beta</span>
+            </h2>
         </div>
         
-        <p class="text-xs opacity-70">
-            Click para añadir puntos. Arrastra para ajustar.
-        </p>
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-[10px] opacity-70">👉 Click Izq: Añadir waypoint.</p>
+                <p class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold">🖱️ Click Der: Reportar Intel / Foto.</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="{% url 'explore_view' %}" class="text-xs font-bold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition">🌍 Explorar</a>
+                <a href="{% url 'dashboard_view' %}" class="text-xs font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 transition">📚 Mis Rutas</a>
+            </div>
+        </div>
         
         <div class="flex gap-2">
             <select id="profile" class="flex-1 p-2 rounded border dark:bg-gray-800 dark:border-gray-700 text-sm">
@@ -125,9 +125,27 @@
                 <div id="surface-legend" class="grid grid-cols-2 gap-1 mt-2 text-[10px]"></div>
             </div>
 
-            <button id="download-gpx" class="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md font-bold text-sm transition">
-                📥 Descargar GPX
-            </button>
+            <div class="flex gap-2">
+                <button id="download-gpx" class="flex-1 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md font-bold text-sm transition">
+                    📥 GPX
+                </button>
+                <button id="save-route-btn" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-bold text-sm transition">
+                    💾 Guardar
+                </button>
+            </div>
+            
+            <div id="save-form" class="hidden mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 text-sm">
+                <input type="text" id="route-name" placeholder="Nombre de la aventura..." class="w-full p-2 mb-2 rounded border dark:bg-gray-700 dark:border-gray-600">
+                <textarea id="route-desc" placeholder="Notas o descripción (opcional)..." class="w-full p-2 mb-2 rounded border dark:bg-gray-700 dark:border-gray-600 text-xs"></textarea>
+                <label class="flex items-center gap-2 mb-2 text-xs">
+                    <input type="checkbox" id="route-public" checked> 
+                    Compartir con la comunidad (Pública)
+                </label>
+                <div class="flex gap-2">
+                    <button id="submit-save" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white p-1.5 rounded font-bold text-xs">Guardar Aventura</button>
+                    <button id="cancel-save" class="flex-1 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 p-1.5 rounded text-xs">Cancelar</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -135,6 +153,50 @@
     <div class="profile-panel collapsed" id="profile-container">
         <button class="toggle-profile-btn" id="toggle-profile">📈 Perfil de Elevación</button>
         <canvas id="elevation-chart"></canvas>
+    </div>
+</div>
+
+<!-- Modal Intel -->
+<div id="intel-modal" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
+        <h3 class="text-xl font-bold mb-4 dark:text-white flex items-center gap-2">
+            📍 Añadir Reporte / Intel
+        </h3>
+        
+        <form id="intel-form" class="space-y-4">
+            <input type="hidden" id="intel-lng" name="lng">
+            <input type="hidden" id="intel-lat" name="lat">
+            <input type="hidden" id="intel-route" name="route_id" value="{{ edit_route_id|default:'' }}">
+            
+            <div>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Tipo de Reporte</label>
+                <select id="intel-type" name="intel_type" class="w-full p-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="warning">⚠️ Peligro / Obstáculo</option>
+                    <option value="water_dry">🏜️ Fuente seca</option>
+                    <option value="water_ok">💧 Fuente funcionando</option>
+                    <option value="shelter_ok">⛺ Refugio en buen estado</option>
+                    <option value="shelter_bad">🏚️ Refugio en mal estado</option>
+                    <option value="surface_mud">💩 Camino con mucho barro</option>
+                    <option value="surface_snow">❄️ Nieve bloqueando</option>
+                    <option value="photo_epic" selected>📸 Lugar Épico / Foto</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
+                <textarea id="intel-desc" name="description" rows="2" class="w-full p-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Añade detalles útiles..."></textarea>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Foto (Opcional pero recomendado)</label>
+                <input type="file" id="intel-image" name="image" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900 dark:file:text-indigo-200 cursor-pointer transition">
+            </div>
+            
+            <div class="flex gap-2 pt-2">
+                <button type="button" onclick="closeIntelModal()" class="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-white rounded-xl font-bold transition">Cancelar</button>
+                <button type="submit" id="intel-submit-btn" class="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/30 transition">Añadir Intel</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -209,24 +271,7 @@
 
     function addWaypoint(lngLat) {
         waypoints.push(lngLat);
-        const index = waypoints.length - 1;
-
-        const el = document.createElement('div');
-        el.className = 'marker-label';
-        el.innerHTML = waypoints.length;
-        if (index === 0) el.style.borderColor = 'green';
-
-        const marker = new maplibregl.Marker({ element: el, draggable: true })
-            .setLngLat(lngLat)
-            .addTo(map);
-
-        marker.on('drag', () => {
-            const newPos = marker.getLngLat();
-            waypoints[index] = [newPos.lng, newPos.lat];
-            throttledCalculate();
-        });
-
-        markers.push(marker);
+        refreshMarkers();
         if (waypoints.length >= 2) {
             calculateFullRoute();
         }
@@ -432,20 +477,24 @@
             const isLast = (i === waypoints.length - 1 && waypoints.length > 1);
 
             let anchor = 'center';
+            let offset = [0, 0];
+            
             if (isFirst) {
-                el.classList.add('pin-start');
-                anchor = 'bottom';
+                el.classList.add('flag-start');
+                el.innerHTML = `<svg viewBox="0 0 24 24" fill="#10b981" stroke="#047857" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>`;
+                anchor = 'bottom-left';
+                offset = [-6, 0];
             } else if (isLast) {
                 const dist = Math.abs(waypoints[0][0] - lngLat[0]) + Math.abs(waypoints[0][1] - lngLat[1]);
                 if (dist < 0.0001) {
-                    el.classList.add('pin-start'); // Reusamos estilo pero con icono circular si quieres
+                    el.classList.add('marker-mid');
                     el.innerHTML = '🔄';
-                    el.style.transform = 'none';
-                    el.style.borderRadius = '50%';
                     anchor = 'center';
                 } else {
-                    el.classList.add('pin-end');
-                    anchor = 'bottom';
+                    el.classList.add('flag-end');
+                    el.innerHTML = `<svg viewBox="0 0 24 24" fill="#ef4444" stroke="#b91c1c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>`;
+                    anchor = 'bottom-left';
+                    offset = [-6, 0];
                 }
             } else {
                 el.classList.add('marker-mid');
@@ -453,7 +502,7 @@
                 anchor = 'center';
             }
 
-            const marker = new maplibregl.Marker({ element: el, draggable: true, anchor: anchor })
+            const marker = new maplibregl.Marker({ element: el, draggable: true, anchor: anchor, offset: offset })
                 .setLngLat(lngLat)
                 .addTo(map);
 
@@ -555,5 +604,206 @@
         a.download = 'ruta_adventure.gpx';
         a.click();
     });
+
+    // Save Route Logic
+    document.getElementById('save-route-btn').addEventListener('click', () => {
+        document.getElementById('save-form').classList.remove('hidden');
+    });
+
+    document.getElementById('cancel-save').addEventListener('click', () => {
+        document.getElementById('save-form').classList.add('hidden');
+    });
+
+    document.getElementById('submit-save').addEventListener('click', async () => {
+        if (!currentRouteData) return;
+        
+        const name = document.getElementById('route-name').value.trim();
+        if (!name) { alert("Ponle un nombre a tu aventura"); return; }
+        
+        const btn = document.getElementById('submit-save');
+        btn.innerText = "Guardando...";
+        btn.disabled = true;
+
+        const surfaceStats = {};
+        const bar = document.getElementById('surface-bar');
+        if (bar) {
+            currentRouteData.features.forEach(f => {
+                const type = f.properties.highway_type;
+                const len = f.properties.cost;
+                let group = 'other';
+                if (['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'residential', 'living_street', 'service'].includes(type)) group = 'asphalt';
+                else if (['track', 'path', 'bridleway'].includes(type)) group = 'unpaved';
+                else if (type === 'cycleway') group = 'cycleway';
+                
+                surfaceStats[group] = (surfaceStats[group] || 0) + len;
+            });
+        }
+
+        const payload = {
+            name: name,
+            description: document.getElementById('route-desc').value.trim(),
+            is_public: document.getElementById('route-public').checked,
+            profile: document.getElementById('profile').value,
+            waypoints: waypoints,
+            features: currentRouteData.features,
+            distance_meters: currentRouteData.metadata.total_cost,
+            elevation_gain: parseInt(document.getElementById('gain-val').innerText) || 0,
+            elevation_loss: parseInt(document.getElementById('loss-val').innerText) || 0,
+            surface_stats: surfaceStats
+        };
+
+        try {
+            const response = await fetch('/api/adventure/routes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                alert("¡Ruta guardada correctamente!");
+                document.getElementById('save-form').classList.add('hidden');
+            } else {
+                alert("Error: " + (data.error || "No se pudo guardar"));
+            }
+        } catch (e) {
+            alert("Error de conexión");
+        } finally {
+            btn.innerText = "Guardar Aventura";
+            btn.disabled = false;
+        }
+    });
+
+    // Carga de ruta existente para edición
+    const editRouteId = "{{ edit_route_id|default:'' }}";
+    if (editRouteId) {
+        map.on('load', async () => {
+            try {
+                const res = await fetch(`/api/adventure/routes/${editRouteId}`);
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('route-name').value = data.name;
+                    document.getElementById('profile').value = data.profile;
+                    
+                    data.waypoints.forEach(wp => {
+                        waypoints.push(wp);
+                    });
+                    
+                    if (waypoints.length > 0) {
+                        map.setCenter(waypoints[0]);
+                        map.setZoom(13);
+                    }
+                    
+                    refreshMarkers();
+                    if (waypoints.length >= 2) {
+                        await calculateRoute();
+                    }
+                }
+            } catch (err) {
+                console.error("No se pudo cargar la ruta para edición", err);
+            }
+        });
+    }
+
+    // ==========================================
+    // LOGICA DE INTEL DROPS (Reportes Tácticos)
+    // ==========================================
+    const intelModal = document.getElementById('intel-modal');
+    let tempIntelMarker = null;
+
+    function closeIntelModal() {
+        intelModal.classList.add('hidden');
+        if (tempIntelMarker) {
+            tempIntelMarker.remove();
+            tempIntelMarker = null;
+        }
+        document.getElementById('intel-form').reset();
+    }
+
+    map.on('contextmenu', (e) => {
+        // Right click opens Intel Drop Modal
+        const lngLat = e.lngLat;
+        
+        // Colocar marcador temporal
+        if (tempIntelMarker) tempIntelMarker.remove();
+        
+        const el = document.createElement('div');
+        el.className = 'text-3xl filter drop-shadow-md cursor-pointer animate-bounce';
+        el.innerText = '📍';
+        tempIntelMarker = new maplibregl.Marker({ element: el })
+            .setLngLat(lngLat)
+            .addTo(map);
+
+        document.getElementById('intel-lng').value = lngLat.lng;
+        document.getElementById('intel-lat').value = lngLat.lat;
+        intelModal.classList.remove('hidden');
+    });
+
+    // Form submit for Intel
+    function getCSRFToken() {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'csrftoken') return value;
+        }
+        return '';
+    }
+
+    document.getElementById('intel-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('intel-submit-btn');
+        btn.disabled = true;
+        btn.innerText = 'Subiendo...';
+
+        const formData = new FormData(e.target);
+        // Clean empty route_id if not present
+        if (!formData.get('route_id')) formData.delete('route_id');
+
+        try {
+            const res = await fetch('/api/adventure/intel', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: formData
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                // Success! Dejar el marcador fijo (con otro icono)
+                const intelType = formData.get('intel_type');
+                let icon = '📍';
+                if (intelType === 'warning') icon = '⚠️';
+                else if (intelType === 'water_dry') icon = '🏜️';
+                else if (intelType === 'water_ok') icon = '💧';
+                else if (intelType === 'shelter_ok') icon = '⛺';
+                else if (intelType === 'shelter_bad') icon = '🏚️';
+                else if (intelType === 'surface_mud') icon = '💩';
+                else if (intelType === 'surface_snow') icon = '❄️';
+                else if (intelType === 'photo_epic') icon = '📸';
+
+                const fixedEl = document.createElement('div');
+                fixedEl.className = 'text-xl filter drop-shadow hover:scale-125 transition-transform bg-white/80 rounded-full w-8 h-8 flex items-center justify-center border border-gray-300';
+                fixedEl.innerText = icon;
+                
+                new maplibregl.Marker({ element: fixedEl })
+                    .setLngLat([formData.get('lng'), formData.get('lat')])
+                    .addTo(map);
+                
+                tempIntelMarker = null; // para que closeIntelModal no lo borre
+                closeIntelModal();
+                // Opcional: mostrar un mini toast de éxito
+            } else {
+                alert("Error al guardar Intel: " + (data.error || 'Desconocido'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error de red al guardar Intel.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'Añadir Intel';
+        }
+    });
+
 </script>
 {% endblock %}

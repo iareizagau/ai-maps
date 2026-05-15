@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'apps.gailur',
     'apps.zbe',
     'apps.adventure',
+    'apps.solar',
 ]
 
 MIDDLEWARE = [

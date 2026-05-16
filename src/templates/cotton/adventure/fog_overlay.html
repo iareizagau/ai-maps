@@ -1,23 +1,45 @@
 <div id="fog-of-war-container" class="hidden"></div>
 
+<!-- Visor de Inteligencia (Flashback Card) -->
+<div id="intel-visor" class="fixed inset-0 z-[100] flex items-center justify-center p-8 bg-black/40 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-500">
+    <div class="bg-black/80 border border-white/20 p-2 rounded-[2rem] max-w-2xl w-full shadow-[0_0_100px_rgba(0,0,0,0.9)] overflow-hidden">
+        <div class="relative group">
+            <img id="intel-img" src="" class="w-full aspect-video object-cover rounded-[1.5rem]" alt="Intel Drop">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+            <button onclick="closeIntel()" class="absolute top-6 right-6 bg-black/60 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="p-8">
+            <div class="flex items-center gap-3 mb-4">
+                <span id="intel-badge" class="bg-indigo-500 text-[10px] font-black px-3 py-1 rounded-full tracking-[0.2em] uppercase text-white">RECON INTEL</span>
+                <span id="intel-date" class="text-white/40 text-xs font-mono">2026.05.17</span>
+            </div>
+            <h3 id="intel-type" class="text-3xl font-black text-white mb-2 uppercase italic tracking-tighter">LUXURY VIEWPOINT</h3>
+            <p id="intel-desc" class="text-white/60 text-lg leading-relaxed">Analizando datos de la expedición...</p>
+        </div>
+    </div>
+</div>
+
 <script>
-    console.log("Fog of War: Motor de Alta Densidad (Interpolado) activado.");
+    console.log("Fog of War: Sistema de Inteligencia (Recon) cargado.");
 
     async function initFogOfWar(mapInstance) {
         if (!mapInstance) return;
         
         try {
-            console.log("Fog of War: Sincronizando inteligencia...");
+            console.log("Fog of War: Sincronizando datos de inteligencia...");
             
-            let data = { type: "FeatureCollection", features: [] };
-            try {
-                const response = await fetch('/api/adventure/exploration/sectors');
-                if (response.ok) data = await response.json();
-            } catch (e) {
-                console.warn("Fog of War: API no disponible.");
-            }
+            // 1. FETCH MULTIFUENTE
+            const [sectorsRes, intelRes] = await Promise.all([
+                fetch('/api/adventure/exploration/sectors'),
+                fetch('/api/adventure/exploration/intel')
+            ]);
+            
+            const data = await sectorsRes.json();
+            const intel = await intelRes.json();
 
-            // 1. CAPA SATELITAL
+            // 2. CAPA SATELITAL
             if (!mapInstance.getSource('satellite-google')) {
                 mapInstance.addSource('satellite-google', {
                     type: 'raster',
@@ -27,85 +49,76 @@
                 mapInstance.addLayer({ id: 'satellite-layer', type: 'raster', source: 'satellite-google' });
             }
 
-            // 2. PROCESAMIENTO DE ALTA DENSIDAD
-            let revealGeometry;
+            // 3. MÁSCARA ORGÁNICA
             if (data.features.length > 0) {
-                console.log("Fog of War: Generando corredor de luz sólido...");
-                
-                // Extraemos todos los puntos centrales de los sectores
                 const points = data.features.map(f => turf.centroid(f).geometry.coordinates);
-                const multiPoint = turf.multiPoint(points);
+                const revealGeometry = turf.buffer(turf.multiPoint(points), 0.22, {units: 'kilometers'}).geometry;
+                const worldOuter = [[-180, 90], [180, 90], [180, -90], [-180, -90], [-180, 90]];
+                const maskCoordinates = [worldOuter];
                 
-                // Buffer masivo: 200m de radio para asegurar solidez y amplitud
-                revealGeometry = turf.buffer(multiPoint, 0.2, {units: 'kilometers'}).geometry;
-            }
+                if (revealGeometry.type === 'Polygon') maskCoordinates.push(revealGeometry.coordinates[0]);
+                else revealGeometry.coordinates.forEach(poly => maskCoordinates.push(poly[0]));
 
-            // 3. MÁSCARA DE NIEBLA
-            const worldOuter = [[-180, 90], [180, 90], [180, -90], [-180, -90], [-180, 90]];
-            const maskCoordinates = [worldOuter];
-            
-            if (revealGeometry) {
-                if (revealGeometry.type === 'Polygon') {
-                    maskCoordinates.push(revealGeometry.coordinates[0]);
-                } else if (revealGeometry.type === 'MultiPolygon') {
-                    revealGeometry.coordinates.forEach(poly => maskCoordinates.push(poly[0]));
+                if (mapInstance.getSource('fog-mask')) {
+                    mapInstance.getSource('fog-mask').setData({ "type": "Feature", "geometry": { "type": "Polygon", "coordinates": maskCoordinates } });
+                } else {
+                    mapInstance.addSource('fog-mask', { type: 'geojson', data: { "type": "Feature", "geometry": { "type": "Polygon", "coordinates": maskCoordinates } } });
+                    mapInstance.addLayer({ id: 'fog-layer', type: 'fill', source: 'fog-mask', paint: { 'fill-color': '#000000', 'fill-opacity': 0.94 } });
+                    mapInstance.addLayer({ id: 'sector-glow-organic', type: 'line', source: 'fog-mask', paint: { 'line-color': '#4f46e5', 'line-width': 8, 'line-blur': 15, 'line-opacity': 0.4 } });
                 }
             }
 
-            const maskData = { "type": "Feature", "geometry": { "type": "Polygon", "coordinates": maskCoordinates } };
-            
-            if (mapInstance.getSource('fog-mask')) {
-                mapInstance.getSource('fog-mask').setData(maskData);
-            } else {
-                mapInstance.addSource('fog-mask', { type: 'geojson', data: maskData });
-                mapInstance.addLayer({
-                    id: 'fog-layer',
-                    type: 'fill',
-                    source: 'fog-mask',
-                    paint: { 'fill-color': '#000000', 'fill-opacity': 0.94 }
-                });
-            }
-
-            // 4. ESTILO "ESTELA DE MISIÓN"
-            if (revealGeometry) {
-                if (!mapInstance.getSource('reveal-glow-source')) {
-                    mapInstance.addSource('reveal-glow-source', { type: 'geojson', data: revealGeometry });
+            // 4. CAPA DE INTELIGENCIA (INTEL DROPS)
+            if (intel.features.length > 0) {
+                if (!mapInstance.getSource('intel-drops')) {
+                    mapInstance.addSource('intel-drops', { type: 'geojson', data: intel });
+                    
+                    // Marcador Táctico (Diamante de Luz)
                     mapInstance.addLayer({
-                        id: 'sector-glow-organic',
-                        type: 'line',
-                        source: 'reveal-glow-source',
+                        id: 'intel-layer',
+                        type: 'circle',
+                        source: 'intel-drops',
                         paint: {
-                            'line-color': '#6366f1',
-                            'line-width': 12,
-                            'line-blur': 20,
-                            'line-opacity': 0.5
+                            'circle-radius': 8,
+                            'circle-color': [
+                                'match', ['get', 'type'],
+                                'danger', '#ef4444',
+                                'water_source', '#3b82f6',
+                                'photo_epic', '#f59e0b',
+                                '#10b981'
+                            ],
+                            'circle-stroke-width': 3,
+                            'circle-stroke-color': '#fff',
+                            'circle-blur': 0.2
                         }
                     });
-                } else {
-                    mapInstance.getSource('reveal-glow-source').setData(revealGeometry);
-                }
 
-                // Balizas simplificadas (solo una por zona densa para no saturar)
-                const beaconData = turf.simplify(data, {tolerance: 0.01, highPrecision: false});
-                if (!mapInstance.getSource('sector-beacons-source')) {
-                    mapInstance.addSource('sector-beacons-source', { type: 'geojson', data: beaconData });
+                    // Aura de Pulso para Intel
                     mapInstance.addLayer({
-                        id: 'sector-beacons', type: 'circle', source: 'sector-beacons-source',
-                        maxzoom: 10,
+                        id: 'intel-pulse',
+                        type: 'circle',
+                        source: 'intel-drops',
                         paint: {
-                            'circle-radius': 6,
-                            'circle-color': '#818cf8',
-                            'circle-opacity': 0.7,
-                            'circle-blur': 0.6
+                            'circle-radius': 15,
+                            'circle-color': 'transparent',
+                            'circle-stroke-width': 1,
+                            'circle-stroke-color': '#fff',
+                            'circle-stroke-opacity': 0.3
                         }
                     });
-                } else {
-                    mapInstance.getSource('sector-beacons-source').setData(beaconData);
-                }
 
-                // 5. AUTO-FOCUS
-                const bounds = turf.bbox(data);
-                mapInstance.fitBounds(bounds, { padding: 150, maxZoom: 12, duration: 2500 });
+                    // Evento de Click
+                    mapInstance.on('click', 'intel-layer', (e) => {
+                        const props = e.features[0].properties;
+                        const coords = e.features[0].geometry.coordinates;
+                        showIntel(props, coords);
+                    });
+
+                    mapInstance.on('mouseenter', 'intel-layer', () => mapInstance.getCanvas().style.cursor = 'pointer');
+                    mapInstance.on('mouseleave', 'intel-layer', () => mapInstance.getCanvas().style.cursor = '');
+                } else {
+                    mapInstance.getSource('intel-drops').setData(intel);
+                }
             }
 
             return data.features.length;
@@ -114,5 +127,38 @@
             console.error("Fog of War Error:", err);
             return 0;
         }
+    }
+
+    function showIntel(props, coordinates) {
+        // Vuelo Cinematográfico al punto de Inteligencia
+        mapInstance.flyTo({
+            center: coordinates,
+            zoom: 15,
+            pitch: 65,
+            bearing: Math.random() * 40 - 20, // Rotación aleatoria para dinamismo
+            duration: 2000,
+            essential: true
+        });
+
+        const visor = document.getElementById('intel-visor');
+        document.getElementById('intel-img').src = props.image_url || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1000';
+        document.getElementById('intel-type').innerText = props.type_display;
+        document.getElementById('intel-desc').innerText = props.description || "Sin descripción de campo.";
+        document.getElementById('intel-date').innerText = new Date(props.created_at).toLocaleDateString();
+        
+        visor.classList.remove('opacity-0', 'pointer-events-none');
+        visor.classList.add('opacity-100', 'pointer-events-auto');
+    }
+
+    function closeIntel() {
+        const visor = document.getElementById('intel-visor');
+        visor.classList.add('opacity-0', 'pointer-events-none');
+        visor.classList.remove('opacity-100', 'pointer-events-auto');
+        
+        // Volver a vista táctica general
+        mapInstance.easeTo({
+            pitch: 45,
+            duration: 1000
+        });
     }
 </script>

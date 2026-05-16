@@ -316,6 +316,33 @@ def get_user_exploration(request):
         "features": features
     }
 
+@router.get("/exploration/intel")
+def get_user_intel(request):
+    """Retorna todos los Intel Drops del usuario para el Mando de Operaciones"""
+    if not request.user.is_authenticated:
+        return {"error": "No autenticado"}
+    
+    drops = IntelDrop.objects.filter(user=request.user)
+    features = []
+    for d in drops:
+        features.append({
+            "type": "Feature",
+            "geometry": json.loads(d.location.geojson),
+            "properties": {
+                "id": d.id,
+                "type": d.intel_type,
+                "type_display": d.get_intel_type_display(),
+                "description": d.description,
+                "image_url": d.image.url if d.image else None,
+                "created_at": d.created_at.isoformat()
+            }
+        })
+    
+    return {
+        "type": "FeatureCollection",
+        "features": features
+    }
+
 
 @router.get("/routes/{route_id}")
 def get_route_by_id(request, route_id: int):

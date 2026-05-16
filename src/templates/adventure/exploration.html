@@ -63,7 +63,7 @@
                 <div class="w-px h-20 bg-white/10"></div>
                 <div class="text-center">
                     <p class="text-xs uppercase font-black text-indigo-300/40 mb-2 tracking-[0.4em]">Grado Recon</p>
-                    <p class="text-6xl font-black text-amber-500 tracking-tighter">ELITE</p>
+                    <p id="stat-rank" class="text-6xl font-black text-amber-500 tracking-tighter">RECON</p>
                 </div>
                 <div class="w-px h-20 bg-white/10"></div>
                 <div class="text-center">
@@ -133,7 +133,28 @@
 
         map.on('load', () => {
             initFogOfWar(map).then((count) => {
-                document.getElementById('stat-sectors').innerText = count || 0;
+                const statElem = document.getElementById('stat-sectors');
+                const rankElem = document.getElementById('stat-rank');
+                
+                statElem.innerText = count || 0;
+                
+                // Lógica de Rangos Tácticos
+                let rank = "SCOUT";
+                let color = "text-blue-400";
+                
+                if (count >= 10000) {
+                    rank = "PATHFINDER";
+                    color = "text-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.4)]";
+                } else if (count >= 5000) {
+                    rank = "ELITE";
+                    color = "text-emerald-500";
+                } else if (count >= 1000) {
+                    rank = "RECON";
+                    color = "text-amber-500";
+                }
+                
+                rankElem.innerText = rank;
+                rankElem.className = `text-6xl font-black tracking-tighter ${color}`;
             });
         });
 

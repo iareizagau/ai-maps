@@ -34,3 +34,4 @@ django-anymail[brevo]
 
 # Debugging
 debugpy
+gpxpy

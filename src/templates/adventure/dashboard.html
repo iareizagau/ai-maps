@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto p-4 md:p-8">
+    <!-- HERO: Dedicated Exploration View CTA -->
+    <div class="relative w-full h-[400px] rounded-[2rem] overflow-hidden border border-indigo-500/30 shadow-2xl mb-12 bg-slate-950 group">
+        <!-- Background Ambient Map (Blurred) -->
+        <div class="absolute inset-0 opacity-40 bg-[url('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/4/6/10')] bg-cover bg-center grayscale blur-sm"></div>
+        
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent"></div>
+
+        <div class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
+            <div class="mb-6">
+                <span class="inline-block px-4 py-1 rounded-full bg-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-[0.5em] border border-indigo-500/30 mb-4 animate-pulse">
+                    Sistema de Reconocimiento Activo
+                </span>
+                <h1 class="text-6xl font-black text-white tracking-tighter drop-shadow-2xl">MANDO DE OPERACIONES</h1>
+                <p class="text-gray-400 max-w-md mx-auto mt-4 text-sm font-medium">
+                    Visualiza tu dominio global, analiza sectores conquistados y descubre zonas inexploradas en la consola táctica de alta precisión.
+                </p>
+            </div>
+
+            <a href="{% url 'exploration_view' %}" class="relative group overflow-hidden bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-5 rounded-2xl font-black transition-all shadow-[0_0_40px_rgba(79,70,229,0.4)] hover:shadow-[0_0_60px_rgba(79,70,229,0.6)] flex items-center gap-4">
+                <span class="text-lg">ENTRAR AL CENTRO DE MANDO</span>
+                <svg class="w-6 h-6 animate-bounce-x" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+            </a>
+        </div>
+    </div>
+
+    <div class="flex justify-between items-end mb-8">
+        <div>
+            <h2 class="text-3xl font-black dark:text-white tracking-tight">Mis Expediciones</h2>
+            <p class="text-gray-500 text-sm">Registro cronológico de tus aventuras</p>
+        </div>
+        <div class="flex flex-wrap gap-2 justify-end">
+            <button onclick="document.getElementById('gpx-upload-modal').classList.remove('hidden')" class="bg-indigo-600 text-white px-4 py-2 rounded font-bold hover:bg-indigo-700 transition flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                Subir GPX
+            </button>
+            <a href="{% url 'photo_route_view' %}" class="bg-purple-600 text-white px-4 py-2 rounded font-bold hover:bg-purple-700 transition flex items-center gap-2">
+                📸 Fotos
+            </a>
+            <a href="{% url 'scout_view' %}" class="bg-amber-500 text-white px-4 py-2 rounded font-bold hover:bg-amber-600 transition flex items-center gap-2">
+                <span class="animate-pulse">🔴</span> Scout
+            </a>
+            <a href="{% url 'explore_view' %}" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition">Explorar</a>
+            <a href="{% url 'map_view' %}" class="bg-emerald-600 text-white px-4 py-2 rounded font-bold hover:bg-emerald-700 transition">Nueva Ruta</a>
+        </div>
+    </div>
+
+    {% if not routes %}
+    <div class="text-center py-16 bg-gray-50 dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 mb-8">
+        <div class="text-4xl mb-4">🗺️</div>
+        <h3 class="text-xl font-bold dark:text-white mb-2">Aún no tienes rutas guardadas</h3>
+        <p class="text-gray-500 mb-4">Empieza a trazar tu primera aventura y guárdala para verla aquí.</p>
+        <a href="{% url 'map_view' %}" class="bg-emerald-600 text-white px-6 py-2 rounded font-bold hover:bg-emerald-700 transition">Crear mi primera ruta</a>
+    </div>
+    {% else %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {% for route in routes %}
+        <c-adventure.expedition_card :route="route" />
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Fog of War Overlay Component -->
+    <c-adventure.fog_overlay />
+</div>
+
+<!-- Modal Upload GPX -->
+<div id="gpx-upload-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold dark:text-white">Subir ruta GPX</h3>
+            <button onclick="document.getElementById('gpx-upload-modal').classList.add('hidden')" class="text-gray-500 hover:text-gray-800 dark:hover:text-white">&times;</button>
+        </div>
+        
+        <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center transition-colors duration-200" id="drop-zone">
+            <div class="text-4xl mb-2">📥</div>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">Arrastra aquí tu archivo .gpx o haz clic para seleccionar</p>
+            <input type="file" id="gpx-file" accept=".gpx" class="hidden" onchange="handleFileSelect(event)">
+            <button onclick="document.getElementById('gpx-file').click()" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition">Seleccionar Archivo</button>
+        </div>
+        
+        <div id="upload-status" class="hidden mt-4 p-3 rounded font-bold text-center"></div>
+    </div>
+</div>
+
+<!-- Modal Delete Route -->
+<div id="delete-route-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+    <div class="bg-white dark:bg-gray-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl transform scale-95 transition-transform duration-300" id="delete-route-card">
+        <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center text-3xl mx-auto mb-4">
+            ⚠️
+        </div>
+        <h3 class="text-xl font-black text-center dark:text-white mb-2">¿Eliminar ruta?</h3>
+        <p class="text-gray-500 text-center mb-6 text-sm">Esta acción no se puede deshacer. Vas a eliminar <span id="delete-route-name" class="font-bold text-gray-800 dark:text-gray-200"></span>.</p>
+        
+        <div class="flex gap-3">
+            <button onclick="closeDeleteModal()" class="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-xl font-bold transition">Cancelar</button>
+            <button id="btn-confirm-delete" class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg transition">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Inicialización del Mapa de Mando
+    const map = new maplibregl.Map({
+        container: 'discovery-map',
+        style: {
+            version: 8,
+            sources: {
+                'satellite': {
+                    type: 'raster',
+                    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+                    tileSize: 256,
+                    attribution: 'Esri'
+                }
+            },
+            layers: [{
+                id: 'satellite',
+                type: 'raster',
+                source: 'satellite'
+            }]
+        },
+        center: [-3.70379, 40.41678],
+        zoom: 2,
+        pitch: 30,
+        attributionControl: false
+    });
+
+    map.on('load', () => {
+        initFogOfWar(map);
+    });
+
+    const dropZone = document.getElementById('drop-zone');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight(e) {
+        dropZone.classList.add('border-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-900/20');
+    }
+
+    function unhighlight(e) {
+        dropZone.classList.remove('border-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-900/20');
+    }
+
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        let dt = e.dataTransfer;
+        let files = dt.files;
+        handleFiles(files);
+    }
+
+    function handleFileSelect(e) {
+        let files = e.target.files;
+        handleFiles(files);
+    }
+
+    function handleFiles(files) {
+        if (files.length > 0) {
+            const file = files[0];
+            if (!file.name.toLowerCase().endsWith('.gpx')) {
+                showStatus('Por favor, sube un archivo .gpx válido', false);
+                return;
+            }
+            uploadFile(file);
+        }
+    }
+
+    function showStatus(message, isSuccess, isPending = false) {
+        const statusDiv = document.getElementById('upload-status');
+        statusDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700', 'bg-blue-100', 'text-blue-700');
+        
+        if (isPending) {
+            statusDiv.classList.add('bg-blue-100', 'text-blue-700');
+        } else if (isSuccess) {
+            statusDiv.classList.add('bg-green-100', 'text-green-700');
+        } else {
+            statusDiv.classList.add('bg-red-100', 'text-red-700');
+        }
+        
+        statusDiv.textContent = message;
+    }
+
+    function uploadFile(file) {
+        showStatus('Procesando archivo... La inteligencia está leyendo la ruta 🧠', false, true);
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const csrfToken = getCookie('csrftoken');
+
+        fetch('/api/adventure/routes/gpx', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showStatus(`¡Éxito! Ruta guardada (${data.distance_km} km). Redirigiendo...`, true);
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showStatus(data.error || 'Error desconocido al subir', false);
+            }
+        })
+        .catch(error => {
+            showStatus('Error de conexión', false);
+            console.error(error);
+        });
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Delete Logic
+    let routeToDeleteId = null;
+
+    window.confirmDeleteRoute = function(id, name) {
+        routeToDeleteId = id;
+        document.getElementById('delete-route-name').innerText = name;
+        
+        const modal = document.getElementById('delete-route-modal');
+        const card = document.getElementById('delete-route-card');
+        
+        modal.classList.remove('hidden');
+        // Trigger reflow
+        void modal.offsetWidth;
+        modal.classList.remove('opacity-0');
+        card.classList.remove('scale-95');
+    }
+
+    window.closeDeleteModal = function() {
+        const modal = document.getElementById('delete-route-modal');
+        const card = document.getElementById('delete-route-card');
+        
+        modal.classList.add('opacity-0');
+        card.classList.add('scale-95');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            routeToDeleteId = null;
+        }, 300);
+    }
+
+    document.getElementById('btn-confirm-delete').addEventListener('click', function() {
+        if (!routeToDeleteId) return;
+        
+        const btn = this;
+        btn.innerText = 'Eliminando...';
+        btn.disabled = true;
+
+        fetch(`/api/adventure/routes/${routeToDeleteId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                window.location.reload();
+            } else {
+                alert(data.error || 'Error al eliminar');
+                closeDeleteModal();
+                btn.innerText = 'Eliminar';
+                btn.disabled = false;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error de red');
+            closeDeleteModal();
+            btn.innerText = 'Eliminar';
+            btn.disabled = false;
+        });
+    });
+</script>
+{% endblock %}

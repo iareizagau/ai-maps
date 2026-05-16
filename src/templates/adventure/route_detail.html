@@ -36,6 +36,11 @@
                 <span class="flex items-center gap-1">👤 {{ route.user.username }}</span>
                 <span class="flex items-center gap-1">📅 {{ route.created_at|date:"d M, Y" }}</span>
             </div>
+
+            <!-- Follow Route Button -->
+            <a href="{% url 'follow_route' route.id %}" class="mt-4 w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm uppercase tracking-widest py-3 rounded-xl shadow-lg shadow-emerald-900/50 transition-all transform hover:-translate-y-0.5">
+                <span class="animate-pulse">🔴</span> Tactical HUD
+            </a>
         </div>
     </div>
 
@@ -126,21 +131,10 @@
         ⏳ Cargando Mapa...
     </button>
 
+    <!-- Flight Control Deck (Scrubber) -->
+    <c-adventure.flight_deck />
     <!-- Cinematic Overlay -->
-    <div id="cinematic-overlay" class="hidden absolute inset-0 z-50 bg-black bg-opacity-60 backdrop-blur-md flex-col items-center justify-center p-4 transition-opacity duration-500 opacity-0">
-        <div class="bg-white bg-opacity-10 dark:bg-black dark:bg-opacity-40 border border-white border-opacity-20 p-8 rounded-3xl max-w-lg w-full shadow-2xl backdrop-blur-xl transform transition-transform scale-95" id="cinematic-card">
-            <div class="flex items-center gap-4 mb-6">
-                <div id="cinematic-icon" class="text-4xl bg-white bg-opacity-20 p-4 rounded-full shadow-inner">📸</div>
-                <div>
-                    <h3 id="cinematic-title" class="text-2xl font-black text-white drop-shadow-md tracking-tight">Lugar Épico</h3>
-                    <p id="cinematic-author" class="text-sm text-gray-300 font-bold mt-1">por usuario</p>
-                </div>
-            </div>
-            <img id="cinematic-image" src="" alt="Intel" class="w-full h-56 object-cover rounded-2xl mb-6 hidden shadow-2xl border border-white border-opacity-10">
-            <p id="cinematic-desc" class="text-white text-opacity-90 text-lg font-medium mb-8 drop-shadow-md leading-relaxed">...</p>
-            <button id="cinematic-continue" class="w-full py-4 bg-white hover:bg-gray-100 text-black font-black rounded-2xl uppercase tracking-widest transition-all hover:scale-105 shadow-xl">Continuar Vuelo ✈️</button>
-        </div>
-    </div>
+    <c-adventure.cinematic_overlay />
 </div>
 
 <style>
@@ -363,31 +357,88 @@
 
     document.getElementById('cinematic-continue').addEventListener('click', () => {
         hideCinematicOverlay();
-        if (isPaused) {
-            isPaused = false;
-            // Resume flyover
+        // Since we stopped for cinematic, resume automatically
+        isPaused = false;
+        const fcPlayPause = document.getElementById('fc-play-pause');
+        if (fcPlayPause) fcPlayPause.innerText = '⏸️';
+        animationStep();
+    });
+
+    let flySpeed = 2; // Default step
+    let speedMultiplier = 1;
+
+    // Flight Deck Elements
+    const flightDeck = document.getElementById('flight-control-deck');
+    const fcPlayPause = document.getElementById('fc-play-pause');
+    const fcScrubber = document.getElementById('fc-scrubber');
+    const fcProgressText = document.getElementById('fc-progress-text');
+    const fcSpeed = document.getElementById('fc-speed');
+    const fcStop = document.getElementById('fc-stop');
+
+    fcPlayPause.addEventListener('click', () => {
+        isPaused = !isPaused;
+        fcPlayPause.innerText = isPaused ? '▶️' : '⏸️';
+        if (!isPaused) {
             animationStep();
         }
+    });
+
+    fcStop.addEventListener('click', () => {
+        isPaused = true;
+        flightDeck.classList.add('hidden');
+        document.getElementById('btn-flyover').style.display = 'flex';
+        // Reiniciamos cámara si lo deseamos, pero dejarla donde está permite seguir viendo.
+    });
+
+    fcScrubber.addEventListener('input', (e) => {
+        let percent = parseInt(e.target.value);
+        flyoverIndex = Math.floor((percent / 100) * (flyoverCoords.length - 1));
+        fcProgressText.innerText = percent + '%';
+        const currentPos = flyoverCoords[flyoverIndex];
+        if (currentPos) {
+            map.jumpTo({
+                center: currentPos,
+                zoom: 16,
+                pitch: 60,
+                bearing: (flyoverIndex * 0.5) % 360
+            });
+        }
+        // Reseteamos POIs si el usuario retrocede
+        intelDrops.forEach(i => i.shown = false);
+    });
+
+    fcSpeed.addEventListener('click', () => {
+        if (speedMultiplier === 1) speedMultiplier = 2;
+        else if (speedMultiplier === 2) speedMultiplier = 4;
+        else if (speedMultiplier === 4) speedMultiplier = 8;
+        else speedMultiplier = 1;
+        fcSpeed.innerText = speedMultiplier + 'x';
     });
 
     const animationStep = () => {
         if (isPaused) return;
         if (flyoverIndex >= flyoverCoords.length) {
-            document.getElementById('btn-flyover').style.display = 'flex'; // show button again
+            document.getElementById('btn-flyover').style.display = 'flex'; 
+            flightDeck.classList.add('hidden');
             intelDrops.forEach(i => i.shown = false); // reset
             return; 
         }
 
         const currentPos = flyoverCoords[flyoverIndex];
 
-        // Check if near any unshown Intel Drop
+        // Actualizamos UI
+        let percent = Math.floor((flyoverIndex / flyoverCoords.length) * 100);
+        fcScrubber.value = percent;
+        fcProgressText.innerText = percent + '%';
+
+        // Check Intel Drops
         let hitIntel = intelDrops.find(i => !i.shown && Math.hypot(i.lng - currentPos[0], i.lat - currentPos[1]) < 0.00045);
         
         if (hitIntel) {
             hitIntel.shown = true;
             isPaused = true;
+            fcPlayPause.innerText = '▶️';
             
-            // Adjust camera slightly to look at the point better
             map.easeTo({
                 center: [hitIntel.lng, hitIntel.lat],
                 zoom: 16.5,
@@ -398,9 +449,12 @@
             setTimeout(() => {
                 showCinematicOverlay(hitIntel);
             }, 1000);
-            return; // stop RAF loop until unpaused
+            return; 
         }
 
+        // Auto-Pacing (Smart Speed)
+        let currentStep = flySpeed * speedMultiplier;
+        
         map.easeTo({
             center: currentPos,
             zoom: 16,
@@ -410,18 +464,23 @@
             easing: t => t
         });
 
-        flyoverIndex += 2; // skip coords
+        flyoverIndex += currentStep;
         flyoverRaf = requestAnimationFrame(animationStep);
     };
 
-    // Flyover Initialization
+    // Initialization
     document.getElementById('btn-flyover').addEventListener('click', (e) => {
-        e.target.style.display = 'none'; // hide button while flying
+        e.target.style.display = 'none'; 
         flyoverCoords = routeGeoJSON.coordinates.flat(1);
         if (flyoverCoords.length === 0) return;
         
         flyoverIndex = 0;
         isPaused = false;
+        speedMultiplier = 1;
+        fcSpeed.innerText = '1x';
+        fcPlayPause.innerText = '⏸️';
+        fcScrubber.value = 0;
+        flightDeck.classList.remove('hidden');
         
         animationStep();
     });

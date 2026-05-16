@@ -22,10 +22,8 @@
     {% else %}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for route in routes %}
-        <div class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col hover:shadow-md transition">
-            
-            <!-- User Header -->
-            <div class="p-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-700">
+        <c-adventure.expedition_card :route="route">
+            <div class="p-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 z-10 relative">
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
                         {{ route.user.username|make_list|first|upper }}
@@ -44,37 +42,12 @@
                     {% endif %}
                 {% endif %}
             </div>
-
-            <!-- Mini-map placeholder / Thumbnail -->
-            <div class="h-32 bg-gray-200 dark:bg-gray-900 relative overflow-hidden flex items-center justify-center">
-                <div class="text-5xl opacity-80">{{ route.profile|yesno:"🚲,🥾"|default:"🏕️" }}</div>
-            </div>
-            
-            <div class="p-5 flex-1 flex flex-col">
-                <h3 class="font-bold text-lg dark:text-white mb-1">{{ route.name }}</h3>
-                <p class="text-xs text-gray-500 mb-4 line-clamp-2 flex-1">{{ route.description|default:"Sin descripción" }}</p>
-                
-                <div class="grid grid-cols-3 gap-2 mb-4 border-y border-gray-100 dark:border-gray-700 py-3">
-                    <div class="text-center">
-                        <div class="text-[10px] uppercase font-bold text-gray-400">Distancia</div>
-                        <div class="font-black dark:text-white">{{ route.distance_km|floatformat:1 }} km</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-[10px] uppercase font-bold text-gray-400">Desnivel+</div>
-                        <div class="font-black text-emerald-600">+{{ route.elevation_gain|floatformat:0 }}m</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-[10px] uppercase font-bold text-gray-400">Desnivel-</div>
-                        <div class="font-black text-red-500">-{{ route.elevation_loss|floatformat:0 }}m</div>
-                    </div>
-                </div>
-
-                <a href="{% url 'route_detail' route.id %}" class="w-full text-center bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-sm font-bold py-2 rounded transition dark:text-white block mt-auto">Ver Detalle</a>
-            </div>
-        </div>
+        </c-adventure.expedition_card>
         {% endfor %}
     </div>
     {% endif %}
+    <!-- Fog of War Overlay Component -->
+    <c-adventure.fog_overlay />
 </div>
 {% endblock %}
 

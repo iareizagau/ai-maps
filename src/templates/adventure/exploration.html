@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mando de Operaciones - Maps.eus</title>
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000; }
+        #discovery-map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        .hud-layer { pointer-events: none; }
+        .hud-layer * { pointer-events: auto; }
+        .mode-toggle-active { @apply bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.6)]; }
+    </style>
+</head>
+<body class="bg-black text-white overflow-hidden">
+
+    <!-- El Mapa Full Screen -->
+    <div id="discovery-map"></div>
+    
+    <!-- Capa de Contraste Cinematográfica (Vignette) -->
+    <div id="vignette" class="absolute inset-0 pointer-events-none shadow-[inset_0_0_200px_rgba(0,0,0,0.95)] z-10 transition-opacity duration-700"></div>
+    
+    <!-- UI de Control (HUD) -->
+    <div class="absolute inset-0 z-20 hud-layer flex flex-col justify-between p-12">
+        <!-- Top HUD -->
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-7xl font-black text-white drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] tracking-tighter mb-2">MANDO DE OPERACIONES</h1>
+                <div class="flex items-center gap-4">
+                    <span class="flex h-3 w-3 relative">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+                    </span>
+                    <p class="text-indigo-400 font-black text-xl uppercase tracking-[0.6em] drop-shadow-lg" id="status-text">Exploración Global Activa</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-4">
+                <!-- Modo Toggle -->
+                <div class="bg-black/60 backdrop-blur-xl border border-white/10 p-1 rounded-2xl flex gap-1 shadow-2xl">
+                    <button id="btn-mode-explore" onclick="setMapMode('explore')" class="px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all bg-indigo-600 text-white">Táctico</button>
+                    <button id="btn-mode-sat" onclick="setMapMode('sat')" class="px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">Satélite</button>
+                </div>
+
+                <a href="/adventure/mis-rutas/" class="bg-white/10 backdrop-blur-xl border border-white/20 text-white px-8 py-4 rounded-2xl font-black hover:bg-white/20 transition-all flex items-center gap-3 shadow-2xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    ABORTAR
+                </a>
+            </div>
+        </div>
+
+        <!-- Bottom HUD: Telemetría -->
+        <div class="flex justify-center">
+            <div class="bg-black/80 backdrop-blur-3xl border border-white/10 p-10 rounded-[3.5rem] flex gap-16 shadow-[0_0_100px_rgba(0,0,0,0.8)] items-center">
+                <div class="text-center">
+                    <p class="text-xs uppercase font-black text-indigo-300/40 mb-2 tracking-[0.4em]">Sectores Conquistados</p>
+                    <p class="text-6xl font-black text-white tabular-nums tracking-tighter" id="stat-sectors">---</p>
+                </div>
+                <div class="w-px h-20 bg-white/10"></div>
+                <div class="text-center">
+                    <p class="text-xs uppercase font-black text-indigo-300/40 mb-2 tracking-[0.4em]">Grado Recon</p>
+                    <p class="text-6xl font-black text-amber-500 tracking-tighter">ELITE</p>
+                </div>
+                <div class="w-px h-20 bg-white/10"></div>
+                <div class="text-center">
+                    <p class="text-xs uppercase font-black text-indigo-300/40 mb-2 tracking-[0.4em]">Filtro de Datos</p>
+                    <p class="text-6xl font-black text-emerald-500 tracking-tighter uppercase">Alpha</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include "cotton/adventure/fog_overlay.html" %}
+
+    <script>
+        console.log("Sistema de Mando: Inicializando...");
+
+        const map = new maplibregl.Map({
+            container: 'discovery-map',
+            style: {
+                version: 8,
+                sources: {
+                    'satellite': {
+                        type: 'raster',
+                        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+                        tileSize: 256,
+                        attribution: 'Esri'
+                    }
+                },
+                layers: [{
+                    id: 'satellite',
+                    type: 'raster',
+                    source: 'satellite'
+                }]
+            },
+            center: [-3.70379, 40.41678],
+            zoom: 2,
+            pitch: 45,
+            attributionControl: false
+        });
+
+        function setMapMode(mode) {
+            const isExplore = mode === 'explore';
+            const layersToToggle = [
+                'fog-layer', 
+                'sector-glow-organic', 
+                'sector-beacons'
+            ];
+            
+            // UI Update
+            document.getElementById('btn-mode-explore').className = isExplore 
+                ? 'px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all bg-indigo-600 text-white'
+                : 'px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white';
+            
+            document.getElementById('btn-mode-sat').className = !isExplore 
+                ? 'px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all bg-indigo-600 text-white'
+                : 'px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white';
+
+            document.getElementById('status-text').innerText = isExplore ? 'Exploración Global Activa' : 'Reconocimiento Satelital';
+            document.getElementById('vignette').style.opacity = isExplore ? '1' : '0';
+
+            // Map Update
+            layersToToggle.forEach(layerId => {
+                if (map.getLayer(layerId)) {
+                    map.setLayoutProperty(layerId, 'visibility', isExplore ? 'visible' : 'none');
+                }
+            });
+        }
+
+        map.on('load', () => {
+            initFogOfWar(map).then((count) => {
+                document.getElementById('stat-sectors').innerText = count || 0;
+            });
+        });
+
+        map.on('zoom', () => {
+            console.log("Nivel de Zoom:", map.getZoom().toFixed(2));
+        });
+    </script>
+</body>
+</html>

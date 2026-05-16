@@ -1,0 +1,26 @@
+<div id="flight-control-deck" class="hidden absolute bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-[90%] max-w-2xl bg-white bg-opacity-90 dark:bg-black dark:bg-opacity-80 backdrop-blur-xl border border-white border-opacity-40 dark:border-white dark:border-opacity-10 p-4 rounded-3xl shadow-2xl flex items-center gap-4 transition-all duration-300">
+    <!-- Play / Pause -->
+    <button id="fc-play-pause" class="w-12 h-12 flex-shrink-0 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full flex items-center justify-center text-xl shadow-lg transition">
+        ⏸️
+    </button>
+    
+    <!-- Scrubber -->
+    <div class="flex-1 flex flex-col relative group">
+        <div class="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 px-1">
+            <span>Inicio</span>
+            <span id="fc-progress-text">0%</span>
+            <span>Fin</span>
+        </div>
+        <input type="range" id="fc-scrubber" min="0" max="100" value="0" class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+    </div>
+
+    <!-- Speed Toggle -->
+    <button id="fc-speed" class="px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-white rounded-xl text-xs font-black shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+        1x
+    </button>
+    
+    <!-- Stop / Exit -->
+    <button id="fc-stop" class="w-10 h-10 flex-shrink-0 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-full flex items-center justify-center text-lg shadow-sm transition" title="Salir del Vuelo">
+        ⏹️
+    </button>
+</div>

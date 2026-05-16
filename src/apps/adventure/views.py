@@ -76,3 +76,44 @@ def route_detail_view(request, route_id):
         "poi_counts": poi_counts
     }
     return render(request, "adventure/route_detail.html", context)
+
+@login_required
+def scout_view(request):
+    context = {
+        "title": "Scouting Mode",
+        "app_slug": "adventure",
+    }
+    return render(request, "adventure/scout.html", context)
+
+
+@login_required
+def follow_view(request, route_id):
+    route = get_object_or_404(Route, id=route_id)
+    context = {
+        "title": f"Siguiendo: {route.name}",
+        "app_slug": "adventure",
+        "route": route,
+        "route_geojson": route.geom.geojson,
+    }
+    return render(request, "adventure/follow.html", context)
+
+
+@login_required
+def photo_route_view(request):
+    context = {
+        "title": "Ruta Forense EXIF",
+        "app_slug": "adventure",
+    }
+    return render(request, "adventure/photo_route.html", context)
+
+
+@login_required
+def exploration_view(request):
+    """
+    Vista inmersiva a pantalla completa del Mando de Operaciones (Fog of War).
+    """
+    context = {
+        "title": "Mando de Operaciones - Exploración Global",
+        "app_slug": "adventure",
+    }
+    return render(request, "adventure/exploration.html", context)

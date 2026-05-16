@@ -58,6 +58,9 @@ class Route(models.Model):
     waypoints = models.JSONField(help_text="Array de coordenadas [lng, lat] para permitir edición posterior")
     geom = models.MultiLineStringField(srid=4326, help_text="La línea trazada por PgRouting")
     
+    location_city = models.CharField(max_length=100, blank=True, null=True)
+    location_province = models.CharField(max_length=100, blank=True, null=True)
+    
     # Metadatos cacheados (para no recalcular en el dashboard)
     distance_meters = models.FloatField()
     elevation_gain = models.FloatField()
@@ -79,6 +82,66 @@ class Route(models.Model):
     @property
     def distance_km(self):
         return self.distance_meters / 1000.0
+
+    @property
+    def svg_path(self):
+        """Generates an SVG path normalized to a 0-100 viewBox"""
+        if not self.waypoints or len(self.waypoints) < 2:
+            return ""
+        
+        lngs = [p[0] for p in self.waypoints]
+        lats = [p[1] for p in self.waypoints]
+        
+        min_lng, max_lng = min(lngs), max(lngs)
+        min_lat, max_lat = min(lats), max(lats)
+        
+        lng_diff = max_lng - min_lng
+        lat_diff = max_lat - min_lat
+        
+        if lng_diff == 0: lng_diff = 0.0001
+        if lat_diff == 0: lat_diff = 0.0001
+        
+        # Scale to 0-100 keeping aspect ratio within a 100x100 box
+        scale = 90 / max(lng_diff, lat_diff) 
+        
+        x_offset = (100 - (lng_diff * scale)) / 2
+        y_offset = (100 - (lat_diff * scale)) / 2
+        
+        path = []
+        for i, p in enumerate(self.waypoints):
+            x = x_offset + (p[0] - min_lng) * scale
+            y = 100 - (y_offset + (p[1] - min_lat) * scale) # Invert Y
+            prefix = "M" if i == 0 else "L"
+            path.append(f"{prefix} {x:.1f} {y:.1f}")
+            
+        return " ".join(path)
+
+    @property
+    def difficulty_badge(self):
+        dist = self.distance_km
+        elev = self.elevation_gain
+        if dist > 80 or elev > 2000:
+            return "💀 Épica"
+        elif dist > 40 or elev > 1000:
+            return "🔥 Desafiante"
+        elif dist > 20 or elev > 500:
+            return "⚡ Activa"
+        else:
+            return "🍃 Paseo"
+            
+    @property
+    def surface_percentages(self):
+        """Devuelve asfalto vs tierra simplificado"""
+        stats = self.surface_stats or {}
+        asphalt_keys = ['asphalt', 'paved', 'concrete']
+        asphalt_pct = sum([v for k, v in stats.items() if any(ak in k.lower() for ak in asphalt_keys)])
+        dirt_pct = 100 - asphalt_pct
+        if dirt_pct < 0: dirt_pct = 0
+        
+        return {
+            "asphalt": round(asphalt_pct),
+            "dirt": round(dirt_pct)
+        }
 
 class PointOfInterest(models.Model):
     """Puntos de interés genéricos importados de OSM"""
@@ -141,3 +204,24 @@ class IntelDrop(models.Model):
         from django.utils import timezone
         import datetime
         return self.created_at >= timezone.now() - datetime.timedelta(days=14)
+
+class ExplorationRecord(models.Model):
+    """
+    Representa un 'Sector' del mundo descubierto por un usuario.
+    Usamos una rejilla de ~100m x 100m (0.001 grados).
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='discovered_sectors')
+    sector_key = models.CharField(max_length=50, db_index=True) # Formato "lat_idx:lng_idx"
+    geom = models.PolygonField(srid=4326)
+    
+    is_pioneer = models.BooleanField(default=False, help_text="¿Fue el primero en el mundo en descubrirlo?")
+    discovered_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'adventure_exploration'
+        unique_together = ('user', 'sector_key')
+        verbose_name = 'Sector Descubierto'
+        verbose_name_plural = 'Sectores Descubiertos'
+
+    def __str__(self):
+        return f"{self.user.username} en {self.sector_key}"

@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script src="https://unpkg.com/exifr/dist/full.umd.js"></script>
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+<div class="max-w-6xl mx-auto p-4 md:p-8 flex flex-col md:flex-row gap-8">
+    <!-- Left panel: Uploader -->
+    <div class="w-full md:w-1/3 flex flex-col gap-6">
+        <div>
+            <h1 class="text-3xl font-black dark:text-white leading-tight">Reconstrucción Forense</h1>
+            <p class="text-gray-500 mt-2 text-sm">Sube las fotos de tu aventura. Extraeremos las coordenadas secretas (EXIF) y dibujaremos cronológicamente tu ruta sin haber gastado batería.</p>
+        </div>
+        
+        <div id="dropzone" class="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-3xl p-8 flex flex-col items-center justify-center text-center bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer">
+            <div class="text-4xl mb-4">📸</div>
+            <p class="font-bold dark:text-white mb-2">Añadir Fotografías</p>
+            <p class="text-xs text-gray-400">Arrastra tus fotos aquí o haz clic para abrir la galería</p>
+            <input type="file" id="file-input" multiple accept="image/jpeg, image/png, image/heic" class="hidden" />
+        </div>
+
+        <div id="processing-status" class="hidden bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+            <div class="flex items-center gap-3">
+                <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-sm font-bold text-blue-800 dark:text-blue-300">Analizando metadatos... <span id="progress-text">0/0</span></span>
+            </div>
+        </div>
+
+        <div id="stats" class="hidden grid grid-cols-2 gap-3">
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div class="text-[10px] uppercase font-black text-gray-400">Puntos Clave</div>
+                <div id="stat-photos" class="text-2xl font-black text-emerald-600">0</div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div class="text-[10px] uppercase font-black text-gray-400">Distancia Est.</div>
+                <div id="stat-dist" class="text-2xl font-black dark:text-white">0.0<span class="text-xs text-gray-500 ml-1">km</span></div>
+            </div>
+        </div>
+        
+        <button id="save-route-btn" class="hidden w-full bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-widest py-4 rounded-xl shadow-xl hover:-translate-y-1 transition transform">
+            Guardar Expedición Mágica
+        </button>
+    </div>
+
+    <!-- Right panel: Map -->
+    <div class="w-full md:w-2/3 h-[500px] md:h-[calc(100vh-120px)] rounded-3xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-800 relative bg-gray-900">
+        <div id="map" class="w-full h-full absolute inset-0 z-0"></div>
+        <div id="map-overlay" class="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-10 transition-opacity duration-500">
+            <div class="text-center">
+                <div class="text-6xl mb-4 animate-bounce">🕵️‍♂️</div>
+                <h3 class="text-2xl font-black text-white">Esperando Pruebas</h3>
+                <p class="text-gray-400 text-sm mt-2 max-w-xs mx-auto">Selecciona las fotos de tu galería para visualizar el rastro.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const map = new maplibregl.Map({
+        container: 'map',
+        style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        center: [-2.0, 43.0],
+        zoom: 7,
+        attributionControl: false
+    });
+
+    let originalFiles = {}; // filename -> File object
+    let extractedPoints = [];
+    let routeGeoJSON = null;
+    let distanceKm = 0;
+
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    
+    dropzone.addEventListener('click', () => fileInput.click());
+    
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/20');
+    });
+    
+    dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/20');
+    });
+    
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/20');
+        if(e.dataTransfer.files.length) processFiles(e.dataTransfer.files);
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+        if(e.target.files.length) processFiles(e.target.files);
+    });
+
+    async function processFiles(files) {
+        document.getElementById('processing-status').classList.remove('hidden');
+        document.getElementById('stats').classList.add('hidden');
+        document.getElementById('save-route-btn').classList.add('hidden');
+        
+        const pts = [];
+        let total = files.length;
+        let processed = 0;
+        
+        for (const file of files) {
+            try {
+                const gps = await exifr.gps(file);
+                const data = await exifr.parse(file, ['DateTimeOriginal']);
+                
+                if (gps && gps.latitude && gps.longitude) {
+                    const date = data?.DateTimeOriginal ? new Date(data.DateTimeOriginal) : new Date(file.lastModified);
+                    
+                    originalFiles[file.name] = file;
+                    pts.push({
+                        lat: gps.latitude,
+                        lng: gps.longitude,
+                        time: date.getTime(),
+                        filename: file.name
+                    });
+                }
+            } catch (e) {
+                console.log('No EXIF in', file.name);
+            }
+            
+            processed++;
+            document.getElementById('progress-text').innerText = `${processed}/${total}`;
+        }
+        
+        if (pts.length < 2) {
+            alert("Se necesitan al menos 2 fotos con datos GPS (Localización activada en la cámara) para trazar una ruta.");
+            document.getElementById('processing-status').classList.add('hidden');
+            return;
+        }
+        
+        pts.sort((a, b) => a.time - b.time);
+        extractedPoints = pts;
+        renderRouteOnMap();
+    }
+
+    function renderRouteOnMap() {
+        document.getElementById('processing-status').classList.add('hidden');
+        document.getElementById('map-overlay').classList.add('opacity-0', 'pointer-events-none');
+        
+        const coords = extractedPoints.map(p => [p.lng, p.lat]);
+        routeGeoJSON = turf.lineString(coords);
+        distanceKm = turf.length(routeGeoJSON, {units: 'kilometers'});
+        
+        document.getElementById('stats').classList.remove('hidden');
+        document.getElementById('stat-photos').innerText = extractedPoints.length;
+        document.getElementById('stat-dist').innerHTML = `${distanceKm.toFixed(1)}<span class="text-xs text-gray-500 ml-1">km</span>`;
+        document.getElementById('save-route-btn').classList.remove('hidden');
+
+        if (map.getSource('route')) {
+            map.getSource('route').setData(routeGeoJSON);
+            map.getSource('points').setData(turf.featureCollection(coords.map(c => turf.point(c))));
+        } else {
+            map.addSource('route', { type: 'geojson', data: routeGeoJSON });
+            map.addSource('points', { type: 'geojson', data: turf.featureCollection(coords.map(c => turf.point(c))) });
+            
+            map.addLayer({
+                id: 'route-glow',
+                type: 'line',
+                source: 'route',
+                layout: { 'line-join': 'round', 'line-cap': 'round' },
+                paint: { 'line-color': '#10b981', 'line-width': 8, 'line-opacity': 0.4, 'line-blur': 4 }
+            });
+
+            map.addLayer({
+                id: 'route-line',
+                type: 'line',
+                source: 'route',
+                layout: { 'line-join': 'round', 'line-cap': 'round' },
+                paint: { 'line-color': '#34d399', 'line-width': 3 }
+            });
+            
+            map.addLayer({
+                id: 'route-points',
+                type: 'circle',
+                source: 'points',
+                paint: { 'circle-color': '#ffffff', 'circle-radius': 4, 'circle-stroke-width': 2, 'circle-stroke-color': '#10b981' }
+            });
+        }
+        
+        const bounds = turf.bbox(routeGeoJSON);
+        map.fitBounds(bounds, { padding: 50, duration: 1500 });
+    }
+    
+    document.getElementById('save-route-btn').addEventListener('click', async () => {
+        const routeName = prompt("¿Qué nombre le ponemos a esta expedición reconstruida?", "Aventura del " + new Date(extractedPoints[0].time).toLocaleDateString());
+        if(!routeName) return;
+        
+        const btn = document.getElementById('save-route-btn');
+        btn.innerText = "Subiendo Evidencias...";
+        btn.disabled = true;
+        
+        const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+        
+        const formData = new FormData();
+        formData.append('name', routeName);
+        formData.append('description', `Ruta forense generada a partir de ${extractedPoints.length} fotografías.`);
+        formData.append('profile', "hiking");
+        formData.append('geojson', JSON.stringify(routeGeoJSON.geometry));
+        formData.append('distance_meters', Math.round(distanceKm * 1000));
+        
+        // Metadata mapping
+        const metaMap = {};
+        extractedPoints.forEach(p => {
+            metaMap[p.filename] = { lat: p.lat, lng: p.lng, time: p.time };
+            formData.append('photos', originalFiles[p.filename]);
+        });
+        formData.append('photo_metadata', JSON.stringify(metaMap));
+
+        try {
+            const res = await fetch('/api/adventure/routes/forensic', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            });
+            
+            const data = await res.json();
+            if(data.success) {
+                window.location.href = `/adventure/ruta/${data.id}/`;
+            } else {
+                alert(data.error || "Error al guardar la ruta");
+                btn.innerText = "Guardar Expedición Mágica";
+                btn.disabled = false;
+            }
+        } catch (e) {
+            alert("Error de red");
+            btn.innerText = "Guardar Expedición Mágica";
+            btn.disabled = false;
+        }
+    });
+</script>
+{% endblock %}

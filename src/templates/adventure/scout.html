@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-md mx-auto min-h-[calc(100vh-72px)] bg-gray-900 text-white flex flex-col relative overflow-hidden">
+    <!-- Background Grid Pattern -->
+    <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(circle at 1px 1px, #fff 1px, transparent 0); background-size: 20px 20px;"></div>
+    
+    <div class="flex-1 flex flex-col p-6 z-10">
+        <!-- Header -->
+        <div class="flex items-center gap-3 mb-8">
+            <a href="{% url 'dashboard_view' %}" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition">
+                <span class="text-xl">←</span>
+            </a>
+            <div>
+                <h1 class="text-2xl font-black tracking-tight text-white uppercase flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>
+                    Scouting Mode
+                </h1>
+                <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1" id="gps-status">📡 Buscando señal GPS...</p>
+            </div>
+        </div>
+
+        <form id="intel-form" class="flex-1 flex flex-col gap-6" onsubmit="submitIntel(event)">
+            <!-- Location Data -->
+            <input type="hidden" id="lat" name="lat" required>
+            <input type="hidden" id="lng" name="lng" required>
+
+            <!-- Type Selection -->
+            <div>
+                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Tipo de Inteligencia</label>
+                <div class="grid grid-cols-2 gap-3" id="type-grid">
+                    <!-- Types will be populated here -->
+                </div>
+                <input type="hidden" id="intel_type" name="intel_type" required>
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Reporte Táctico (Opcional)</label>
+                <textarea id="description" name="description" rows="3" class="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 resize-none transition" placeholder="Detalles de la situación..."></textarea>
+            </div>
+
+            <!-- Camera -->
+            <div>
+                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Evidencia Visual</label>
+                <div class="relative w-full h-32 bg-gray-800 border-2 border-dashed border-gray-700 rounded-xl flex flex-col items-center justify-center text-center hover:bg-gray-700 transition cursor-pointer overflow-hidden" onclick="document.getElementById('image').click()">
+                    <input type="file" id="image" name="image" accept="image/*" capture="environment" class="hidden" onchange="previewImage(event)">
+                    <div id="camera-placeholder" class="flex flex-col items-center">
+                        <span class="text-4xl mb-2">📸</span>
+                        <span class="text-xs font-bold text-gray-400">Tocar para abrir cámara</span>
+                    </div>
+                    <img id="image-preview" src="" class="absolute inset-0 w-full h-full object-cover hidden">
+                </div>
+            </div>
+
+            <div class="flex-1"></div>
+
+            <!-- Submit -->
+            <button type="submit" id="btn-submit" disabled class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-lg rounded-2xl uppercase tracking-widest shadow-xl shadow-emerald-900/50 transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                Desplegar Intel 🚀
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const intelTypes = [
+        { id: 'warning', icon: '⚠️', label: 'Peligro' },
+        { id: 'photo_epic', icon: '📸', label: 'Lugar Épico' },
+        { id: 'water_ok', icon: '💧', label: 'Agua OK' },
+        { id: 'water_dry', icon: '🏜️', label: 'Fuente Seca' },
+        { id: 'surface_mud', icon: '💩', label: 'Barro' },
+        { id: 'surface_snow', icon: '❄️', label: 'Nieve' },
+        { id: 'shelter_ok', icon: '⛺', label: 'Refugio OK' },
+        { id: 'shelter_bad', icon: '🏚️', label: 'Refugio Mal' }
+    ];
+
+    const typeGrid = document.getElementById('type-grid');
+    const inputIntelType = document.getElementById('intel_type');
+    const btnSubmit = document.getElementById('btn-submit');
+    const gpsStatus = document.getElementById('gps-status');
+
+    // Populate Grid
+    intelTypes.forEach(t => {
+        const btn = document.createElement('div');
+        btn.className = 'type-btn bg-gray-800 border border-gray-700 rounded-xl p-3 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all hover:bg-gray-700';
+        btn.innerHTML = `<span class="text-2xl">${t.icon}</span><span class="text-[10px] font-bold uppercase tracking-wider text-center leading-tight text-gray-300">${t.label}</span>`;
+        btn.onclick = () => {
+            document.querySelectorAll('.type-btn').forEach(b => {
+                b.classList.remove('border-emerald-500', 'bg-emerald-900/20');
+                b.classList.add('border-gray-700', 'bg-gray-800');
+            });
+            btn.classList.remove('border-gray-700', 'bg-gray-800');
+            btn.classList.add('border-emerald-500', 'bg-emerald-900/20');
+            inputIntelType.value = t.id;
+            checkFormReady();
+        };
+        typeGrid.appendChild(btn);
+    });
+
+    // Request GPS Location immediately
+    let gpsReady = false;
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                document.getElementById('lat').value = position.coords.latitude;
+                document.getElementById('lng').value = position.coords.longitude;
+                gpsStatus.innerHTML = `✅ GPS Fijo: ${position.coords.accuracy.toFixed(0)}m precisión`;
+                gpsStatus.classList.remove('text-gray-400');
+                gpsStatus.classList.add('text-emerald-400');
+                gpsReady = true;
+                checkFormReady();
+            },
+            (error) => {
+                console.error(error);
+                gpsStatus.innerHTML = `❌ Error GPS: ${error.message}`;
+                gpsStatus.classList.remove('text-gray-400');
+                gpsStatus.classList.add('text-red-400');
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    } else {
+        gpsStatus.innerHTML = `❌ GPS No Soportado`;
+    }
+
+    function checkFormReady() {
+        if (gpsReady && inputIntelType.value) {
+            btnSubmit.disabled = false;
+        } else {
+            btnSubmit.disabled = true;
+        }
+    }
+
+    function previewImage(event) {
+        const input = event.target;
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('image-preview');
+                img.src = e.target.result;
+                img.classList.remove('hidden');
+                document.getElementById('camera-placeholder').classList.add('hidden');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function submitIntel(e) {
+        e.preventDefault();
+        
+        btnSubmit.disabled = true;
+        const originalText = btnSubmit.innerHTML;
+        btnSubmit.innerHTML = 'Desplegando... ⏳';
+
+        const formData = new FormData(document.getElementById('intel-form'));
+        
+        fetch('/api/adventure/intel', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                btnSubmit.innerHTML = '¡Desplegado! ✅';
+                btnSubmit.classList.remove('bg-emerald-600');
+                btnSubmit.classList.add('bg-blue-600');
+                setTimeout(() => {
+                    window.location.href = "{% url 'dashboard_view' %}";
+                }, 1500);
+            } else {
+                alert(data.error || 'Error al desplegar');
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = originalText;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error de red al desplegar');
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = originalText;
+        });
+    }
+</script>
+{% endblock %}

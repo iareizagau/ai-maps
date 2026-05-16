@@ -1,0 +1,87 @@
+<div class="group relative bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-800 flex flex-col transition-all duration-300 transform hover:-translate-y-1">
+    {{ slot }}
+    <!-- Thumbnail Area with SVG Track -->
+    <a href="{% url 'route_detail' route.id %}" class="block h-48 relative overflow-hidden flex items-center justify-center bg-gray-50 dark:bg-black cursor-pointer">
+        <!-- Grid Background pattern -->
+        <div class="absolute inset-0 opacity-10 dark:opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at 1px 1px, #9ca3af 1px, transparent 0); background-size: 20px 20px;"></div>
+        
+        <!-- The SVG Mini-Track -->
+        {% if route.svg_path %}
+        <svg viewBox="0 0 100 100" class="w-full h-full p-6 drop-shadow-md z-10 transition-transform duration-500 group-hover:scale-105">
+            <path d="{{ route.svg_path }}" fill="none" stroke="currentColor" class="text-emerald-500 dark:text-emerald-400" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        {% else %}
+        <div class="text-5xl opacity-40 z-10">{{ route.profile|yesno:"🚲,🥾"|default:"🏕️" }}</div>
+        {% endif %}
+
+        <!-- Badges -->
+        <div class="absolute top-3 left-3 z-20 pointer-events-none">
+            <span class="bg-black/60 backdrop-blur-md text-white text-[10px] font-black px-2 py-1 rounded-md tracking-widest uppercase shadow-sm border border-white/10">{{ route.difficulty_badge }}</span>
+        </div>
+        <div class="absolute top-3 right-3 z-20 pointer-events-none">
+            {% if route.is_public %}
+            <span class="bg-blue-500/20 text-blue-700 dark:text-blue-300 text-[10px] font-bold px-2 py-1 rounded-md backdrop-blur-md border border-blue-500/20">Pública</span>
+            {% else %}
+            <span class="bg-gray-500/20 text-gray-700 dark:text-gray-300 text-[10px] font-bold px-2 py-1 rounded-md backdrop-blur-md border border-gray-500/20">Privada</span>
+            {% endif %}
+        </div>
+    </a>
+    
+    <div class="p-5 flex-1 flex flex-col border-t border-gray-100 dark:border-gray-800">
+        {% if route.location_city or route.location_province %}
+        <div class="flex items-center text-[10px] uppercase font-black tracking-widest text-emerald-600 dark:text-emerald-500 mb-1 truncate">
+            <svg class="w-3 h-3 mr-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span class="truncate">{{ route.location_city|default:"" }}{% if route.location_city and route.location_province %}, {% endif %}{{ route.location_province|default:"" }}</span>
+        </div>
+        {% endif %}
+        <a href="{% url 'route_detail' route.id %}" class="hover:text-emerald-600 transition-colors">
+            <h3 class="font-black text-lg dark:text-white mb-1 truncate">{{ route.name }}</h3>
+        </a>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4 line-clamp-1 flex-1">{{ route.description|default:"Sin descripción" }}</p>
+        
+        <div class="grid grid-cols-3 gap-2 mb-4">
+            <div class="text-center">
+                <div class="text-[9px] uppercase font-black text-gray-400 tracking-widest mb-1">Distancia</div>
+                <div class="font-black dark:text-white text-lg leading-none">{{ route.distance_km|floatformat:1 }}<span class="text-[10px] text-gray-400 font-bold ml-0.5">km</span></div>
+            </div>
+            <div class="text-center">
+                <div class="text-[9px] uppercase font-black text-gray-400 tracking-widest mb-1">Desnivel+</div>
+                <div class="font-black text-blue-600 dark:text-blue-400 text-lg leading-none">+{{ route.elevation_gain|floatformat:0 }}<span class="text-[10px] font-bold ml-0.5">m</span></div>
+            </div>
+            <div class="text-center">
+                <div class="text-[9px] uppercase font-black text-gray-400 tracking-widest mb-1">Desnivel-</div>
+                <div class="font-black text-red-500 text-lg leading-none">-{{ route.elevation_loss|floatformat:0 }}<span class="text-[10px] font-bold ml-0.5">m</span></div>
+            </div>
+        </div>
+
+        <!-- Surface Bar & Actions -->
+        <div class="w-full flex items-center justify-between gap-4 mt-2">
+            <div class="flex-1 flex flex-col gap-1">
+                <div class="flex items-center gap-2 text-[9px] font-black text-gray-400 tracking-widest">
+                    <span>TIERRA {{ route.surface_percentages.dirt }}%</span>
+                    <span>ASFALTO {{ route.surface_percentages.asphalt }}%</span>
+                </div>
+                <div class="h-1.5 flex rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 w-full">
+                    <div class="bg-gray-800 dark:bg-gray-500 h-full" style="width: {{ route.surface_percentages.asphalt }}%;" title="Asfalto"></div>
+                    <div class="bg-amber-600 h-full" style="width: {{ route.surface_percentages.dirt }}%;" title="Tierra / Pista"></div>
+                </div>
+            </div>
+            
+            <div class="flex gap-2 shrink-0">
+                {% if request.user == route.user %}
+                <a href="{% url 'map_view' %}?edit={{ route.id }}" class="p-2 bg-gray-100 hover:bg-emerald-100 dark:bg-gray-800 dark:hover:bg-emerald-900/30 text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg transition-colors" title="Editar Ruta">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                </a>
+                {% endif %}
+                <button class="p-2 bg-gray-100 hover:bg-blue-100 dark:bg-gray-800 dark:hover:bg-blue-900/30 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors" title="Descargar GPX">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                </button>
+                {% if request.user == route.user %}
+                <button onclick="confirmDeleteRoute({{ route.id }}, '{{ route.name|escapejs }}')" class="p-2 bg-gray-100 hover:bg-red-100 dark:bg-gray-800 dark:hover:bg-red-900/30 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors" title="Eliminar Ruta">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,118 @@
+<div id="fog-of-war-container" class="hidden"></div>
+
+<script>
+    console.log("Fog of War: Motor de Alta Densidad (Interpolado) activado.");
+
+    async function initFogOfWar(mapInstance) {
+        if (!mapInstance) return;
+        
+        try {
+            console.log("Fog of War: Sincronizando inteligencia...");
+            
+            let data = { type: "FeatureCollection", features: [] };
+            try {
+                const response = await fetch('/api/adventure/exploration/sectors');
+                if (response.ok) data = await response.json();
+            } catch (e) {
+                console.warn("Fog of War: API no disponible.");
+            }
+
+            // 1. CAPA SATELITAL
+            if (!mapInstance.getSource('satellite-google')) {
+                mapInstance.addSource('satellite-google', {
+                    type: 'raster',
+                    tiles: ['https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'],
+                    tileSize: 256
+                });
+                mapInstance.addLayer({ id: 'satellite-layer', type: 'raster', source: 'satellite-google' });
+            }
+
+            // 2. PROCESAMIENTO DE ALTA DENSIDAD
+            let revealGeometry;
+            if (data.features.length > 0) {
+                console.log("Fog of War: Generando corredor de luz sólido...");
+                
+                // Extraemos todos los puntos centrales de los sectores
+                const points = data.features.map(f => turf.centroid(f).geometry.coordinates);
+                const multiPoint = turf.multiPoint(points);
+                
+                // Buffer masivo: 200m de radio para asegurar solidez y amplitud
+                revealGeometry = turf.buffer(multiPoint, 0.2, {units: 'kilometers'}).geometry;
+            }
+
+            // 3. MÁSCARA DE NIEBLA
+            const worldOuter = [[-180, 90], [180, 90], [180, -90], [-180, -90], [-180, 90]];
+            const maskCoordinates = [worldOuter];
+            
+            if (revealGeometry) {
+                if (revealGeometry.type === 'Polygon') {
+                    maskCoordinates.push(revealGeometry.coordinates[0]);
+                } else if (revealGeometry.type === 'MultiPolygon') {
+                    revealGeometry.coordinates.forEach(poly => maskCoordinates.push(poly[0]));
+                }
+            }
+
+            const maskData = { "type": "Feature", "geometry": { "type": "Polygon", "coordinates": maskCoordinates } };
+            
+            if (mapInstance.getSource('fog-mask')) {
+                mapInstance.getSource('fog-mask').setData(maskData);
+            } else {
+                mapInstance.addSource('fog-mask', { type: 'geojson', data: maskData });
+                mapInstance.addLayer({
+                    id: 'fog-layer',
+                    type: 'fill',
+                    source: 'fog-mask',
+                    paint: { 'fill-color': '#000000', 'fill-opacity': 0.94 }
+                });
+            }
+
+            // 4. ESTILO "ESTELA DE MISIÓN"
+            if (revealGeometry) {
+                if (!mapInstance.getSource('reveal-glow-source')) {
+                    mapInstance.addSource('reveal-glow-source', { type: 'geojson', data: revealGeometry });
+                    mapInstance.addLayer({
+                        id: 'sector-glow-organic',
+                        type: 'line',
+                        source: 'reveal-glow-source',
+                        paint: {
+                            'line-color': '#6366f1',
+                            'line-width': 12,
+                            'line-blur': 20,
+                            'line-opacity': 0.5
+                        }
+                    });
+                } else {
+                    mapInstance.getSource('reveal-glow-source').setData(revealGeometry);
+                }
+
+                // Balizas simplificadas (solo una por zona densa para no saturar)
+                const beaconData = turf.simplify(data, {tolerance: 0.01, highPrecision: false});
+                if (!mapInstance.getSource('sector-beacons-source')) {
+                    mapInstance.addSource('sector-beacons-source', { type: 'geojson', data: beaconData });
+                    mapInstance.addLayer({
+                        id: 'sector-beacons', type: 'circle', source: 'sector-beacons-source',
+                        maxzoom: 10,
+                        paint: {
+                            'circle-radius': 6,
+                            'circle-color': '#818cf8',
+                            'circle-opacity': 0.7,
+                            'circle-blur': 0.6
+                        }
+                    });
+                } else {
+                    mapInstance.getSource('sector-beacons-source').setData(beaconData);
+                }
+
+                // 5. AUTO-FOCUS
+                const bounds = turf.bbox(data);
+                mapInstance.fitBounds(bounds, { padding: 150, maxZoom: 12, duration: 2500 });
+            }
+
+            return data.features.length;
+
+        } catch (err) {
+            console.error("Fog of War Error:", err);
+            return 0;
+        }
+    }
+</script>

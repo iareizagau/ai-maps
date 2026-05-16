@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script src="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+<!-- AMOLED Black Theme container -->
+<div style="height: calc(100vh - 72px);" class="w-full relative bg-black font-sans overflow-hidden" id="follow-container">
+    
+    <!-- Map container (Full screen background) -->
+    <div id="map" class="absolute top-0 left-0 w-full h-full z-0"></div>
+
+    <!-- Top HUD Bar -->
+    <div class="absolute top-0 left-0 w-full z-10 bg-gradient-to-b from-black/80 to-transparent p-4 pt-6 flex justify-between items-start">
+        <a href="{% url 'route_detail' route.id %}" class="bg-gray-900/50 backdrop-blur-sm border border-gray-700 text-white w-12 h-12 flex items-center justify-center rounded-full hover:bg-gray-800 transition shadow-lg">
+            <span class="text-xl">←</span>
+        </a>
+        
+        <div class="text-right">
+            <div id="status-badge" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-1 shadow-lg backdrop-blur-sm">
+                🟢 En Ruta
+            </div>
+            <div class="text-[10px] font-black text-gray-400 tracking-widest uppercase shadow-sm drop-shadow-md">Precisión GPS</div>
+            <div id="gps-accuracy" class="text-lg font-black text-white leading-none drop-shadow-md">-- m</div>
+        </div>
+    </div>
+
+    <!-- Red Danger Overlay (Off-route) -->
+    <div id="danger-overlay" class="absolute top-0 left-0 w-full h-full border-[8px] border-red-600 bg-red-600/10 opacity-0 transition-opacity duration-300 z-20 flex items-center justify-center pointer-events-none">
+        <div class="bg-red-600 text-white font-black text-2xl uppercase tracking-widest px-6 py-3 rounded-xl shadow-2xl animate-pulse">
+            ⚠️ Fuera de Ruta
+        </div>
+    </div>
+    
+    <!-- Bottom HUD Bar -->
+    <div class="absolute bottom-0 left-0 w-full z-10 bg-gradient-to-t from-black/90 to-transparent p-6 pb-8">
+        <div class="bg-gray-900/80 backdrop-blur-md border border-gray-800 rounded-2xl p-4 max-w-sm mx-auto shadow-2xl relative overflow-hidden">
+            <!-- Intel Alert Banner (Hidden by default) -->
+            <div id="intel-alert" class="hidden absolute top-0 left-0 w-full bg-amber-500 text-amber-950 font-black text-[10px] uppercase tracking-widest py-1 text-center animate-pulse">
+                Intel Detectado a <span id="intel-dist">--</span>m
+            </div>
+            
+            <h3 class="font-bold text-white mb-1 mt-2 text-center truncate px-2">{{ route.name }}</h3>
+            <p id="intel-desc" class="text-xs text-gray-400 text-center line-clamp-2 px-2">Vigilando perímetro...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const rawGeojson = {{ route_geojson|safe }};
+    const routeId = {{ route.id }};
+    
+    // Config
+    const OFF_ROUTE_THRESHOLD_METERS = 50;
+    const INTEL_ALERT_THRESHOLD_METERS = 500;
+    
+    // State
+    let isOffRoute = false;
+    let intelDrops = [];
+    let alertedIntelIds = new Set();
+    let userMarker = null;
+    let watchId = null;
+
+    const map = new maplibregl.Map({
+        container: 'map',
+        style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        center: rawGeojson.coordinates[0][0], // Start of route
+        zoom: 16,
+        pitch: 60,
+        bearing: 0,
+        attributionControl: false
+    });
+
+    // The route line string for Turf.js
+    const routeLine = turf.lineString(rawGeojson.coordinates[0]);
+
+    map.on('load', () => {
+        // Force AMOLED Black background to save battery
+        map.setPaintProperty('background', 'background-color', '#000000');
+        
+        // Add Route Source
+        map.addSource('route', {
+            type: 'geojson',
+            data: {
+                type: 'Feature',
+                properties: {},
+                geometry: rawGeojson
+            }
+        });
+        
+        // Outer glow
+        map.addLayer({
+            id: 'route-glow',
+            type: 'line',
+            source: 'route',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-color': '#10b981', 'line-width': 12, 'line-opacity': 0.2, 'line-blur': 10 }
+        });
+        
+        // Inner core
+        map.addLayer({
+            id: 'route-core',
+            type: 'line',
+            source: 'route',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-color': '#34d399', 'line-width': 4 }
+        });
+
+        // Create User Marker Element (Blue pulsing dot)
+        const userEl = document.createElement('div');
+        userEl.className = 'w-6 h-6 rounded-full bg-blue-500 border-4 border-white shadow-[0_0_20px_rgba(59,130,246,0.8)] transition-transform duration-1000';
+        
+        userMarker = new maplibregl.Marker({ element: userEl })
+            .setLngLat(rawGeojson.coordinates[0][0])
+            .addTo(map);
+
+        // Fetch Intel Drops
+        fetch(`/api/adventure/intel/route/${routeId}`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    intelDrops = data.intel;
+                    // Add Intel markers
+                    intelDrops.forEach(drop => {
+                        const el = document.createElement('div');
+                        el.className = 'w-8 h-8 rounded-full bg-gray-900 border-2 border-amber-500 flex items-center justify-center text-xs shadow-lg z-0';
+                        el.innerHTML = getIntelIcon(drop.type);
+                        new maplibregl.Marker({ element: el }).setLngLat([drop.lng, drop.lat]).addTo(map);
+                    });
+                }
+            });
+
+        // Start GPS Watch
+        startTracking();
+    });
+
+    function getIntelIcon(type) {
+        const icons = { 'warning': '⚠️', 'photo_epic': '📸', 'water_ok': '💧', 'water_dry': '🏜️', 'surface_mud': '💩', 'surface_snow': '❄️', 'shelter_ok': '⛺', 'shelter_bad': '🏚️' };
+        return icons[type] || '📍';
+    }
+
+    function startTracking() {
+        if (!("geolocation" in navigator)) {
+            alert("Tu navegador no soporta GPS.");
+            return;
+        }
+        
+        // Request Screen Wake Lock
+        try {
+            if ('wakeLock' in navigator) {
+                navigator.wakeLock.request('screen').catch(() => console.log("Wake lock refused"));
+            }
+        } catch(e) {}
+
+        watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const lng = position.coords.longitude;
+                const lat = position.coords.latitude;
+                const accuracy = position.coords.accuracy;
+                
+                // Update UI
+                document.getElementById('gps-accuracy').innerText = `±${accuracy.toFixed(0)}m`;
+                
+                // Move marker
+                userMarker.setLngLat([lng, lat]);
+                
+                // Center Map (smooth follow)
+                map.flyTo({ center: [lng, lat], speed: 0.5 });
+                
+                // Turf checks
+                runSentinelChecks(lng, lat);
+            },
+            (error) => {
+                console.error(error);
+                document.getElementById('status-badge').className = "bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-1 shadow-lg backdrop-blur-sm";
+                document.getElementById('status-badge').innerText = "❌ Sin GPS";
+            },
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+    }
+
+    function runSentinelChecks(lng, lat) {
+        const currentPt = turf.point([lng, lat]);
+        
+        // 1. Off-Route Check
+        const distanceToRouteKm = turf.pointToLineDistance(currentPt, routeLine);
+        const distanceMeters = distanceToRouteKm * 1000;
+        
+        const dangerOverlay = document.getElementById('danger-overlay');
+        const statusBadge = document.getElementById('status-badge');
+        
+        if (distanceMeters > OFF_ROUTE_THRESHOLD_METERS) {
+            if (!isOffRoute) {
+                isOffRoute = true;
+                dangerOverlay.classList.remove('opacity-0');
+                statusBadge.className = "bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-1 shadow-lg backdrop-blur-sm";
+                statusBadge.innerText = "❌ PELIGRO";
+                if(navigator.vibrate) navigator.vibrate([500, 200, 500]); // Aggressive vibrate
+            }
+        } else {
+            if (isOffRoute) {
+                isOffRoute = false;
+                dangerOverlay.classList.add('opacity-0');
+                statusBadge.className = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-1 shadow-lg backdrop-blur-sm";
+                statusBadge.innerText = "🟢 En Ruta";
+                if(navigator.vibrate) navigator.vibrate([100, 50, 100]); // Friendly vibrate
+            }
+        }
+
+        // 2. Proximity Intel Alerts
+        intelDrops.forEach(drop => {
+            if (alertedIntelIds.has(drop.id)) return;
+            
+            const dropPt = turf.point([drop.lng, drop.lat]);
+            const distKm = turf.distance(currentPt, dropPt);
+            const distM = Math.round(distKm * 1000);
+            
+            if (distM < INTEL_ALERT_THRESHOLD_METERS) {
+                // Trigger Alert
+                alertedIntelIds.add(drop.id);
+                if(navigator.vibrate) navigator.vibrate([300, 100, 300]);
+                
+                const alertDiv = document.getElementById('intel-alert');
+                const distSpan = document.getElementById('intel-dist');
+                const descSpan = document.getElementById('intel-desc');
+                
+                alertDiv.classList.remove('hidden');
+                distSpan.innerText = distM;
+                descSpan.innerHTML = `<span class="font-bold text-amber-500">${getIntelIcon(drop.type)} ${drop.type_display}</span>: ${drop.description}`;
+                
+                // Hide alert after 15 seconds
+                setTimeout(() => {
+                    alertDiv.classList.add('hidden');
+                    descSpan.innerText = "Vigilando perímetro...";
+                }, 15000);
+            }
+        });
+    }
+
+    // Cleanup on exit
+    window.addEventListener('beforeunload', () => {
+        if(watchId) navigator.geolocation.clearWatch(watchId);
+    });
+</script>
+{% endblock %}

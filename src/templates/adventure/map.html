@@ -207,6 +207,20 @@
         </form>
     </div>
 </div>
+<script id="poi-data" type="application/json">
+    [
+        {% for poi in pois %}
+        {
+            "id": "{{ poi.id }}",
+            "name": "{{ poi.name|default:'Punto sin nombre'|escapejs }}",
+            "type": "{{ poi.poi_type }}",
+            "display": "{{ poi.get_poi_type_display|escapejs }}",
+            "lng": {{ poi.location.x|stringformat:"f" }},
+            "lat": {{ poi.location.y|stringformat:"f" }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+</script>
 
 <script>
     const map = new maplibregl.Map({
@@ -276,7 +290,66 @@
     });
 
     map.on('moveend', fetchFountains);
-    map.on('load', fetchFountains);
+    
+    map.on('load', () => {
+        fetchFountains();
+        
+        // Render POIs Interactivos con Route-Snapping
+        const rawPoiData = document.getElementById('poi-data').textContent.trim();
+        if (rawPoiData) {
+            try {
+                const poiData = JSON.parse(rawPoiData);
+                const emojis = {
+                    'water': '💧', 'shelter': '⛺', 'cafe': '☕', 'station': '🚉', 'default': '📍'
+                };
+                const bgColors = {
+                    'water': 'bg-blue-100 border-blue-300 text-blue-800',
+                    'shelter': 'bg-amber-100 border-amber-300 text-amber-800',
+                    'cafe': 'bg-orange-100 border-orange-300 text-orange-800',
+                    'station': 'bg-purple-100 border-purple-300 text-purple-800',
+                    'default': 'bg-gray-100 border-gray-300 text-gray-800'
+                };
+
+                poiData.forEach(poi => {
+                    const el = document.createElement('div');
+                    const icon = emojis[poi.type] || emojis['default'];
+                    const colorClass = bgColors[poi.type] || bgColors['default'];
+                    
+                    el.className = `w-7 h-7 rounded-full flex items-center justify-center border-2 shadow-lg cursor-pointer transform hover:scale-125 transition-transform duration-200 z-10 ${colorClass}`;
+                    el.innerHTML = `<span class="text-xs drop-shadow-md">${icon}</span>`;
+                    
+                    const popup = new maplibregl.Popup({ offset: 20, closeButton: false, className: 'poi-popup', maxWidth: '200px' })
+                        .setHTML(`
+                            <div class="font-bold text-[11px] text-gray-900 leading-tight">${poi.name}</div>
+                            <div class="text-[9px] uppercase text-gray-500 font-black tracking-wider mt-1">${icon} ${poi.display}</div>
+                            <div class="text-[9px] text-emerald-600 mt-1 italic font-bold">👆 Añadir como destino</div>
+                        `);
+                    
+                    const marker = new maplibregl.Marker({element: el})
+                        .setLngLat([poi.lng, poi.lat])
+                        .setPopup(popup)
+                        .addTo(map);
+
+                    el.addEventListener('mouseenter', () => el.classList.add('ring-4', 'ring-white', 'ring-opacity-50'));
+                    el.addEventListener('mouseleave', () => el.classList.remove('ring-4', 'ring-white', 'ring-opacity-50'));
+                    
+                    el.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (waypoints.length >= 10) {
+                            alert("Máximo 10 puntos de control permitidos en esta demo.");
+                            return;
+                        }
+                        waypoints.push([poi.lng, poi.lat]);
+                        if (typeof calculateRoute === 'function') {
+                            calculateRoute();
+                        }
+                    });
+                });
+            } catch (e) {
+                console.error("Error parsing POI data:", e);
+            }
+        }
+    });
 
     async function fetchFountains() {
         const bounds = map.getBounds();

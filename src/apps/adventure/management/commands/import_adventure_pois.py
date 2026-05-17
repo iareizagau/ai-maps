@@ -8,6 +8,7 @@ class POIHandler(osmium.SimpleHandler):
         super().__init__()
         self.pois = []
         self.batch_size = 5000
+        self.total_saved = 0
 
     def save_batch(self):
         if self.pois:
@@ -15,6 +16,8 @@ class POIHandler(osmium.SimpleHandler):
                 self.pois, 
                 ignore_conflicts=True
             )
+            self.total_saved += len(self.pois)
+            print(f"[{self.total_saved} POIs extraídos y guardados...]", flush=True)
             self.pois = []
 
     def process_node(self, node):

@@ -278,6 +278,9 @@ def upload_gpx(request, file: UploadedFile = File(...)):
             route.surface_stats = {k: round(v, 2) for k, v in stats.items()}
             route.save(update_fields=['surface_stats'])
 
+        # Buscar fuentes cercanas (aprox 200m)
+        fountains_count = Fountain.objects.filter(location__dwithin=(geom, 0.0018)).count()
+
         # Fog of War: Desbloquear sectores
         discovery = discover_sectors_from_route(route)
 

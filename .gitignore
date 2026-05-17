@@ -1,3 +1,6 @@
+# data
+routing_data.sql
+routing_data.zip
 # Claude Code session-specific files (DO NOT COMMIT)
 *.claude-session
 .claude-session/

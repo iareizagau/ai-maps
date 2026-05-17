@@ -150,6 +150,15 @@
     </div>
 
     <div id="map"></div>
+    
+    <!-- Tactical Layers Control -->
+    <div class="absolute top-20 right-6 z-50 bg-white/90 dark:bg-black/80 backdrop-blur-md p-2 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xl flex flex-col gap-2">
+        <button id="layer-topo" class="p-2 w-full text-left rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 font-bold text-xs shadow-inner transition flex items-center gap-2">🗺️ Topo Adventure</button>
+        <button id="layer-sat" class="p-2 w-full text-left rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold text-xs transition flex items-center gap-2">🛰️ Satélite Híbrido</button>
+        <hr class="border-gray-300 dark:border-gray-600">
+        <button id="toggle-3d" class="p-2 w-full text-left rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold text-xs transition flex items-center gap-2">🏔️ Terreno 3D</button>
+    </div>
+
     <div class="profile-panel collapsed" id="profile-container">
         <button class="toggle-profile-btn" id="toggle-profile">📈 Perfil de Elevación</button>
         <canvas id="elevation-chart"></canvas>
@@ -208,15 +217,66 @@
             'sources': {
                 'osm': {
                     'type': 'raster',
-                    'tiles': ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                    'tiles': ['https://a.tile.opentopomap.org/{z}/{x}/{y}.png'],
                     'tileSize': 256,
-                    'attribution': '&copy; OpenStreetMap contributors'
+                    'attribution': '&copy; OpenTopoMap'
+                },
+                'satellite': {
+                    'type': 'raster',
+                    'tiles': ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+                    'tileSize': 256,
+                    'attribution': '&copy; Esri'
+                },
+                'terrainSource': {
+                    'type': 'raster-dem',
+                    'url': 'https://demotiles.maplibre.org/terrain-tiles/tiles.json',
+                    'tileSize': 256
                 }
             },
-            'layers': [{ 'id': 'osm-layer', 'type': 'raster', 'source': 'osm' }]
+            'layers': [
+                { 'id': 'sat-layer', 'type': 'raster', 'source': 'satellite', 'layout': {'visibility': 'none'} },
+                { 'id': 'osm-layer', 'type': 'raster', 'source': 'osm', 'layout': {'visibility': 'visible'} }
+            ]
         },
         center: [-1.981, 43.318],
         zoom: 13
+    });
+
+    // Tactical Layers Logic
+    let is3D = false;
+    document.getElementById('layer-topo').addEventListener('click', (e) => {
+        map.setLayoutProperty('osm-layer', 'visibility', 'visible');
+        map.setLayoutProperty('sat-layer', 'visibility', 'none');
+        e.currentTarget.classList.add('bg-emerald-100', 'text-emerald-800', 'dark:bg-emerald-900', 'dark:text-emerald-200', 'shadow-inner');
+        e.currentTarget.classList.remove('hover:bg-gray-200', 'text-gray-700', 'dark:text-gray-300');
+        const satBtn = document.getElementById('layer-sat');
+        satBtn.classList.remove('bg-emerald-100', 'text-emerald-800', 'dark:bg-emerald-900', 'dark:text-emerald-200', 'shadow-inner');
+        satBtn.classList.add('hover:bg-gray-200', 'text-gray-700', 'dark:text-gray-300');
+    });
+
+    document.getElementById('layer-sat').addEventListener('click', (e) => {
+        map.setLayoutProperty('osm-layer', 'visibility', 'none');
+        map.setLayoutProperty('sat-layer', 'visibility', 'visible');
+        e.currentTarget.classList.add('bg-emerald-100', 'text-emerald-800', 'dark:bg-emerald-900', 'dark:text-emerald-200', 'shadow-inner');
+        e.currentTarget.classList.remove('hover:bg-gray-200', 'text-gray-700', 'dark:text-gray-300');
+        const topoBtn = document.getElementById('layer-topo');
+        topoBtn.classList.remove('bg-emerald-100', 'text-emerald-800', 'dark:bg-emerald-900', 'dark:text-emerald-200', 'shadow-inner');
+        topoBtn.classList.add('hover:bg-gray-200', 'text-gray-700', 'dark:text-gray-300');
+    });
+
+    document.getElementById('toggle-3d').addEventListener('click', (e) => {
+        is3D = !is3D;
+        if (is3D) {
+            map.setTerrain({ 'source': 'terrainSource', 'exaggeration': 1.5 });
+            map.easeTo({ pitch: 60, duration: 1000 });
+            e.currentTarget.classList.add('bg-emerald-100', 'text-emerald-800', 'dark:bg-emerald-900', 'dark:text-emerald-200', 'shadow-inner');
+            e.currentTarget.classList.remove('hover:bg-gray-200', 'text-gray-700', 'dark:text-gray-300');
+        } else {
+            map.setTerrain(null);
+            map.easeTo({ pitch: 0, duration: 1000 });
+            e.currentTarget.classList.remove('bg-emerald-100', 'text-emerald-800', 'dark:bg-emerald-900', 'dark:text-emerald-200', 'shadow-inner');
+            e.currentTarget.classList.add('hover:bg-gray-200', 'text-gray-700', 'dark:text-gray-300');
+        }
     });
 
     map.on('moveend', fetchFountains);

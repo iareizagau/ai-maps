@@ -42,6 +42,37 @@ def get_fountains(request, bbox: str):
     except Exception as e:
         return {"error": str(e)}
 
+@router.get("/pois")
+def get_pois(request, bbox: str):
+    """Obtiene Puntos de Interés dentro de un bounding box"""
+    try:
+        coords = [float(x) for x in bbox.split(',')]
+        poly = Polygon.from_bbox(coords)
+        # Límite a 200 puntos por llamada para no ahogar el mapa
+        pois = PointOfInterest.objects.filter(location__within=poly)[:200]
+        
+        return {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [p.location.x, p.location.y]
+                    },
+                    "properties": {
+                        "id": p.id,
+                        "name": p.name or "Punto sin nombre",
+                        "poi_type": p.poi_type,
+                        "poi_type_display": p.get_poi_type_display(),
+                        "tags": p.tags
+                    }
+                } for p in pois
+            ]
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
 @router.get("/route")
 def get_route(request, coords: str, profile: str = "bikepacking"):
     """

@@ -207,20 +207,6 @@
         </form>
     </div>
 </div>
-<script id="poi-data" type="application/json">
-    [
-        {% for poi in pois %}
-        {
-            "id": "{{ poi.id }}",
-            "name": "{{ poi.name|default:'Punto sin nombre'|escapejs }}",
-            "type": "{{ poi.poi_type }}",
-            "display": "{{ poi.get_poi_type_display|escapejs }}",
-            "lng": {{ poi.location.x|stringformat:"f" }},
-            "lat": {{ poi.location.y|stringformat:"f" }}
-        }{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    ]
-</script>
 
 <script>
     const map = new maplibregl.Map({
@@ -289,103 +275,90 @@
         }
     });
 
-    map.on('moveend', fetchFountains);
+    map.on('moveend', fetchPOIs);
     
     map.on('load', () => {
-        fetchFountains();
-        
-        // Render POIs Interactivos con Route-Snapping
-        const rawPoiData = document.getElementById('poi-data').textContent.trim();
-        if (rawPoiData) {
-            try {
-                const poiData = JSON.parse(rawPoiData);
-                const emojis = {
-                    'water': '💧', 'shelter': '⛺', 'cafe': '☕', 'station': '🚉', 'default': '📍'
-                };
-                const bgColors = {
-                    'water': 'bg-blue-100 border-blue-300 text-blue-800',
-                    'shelter': 'bg-amber-100 border-amber-300 text-amber-800',
-                    'cafe': 'bg-orange-100 border-orange-300 text-orange-800',
-                    'station': 'bg-purple-100 border-purple-300 text-purple-800',
-                    'default': 'bg-gray-100 border-gray-300 text-gray-800'
-                };
-
-                poiData.forEach(poi => {
-                    const el = document.createElement('div');
-                    const icon = emojis[poi.type] || emojis['default'];
-                    const colorClass = bgColors[poi.type] || bgColors['default'];
-                    
-                    el.className = `w-7 h-7 rounded-full flex items-center justify-center border-2 shadow-lg cursor-pointer transform hover:scale-125 transition-transform duration-200 z-10 ${colorClass}`;
-                    el.innerHTML = `<span class="text-xs drop-shadow-md">${icon}</span>`;
-                    
-                    const popup = new maplibregl.Popup({ offset: 20, closeButton: false, className: 'poi-popup', maxWidth: '200px' })
-                        .setHTML(`
-                            <div class="font-bold text-[11px] text-gray-900 leading-tight">${poi.name}</div>
-                            <div class="text-[9px] uppercase text-gray-500 font-black tracking-wider mt-1">${icon} ${poi.display}</div>
-                            <div class="text-[9px] text-emerald-600 mt-1 italic font-bold">👆 Añadir como destino</div>
-                        `);
-                    
-                    const marker = new maplibregl.Marker({element: el})
-                        .setLngLat([poi.lng, poi.lat])
-                        .setPopup(popup)
-                        .addTo(map);
-
-                    el.addEventListener('mouseenter', () => el.classList.add('ring-4', 'ring-white', 'ring-opacity-50'));
-                    el.addEventListener('mouseleave', () => el.classList.remove('ring-4', 'ring-white', 'ring-opacity-50'));
-                    
-                    el.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        if (waypoints.length >= 10) {
-                            alert("Máximo 10 puntos de control permitidos en esta demo.");
-                            return;
-                        }
-                        waypoints.push([poi.lng, poi.lat]);
-                        if (typeof calculateRoute === 'function') {
-                            calculateRoute();
-                        }
-                    });
-                });
-            } catch (e) {
-                console.error("Error parsing POI data:", e);
-            }
-        }
+        fetchPOIs();
     });
 
-    async function fetchFountains() {
+    async function fetchPOIs() {
         const bounds = map.getBounds();
         const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
         
         try {
-            const response = await fetch(`/api/adventure/fountains?bbox=${bbox}`);
+            const response = await fetch(`/api/adventure/pois?bbox=${bbox}`);
             const data = await response.json();
             
-            if (!map.getSource('fountains')) {
-                map.addSource('fountains', { type: 'geojson', data: data });
+            if (!map.getSource('pois')) {
+                map.addSource('pois', { type: 'geojson', data: data });
+                
+                // Cargar imágenes para pines (opcional si usamos circle, usaremos circle para mejor rendimiento)
                 map.addLayer({
-                    'id': 'fountains-layer',
+                    'id': 'pois-layer',
                     'type': 'circle',
-                    'source': 'fountains',
+                    'source': 'pois',
                     'paint': {
-                        'circle-radius': 5,
-                        'circle-color': '#06b6d4', // Cyan 500 (Color agua)
-                        'circle-stroke-width': 1.5,
+                        'circle-radius': [
+                            'match',
+                            ['get', 'poi_type'],
+                            'water', 7,
+                            'shelter', 7,
+                            'cafe', 7,
+                            5
+                        ],
+                        'circle-color': [
+                            'match',
+                            ['get', 'poi_type'],
+                            'water', '#3b82f6', // blue
+                            'shelter', '#f59e0b', // amber
+                            'cafe', '#ea580c', // orange
+                            'station', '#9333ea', // purple
+                            '#6b7280' // default gray
+                        ],
+                        'circle-stroke-width': 2,
                         'circle-stroke-color': '#ffffff'
                     }
                 });
 
-                // Popup para las fuentes
-                const fountainPopup = new maplibregl.Popup({ closeButton: false });
-                map.on('mouseenter', 'fountains-layer', (e) => {
+                // Añadir tooltips
+                const poiPopup = new maplibregl.Popup({ closeButton: false, offset: 10 });
+                map.on('mouseenter', 'pois-layer', (e) => {
+                    map.getCanvas().style.cursor = 'pointer';
                     const props = e.features[0].properties;
-                    fountainPopup.setLngLat(e.lngLat)
-                        .setHTML(`<strong>${props.name}</strong>`)
+                    poiPopup.setLngLat(e.lngLat)
+                        .setHTML(`
+                            <div class="font-bold text-xs">${props.name}</div>
+                            <div class="text-[9px] uppercase text-gray-500">${props.poi_type_display}</div>
+                            <div class="text-[9px] text-emerald-600 mt-1 italic font-bold">👆 Click para añadir waypoint</div>
+                        `)
                         .addTo(map);
                 });
-                map.on('mouseleave', 'fountains-layer', () => fountainPopup.remove());
+                map.on('mouseleave', 'pois-layer', () => {
+                    map.getCanvas().style.cursor = '';
+                    poiPopup.remove();
+                });
+
+                // Route Snapping Action al clicar en un POI
+                map.on('click', 'pois-layer', (e) => {
+                    // map.on('click') normal no debe saltar
+                    e.originalEvent.stopPropagation();
+                    const props = e.features[0].properties;
+                    const coords = e.features[0].geometry.coordinates;
+                    
+                    if (waypoints.length >= 10) {
+                        alert("Máximo 10 puntos de control permitidos en esta demo.");
+                        return;
+                    }
+                    waypoints.push([coords[0], coords[1]]);
+                    if (typeof calculateRoute === 'function') {
+                        calculateRoute();
+                    }
+                });
+
             } else {
-                map.getSource('fountains').setData(data);
+                map.getSource('pois').setData(data);
             }
-        } catch (e) { console.error("Error cargando fuentes:", e); }
+        } catch (e) { console.error("Error cargando POIs:", e); }
     }
 
     let waypoints = []; // List of [lng, lat]

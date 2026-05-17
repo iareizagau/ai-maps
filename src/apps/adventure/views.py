@@ -9,13 +9,11 @@ def map_view(request):
     Permite cargar una ruta existente si se pasa ?edit=ID
     """
     edit_id = request.GET.get('edit')
-    pois = PointOfInterest.objects.all()
     
     context = {
         "title": "Adventure Lab - Planificador de Rutas",
         "app_slug": "adventure",
-        "edit_route_id": edit_id,
-        "pois": pois
+        "edit_route_id": edit_id
     }
     return render(request, "adventure/map.html", context)
 

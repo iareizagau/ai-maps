@@ -1,0 +1,53 @@
+name: Seed Adventure
+
+on:
+  workflow_dispatch:
+    inputs:
+      pbf_url:
+        description: 'URL of the OSM PBF file to download (ej: Geofabrik Spain)'
+        required: true
+        default: 'https://download.geofabrik.de/europe/spain-latest.osm.pbf'
+      import_pois:
+        description: 'Run import_adventure_pois (requires PBF download)'
+        type: boolean
+        required: true
+        default: true
+      import_fountains:
+        description: 'Run import_fountains (via Overpass API)'
+        type: boolean
+        required: true
+        default: true
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    environment: ai-maps
+    steps:
+      - name: SSH and run seeders
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            set -euo pipefail
+            cd ${{ secrets.APP_DIR }}
+            
+            if [ "${{ github.event.inputs.import_pois }}" = "true" ]; then
+              echo "Downloading PBF file from ${{ github.event.inputs.pbf_url }}..."
+              wget -O temp_adventure.osm.pbf "${{ github.event.inputs.pbf_url }}"
+              
+              echo "Running import_adventure_pois..."
+              docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose.prod.yml run --rm -v $(pwd)/temp_adventure.osm.pbf:/app/temp_adventure.osm.pbf web python manage.py import_adventure_pois temp_adventure.osm.pbf
+              
+              echo "Cleaning up PBF file..."
+              rm temp_adventure.osm.pbf
+            fi
+
+            if [ "${{ github.event.inputs.import_fountains }}" = "true" ]; then
+              echo "Running import_fountains..."
+              docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose.prod.yml run --rm web python manage.py import_fountains
+            fi
+            
+            echo "Adventure seeding complete!"

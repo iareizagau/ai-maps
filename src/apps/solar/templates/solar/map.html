@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
     body { font-family: 'Outfit', sans-serif; background: #f1f5f9; overflow: hidden; }
-    #map { height: 100vh; width: 100%; position: relative; }
+    #map { height: 100vh; width: 100%; position: relative; touch-action: none; }
     
     .floating-panel {
         position: absolute;
@@ -99,6 +99,19 @@
     .control-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
     .control-row:last-child { margin-bottom: 0; }
     input[type=range] { flex: 1; accent-color: #4f46e5; height: 4px; }
+
+    @media (max-width: 768px) {
+        .floating-panel {
+            top: auto;
+            bottom: 20px;
+            left: 12px;
+            right: 12px;
+            width: auto;
+            max-height: 50vh;
+            overflow-y: auto;
+            border-radius: 20px;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -322,10 +335,65 @@
     }
 
     var lastClickX, lastClickY;
+    var pointerStartX = 0;
+    var pointerStartY = 0;
+    var pointerStartTime = 0;
+
+    function getPointerCoords(e) {
+        var rect = document.getElementById('map').getBoundingClientRect();
+        var orig = e.originalEvent || e.original || e;
+        
+        var clientX = orig.clientX;
+        var clientY = orig.clientY;
+        
+        if (clientX === undefined && orig.touches && orig.touches.length > 0) {
+            clientX = orig.touches[0].clientX;
+            clientY = orig.touches[0].clientY;
+        }
+        if (clientX === undefined && orig.changedTouches && orig.changedTouches.length > 0) {
+            clientX = orig.changedTouches[0].clientX;
+            clientY = orig.changedTouches[0].clientY;
+        }
+        if (clientX === undefined && e.detail && e.detail.x !== undefined) {
+            clientX = e.detail.x;
+            clientY = e.detail.y;
+        }
+        if (clientX === undefined) {
+            clientX = e.x;
+            clientY = e.y;
+        }
+        
+        if (clientX === undefined || isNaN(clientX)) {
+            return null;
+        }
+        
+        return {
+            x: Math.round(clientX - rect.left),
+            y: Math.round(clientY - rect.top)
+        };
+    }
+
     osmb.on('pointerdown', function(e) {
-        lastClickX = Math.round(e.x || (e.detail && e.detail.x));
-        lastClickY = Math.round(e.y || (e.detail && e.detail.y));
-        handleMapInteraction(lastClickX, lastClickY);
+        var coords = getPointerCoords(e);
+        if (!coords) return;
+        pointerStartX = coords.x;
+        pointerStartY = coords.y;
+        pointerStartTime = Date.now();
+    });
+
+    osmb.on('pointerup', function(e) {
+        var coords = getPointerCoords(e);
+        if (!coords) return;
+        
+        var dist = Math.sqrt(Math.pow(coords.x - pointerStartX, 2) + Math.pow(coords.y - pointerStartY, 2));
+        var duration = Date.now() - pointerStartTime;
+        
+        // Un tap/click genuino es rápido y apenas se mueve (menos de 8px de arrastre, duración menor a 300ms)
+        if (dist < 8 && duration < 300) {
+            lastClickX = coords.x;
+            lastClickY = coords.y;
+            handleMapInteraction(lastClickX, lastClickY);
+        }
     });
 
     // --- Lógica de Sombras (Solar Time Machine) ---

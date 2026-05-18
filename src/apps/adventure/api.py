@@ -155,6 +155,27 @@ def save_route(request, data: RouteCreateSchema):
             surface_stats=data.surface_stats
         )
         
+        # Recalcular surface_stats en el backend si el frontend no los calculó
+        # (ocurre cuando pgRouting no devuelve highway_type, p.ej. faltan columnas de coste en producción)
+        surface_stats_from_frontend = data.surface_stats
+        needs_recalc = (
+            not surface_stats_from_frontend
+            or list(surface_stats_from_frontend.keys()) == ['unknown']
+            or list(surface_stats_from_frontend.keys()) == []
+        )
+        if needs_recalc:
+            edges = TrailEdge.objects.filter(geom__dwithin=(geom, 0.0002))
+            stats = {}
+            total_edges = edges.count()
+            if total_edges > 0:
+                surface_counts = edges.values('surface').annotate(count=Count('id'))
+                for item in surface_counts:
+                    surface = item['surface'] or 'unknown'
+                    pct = (item['count'] / total_edges) * 100
+                    stats[surface] = stats.get(surface, 0) + pct
+                route.surface_stats = {k: round(v, 2) for k, v in stats.items()}
+                route.save(update_fields=['surface_stats'])
+        
         # Fog of War: Desbloquear sectores
         discovery = discover_sectors_from_route(route)
         

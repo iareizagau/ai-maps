@@ -79,6 +79,22 @@ def get_adventure_route(start_coords, end_coords, profile='bikepacking'):
             }
         })
 
+    if not features:
+        # Para facilitar el diagnóstico, comprobamos si la tabla pgr_ways tiene datos en el bbox
+        with connection.cursor() as cursor:
+            cursor.execute(f"SELECT COUNT(*) FROM pgr_ways WHERE the_geom && ST_MakeEnvelope({min_lon}, {min_lat}, {max_lon}, {max_lat}, 4326)")
+            ways_count = cursor.fetchone()[0]
+        
+        # También comprobamos cuántos vértices hay en total
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM pgr_ways_vertices_pgr")
+            vertices_count = cursor.fetchone()[0]
+            
+        return {
+            "error": f"No se encontró camino entre los nodos {start_node} y {end_node}. "
+                     f"[Diagnóstico: {ways_count} vías en la zona, {vertices_count} vértices en la base de datos]"
+        }
+
     return {
         "type": "FeatureCollection",
         "features": features,

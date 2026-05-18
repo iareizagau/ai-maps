@@ -96,7 +96,7 @@ def get_route(request, coords: str, profile: str = "bikepacking"):
     for i in range(len(points) - 1):
         segment = get_adventure_route(points[i], points[i+1], profile=profile)
         if "error" in segment:
-            continue
+            return {"error": segment["error"]}
         
         # Marcamos cada feature con el Ã­ndice del segmento al que pertenece
         for feature in segment["features"]:

@@ -431,6 +431,10 @@
             });
     }
 
+    // Variables para recordar el último clic/tap y poder refrescar el edificio tras calcular
+    var lastClickX = 0;
+    var lastClickY = 0;
+
     // Distinguir entre arrastre (pan/drag) y toque rápido (tap) en pantallas táctiles con tolerancia al micro-arrastre
     var isDragging = false;
     var touchStartX = 0;
@@ -488,6 +492,9 @@
         var rect = mapContainer.getBoundingClientRect();
         var x = Math.round(event.clientX - rect.left);
         var y = Math.round(event.clientY - rect.top);
+        
+        lastClickX = x;
+        lastClickY = y;
         console.log('Procesando clic/tap en píxeles del contenedor: x=' + x + ', y=' + y);
 
         // Opcional: Registrar diagnóstico del feature bajo las coordenadas 3D

@@ -96,12 +96,24 @@ def trigger_calculation(request, osm_id: int):
 @router.get("/building-at")
 def get_building_at(request, lat: float, lon: float):
     """
-    Busca el edificio en una coordenada específica.
+    Busca el edificio en una coordenada específica o el más cercano dentro de un radio de 15 metros.
     """
     from django.contrib.gis.geos import Point
+    from django.contrib.gis.db.models.functions import Distance
+    from django.contrib.gis.measure import D
+    
     point = Point(lon, lat, srid=4326)
     
+    # 1. Intentamos primero una intersección exacta
     building = Building.objects.filter(geom__intersects=point).select_related('potential').first()
+    
+    # 2. Si no se encuentra, buscamos el edificio más cercano dentro de 15 metros para tolerar la inclinación 3D y toques táctiles
+    if not building:
+        building = Building.objects.annotate(
+            distance=Distance('geom', point)
+        ).filter(
+            geom__distance_lte=(point, D(m=15))
+        ).select_related('potential').order_by('distance').first()
     
     if not building:
         return {"error": "No building found at this location"}

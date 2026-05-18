@@ -507,3 +507,5 @@ def get_route_intel(request, route_id: int):
             "is_direct": drop.route_id == route.id
         })
         
+    return {"success": True, "intel": intel_list}
+

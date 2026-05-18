@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional
 import json
 from .selectors import get_adventure_route
 from django.contrib.gis.geos import Polygon, LineString, MultiLineString, Point
-from .models import Fountain, Route, IntelDrop, TrailEdge, ExplorationRecord
+from .models import Fountain, Route, IntelDrop, TrailEdge, ExplorationRecord, PointOfInterest
 from .services import discover_sectors_from_route
 from django.db.models import Count
 from django.contrib.auth import get_user_model

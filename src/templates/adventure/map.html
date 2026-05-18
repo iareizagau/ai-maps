@@ -289,6 +289,12 @@
             const response = await fetch(`/api/adventure/pois?bbox=${bbox}`);
             const data = await response.json();
             
+            // Validar que la respuesta sea GeoJSON válido antes de pasarlo a MapLibre
+            if (!data || data.error || data.type !== 'FeatureCollection') {
+                console.warn("POIs API no devolvió GeoJSON válido:", data?.error || data);
+                return;
+            }
+            
             if (!map.getSource('pois')) {
                 map.addSource('pois', { type: 'geojson', data: data });
                 

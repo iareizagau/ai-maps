@@ -409,7 +409,21 @@
             const data = await response.json();
             currentRouteData = data;
 
-            if (data.error) return;
+            if (data.error) {
+                console.error("Error de enrutamiento:", data.error);
+                document.getElementById('stats-panel').classList.remove('hidden');
+                document.getElementById('dist-val').innerText = '⚠️ Error';
+                document.getElementById('surface-bar').innerHTML = `<span style="font-size:10px;color:#ef4444">Red de rutas no disponible en servidor</span>`;
+                return;
+            }
+
+            if (!data.features || data.features.length === 0) {
+                console.warn("La ruta devolvió 0 segmentos. ¿Faltan columnas de coste en pgr_ways?");
+                document.getElementById('stats-panel').classList.remove('hidden');
+                document.getElementById('dist-val').innerText = '⚠️ Sin ruta';
+                document.getElementById('surface-bar').innerHTML = `<span style="font-size:10px;color:#f59e0b">No se encontró camino entre esos puntos</span>`;
+                return;
+            }
 
             updateMapRoute(data, profile);
             updateStats(data);

@@ -429,6 +429,7 @@
     map.on('moveend', fetchPOIs);
     
     map.on('load', () => {
+        map.resize();
         fetchPOIs();
     });
 
@@ -1134,6 +1135,13 @@
             if (sheet) {
                 sheet.classList.remove('sheet-collapsed', 'sheet-mid', 'sheet-expanded');
             }
+        }
+
+        // Recalculate map canvas size for MapLibre
+        if (typeof map !== 'undefined' && map && typeof map.resize === 'function') {
+            setTimeout(() => {
+                map.resize();
+            }, 100);
         }
     }
 

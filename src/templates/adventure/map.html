@@ -73,33 +73,97 @@
         box-shadow: 0 3px 6px rgba(0,0,0,0.3);
     }
 
-    /* PREMIUM MOBILE RESPONSIVENESS */
+    /* PREMIUM MOBILE BOTTOM SHEET SYSTEM */
+    .sheet-handle {
+        display: none;
+    }
     @media (max-width: 768px) {
+        /* Hide site footer on mobile to maximize map canvas */
+        footer {
+            display: none !important;
+        }
+        
         .relative.w-full {
+            display: block !important;
+            height: calc(100vh - 72px) !important;
+            overflow: hidden !important;
+            position: relative !important;
+        }
+
+        #map {
+            height: 100% !important;
+            width: 100% !important;
+            border-radius: 0px !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            z-index: 1 !important;
+        }
+
+        .sheet-handle {
+            display: block !important;
+            width: 40px;
+            height: 5px;
+            background: rgba(156, 163, 175, 0.4);
+            border-radius: 999px;
+            margin: -4px auto 12px auto;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+        .sheet-handle:hover {
+            background: rgba(156, 163, 175, 0.7);
+        }
+        .dark .sheet-handle {
+            background: rgba(75, 85, 99, 0.4);
+        }
+        .dark .sheet-handle:hover {
+            background: rgba(75, 85, 99, 0.7);
+        }
+
+        .adventure-controls {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: auto !important;
+            width: 100% !important;
+            height: 70vh !important;
+            max-height: 70vh !important;
+            z-index: 1000 !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            border-radius: 28px 28px 0 0 !important;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.12) !important;
+            border-top: 1px solid rgba(255,255,255,0.4) !important;
+            padding: 16px 20px 24px 20px !important;
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            padding: 8px;
-        }
-        #map {
-            height: 380px !important;
-            border-radius: 16px;
-            order: 1;
-        }
-        .adventure-controls {
-            position: relative !important;
-            top: auto !important;
-            left: auto !important;
-            width: 100% !important;
-            order: 2;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
-            border: 1px solid #e5e7eb;
-            border-radius: 16px !important;
-            padding: 16px !important;
+            gap: 12px;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            overflow-y: auto !important;
         }
         .dark .adventure-controls {
-            border-color: #374151;
+            background: rgba(17, 24, 39, 0.95) !important;
+            border-top: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.4) !important;
         }
+
+        /* Bottom Sheet States */
+        .adventure-controls.sheet-collapsed {
+            transform: translateY(calc(100% - 74px)) !important;
+            overflow: hidden !important;
+        }
+        .adventure-controls.sheet-mid {
+            transform: translateY(calc(100% - 245px)) !important;
+            overflow: hidden !important;
+        }
+        .adventure-controls.sheet-expanded {
+            transform: translateY(0) !important;
+        }
+
+        /* Profile Panel inside Bottom Sheet */
         .profile-panel {
             position: relative !important;
             bottom: auto !important;
@@ -107,42 +171,54 @@
             right: auto !important;
             width: 100% !important;
             height: auto !important;
-            min-height: 220px;
+            background: transparent !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin-top: 8px !important;
+            border: none !important;
             transform: none !important;
-            order: 3;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
-            border: 1px solid #e5e7eb;
-            border-radius: 16px !important;
-            transition: none !important;
-            padding: 12px !important;
         }
         .dark .profile-panel {
-            border-color: #374151;
+            background: transparent !important;
         }
         .profile-panel.collapsed {
-            transform: none !important;
-            height: 48px !important;
-            min-height: 48px !important;
-            overflow: hidden;
-            padding: 0 12px !important;
+            display: none !important; /* Hide elevation profile completely when collapsed on mobile */
         }
+        
         .toggle-profile-btn {
             position: relative !important;
-            top: 0 !important;
-            width: 100%;
-            border-radius: 8px;
-            text-align: center;
+            top: auto !important;
+            right: auto !important;
+            width: 100% !important;
+            display: block !important;
+            border-radius: 12px !important;
+            text-align: center !important;
+            padding: 10px 14px !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.05em !important;
+            background: rgba(243, 244, 246, 0.8) !important;
+            color: #374151 !important;
+            margin-bottom: 8px !important;
+            border: 1px solid rgba(0,0,0,0.05) !important;
             box-shadow: none !important;
-            border: 1px solid #e5e7eb;
-            margin-top: 6px;
-            margin-bottom: 12px;
         }
         .dark .toggle-profile-btn {
-            border-color: #374151;
+            background: rgba(55, 65, 81, 0.8) !important;
+            color: #f3f4f6 !important;
+            border-color: rgba(255,255,255,0.05) !important;
         }
+        
         #elevation-chart {
-            height: 160px !important;
+            height: 140px !important;
             width: 100% !important;
+            background: rgba(0,0,0,0.02) !important;
+            border-radius: 14px !important;
+            padding: 8px !important;
+        }
+        .dark #elevation-chart {
+            background: rgba(255,255,255,0.02) !important;
         }
     }
 </style>
@@ -150,7 +226,8 @@
 
 {% block content %}
 <div class="relative w-full">
-    <div class="adventure-controls">
+    <div class="adventure-controls sheet-collapsed">
+        <div class="sheet-handle" id="sheet-toggle"></div>
         <div class="flex justify-between items-center">
             <h2 class="text-xl font-bold flex items-center gap-2">
                 🗺️ Adventure Planner
@@ -713,6 +790,14 @@
 
     function updateStats(data) {
         document.getElementById('stats-panel').classList.remove('hidden');
+        
+        // Auto-expand bottom sheet on mobile when stats are loaded
+        if (window.innerWidth <= 768) {
+            const sheet = document.querySelector('.adventure-controls');
+            sheet.classList.remove('sheet-collapsed', 'sheet-expanded');
+            sheet.classList.add('sheet-mid');
+        }
+
         document.getElementById('dist-val').innerText = (data.metadata.total_cost / 1000).toFixed(2);
 
         // Calculate surfaces
@@ -1000,6 +1085,72 @@
             btn.innerText = 'Añadir Intel';
         }
     });
+
+    // ==========================================
+    // PREMIUM MOBILE BOTTOM SHEET CONTROLLER
+    // ==========================================
+    const sheet = document.querySelector('.adventure-controls');
+    const sheetToggle = document.getElementById('sheet-toggle');
+    const titleHeader = document.querySelector('.adventure-controls h2');
+
+    function cycleSheetState() {
+        if (window.innerWidth > 768) return;
+        
+        if (sheet.classList.contains('sheet-collapsed')) {
+            sheet.classList.remove('sheet-collapsed', 'sheet-expanded');
+            sheet.classList.add('sheet-mid');
+        } else if (sheet.classList.contains('sheet-mid')) {
+            sheet.classList.remove('sheet-collapsed', 'sheet-mid');
+            sheet.classList.add('sheet-expanded');
+        } else {
+            sheet.classList.remove('sheet-mid', 'sheet-expanded');
+            sheet.classList.add('sheet-collapsed');
+        }
+    }
+
+    if (sheetToggle) sheetToggle.addEventListener('click', cycleSheetState);
+    if (titleHeader) {
+        titleHeader.style.cursor = 'pointer';
+        titleHeader.addEventListener('click', cycleSheetState);
+    }
+
+    // Adapt layout on window resize and load
+    function adjustLayoutForMobile() {
+        const controls = document.querySelector('.adventure-controls');
+        const profile = document.getElementById('profile-container');
+        const mainContainer = document.querySelector('.relative.w-full');
+
+        if (window.innerWidth <= 768) {
+            // Move profile inside controls so it scrolls inside the bottom sheet
+            if (profile && controls && profile.parentNode !== controls) {
+                controls.appendChild(profile);
+            }
+        } else {
+            // Move profile back to desktop position as a sibling of map
+            if (profile && mainContainer && profile.parentNode === controls) {
+                mainContainer.appendChild(profile);
+            }
+            // Remove mobile classes on desktop
+            if (sheet) {
+                sheet.classList.remove('sheet-collapsed', 'sheet-mid', 'sheet-expanded');
+            }
+        }
+    }
+
+    window.addEventListener('resize', adjustLayoutForMobile);
+    window.addEventListener('load', adjustLayoutForMobile);
+    adjustLayoutForMobile(); // Run immediately
+
+    // Connect Profile Button to sheet expansion
+    const toggleProfileBtn = document.getElementById('toggle-profile');
+    if (toggleProfileBtn) {
+        toggleProfileBtn.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                sheet.classList.remove('sheet-collapsed', 'sheet-mid');
+                sheet.classList.add('sheet-expanded');
+            }
+        });
+    }
 
 </script>
 {% endblock %}

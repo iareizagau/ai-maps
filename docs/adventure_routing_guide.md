@@ -74,6 +74,37 @@ Ejecuta la calibración de costes de ciclismo y senderismo sobre la red:
 docker exec -it maps_web_prod python manage.py setup_routing_costs
 ```
 
+### Paso 3.5: Inicializar Costes de Enrutamiento Camper (Overland / Vanlife) [NUEVO]
+Ejecuta la calibración de costes específica para vehículos pesados / furgonetas camper sobre el contenedor de base de datos de producción:
+```bash
+docker exec -it maps_db_prod psql -U postgres -d maps_db -c "
+-- 1. Añadir columna si no existe
+ALTER TABLE pgr_ways ADD COLUMN IF NOT EXISTS camper_cost double precision;
+
+-- 2. Inicializar con coste de tiempo base (segundos)
+UPDATE pgr_ways SET camper_cost = cost_s;
+
+-- 3. Penalizar masivamente (pero mantener conectados) caminos, sendas, aceras y carriles bici
+UPDATE pgr_ways 
+SET camper_cost = cost_s * 100000 
+WHERE tag_id IN (
+    SELECT tag_id FROM configuration 
+    WHERE tag_value IN ('path', 'steps', 'footway', 'pedestrian', 'cycleway', 'bridleway', 'grade4', 'grade5')
+) AND cost_s > 0;
+
+-- 4. Penalizar (multiplicador x20) pistas forestales y caminos de tierra de grado 3 (transitables pero no óptimos)
+UPDATE pgr_ways 
+SET camper_cost = camper_cost * 20 
+WHERE tag_id IN (
+    SELECT tag_id FROM configuration 
+    WHERE tag_value IN ('track', 'grade3')
+);
+
+-- 5. Limpiar valores inválidos o negativos que puedan romper Dijkstra
+UPDATE pgr_ways SET camper_cost = NULL WHERE camper_cost < 0;
+"
+```
+
 ### Paso 4: Rellenar la Tabla de Senderos y Terrenos
 Lanza nuestro comando de mapeado inteligente de superficies:
 ```bash

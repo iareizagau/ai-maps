@@ -13,16 +13,22 @@ El enrutador de aventura no devolvía caminos y el panel mostraba *"No se encont
 2. **pgRouting 4.0+ eliminó la función heredada `pgr_createTopology`** (la cual fue deprecada en 3.8.0). Intentar ejecutarla en producción arrojó un error de función no encontrada (`function does not exist`).
 3. **El backend ignoraba los errores en silencio**: Si un segmento de ruta fallaba por falta de base de datos, el backend hacía un `continue` silencioso devolviendo una lista vacía, ocultando el error al desarrollador y al usuario.
 4. **Falta de datos en `adventure_trails`**: La tabla que calcula los tipos de terreno tenía 0 filas en producción, lo cual impedía realizar el fallback de estadísticas en el servidor.
+5. **Precisión Errónea de Distancias**: El frontend y el perfil de elevación consumían la columna lógica de dificultad `cost` para calcular distancias, reportando distancias físicas sumamente reducidas e incorrectas (ej. mostrar "5.56 km" en una ruta real de más de 50 km).
+6. **Bounding Box restrictivo en Enrutamientos Especiales**: Vías fuertemente penalizadas (por perfil `camper` o configuración de ruta escénica panorámica) forzaban grandes rodeos espaciales que se salían de la caja delimitadora fija (~5km) del enrutador, rompiendo la continuidad lógica del grafo y provocando el fallo `"No se encontró camino"`.
+7. **Puntos de Interés (POIs) Vacíos en Vista de Detalle**: Las fuentes de agua potable sólo residían en el modelo heredado `Fountain` (`adventure_fountains`), mientras que la vista detallada de la ruta (`route_detail_view`) requería consultar el nuevo modelo táctico unificado `PointOfInterest` (`adventure_pois`), el cual estaba vacío (0 registros).
 
 ---
 
 ## 🛠️ 2. Arquitectura de Solución Implementada
 
-Para resolver esto y prevenir futuros fallos ciegos, implementamos tres pilares en el código:
+Para resolver esto y prevenir futuros fallos ciegos, implementamos la siguiente arquitectura de soluciones:
 
 *   **Propagación de Errores Activa ([api.py](file:///c:/Users/imanol/projects/imanol/saas/maps/src/apps/adventure/api.py))**: Modificado para capturar errores de base de datos y retornarlos al cliente de manera explícita en lugar de omitirlos.
 *   **Mensajes de Autodiagnóstico ([selectors.py](file:///c:/Users/imanol/projects/imanol/saas/maps/src/apps/adventure/selectors.py))**: Si el enrutador no encuentra caminos, realiza consultas en caliente y añade estadísticas del estado de la base de datos de producción directamente en el mensaje de error.
 *   **Comando de Poblado de Terrenos ([populate_adventure_trails.py](file:///c:/Users/imanol/projects/imanol/saas/maps/src/apps/adventure/management/commands/populate_adventure_trails.py))**: Un comando Django robusto que limpia la tabla `adventure_trails` e inserta los caminos clasificando inteligentemente las superficies en base a sus etiquetas de OSM.
+*   **Cálculo Geográfico Preciso (`length_m`)**: Modificamos el SQL de `get_adventure_route` para calcular la longitud real exacta de cada tramo mediante `ST_Length(geometry::geography)` en PostGIS, actualizando la integración del frontend (mapa, barra de estadísticas, eje X del gráfico de perfil y proporciones de asfalto/tierra).
+*   **Bounding Box Dinámico según Perfil**: Ajuste inteligente de la caja delimitadora espacial en `selectors.py`. En perfiles de alta tolerancia o vehículos pesados como `camper`, ampliamos el buffer de búsqueda espaciotemporal hasta un factor de **2.5x** (mínimo ~20km) para garantizar margen ante desvíos masivos panorámicos.
+*   **Pipeline de POIs Tácticos unificado**: Implementación del modelo `PointOfInterest` (`adventure_pois`) integrando campings de pago (`camp_paid`), zonas de pernocta gratuitas (`camp_free`), refugios/hostales (`shelter`), cafeterías/bares (`cafe`) y estaciones (`station`), junto a las fuentes (`water`).
 
 ---
 
@@ -74,11 +80,27 @@ Lanza nuestro comando de mapeado inteligente de superficies:
 docker exec -it maps_web_prod python manage.py populate_adventure_trails
 ```
 
+### Paso 5: Poblar Puntos de Interés Enriquecidos (POIs) [NUEVO]
+Poblar el ecosistema de POIs (campings, zonas camper, refugios, hostelería, transporte) de forma rápida mediante consulta directa a la API Overpass para Euskadi:
+```bash
+# 1. Ejecutar la importación remota de POIs de Overpass
+docker exec -it maps_web_prod python manage.py import_overpass_pois
+
+# 2. (Opcional) Migrar fuentes ya existentes en el modelo Fountain a la tabla unificada
+docker exec -it maps_web_prod python manage.py shell -c "
+from apps.adventure.models import Fountain, PointOfInterest
+fountains = Fountain.objects.all()
+pois = [PointOfInterest(osm_id=f.osm_id, poi_type='water', name=f.name, location=f.location, tags={'description': f.description}) for f in fountains]
+PointOfInterest.objects.bulk_create(pois, ignore_conflicts=True)
+print('Migración completada con éxito')
+"
+```
+
 ---
 
 ## 📊 4. Comandos de Diagnóstico Rápido
 
-Ejecuta estas consultas en el VPS si tienes sospechas de fallos de enrutamiento:
+Ejecuta estas consultas en el VPS si tienes sospechas de fallos de enrutamiento o inconsistencia de datos:
 
 *   **Comprobar número de vértices cargados**:
     ```bash
@@ -91,3 +113,17 @@ Ejecuta estas consultas en el VPS si tienes sospechas de fallos de enrutamiento:
     docker exec -it maps_db_prod psql -U postgres -d maps_db -c "SELECT COUNT(*), surface FROM adventure_trails GROUP BY surface;"
     ```
     *Te mostrará el número de caminos clasificados por asfalto, tierra, etc.*
+
+*   **Comprobar la salud de los Puntos de Interés (POIs)**:
+    ```bash
+    docker exec -it maps_db_prod psql -U postgres -d maps_db -c "SELECT COUNT(*), poi_type FROM adventure_pois GROUP BY poi_type;"
+    ```
+    *Muestra la distribución de POIs tácticos cargados (water, shelter, cafe, station, camp_paid, camp_free).*
+
+*   **Simular y depurar consulta de enrutamiento desde la CLI de Django**:
+    ```bash
+    docker exec -it maps_web_prod python manage.py shell -c "
+    from apps.adventure.selectors import get_adventure_route
+    print(get_adventure_route([-1.981, 43.318], [-1.99, 43.32], profile='camper'))
+    "
+    ```

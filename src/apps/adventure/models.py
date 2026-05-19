@@ -150,6 +150,8 @@ class PointOfInterest(models.Model):
         ('shelter', 'Refugio / Cabaña'),
         ('cafe', 'Cafetería / Bar'),
         ('station', 'Estación de Transporte'),
+        ('camp_paid', '⛺ Camping (Pago)'),
+        ('camp_free', '🚐 Zona Camper / Pernocta (Gratis)'),
         ('other', 'Otro')
     )
     

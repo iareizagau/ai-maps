@@ -74,7 +74,7 @@ def get_pois(request, bbox: str):
         return {"error": str(e)}
 
 @router.get("/route")
-def get_route(request, coords: str, profile: str = "bikepacking"):
+def get_route(request, coords: str, profile: str = "bikepacking", scenic: bool = False):
     """
     Calcula una ruta multi-punto.
     coords: string en formato "lon,lat;lon,lat;lon,lat"
@@ -94,7 +94,7 @@ def get_route(request, coords: str, profile: str = "bikepacking"):
 
     # Calculamos la ruta por tramos (segmentos)
     for i in range(len(points) - 1):
-        segment = get_adventure_route(points[i], points[i+1], profile=profile)
+        segment = get_adventure_route(points[i], points[i+1], profile=profile, scenic=scenic)
         if "error" in segment:
             return {"error": segment["error"]}
         

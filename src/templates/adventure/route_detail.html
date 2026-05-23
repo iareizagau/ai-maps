@@ -41,6 +41,11 @@
             <a href="{% url 'follow_route' route.id %}" class="mt-4 w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm uppercase tracking-widest py-3 rounded-xl shadow-lg shadow-emerald-900/50 transition-all transform hover:-translate-y-0.5">
                 <span class="animate-pulse">🔴</span> Tactical HUD
             </a>
+
+            <!-- Offline Caching Button -->
+            <button id="btn-download-offline" onclick="downloadRouteOffline()" class="mt-2 w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white font-black text-xs uppercase tracking-widest py-3 rounded-xl shadow-lg border border-gray-700 transition-all transform hover:-translate-y-0.5">
+                💾 Cargar Offline
+            </button>
         </div>
     </div>
 
@@ -596,5 +601,104 @@
         
         animationStep();
     });
+
+    // Offline maps downloading system
+    const routeId = {{ route.id }};
+    
+    // Check if previously downloaded
+    if (localStorage.getItem(`route-offline-${routeId}`) === 'true') {
+        const btn = document.getElementById('btn-download-offline');
+        if (btn) {
+            btn.innerHTML = `✅ Disponible Offline`;
+            btn.classList.remove('bg-gray-800', 'hover:bg-gray-700');
+            btn.classList.add('bg-emerald-700');
+        }
+    }
+
+    async function downloadRouteOffline() {
+        const coords = routeGeoJSON.coordinates.flat(1);
+        if (!coords || coords.length === 0) return;
+
+        const btn = document.getElementById('btn-download-offline');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+
+        // Define tile sources
+        const sources = [
+            // ESRI Topo Map (used in route_detail as default layer)
+            (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/${z}/${y}/${x}`,
+            // ESRI Satellite World Imagery (used in sat view)
+            (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`,
+            // CartoDB Dark Matter (For Follow HUD)
+            (z, x, y) => `https://a.basemaps.cartocdn.com/rastertiles/dark_all/${z}/${x}/${y}.png`,
+            // Terrarium 3D DEM Terrain
+            (z, x, y) => `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`
+        ];
+
+        // Compute unique tile coordinates for zoom levels 11 to 15
+        const tileUrls = new Set();
+        const zooms = [11, 12, 13, 14, 15];
+
+        coords.forEach(pt => {
+            const lng = pt[0];
+            const lat = pt[1];
+            
+            zooms.forEach(zoom => {
+                const latRad = lat * Math.PI / 180;
+                const n = Math.pow(2, zoom);
+                const xtile = Math.floor((lng + 180) / 360 * n);
+                const ytile = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
+                
+                if (xtile >= 0 && xtile < n && ytile >= 0 && ytile < n) {
+                    sources.forEach(srcFn => {
+                        tileUrls.add(srcFn(zoom, xtile, ytile));
+                    });
+                }
+            });
+        });
+
+        const urlList = Array.from(tileUrls);
+        console.log(`Calculado un total de ${urlList.length} tiles únicas para descarga offline.`);
+
+        try {
+            const cache = await caches.open('adventure-tiles-cache');
+            let downloaded = 0;
+            const total = urlList.length;
+
+            // Fetch and cache in batches
+            const batchSize = 15;
+            for (let i = 0; i < urlList.length; i += batchSize) {
+                const batch = urlList.slice(i, i + batchSize);
+                await Promise.all(batch.map(async url => {
+                    try {
+                        const cached = await cache.match(url);
+                        if (!cached) {
+                            const response = await fetch(url);
+                            if (response.ok) {
+                                await cache.put(url, response);
+                            }
+                        }
+                    } catch (err) {
+                        console.warn(`Error al cachear tile: ${url}`, err);
+                    }
+                    downloaded++;
+                }));
+                
+                const progress = Math.round((downloaded / total) * 100);
+                btn.innerHTML = `💾 Descargando... ${progress}%`;
+            }
+
+            btn.innerHTML = `✅ Disponible Offline`;
+            btn.classList.remove('bg-gray-800', 'hover:bg-gray-700');
+            btn.classList.add('bg-emerald-700');
+            localStorage.setItem(`route-offline-${routeId}`, 'true');
+
+        } catch (e) {
+            console.error("Error en descarga offline", e);
+            btn.innerHTML = `❌ Error en Descarga`;
+            btn.disabled = false;
+            setTimeout(() => { btn.innerHTML = originalText; }, 3000);
+        }
+    }
 </script>
 {% endblock %}

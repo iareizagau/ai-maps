@@ -5,6 +5,7 @@ from django.conf import settings
 from apps.core.api import api
 from django.contrib.sitemaps.views import sitemap
 from apps.sbk.sitemaps import SbkCitySitemap, SbkTypeSitemap, SbkStaticSitemap, SbkPersonSitemap
+from django.views.generic import TemplateView
 
 sitemaps = {
     'sbk_cities': SbkCitySitemap,
@@ -22,6 +23,8 @@ def healthz(request):
 
 urlpatterns = [
     path('healthz/', healthz),
+    # Service Worker
+    path('sw.js', TemplateView.as_view(template_name="adventure/sw.js", content_type='application/javascript'), name='service_worker'),
     # Auth
     path('', include('apps.core.urls')),
     path('accounts/', include('allauth.urls')),
@@ -41,6 +44,7 @@ urlpatterns += [
     path('zbe/', include('apps.zbe.urls')),
     path('adventure/', include('apps.adventure.urls')),
     path('solar/', include('apps.solar.urls')),
+    path('oceania/', include('apps.oceania.urls')),
 ]
 if settings.DEBUG:
     from django.conf.urls.static import static

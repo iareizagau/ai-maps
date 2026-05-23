@@ -23,9 +23,12 @@
 
 <script>
     console.log("Fog of War: Sistema de Inteligencia (Recon) cargado.");
+    
+    let activeMapInstance = null;
 
     async function initFogOfWar(mapInstance) {
         if (!mapInstance) return;
+        activeMapInstance = mapInstance;
         
         try {
             console.log("Fog of War: Sincronizando datos de inteligencia...");
@@ -130,8 +133,9 @@
     }
 
     function showIntel(props, coordinates) {
+        if (!activeMapInstance) return;
         // Vuelo Cinematográfico al punto de Inteligencia
-        mapInstance.flyTo({
+        activeMapInstance.flyTo({
             center: coordinates,
             zoom: 15,
             pitch: 65,
@@ -151,12 +155,13 @@
     }
 
     function closeIntel() {
+        if (!activeMapInstance) return;
         const visor = document.getElementById('intel-visor');
         visor.classList.add('opacity-0', 'pointer-events-none');
         visor.classList.remove('opacity-100', 'pointer-events-auto');
         
         // Volver a vista táctica general
-        mapInstance.easeTo({
+        activeMapInstance.easeTo({
             pitch: 45,
             duration: 1000
         });

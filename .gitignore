@@ -44,3 +44,6 @@ settings.local.json
 .claude-session/
 .claude/session-*.log
 .claude/scratch/
+
+# Large data files
+*.pbf

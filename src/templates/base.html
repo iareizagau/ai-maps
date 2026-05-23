@@ -29,5 +29,15 @@
     </div>
 
     {% block extra_js %}{% endblock %}
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('sw: Service Worker registrado con éxito:', reg.scope))
+                    .catch(err => console.error('sw: Error al registrar Service Worker:', err));
+            });
+        }
+    </script>
 </body>
 </html>

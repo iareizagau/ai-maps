@@ -6,24 +6,64 @@ from apps.adventure.models import PointOfInterest
 class Command(BaseCommand):
     help = 'Import rich POIs (shelters, cafes, stations, campsites) from OpenStreetMap via Overpass API'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--country',
+            type=str,
+            help='ISO 3166-1 country code (e.g. ES, FR, CH)'
+        )
+        parser.add_argument(
+            '--region',
+            type=str,
+            help='ISO 3166-2 region code (e.g. ES-PV, FR-ARA, CH-BE)'
+        )
+        parser.add_argument(
+            '--bbox',
+            type=str,
+            help='Bounding box in format "min_lon,min_lat,max_lon,max_lat"'
+        )
+
     def handle(self, *args, **options):
-        self.stdout.write('Fetching POIs from Overpass API...')
+        country = options.get('country')
+        region = options.get('region')
+        bbox = options.get('bbox')
         
-        # Query for Basque Country using ISO code
-        # We fetch: shelter, alpine_hut, wilderness_hut, cafe, bar, pub, restaurant, station, camp_site, caravan_site
-        query = """
-        [out:json][timeout:90];
-        area["ISO3166-2"="ES-PV"]->.a;
+        if region:
+            area_expr = f'area["ISO3166-2"="{region}"]->.a;'
+            filter_expr = '(area.a)'
+            self.stdout.write(f'Fetching POIs for region {region} from Overpass API...')
+        elif country:
+            area_expr = f'area["ISO3166-1"="{country}"]->.a;'
+            filter_expr = '(area.a)'
+            self.stdout.write(f'Fetching POIs for country {country} from Overpass API...')
+        elif bbox:
+            coords = [c.strip() for c in bbox.split(',')]
+            if len(coords) != 4:
+                self.stdout.write(self.style.ERROR('Bbox format must be "min_lon,min_lat,max_lon,max_lat"'))
+                return
+            # Overpass expects (lat_min, lon_min, lat_max, lon_max)
+            area_expr = ''
+            filter_expr = f'({coords[1]},{coords[0]},{coords[3]},{coords[2]})'
+            self.stdout.write(f'Fetching POIs for bounding box {bbox} from Overpass API...')
+        else:
+            # Default to ES-PV
+            area_expr = 'area["ISO3166-2"="ES-PV"]->.a;'
+            filter_expr = '(area.a)'
+            self.stdout.write('Fetching POIs for default region (Basque Country, ES-PV) from Overpass API...')
+
+        query = f"""
+        [out:json][timeout:120];
+        {area_expr}
         (
-          node["amenity"="shelter"](area.a);
-          node["tourism"="alpine_hut"](area.a);
-          node["tourism"="wilderness_hut"](area.a);
-          node["amenity"="cafe"](area.a);
-          node["amenity"="restaurant"](area.a);
-          node["tourism"="camp_site"](area.a);
-          node["tourism"="caravan_site"](area.a);
-          node["railway"="station"](area.a);
-          node["public_transport"="station"](area.a);
+          node["amenity"="shelter"]{filter_expr};
+          node["tourism"="alpine_hut"]{filter_expr};
+          node["tourism"="wilderness_hut"]{filter_expr};
+          node["amenity"="cafe"]{filter_expr};
+          node["amenity"="restaurant"]{filter_expr};
+          node["tourism"="camp_site"]{filter_expr};
+          node["tourism"="caravan_site"]{filter_expr};
+          node["railway"="station"]{filter_expr};
+          node["public_transport"="station"]{filter_expr};
         );
         out body;
         """
@@ -38,6 +78,9 @@ class Command(BaseCommand):
             response.raise_for_status()
             data = response.json()
             
+            if 'remark' in data:
+                self.stdout.write(self.style.WARNING(f"Overpass API Warning/Error: {data['remark']}"))
+                
             elements = data.get('elements', [])
             self.stdout.write(f'Found {len(elements)} POI elements. Importing...')
             

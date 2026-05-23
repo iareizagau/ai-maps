@@ -18,15 +18,49 @@ def map_view(request):
     return render(request, "adventure/map.html", context)
 
 @login_required
+def vanlife_planner_view(request):
+    """
+    Vista del Planificador Táctico de Viajes en Furgoneta Camper (Vanlife TSP Planner).
+    """
+    context = {
+        "title": "Vanlife Planner - Planificador de Expedición Camper",
+        "app_slug": "adventure",
+    }
+    return render(request, "adventure/vanlife_planner.html", context)
+
+@login_required
 def dashboard_view(request):
     """
     Dashboard para ver las rutas guardadas del usuario.
     """
+    import json
     routes = Route.objects.filter(user=request.user).select_related('user')
+    
+    routes_list = []
+    for r in routes:
+        # Extraer porcentajes de superficie de forma segura
+        surface = r.surface_percentages
+        routes_list.append({
+            "id": r.id,
+            "name": r.name,
+            "description": r.description or "",
+            "profile": r.profile,
+            "distance": float(r.distance_km),
+            "gain": float(r.elevation_gain or 0),
+            "loss": float(r.elevation_loss or 0),
+            "asphalt": float(surface.get("asphalt", 0)),
+            "dirt": float(surface.get("dirt", 0)),
+            "difficulty": r.difficulty_badge,
+            "isPublic": bool(r.is_public),
+            "location": f"{r.location_city or ''}, {r.location_province or ''}".strip(", "),
+            "geojson": json.loads(r.geom_simplified_geojson) if r.geom_simplified_geojson else {}
+        })
+        
     context = {
         "title": "Mis Rutas de Aventura",
         "app_slug": "adventure",
-        "routes": routes
+        "routes": routes,
+        "routes_json": json.dumps(routes_list)
     }
     return render(request, "adventure/dashboard.html", context)
 

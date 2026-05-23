@@ -111,13 +111,31 @@ Lanza nuestro comando de mapeado inteligente de superficies:
 docker exec -it maps_web_prod python manage.py populate_adventure_trails
 ```
 
-### Paso 5: Poblar Puntos de Interés Enriquecidos (POIs) [NUEVO]
-Poblar el ecosistema de POIs (campings, zonas camper, refugios, hostelería, transporte) de forma rápida mediante consulta directa a la API Overpass para Euskadi:
+### Paso 5: Poblar Puntos de Interés Enriquecidos (POIs) y Fuentes [ACTUALIZADO]
+El ecosistema de POIs (campings, zonas camper, refugios, hostelería, transporte) y fuentes de agua potable se poblan mediante consultas optimizadas a la API de Overpass. Ahora soporta parámetros dinámicos para facilitar la expansión internacional:
+
 ```bash
-# 1. Ejecutar la importación remota de POIs de Overpass
+# 1. Ejecutar la importación remota de POIs de Overpass (por defecto importa Euskadi ES-PV)
 docker exec -it maps_web_prod python manage.py import_overpass_pois
 
-# 2. (Opcional) Migrar fuentes ya existentes en el modelo Fountain a la tabla unificada
+# 2. Opciones de Expansión Geográfica (Ejemplos):
+# Por País completo (¡Atención! Puede tardar varios minutos y requerir buena memoria):
+docker exec -it maps_web_prod python manage.py import_overpass_pois --country ES
+docker exec -it maps_web_prod python manage.py import_overpass_pois --country FR
+docker exec -it maps_web_prod python manage.py import_overpass_pois --country CH
+
+# Por Región específica (Recomendado para evitar límites de la API pública):
+docker exec -it maps_web_prod python manage.py import_overpass_pois --region FR-ARA   # Auvergne-Rhône-Alpes
+docker exec -it maps_web_prod python manage.py import_overpass_pois --region CH-BE    # Berna
+
+# Por Bounding Box personalizado (Formato: min_lon,min_lat,max_lon,max_lat):
+docker exec -it maps_web_prod python manage.py import_overpass_pois --bbox "-2.1,43.2,-1.8,43.4"
+
+# 3. Importación dinámica de Fuentes de Agua Potable:
+docker exec -it maps_web_prod python manage.py import_fountains --region ES-PV
+docker exec -it maps_web_prod python manage.py import_fountains --country CH
+
+# 4. (Opcional) Migrar fuentes ya existentes en el modelo Fountain a la tabla unificada de POIs:
 docker exec -it maps_web_prod python manage.py shell -c "
 from apps.adventure.models import Fountain, PointOfInterest
 fountains = Fountain.objects.all()

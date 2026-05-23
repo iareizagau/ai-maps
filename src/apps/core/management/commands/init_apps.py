@@ -87,6 +87,17 @@ class Command(BaseCommand):
                 'hero_title': 'Energía limpia para tu tejado',
                 'description': 'Visualiza el potencial solar de tu edificio en 3D y calcula tus ahorros con PVGIS.'
             },
+            {
+                'slug': 'oceania',
+                'name': 'Pacific Climate Horizon',
+                'tagline': 'Justicia climática y monitorización del Pacífico.',
+                'domain': 'https://ai.maps.eus/oceania/',
+                'icon': 'globe',
+                'primary_color': '#14b8a6', # Teal
+                'hero_title': 'Horizonte Climático del Pacífico',
+                'description': 'Cartografía interactiva del aumento de nivel del mar, trayectorias de ciclones e inequidad de carbono en Oceanía.',
+                'is_featured': True
+            },
         ]
 
         for app_data in apps:

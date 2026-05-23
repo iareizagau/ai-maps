@@ -2,12 +2,12 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
+# 
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-10 13:23+0200\n"
+"POT-Creation-Date: 2026-05-23 15:43+0200\n"
 "PO-Revision-Date: 2026-04-27 23:15+0200\n"
 "Last-Translator: Antigravity AI\n"
 "Language-Team: Spanish\n"
@@ -110,7 +110,7 @@ msgstr ""
 "valoraciones te ayudarán a decidir mejor."
 
 #: apps/core/templates/core/partials/user_search_results.html:23
-#: templates/account/social.html:43 templates/core/profile.html:159
+#: templates/account/social.html:43 templates/core/profile.html:154
 msgid "Following"
 msgstr "Siguiendo"
 
@@ -311,9 +311,89 @@ msgstr "Evento cultural favorito"
 msgid "Cultural event favorites"
 msgstr "Eventos culturales favoritos"
 
-#: apps/kultur/models.py:151 apps/kultur/models.py:152
+#: apps/kultur/models.py:153 apps/kultur/models.py:154
 msgid "Kultur preferences"
 msgstr "Preferencias kultur"
+
+#: apps/oceania/models.py:6
+#, fuzzy
+#| msgid "Nombre de la Zona"
+msgid "Nombre del País"
+msgstr "Nombre de la Zona"
+
+#: apps/oceania/models.py:7
+msgid "Código ISO"
+msgstr ""
+
+#: apps/oceania/models.py:8
+#, fuzzy
+#| msgid "Ubicación"
+msgid "Población"
+msgstr "Ubicación"
+
+#: apps/oceania/models.py:9
+msgid "Emisiones de CO2 per cápita (toneladas)"
+msgstr ""
+
+#: apps/oceania/models.py:10
+msgid "Índice de Vulnerabilidad ND-GAIN"
+msgstr ""
+
+#: apps/oceania/models.py:11
+msgid "Índice de Preparación ND-GAIN"
+msgstr ""
+
+#: apps/oceania/models.py:12 apps/zbe/models.py:7
+msgid "Geometría"
+msgstr "Geometría"
+
+#: apps/oceania/models.py:13
+msgid "Coordenadas de la Capital"
+msgstr ""
+
+#: apps/oceania/models.py:19
+msgid "País del Pacífico"
+msgstr ""
+
+#: apps/oceania/models.py:20
+msgid "Países del Pacífico"
+msgstr ""
+
+#: apps/oceania/models.py:28
+#, fuzzy
+#| msgid "Nombre de la Zona"
+msgid "Nombre del Ciclón"
+msgstr "Nombre de la Zona"
+
+#: apps/oceania/models.py:29
+msgid "Año"
+msgstr ""
+
+#: apps/oceania/models.py:30
+msgid "Categoría (Saffir-Simpson)"
+msgstr ""
+
+#: apps/oceania/models.py:31
+msgid "Velocidad de Viento Máx (km/h)"
+msgstr ""
+
+#: apps/oceania/models.py:32
+msgid "Daños Estimados (USD)"
+msgstr ""
+
+#: apps/oceania/models.py:33
+msgid "Trayectoria del Ciclón"
+msgstr ""
+
+#: apps/oceania/models.py:39
+msgid "Ciclón"
+msgstr ""
+
+#: apps/oceania/models.py:40 templates/oceania/home.html:84
+#, fuzzy
+#| msgid "Raciones"
+msgid "Ciclones"
+msgstr "Raciones"
 
 #: apps/pintxos/account.py:21 apps/sbk/account.py:26
 #, python-format
@@ -344,16 +424,16 @@ msgstr "Favoritos"
 msgid "Approve selected claims (sets Restaurant.claimed_by)"
 msgstr "Aprobar reclamos seleccionados (asigna Restaurant.claimed_by)"
 
-#: apps/pintxos/admin.py:110 apps/sbk/admin.py:78
+#: apps/pintxos/admin.py:110 apps/sbk/admin.py:82
 #, python-format
 msgid "%(n)d claims approved."
 msgstr "%(n)d reclamos aprobados."
 
-#: apps/pintxos/admin.py:112 apps/sbk/admin.py:80
+#: apps/pintxos/admin.py:112 apps/sbk/admin.py:84
 msgid "Reject selected claims"
 msgstr "Rechazar reclamos seleccionados"
 
-#: apps/pintxos/admin.py:119 apps/sbk/admin.py:87
+#: apps/pintxos/admin.py:119 apps/sbk/admin.py:91
 #, python-format
 msgid "%(n)d claims rejected."
 msgstr "%(n)d reclamos rechazados."
@@ -433,63 +513,63 @@ msgstr "Pizza"
 msgid "Sushi"
 msgstr "Sushi"
 
-#: apps/pintxos/models.py:212 apps/sbk/models.py:278
+#: apps/pintxos/models.py:212 apps/sbk/models.py:362
 msgid "Pending"
 msgstr "Pendiente"
 
-#: apps/pintxos/models.py:213 apps/sbk/models.py:279
+#: apps/pintxos/models.py:213 apps/sbk/models.py:363
 msgid "Approved"
 msgstr "Aprobado"
 
-#: apps/pintxos/models.py:214 apps/sbk/models.py:280
+#: apps/pintxos/models.py:214 apps/sbk/models.py:364
 msgid "Rejected"
 msgstr "Rechazado"
 
-#: apps/pintxos/models.py:215 apps/sbk/models.py:281
+#: apps/pintxos/models.py:215 apps/sbk/models.py:365
 msgid "Revoked"
 msgstr "Revocado"
 
-#: apps/pintxos/models.py:218 apps/sbk/models.py:284
+#: apps/pintxos/models.py:218 apps/sbk/models.py:368
 msgid "Phone call"
 msgstr "Llamada telefónica"
 
-#: apps/pintxos/models.py:219 apps/sbk/models.py:285
+#: apps/pintxos/models.py:219 apps/sbk/models.py:369
 msgid "Domain email"
 msgstr "Email del dominio"
 
-#: apps/pintxos/models.py:220 apps/sbk/models.py:286
+#: apps/pintxos/models.py:220 apps/sbk/models.py:370
 msgid "Document upload"
 msgstr "Subir documento"
 
-#: apps/pintxos/models.py:221 apps/sbk/models.py:287
+#: apps/pintxos/models.py:221 apps/sbk/models.py:371
 msgid "Other"
 msgstr "Otro"
 
-#: apps/pintxos/models.py:229 apps/sbk/models.py:295
+#: apps/pintxos/models.py:229 apps/sbk/models.py:379
 msgid "Free-text proof: role, contact details, supporting info."
 msgstr "Prueba en texto libre: rol, datos de contacto, información de apoyo."
 
-#: apps/pintxos/models.py:233 apps/sbk/models.py:299
+#: apps/pintxos/models.py:233 apps/sbk/models.py:383
 msgid "Internal notes left by the reviewer."
 msgstr "Notas internas del revisor."
 
-#: apps/pintxos/views.py:130 apps/sbk/views.py:547
+#: apps/pintxos/views.py:130 apps/sbk/views.py:611
 msgid "This venue is already claimed."
 msgstr "Este negocio ya está reclamado."
 
-#: apps/pintxos/views.py:137 apps/sbk/views.py:552
+#: apps/pintxos/views.py:137
 msgid "You already submitted a claim for this venue. We're reviewing it."
 msgstr "Ya enviaste un reclamo para este negocio. Lo estamos revisando."
 
-#: apps/pintxos/views.py:150 apps/sbk/views.py:565
+#: apps/pintxos/views.py:150
 msgid "Claim submitted. We'll get back to you within 48h."
 msgstr "Reclamo enviado. Te responderemos en menos de 48 h."
 
-#: apps/pintxos/views.py:169 apps/sbk/views.py:580
+#: apps/pintxos/views.py:169 apps/sbk/views.py:635
 msgid "You don't manage this venue."
 msgstr "No gestionas este negocio."
 
-#: apps/pintxos/views.py:175 apps/sbk/views.py:586
+#: apps/pintxos/views.py:175 apps/sbk/views.py:640
 msgid "Venue updated."
 msgstr "Negocio actualizado."
 
@@ -505,47 +585,196 @@ msgstr "Confirmado"
 msgid "Streak (days)"
 msgstr "Racha (días)"
 
-#: apps/sbk/admin.py:66
+#: apps/sbk/admin.py:70
 msgid "Approve selected claims (sets DanceVenue.claimed_by)"
 msgstr "Aprobar reclamos seleccionados (asigna DanceVenue.claimed_by)"
 
-#: apps/sbk/models.py:186
+#: apps/sbk/models.py:262
 msgid "Academy"
 msgstr "Academia"
 
-#: apps/sbk/models.py:187
+#: apps/sbk/models.py:263
 msgid "Social room"
 msgstr "Sala social"
 
-#: apps/sbk/models.py:188
+#: apps/sbk/models.py:264
 msgid "Bar with dance night"
 msgstr "Bar con noche bailable"
 
-#: apps/sbk/models.py:189
+#: apps/sbk/models.py:265
 msgid "Multi-purpose"
 msgstr "Multi-uso"
 
-#: apps/sbk/models.py:203
+#: apps/sbk/models.py:279
 msgid "List of style codes: salsa, bachata, kizomba, ..."
 msgstr "Lista de códigos de estilo: salsa, bachata, kizomba, ..."
 
-#: apps/sbk/models.py:204
+#: apps/sbk/models.py:280
 msgid ""
 "Free-form: e.g. {\"mon\":{\"class\":[\"bachata-19h\"]},\"wed\":{\"social\":"
 "[\"21h-2h\"]}}"
-msgstr "Formato libre: p. ej. {\"mon\":{\"class\":[\"bachata-19h\"]},\"wed\":{\"social\":[\"21h-2h\"]}}"
+msgstr ""
+"Formato libre: p. ej. {\"mon\":{\"class\":[\"bachata-19h\"]},\"wed\":"
+"{\"social\":[\"21h-2h\"]}}"
 
-#: apps/sbk/models.py:224
+#: apps/sbk/models.py:300
 msgid "Verified owner. Set when a DanceVenueClaim is approved."
 msgstr "Titular verificado. Se asigna al aprobar un DanceVenueClaim."
 
-#: apps/sbk/models.py:251
+#: apps/sbk/models.py:335
 msgid "1: slippery/sticky, 5: perfect"
 msgstr "1: resbaladizo/pegajoso, 5: perfecto"
 
-#: apps/sbk/models.py:253
+#: apps/sbk/models.py:337
 msgid "1: empty, 5: packed"
 msgstr "1: vacío, 5: lleno"
+
+#: apps/sbk/views.py:26
+msgid "SBK Hub - Mapa de Festivales y Socials"
+msgstr ""
+
+#: apps/sbk/views.py:40
+msgid "SBK esta noche: Festivales y Sociales hoy | SBK Hub"
+msgstr ""
+
+#: apps/sbk/views.py:41
+#, fuzzy, python-format
+#| msgid "%(n)s eventos hoy"
+msgid "%d eventos para bailar hoy"
+msgstr "%(n)s eventos hoy"
+
+#: apps/sbk/views.py:41
+#, fuzzy
+#| msgid "Esta noche"
+msgid "SBK esta noche"
+msgstr "Esta noche"
+
+#: apps/sbk/views.py:42
+msgid ""
+"¿Dónde bailar esta noche? Lista actualizada de sesiones sociales, talleres y "
+"fiestas SBK para hoy."
+msgstr ""
+
+#: apps/sbk/views.py:52
+#, fuzzy
+#| msgid "Próximos Destinos"
+msgid "Próximos Festivales SBK"
+msgstr "Próximos Destinos"
+
+#: apps/sbk/views.py:52
+msgid ""
+"Calendario de congresos y festivales internacionales de Bachata, Salsa y "
+"Kizomba."
+msgstr ""
+
+#: apps/sbk/views.py:53
+msgid "Sesiones Sociales y Fiestas SBK"
+msgstr ""
+
+#: apps/sbk/views.py:53
+msgid "Encuentra los mejores sociales para bailar durante la semana."
+msgstr ""
+
+#: apps/sbk/views.py:54
+msgid "Talleres y Bootcamps SBK"
+msgstr ""
+
+#: apps/sbk/views.py:54
+msgid "Mejora tu estilo con los mejores talleres intensivos."
+msgstr ""
+
+#: apps/sbk/views.py:91
+#, python-format
+msgid "SBK en %s: Dónde bailar Salsa y Bachata"
+msgstr ""
+
+#: apps/sbk/views.py:92
+#, python-format
+msgid "Eventos SBK en %s"
+msgstr ""
+
+#: apps/sbk/views.py:93
+#, python-format
+msgid ""
+"Descubre todos los eventos de baile en %s. Festivales, sociales y academias "
+"en un solo mapa."
+msgstr ""
+
+#: apps/sbk/views.py:112
+msgid "Busca pareja de baile o habitación | SBK Hub"
+msgstr ""
+
+#: apps/sbk/views.py:113
+#, fuzzy
+#| msgid "Comunidad"
+msgid "Comunidad SBK"
+msgstr "Comunidad"
+
+#: apps/sbk/views.py:114
+msgid ""
+"Conecta con otros bailadores. Encuentra pareja para talleres o compañeros "
+"para compartir alojamiento."
+msgstr ""
+
+#: apps/sbk/views.py:125
+msgid "Directorio de Artistas y DJs SBK | SBK Hub"
+msgstr ""
+
+#: apps/sbk/views.py:126
+msgid "Artistas de la Comunidad"
+msgstr ""
+
+#: apps/sbk/views.py:127
+msgid ""
+"Conoce a los mejores DJs, profesores y artistas de la escena SBK "
+"internacional."
+msgstr ""
+
+#: apps/sbk/views.py:145
+#, python-format
+msgid "%s | Artista SBK Hub"
+msgstr ""
+
+#: apps/sbk/views.py:147
+#, python-format
+msgid "Perfil oficial de %s en SBK Hub."
+msgstr ""
+
+#: apps/sbk/views.py:615
+#, fuzzy
+#| msgid "You already submitted a claim for this venue. We're reviewing it."
+msgid "You already submitted a claim for this venue."
+msgstr "Ya enviaste un reclamo para este negocio. Lo estamos revisando."
+
+#: apps/sbk/views.py:625
+#, fuzzy
+#| msgid "Rating submitted!"
+msgid "Claim submitted."
+msgstr "¡Valoración enviada!"
+
+#: apps/solar/models.py:20
+msgid "Área útil proyectada del tejado en m2"
+msgstr ""
+
+#: apps/solar/models.py:21
+msgid "Orientación predominante (0=Sur, 90=Oeste, -90=Este)"
+msgstr ""
+
+#: apps/solar/models.py:25
+msgid "Edificio"
+msgstr ""
+
+#: apps/solar/models.py:26
+msgid "Edificios"
+msgstr ""
+
+#: apps/solar/models.py:55
+msgid "Potencial Solar"
+msgstr ""
+
+#: apps/solar/models.py:56
+msgid "Potenciales Solares"
+msgstr ""
 
 #: apps/zbe/models.py:5
 msgid "Nombre de la Zona"
@@ -554,10 +783,6 @@ msgstr "Nombre de la Zona"
 #: apps/zbe/models.py:6
 msgid "Descripción"
 msgstr "Descripción"
-
-#: apps/zbe/models.py:7
-msgid "Geometría"
-msgstr "Geometría"
 
 #: apps/zbe/models.py:13
 msgid "Zona de Bajas Emisiones"
@@ -610,15 +835,15 @@ msgid "soon"
 msgstr "próximamente"
 
 #: templates/account/billing.html:38 templates/core/profile.html:41
-#: templates/core/profile.html:100
+#: templates/core/profile.html:95
 msgid "Payment Methods"
 msgstr "Métodos de Pago"
 
-#: templates/account/billing.html:39 templates/core/profile.html:101
+#: templates/account/billing.html:39 templates/core/profile.html:96
 msgid "Manage your credit cards and billing information."
 msgstr "Gestiona tus tarjetas de crédito e información de facturación."
 
-#: templates/account/billing.html:42 templates/core/profile.html:104
+#: templates/account/billing.html:42 templates/core/profile.html:99
 msgid "Add Card"
 msgstr "Añadir Tarjeta"
 
@@ -714,19 +939,19 @@ msgid "Account & Security"
 msgstr "Cuenta y Seguridad"
 
 #: templates/account/security.html:7
-#: templates/core/partials/username_form.html:9 templates/core/profile.html:75
+#: templates/core/partials/username_form.html:25 templates/core/profile.html:73
 msgid "Change Username"
 msgstr "Cambiar Nombre de Usuario"
 
-#: templates/account/security.html:8 templates/core/profile.html:76
+#: templates/account/security.html:8 templates/core/profile.html:74
 msgid "Your unique identifier on the platform."
 msgstr "Tu identificador único en la plataforma."
 
-#: templates/account/security.html:17 templates/core/profile.html:85
+#: templates/account/security.html:17 templates/core/profile.html:81
 msgid "Update Password"
 msgstr "Actualizar Contraseña"
 
-#: templates/account/security.html:18 templates/core/profile.html:86
+#: templates/account/security.html:18 templates/core/profile.html:82
 msgid "Keep your account secure with a strong password."
 msgstr "Mantén tu cuenta segura con una contraseña fuerte."
 
@@ -751,23 +976,23 @@ msgstr "¿Ya tienes una cuenta?"
 msgid "Social & Trust"
 msgstr "Social y Confianza"
 
-#: templates/account/social.html:8 templates/core/profile.html:120
+#: templates/account/social.html:8 templates/core/profile.html:115
 msgid "Build your Circle"
 msgstr "Construye tu Círculo"
 
-#: templates/account/social.html:9 templates/core/profile.html:121
+#: templates/account/social.html:9 templates/core/profile.html:116
 msgid "Search for other experts and friends to follow."
 msgstr "Busca otros expertos y amigos a los que seguir."
 
-#: templates/account/social.html:14 templates/core/profile.html:126
+#: templates/account/social.html:14 templates/core/profile.html:121
 msgid "Search by username..."
 msgstr "Buscar por nombre de usuario..."
 
-#: templates/account/social.html:33 templates/core/profile.html:149
+#: templates/account/social.html:33 templates/core/profile.html:144
 msgid "Descubrir Expertos"
 msgstr "Descubrir Expertos"
 
-#: templates/account/social.html:44 templates/core/profile.html:160
+#: templates/account/social.html:44 templates/core/profile.html:155
 msgid "People you are currently following across different apps."
 msgstr "Personas a las que sigues actualmente en diferentes apps."
 
@@ -779,7 +1004,7 @@ msgstr "Colaborador Destacado"
 msgid "Followers"
 msgstr "Seguidores"
 
-#: templates/core/partials/password_form.html:15
+#: templates/core/partials/password_form.html:16
 msgid "Change Password"
 msgstr "Cambiar Contraseña"
 
@@ -799,31 +1024,31 @@ msgstr "Sin métodos de pago"
 msgid "Add a card to manage your subscriptions."
 msgstr "Añade una tarjeta para gestionar tus suscripciones."
 
-#: templates/core/partials/profile_form.html:6
+#: templates/core/partials/profile_form.html:19
 msgid "First Name"
 msgstr "Nombre"
 
-#: templates/core/partials/profile_form.html:10
+#: templates/core/partials/profile_form.html:26
 msgid "Last Name"
 msgstr "Apellidos"
 
-#: templates/core/partials/profile_form.html:15
+#: templates/core/partials/profile_form.html:34
 msgid "Email"
 msgstr "Email"
 
-#: templates/core/partials/profile_form.html:19
+#: templates/core/partials/profile_form.html:41
 msgid "Phone"
 msgstr "Teléfono"
 
-#: templates/core/partials/profile_form.html:23
+#: templates/core/partials/profile_form.html:48
 msgid "Bio"
 msgstr "Biografía"
 
-#: templates/core/partials/profile_form.html:27
+#: templates/core/partials/profile_form.html:55
 msgid "Save Changes"
 msgstr "Guardar Cambios"
 
-#: templates/core/partials/username_form.html:5
+#: templates/core/partials/username_form.html:18
 msgid "New Username"
 msgstr "Nuevo Nombre de Usuario"
 
@@ -834,6 +1059,10 @@ msgstr "Panel de Control"
 #: templates/cotton/layouts/account.html:19
 msgid "Account navigation"
 msgstr "Navegación de cuenta"
+
+#: templates/cotton/layouts/main.html:72
+msgid "An error occurred while saving. Please try again."
+msgstr ""
 
 #: templates/cotton/molecules/app_launcher_tile.html:5
 msgid "Abrir"
@@ -1030,7 +1259,7 @@ msgstr "Cómo llegar (Google Maps)"
 msgid "Match"
 msgstr "Match"
 
-#: templates/gailur/home.html:172 templates/sbk/pages/home/map.html:215
+#: templates/gailur/home.html:172 templates/sbk/pages/home/map.html:72
 msgid "Clima"
 msgstr "Clima"
 
@@ -1295,7 +1524,7 @@ msgid "Busca eventos o ciudades..."
 msgstr "Busca eventos o ciudades..."
 
 #: templates/kultur/sections/map_sidebar.html:44
-#: templates/sbk/pages/home/map.html:123
+#: templates/sbk/partials/map_filters.html:7
 msgid "Experiencias"
 msgstr "Experiencias"
 
@@ -1337,22 +1566,23 @@ msgid "Cuándo"
 msgstr "Cuándo"
 
 #: templates/kultur/sections/map_sidebar.html:88
-#: templates/sbk/pages/home/map.html:166
+#: templates/sbk/partials/map_filters.html:54
 msgid "Siempre"
 msgstr "Siempre"
 
 #: templates/kultur/sections/map_sidebar.html:89
-#: templates/sbk/pages/home/map.html:167
+#: templates/sbk/partials/map_filters.html:55
+#: templates/sbk/partials/map_sidebar.html:42
 msgid "Hoy"
 msgstr "Hoy"
 
 #: templates/kultur/sections/map_sidebar.html:90
-#: templates/sbk/pages/home/map.html:168
+#: templates/sbk/partials/map_filters.html:56
 msgid "Finde"
 msgstr "Finde"
 
 #: templates/kultur/sections/map_sidebar.html:92
-#: templates/sbk/pages/home/map.html:170
+#: templates/sbk/partials/map_filters.html:58
 msgid "Rango"
 msgstr "Rango"
 
@@ -1363,6 +1593,131 @@ msgstr "Cargando eventos en el mapa..."
 #: templates/kultur/sections/map_sidebar.html:107
 msgid "¡Sorpréndeme!"
 msgstr "¡Sorpréndeme!"
+
+#: templates/oceania/home.html:2
+msgid "Horizonte Climático"
+msgstr ""
+
+#: templates/oceania/home.html:71
+msgid ""
+"Exploración de la justicia climática, inundación de atolones y trayectorias "
+"de ciclones en Oceanía."
+msgstr ""
+
+#: templates/oceania/home.html:78
+msgid "Justicia"
+msgstr ""
+
+#: templates/oceania/home.html:81
+msgid "Nivel del Mar"
+msgstr ""
+
+#: templates/oceania/home.html:96
+msgid "La Inequidad de la Deuda de Carbono"
+msgstr ""
+
+#: templates/oceania/home.html:99
+msgid ""
+"Los países del Pacífico apenas emiten gases contaminantes, pero pagan el "
+"precio más alto debido a su extrema vulnerabilidad física y económica."
+msgstr ""
+
+#: templates/oceania/home.html:106
+msgid "Emisiones vs Vulnerabilidad"
+msgstr ""
+
+#: templates/oceania/home.html:117
+msgid "Justicia Climática:"
+msgstr ""
+
+#: templates/oceania/home.html:118
+msgid ""
+"Las naciones del Pacífico (en verde en el gráfico) se sitúan en el cuadrante "
+"superior izquierdo: extremadamente vulnerables con emisiones per cápita "
+"insignificantes."
+msgstr ""
+
+#: templates/oceania/home.html:125
+msgid "Vulnerabilidad por País"
+msgstr ""
+
+#: templates/oceania/home.html:153
+msgid "Simulador de Aumento del Nivel del Mar"
+msgstr ""
+
+#: templates/oceania/home.html:156
+msgid ""
+"Los atolones de coral del Pacífico tienen elevaciones medias de apenas 2 "
+"metros sobre el nivel del mar. Usa el control para ver el impacto estimado "
+"de la inundación."
+msgstr ""
+
+#: templates/oceania/home.html:163
+msgid "Elevación del Mar"
+msgstr ""
+
+#: templates/oceania/home.html:178
+msgid "Impacto Estimado en Atolones Bajos"
+msgstr ""
+
+#: templates/oceania/home.html:182
+msgid "Población Desplazada"
+msgstr ""
+
+#: templates/oceania/home.html:186
+msgid "Área Terrestre Perdida"
+msgstr ""
+
+#: templates/oceania/home.html:223
+msgid "Historial de Ciclones Devastadores"
+msgstr ""
+
+#: templates/oceania/home.html:226
+msgid ""
+"El calentamiento del océano intensifica los ciclones tropicales en la "
+"región. Anima las trayectorias de los eventos históricos más intensos."
+msgstr ""
+
+#: templates/oceania/home.html:232
+msgid "Seleccionar Ciclón"
+msgstr ""
+
+#: templates/oceania/home.html:265
+msgid "Viento Máximo"
+msgstr ""
+
+#: templates/oceania/home.html:269
+msgid "Daños Estimados"
+msgstr ""
+
+#: templates/oceania/home.html:280
+msgid "Pérdidas y Daños:"
+msgstr ""
+
+#: templates/oceania/home.html:281
+#, python-format
+msgid ""
+"Para un país pequeño como Vanuatu o Tuvalu, un solo ciclón de Categoría 5 "
+"puede destruir más del 60%% de su PIB en cuestión de horas."
+msgstr ""
+
+#: templates/oceania/home.html:293
+msgid "Visitar Pacific Dataviz Challenge 2026"
+msgstr ""
+
+#: templates/oceania/home.html:304
+msgid "Leyenda del Mapa"
+msgstr ""
+
+#: templates/oceania/home.html:308
+msgid "Vulnerabilidad Climática"
+msgstr ""
+
+#: templates/oceania/home.html:319
+#, fuzzy
+#| msgid "Categorías"
+msgid "Categoría del Ciclón"
+msgstr "Categorías"
 
 #: templates/pintxos/account_panel.html:3
 msgid "My pintxos"
@@ -1875,7 +2230,8 @@ msgstr "Analítica"
 
 #: templates/pintxos/manage.html:58
 msgid "Profile views, popular dishes and conversion will appear here."
-msgstr "Aquí verás las visitas al perfil, los platos populares y la conversión."
+msgstr ""
+"Aquí verás las visitas al perfil, los platos populares y la conversión."
 
 #: templates/pintxos/manage.html:64 templates/sbk/manage.html:45
 msgid "Pro Venue"
@@ -1973,7 +2329,9 @@ msgstr "No gestionas este negocio."
 
 #: templates/sbk/account_panel.html:98
 msgid "No upcoming events. Mark some as interested or going from the SBK map."
-msgstr "No hay eventos próximos. Marca algunos como \"interesado\" o \"voy\" desde el mapa SBK."
+msgstr ""
+"No hay eventos próximos. Marca algunos como \"interesado\" o \"voy\" desde "
+"el mapa SBK."
 
 #: templates/sbk/account_panel.html:104
 msgid "Recent past events"
@@ -1993,224 +2351,366 @@ msgstr "Volver a mi panel"
 
 #: templates/sbk/manage.html:39
 msgid "Profile views, popular nights and conversion will appear here."
-msgstr "Aquí verás las visitas al perfil, las noches populares y la conversión."
+msgstr ""
+"Aquí verás las visitas al perfil, las noches populares y la conversión."
 
 #: templates/sbk/manage.html:46
 msgid ""
 "Unlock analytics, priority listing in dance search, promotions and review "
 "replies."
-msgstr "Desbloquea analítica, prioridad en búsqueda de baile, promociones y respuestas a reseñas."
+msgstr ""
+"Desbloquea analítica, prioridad en búsqueda de baile, promociones y "
+"respuestas a reseñas."
 
 #: templates/sbk/manage.html:50
 msgid "· Promotional banners on your nights"
 msgstr "· Banners promocionales en tus noches"
 
-#: templates/sbk/pages/home/map.html:109
-msgid "Busca eventos, salas o ciudades..."
-msgstr "Busca eventos, salas o ciudades..."
+#: templates/sbk/pages/directory.html:11
+msgid "Conoce a los impulsores de la escena SBK en nuestra comunidad."
+msgstr ""
 
-#: templates/sbk/pages/home/map.html:131 templates/sbk/passport.html:43
-msgid "Festivales"
-msgstr "Festivales"
+#: templates/sbk/pages/directory.html:52
+msgid "Aún no hay perfiles verificados en el directorio."
+msgstr ""
 
-#: templates/sbk/pages/home/map.html:135
-msgid "Social"
-msgstr "Social"
-
-#: templates/sbk/pages/home/map.html:139
-msgid "Talleres"
-msgstr "Talleres"
-
-#: templates/sbk/pages/home/map.html:143
-msgid "Premium"
-msgstr "Premium"
-
-#: templates/sbk/pages/home/map.html:147
-msgid "Exterior"
-msgstr "Exterior"
-
-#: templates/sbk/pages/home/map.html:154
-msgid "Estilos de baile"
-msgstr "Estilos de baile"
-
-#: templates/sbk/pages/home/map.html:157
-msgid "Todos"
-msgstr "Todos"
-
-#: templates/sbk/pages/home/map.html:164
-msgid "Cuándo bailar"
-msgstr "Cuándo bailar"
-
-#: templates/sbk/pages/home/map.html:179
-msgid "Cargando la magia en el mapa..."
-msgstr "Cargando la magia en el mapa..."
-
-#: templates/sbk/pages/home/map.html:194
+#: templates/sbk/pages/home/map.html:51
 msgid "Busca festivales o estilos..."
 msgstr "Busca festivales o estilos..."
 
-#: templates/sbk/pages/home/map.html:224 templates/sbk/pages/home/map.html:289
+#: templates/sbk/pages/home/map.html:81
+#: templates/sbk/partials/map_modals.html:48
+#: templates/sbk/partials/map_scripts.html:660
 msgid "Añadir Social"
 msgstr "Añadir Social"
 
-#: templates/sbk/pages/home/map.html:230
+#: templates/sbk/pages/home/map.html:87
 msgid "Haz clic en el mapa donde es la fiesta"
 msgstr "Haz clic en el mapa donde es la fiesta"
 
-#: templates/sbk/pages/home/map.html:237
+#: templates/sbk/pages/home/map.html:94
 msgid "Ver eventos"
 msgstr "Ver eventos"
 
-#: templates/sbk/pages/home/map.html:247
+#: templates/sbk/pages/person_detail.html:11
+msgid "Perfil Verificado"
+msgstr ""
+
+#: templates/sbk/pages/person_detail.html:65
+#, fuzzy
+#| msgid "Próximamente"
+msgid "Dónde verle próximamente"
+msgstr "Próximamente"
+
+#: templates/sbk/pages/person_detail.html:87
+msgid "No hay eventos confirmados próximamente."
+msgstr ""
+
+#: templates/sbk/pages/practice.html:8
+#, fuzzy
+#| msgid "Comunidad"
+msgid "Comunidad SBK Hub"
+msgstr "Comunidad"
+
+#: templates/sbk/pages/practice.html:11
+msgid "No bailes solo"
+msgstr ""
+
+#: templates/sbk/pages/practice.html:14
+msgid ""
+"Encuentra pareja para ese taller que tanto quieres hacer o comparte gastos "
+"de alojamiento en tu próximo festival."
+msgstr ""
+
+#: templates/sbk/pages/practice.html:26
+#, fuzzy
+#| msgid "Busco Pareja"
+msgid "Buscando pareja"
+msgstr "Busco Pareja"
+
+#: templates/sbk/pages/practice.html:35
+msgid "Habitaciones libres"
+msgstr ""
+
+#: templates/sbk/pages/practice.html:44
+#, fuzzy
+#| msgid "Mapa de Viento"
+msgid "Tasa de éxito"
+msgstr "Mapa de Viento"
+
+#: templates/sbk/pages/practice.html:52
+#, fuzzy
+#| msgid "Tablón Quedadas"
+msgid "Tablón de anuncios"
+msgstr "Tablón Quedadas"
+
+#: templates/sbk/pages/practice.html:54
+#, fuzzy
+#| msgid "Explorar el mapa"
+msgid "Ir al mapa"
+msgstr "Explorar el mapa"
+
+#: templates/sbk/pages/practice.html:77
+msgid "PAREJA"
+msgstr ""
+
+#: templates/sbk/pages/practice.html:82
+msgid "CAMA"
+msgstr ""
+
+#: templates/sbk/pages/practice.html:89
+#, fuzzy
+#| msgid "Mapa de Viento"
+msgid "Para el evento:"
+msgstr "Mapa de Viento"
+
+#: templates/sbk/pages/practice.html:106
+msgid "Contactar por Instagram"
+msgstr ""
+
+#: templates/sbk/pages/practice.html:117
+#, fuzzy
+#| msgid "El tablón está vacío."
+msgid "El tablón está vacío"
+msgstr "El tablón está vacío."
+
+#: templates/sbk/pages/practice.html:119
+msgid ""
+"Parece que por ahora nadie está buscando nada. ¡Sé el primero en publicar!"
+msgstr ""
+
+#: templates/sbk/pages/practice.html:122
+#, fuzzy
+#| msgid "Buscar Eventos"
+msgid "Buscar evento"
+msgstr "Buscar Eventos"
+
+#: templates/sbk/pages/practice.html:132
+msgid "¿Quieres aparecer aquí?"
+msgstr ""
+
+#: templates/sbk/pages/practice.html:134
+msgid ""
+"Busca el evento al que vas a asistir en el mapa, dale a 'Voy' y activa la "
+"opción de buscar pareja o habitación."
+msgstr ""
+
+#: templates/sbk/pages/practice.html:137
+msgid "Empezar ahora"
+msgstr ""
+
+#: templates/sbk/partials/map_filters.html:15 templates/sbk/passport.html:43
+msgid "Festivales"
+msgstr "Festivales"
+
+#: templates/sbk/partials/map_filters.html:19
+msgid "Social"
+msgstr "Social"
+
+#: templates/sbk/partials/map_filters.html:23
+msgid "Talleres"
+msgstr "Talleres"
+
+#: templates/sbk/partials/map_filters.html:27
+msgid "Premium"
+msgstr "Premium"
+
+#: templates/sbk/partials/map_filters.html:31
+msgid "Exterior"
+msgstr "Exterior"
+
+#: templates/sbk/partials/map_filters.html:35
+#, fuzzy
+#| msgid "Academy"
+msgid "Academias"
+msgstr "Academia"
+
+#: templates/sbk/partials/map_filters.html:42
+msgid "Estilos de baile"
+msgstr "Estilos de baile"
+
+#: templates/sbk/partials/map_filters.html:45
+msgid "Todos"
+msgstr "Todos"
+
+#: templates/sbk/partials/map_filters.html:52
+msgid "Cuándo bailar"
+msgstr "Cuándo bailar"
+
+#: templates/sbk/partials/map_modals.html:6
 msgid "Bailadores"
 msgstr "Bailadores"
 
-#: templates/sbk/pages/home/map.html:248
+#: templates/sbk/partials/map_modals.html:7
 msgid "Tablón Quedadas"
 msgstr "Tablón Quedadas"
 
-#: templates/sbk/pages/home/map.html:264
+#: templates/sbk/partials/map_modals.html:23
 msgid "Publicar un anuncio"
 msgstr "Publicar un anuncio"
 
-#: templates/sbk/pages/home/map.html:267
+#: templates/sbk/partials/map_modals.html:26
 msgid "Buscar Pareja"
 msgstr "Buscar Pareja"
 
-#: templates/sbk/pages/home/map.html:268
+#: templates/sbk/partials/map_modals.html:27
 msgid "Compartir Coche"
 msgstr "Compartir Coche"
 
-#: templates/sbk/pages/home/map.html:269
+#: templates/sbk/partials/map_modals.html:28
 msgid "Cena / Quedada"
 msgstr "Cena / Quedada"
 
-#: templates/sbk/pages/home/map.html:270
+#: templates/sbk/partials/map_modals.html:29
 msgid "Otros"
 msgstr "Otros"
 
-#: templates/sbk/pages/home/map.html:272
+#: templates/sbk/partials/map_modals.html:31
 msgid "Ej: Busco pareja para el taller de bachata de las 11:00..."
 msgstr "Ej: Busco pareja para el taller de bachata de las 11:00..."
 
-#: templates/sbk/pages/home/map.html:273
+#: templates/sbk/partials/map_modals.html:32
 msgid "Publicar en el Tablón"
 msgstr "Publicar en el Tablón"
 
-#: templates/sbk/pages/home/map.html:290
+#: templates/sbk/partials/map_modals.html:49
 msgid "Registra una fiesta local en el mapa"
 msgstr "Registra una fiesta local en el mapa"
 
-#: templates/sbk/pages/home/map.html:303
+#: templates/sbk/partials/map_modals.html:62
 msgid "Nombre de la fiesta / local"
 msgstr "Nombre de la fiesta / local"
 
-#: templates/sbk/pages/home/map.html:304
+#: templates/sbk/partials/map_modals.html:63
 msgid "Ej: Jueves Salsero en The Host"
 msgstr "Ej: Jueves Salsero en The Host"
 
-#: templates/sbk/pages/home/map.html:308
+#: templates/sbk/partials/map_modals.html:67
 msgid "Estilo Principal"
 msgstr "Estilo Principal"
 
-#: templates/sbk/pages/home/map.html:320
+#: templates/sbk/partials/map_modals.html:79
 msgid "Fecha"
 msgstr "Fecha"
 
-#: templates/sbk/pages/home/map.html:324
+#: templates/sbk/partials/map_modals.html:83
 msgid "Precio (aprox)"
 msgstr "Precio (aprox)"
 
-#: templates/sbk/pages/home/map.html:325
+#: templates/sbk/partials/map_modals.html:84
 msgid "Ej: 10€ c/copa"
 msgstr "Ej: 10€ c/copa"
 
-#: templates/sbk/pages/home/map.html:330
+#: templates/sbk/partials/map_modals.html:89
 msgid "Ambiente / Notas"
 msgstr "Ambiente / Notas"
 
-#: templates/sbk/pages/home/map.html:331
+#: templates/sbk/partials/map_modals.html:90
 msgid "Ej: Social puro, mucha bachata, relax..."
 msgstr "Ej: Social puro, mucha bachata, relax..."
 
-#: templates/sbk/pages/home/map.html:335
+#: templates/sbk/partials/map_modals.html:94
 msgid "Cartel del evento (Opcional)"
 msgstr "Cartel del evento (Opcional)"
 
-#: templates/sbk/pages/home/map.html:342
+#: templates/sbk/partials/map_modals.html:101
 msgid "Subir un archivo"
 msgstr "Subir un archivo"
 
-#: templates/sbk/pages/home/map.html:343
+#: templates/sbk/partials/map_modals.html:102
 msgid "o arrastra y suelta"
 msgstr "o arrastra y suelta"
 
-#: templates/sbk/pages/home/map.html:345
+#: templates/sbk/partials/map_modals.html:104
 msgid "PNG, JPG, GIF hasta 5MB"
 msgstr "PNG, JPG, GIF hasta 5MB"
 
-#: templates/sbk/pages/home/map.html:354 templates/sbk/passport.html:121
+#: templates/sbk/partials/map_modals.html:113 templates/sbk/passport.html:121
 #: templates/sbk/passport.html:311
 msgid "Cancelar"
 msgstr "Cancelar"
 
-#: templates/sbk/pages/home/map.html:356
+#: templates/sbk/partials/map_modals.html:115
 msgid "Publicar Evento"
 msgstr "Publicar Evento"
 
-#: templates/sbk/pages/home/map.html:369
+#: templates/sbk/partials/map_modals.html:128
 msgid "Vibe Check"
 msgstr "Vibe Check"
 
-#: templates/sbk/pages/home/map.html:381
+#: templates/sbk/partials/map_modals.html:140
 msgid "¿Cómo está la música?"
 msgstr "¿Cómo está la música?"
 
-#: templates/sbk/pages/home/map.html:399
+#: templates/sbk/partials/map_modals.html:158
 msgid "¿Espacio en pista?"
 msgstr "¿Espacio en pista?"
 
-#: templates/sbk/pages/home/map.html:417
+#: templates/sbk/partials/map_modals.html:176
 msgid "Enviar reporte de Vibe"
 msgstr "Enviar reporte de Vibe"
 
-#: templates/sbk/pages/home/map.html:732 templates/sbk/pages/home/map.html:775
+#: templates/sbk/partials/map_scripts.html:379
+#: templates/sbk/partials/map_scripts.html:436
 #, fuzzy
 #| msgid "En el radar"
 msgid "Entrada"
 msgstr "En el radar"
 
-#: templates/sbk/pages/home/map.html:758
+#: templates/sbk/partials/map_scripts.html:410
 msgid "Nada por aquí..."
 msgstr "Nada por aquí..."
 
-#: templates/sbk/pages/home/map.html:778
-msgid "Voy"
-msgstr "Voy"
+#: templates/sbk/partials/map_scripts.html:440
+#, fuzzy
+#| msgid "Academy"
+msgid "Ver Academia"
+msgstr "Academia"
 
-#: templates/sbk/pages/home/map.html:778
-msgid "¡Voy!"
-msgstr "¡Voy!"
-
-#: templates/sbk/pages/home/map.html:806
-msgid "BAILANDO AHORA"
-msgstr "BAILANDO AHORA"
-
-#: templates/sbk/pages/home/map.html:812
+#: templates/sbk/partials/map_scripts.html:442
+#: templates/sbk/partials/map_sidebar.html:37
 msgid "Comunidad"
 msgstr "Comunidad"
 
-#: templates/sbk/pages/home/map.html:926
+#: templates/sbk/partials/map_scripts.html:443
+msgid "Voy"
+msgstr "Voy"
+
+#: templates/sbk/partials/map_scripts.html:443
+msgid "¡Voy!"
+msgstr "¡Voy!"
+
+#: templates/sbk/partials/map_scripts.html:449
+#, fuzzy
+#| msgid "Estilos de baile"
+msgid "Academia de baile"
+msgstr "Estilos de baile"
+
+#: templates/sbk/partials/map_scripts.html:601
 msgid "Nadie apuntado aún."
 msgstr "Nadie apuntado aún."
 
-#: templates/sbk/pages/home/map.html:934
+#: templates/sbk/partials/map_scripts.html:609
 msgid "Contactar"
 msgstr "Contactar"
 
-#: templates/sbk/pages/home/map.html:944
+#: templates/sbk/partials/map_scripts.html:620
 msgid "El tablón está vacío."
 msgstr "El tablón está vacío."
+
+#: templates/sbk/partials/map_sidebar.html:32
+#, fuzzy
+#| msgid "Sector"
+msgid "Directorio"
+msgstr "Sector"
+
+#: templates/sbk/partials/map_sidebar.html:52
+msgid "Busca eventos, salas o ciudades..."
+msgstr "Busca eventos, salas o ciudades..."
+
+#: templates/sbk/partials/map_sidebar.html:64
+msgid "Cargando la magia en el mapa..."
+msgstr "Cargando la magia en el mapa..."
 
 #: templates/sbk/passport.html:2
 msgid "Mi Pasaporte Bailador"
@@ -2436,6 +2936,45 @@ msgstr "Dibujar ZBE"
 msgid "No hay ninguna zona trazada. Pulsa en dibujar para empezar."
 msgstr "No hay ninguna zona trazada. Pulsa en dibujar para empezar."
 
-#: templates/zbe/home.html:88
+#: templates/zbe/home.html:91
+#, fuzzy
+#| msgid "Ubicación"
+msgid "Mi Ubicación"
+msgstr "Ubicación"
+
+#: templates/zbe/home.html:104
+msgid "¿Estoy en una ZBE?"
+msgstr ""
+
+#: templates/zbe/home.html:112
+msgid "DENTRO DE ZBE"
+msgstr ""
+
+#: templates/zbe/home.html:114 templates/zbe/home.html:125
+msgid "Volver a comprobar"
+msgstr ""
+
+#: templates/zbe/home.html:123
+msgid "FUERA DE ZBE"
+msgstr ""
+
+#: templates/zbe/home.html:124
+msgid "Puedes circular libremente."
+msgstr ""
+
+#: templates/zbe/home.html:134
+#, fuzzy
+#| msgid "Ubicación"
+msgid "Error de ubicación"
+msgstr "Ubicación"
+
+#: templates/zbe/home.html:136
+msgid "Reintentar"
+msgstr ""
+
+#: templates/zbe/home.html:145
 msgid "Guardar Zonas"
 msgstr "Guardar Zonas"
+
+#~ msgid "BAILANDO AHORA"
+#~ msgstr "BAILANDO AHORA"

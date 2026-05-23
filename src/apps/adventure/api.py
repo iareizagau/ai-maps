@@ -2,7 +2,7 @@ from ninja import Router, Schema, Form, File
 from ninja.files import UploadedFile
 from typing import List, Dict, Any, Optional
 import json
-from .selectors import get_adventure_route
+from .selectors import get_adventure_route, get_vanlife_tsp_route
 from django.contrib.gis.geos import Polygon, LineString, MultiLineString, Point
 from .models import Fountain, Route, IntelDrop, TrailEdge, ExplorationRecord, PointOfInterest
 from .services import discover_sectors_from_route
@@ -109,6 +109,37 @@ def get_route(request, coords: str, profile: str = "bikepacking", scenic: bool =
     
     return full_route
 
+class VanlifePlannerSchema(Schema):
+    waypoints: List[List[float]]
+    pernocta_preference: str = "both"
+    max_driving_hours: float = 3.0
+    vehicle_height: float = 2.0
+    vehicle_width: float = 1.9
+    scenic: bool = False
+
+@router.post("/vanlife-planner")
+def vanlife_planner(request, data: VanlifePlannerSchema):
+    """
+    Calcula una ruta circular óptima (TSP) para campervan con restricciones y pernoctas.
+    """
+    if len(data.waypoints) < 2:
+        return {"error": "Se necesitan al menos 2 puntos."}
+    if len(data.waypoints) > 12:
+        return {"error": "El planificador permite un máximo de 12 puntos de parada por rendimiento."}
+        
+    try:
+        result = get_vanlife_tsp_route(
+            waypoints=data.waypoints,
+            pernocta_preference=data.pernocta_preference,
+            max_driving_hours=data.max_driving_hours,
+            vehicle_height=data.vehicle_height,
+            vehicle_width=data.vehicle_width,
+            scenic=data.scenic
+        )
+        return result
+    except Exception as e:
+        return {"error": str(e)}
+
 class RouteCreateSchema(Schema):
     name: str
     description: str = ""
@@ -203,11 +234,51 @@ def save_forensic_route(
         return {"error": "Autenticación requerida"}
         
     try:
-        # 1. Parsear Geometría
+        # 1. Parsear Geometría y reconstruir track mediante pgRouting (híbrido)
         geo_data = json.loads(geojson)
         coords = geo_data['coordinates']
-        line = LineString(coords)
-        geom = MultiLineString(line)
+        
+        lines = []
+        total_distance = 0.0
+        
+        if len(coords) >= 2:
+            for i in range(len(coords) - 1):
+                start = coords[i]
+                end = coords[i+1]
+                
+                # Intentar calcular la ruta enrutada con pgRouting
+                res = get_adventure_route(start, end, profile=profile)
+                
+                if isinstance(res, dict) and "features" in res and res["features"]:
+                    segment_lines = []
+                    for f in res["features"]:
+                        geom_type = f["geometry"]["type"]
+                        seg_coords = f["geometry"]["coordinates"]
+                        if geom_type == "LineString":
+                            segment_lines.append(LineString(seg_coords))
+                        elif geom_type == "MultiLineString":
+                            for part in seg_coords:
+                                segment_lines.append(LineString(part))
+                                
+                    if segment_lines:
+                        lines.extend(segment_lines)
+                        total_distance += res["metadata"].get("total_distance_m", 0.0)
+                    else:
+                        lines.append(LineString([start, end]))
+                        total_distance += Point(start).distance(Point(end)) * 111320.0
+                else:
+                    # Fallback robusto a línea recta si pgRouting falla (ej. fuera de la zona activa de Euskadi)
+                    lines.append(LineString([start, end]))
+                    total_distance += Point(start).distance(Point(end)) * 111320.0
+        else:
+            if coords:
+                lines.append(LineString(coords))
+            total_distance = distance_meters
+            
+        if not lines:
+            return {"error": "La ruta no tiene geometría válida."}
+            
+        geom = MultiLineString(*lines)
         
         # 2. Crear la Ruta
         route = Route.objects.create(
@@ -217,10 +288,23 @@ def save_forensic_route(
             profile=profile,
             waypoints=coords,
             geom=geom,
-            distance_meters=distance_meters,
+            distance_meters=total_distance or distance_meters,
             elevation_gain=0,
             elevation_loss=0
         )
+        
+        # Calcular estadísticas de superficie basadas en el trazado final enrutado
+        edges = TrailEdge.objects.filter(geom__dwithin=(geom, 0.0002))
+        stats = {}
+        total_edges = edges.count()
+        if total_edges > 0:
+            surface_counts = edges.values('surface').annotate(count=Count('id'))
+            for item in surface_counts:
+                surface = item['surface'] or 'unknown'
+                pct = (item['count'] / total_edges) * 100
+                stats[surface] = stats.get(surface, 0) + pct
+            route.surface_stats = {k: round(v, 2) for k, v in stats.items()}
+            route.save(update_fields=['surface_stats'])
         
         # 3. Procesar Fotos e IntelDrops
         metadata = json.loads(photo_metadata)
@@ -236,13 +320,13 @@ def save_forensic_route(
                     image=photo_file
                 )
         
-        # Fog of War: Desbloquear sectores
+        # Fog of War: Desbloquear sectores de exploración
         discovery = discover_sectors_from_route(route)
         
         return {
             "success": True, 
             "id": route.id, 
-            "message": "Expedición reconstruida con éxito.",
+            "message": "Expedición reconstruida con éxito mediante pgRouting.",
             "discovery": discovery
         }
         

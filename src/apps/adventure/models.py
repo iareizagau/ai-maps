@@ -143,6 +143,13 @@ class Route(models.Model):
             "dirt": round(dirt_pct)
         }
 
+    @property
+    def geom_simplified_geojson(self):
+        """Devuelve la geometría GeoJSON simplificada al 0.0008 para optimizar el rendimiento de renderizado en cliente"""
+        if not self.geom:
+            return "{}"
+        return self.geom.simplify(0.0008, preserve_topology=True).geojson
+
 class PointOfInterest(models.Model):
     """Puntos de interés genéricos importados de OSM"""
     POI_TYPES = (

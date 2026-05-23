@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'apps.zbe',
     'apps.adventure',
     'apps.solar',
+    'apps.oceania',
 ]
 
 MIDDLEWARE = [

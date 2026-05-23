@@ -28,18 +28,40 @@ class Command(BaseCommand):
             action='store_true', 
             help='Skip importing POIs'
         )
+        parser.add_argument(
+            '--country',
+            type=str,
+            help='ISO country code for fountains (e.g. ES, FR, CH)'
+        )
+        parser.add_argument(
+            '--region',
+            type=str,
+            help='ISO region code for fountains (e.g. ES-PV)'
+        )
+        parser.add_argument(
+            '--bbox',
+            type=str,
+            help='Bounding box for fountains (min_lon,min_lat,max_lon,max_lat)'
+        )
 
     def handle(self, *args, **options):
         pbf_url = options['pbf_url']
         pbf_file = options.get('pbf_file')
         skip_fountains = options['skip_fountains']
         skip_pois = options['skip_pois']
+        country = options.get('country')
+        region = options.get('region')
+        bbox = options.get('bbox')
         
         # 1. Import Fountains
         if not skip_fountains:
             self.stdout.write(self.style.SUCCESS("Starting import_fountains..."))
             try:
-                call_command('import_fountains')
+                kwargs = {}
+                if country: kwargs['country'] = country
+                if region: kwargs['region'] = region
+                if bbox: kwargs['bbox'] = bbox
+                call_command('import_fountains', **kwargs)
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f"Error in import_fountains: {e}"))
         

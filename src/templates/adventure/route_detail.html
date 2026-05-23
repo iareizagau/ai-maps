@@ -11,8 +11,8 @@
     <!-- Mapa Detalle 3D (Background) -->
     <div id="route-map" class="w-full h-full absolute inset-0 z-0"></div>
     
-    <!-- 1. TOP LEFT: Título y Estadísticas Base -->
-    <div class="absolute top-4 md:top-6 left-4 md:left-6 z-10 w-[90%] md:w-[340px]">
+    <!-- 1. TOP LEFT: Título y Estadísticas Base (DESKTOP ONLY) -->
+    <div class="hidden md:block absolute top-4 md:top-6 left-4 md:left-6 z-10 w-[90%] md:w-[340px]">
         <div class="bg-white bg-opacity-90 dark:bg-black dark:bg-opacity-80 backdrop-blur-lg border border-white border-opacity-40 dark:border-white dark:border-opacity-10 p-5 rounded-3xl shadow-2xl">
             <a href="javascript:history.back()" class="text-[11px] font-bold text-gray-500 hover:text-emerald-600 mb-3 flex items-center gap-1 uppercase tracking-widest transition-colors w-max">
                 <span class="text-base leading-none">←</span> Volver al Hub
@@ -139,10 +139,149 @@
         <button id="toggle-3d" class="px-4 py-2 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 font-bold text-[10px] uppercase tracking-wider shadow-inner transition flex items-center gap-2">🏔️ 3D</button>
     </div>
     
-    <!-- 4. BOTTOM RIGHT: Botón Volar -->
-    <button id="btn-flyover" disabled class="absolute bottom-6 right-6 bg-gray-500 text-white px-6 py-4 rounded-full font-black text-sm flex items-center gap-3 shadow-2xl z-50 cursor-not-allowed pointer-events-none opacity-50 transition-all hover:scale-105 uppercase tracking-widest border border-white border-opacity-10 backdrop-blur-md">
+    <!-- 4. BOTTOM RIGHT: Botón Volar (en móvil se sube sobre el peek del sheet) -->
+    <button id="btn-flyover" disabled class="absolute bottom-52 right-4 md:bottom-6 md:right-6 bg-gray-500 text-white px-4 md:px-6 py-3 md:py-4 rounded-full font-black text-xs md:text-sm flex items-center gap-2 md:gap-3 shadow-2xl z-20 md:z-50 cursor-not-allowed pointer-events-none opacity-50 transition-all hover:scale-105 uppercase tracking-widest border border-white border-opacity-10 backdrop-blur-md">
         ⏳ Cargando Mapa...
     </button>
+
+    <!-- ===== MOBILE LAYOUT ===== -->
+
+    <!-- M1. Header pill flotante -->
+    <div class="md:hidden absolute top-3 left-3 right-3 z-30 flex items-center gap-2 pointer-events-none">
+        <a href="javascript:history.back()" aria-label="Volver"
+           class="pointer-events-auto flex items-center justify-center w-10 h-10 rounded-full bg-white/95 dark:bg-black/80 backdrop-blur-md shadow-lg border border-white/40 dark:border-white/10 active:scale-95 transition">
+            <span class="text-lg leading-none">←</span>
+        </a>
+        <div class="pointer-events-auto flex-1 bg-white/95 dark:bg-black/80 backdrop-blur-md rounded-full shadow-lg border border-white/40 dark:border-white/10 px-4 py-2.5 min-w-0">
+            <h1 class="text-sm font-black text-gray-900 dark:text-white truncate leading-tight">{{ route.name }}</h1>
+        </div>
+    </div>
+
+    <!-- M2. FAB de capas (vertical stack) -->
+    <div class="md:hidden absolute top-20 right-3 z-30 flex flex-col gap-2" x-data="{ open: false }">
+        <button @click="open = !open" aria-label="Capas"
+                class="w-11 h-11 rounded-full bg-white/95 dark:bg-black/80 backdrop-blur-md shadow-lg border border-white/40 dark:border-white/10 flex items-center justify-center text-lg active:scale-95 transition">
+            <span x-text="open ? '✕' : '🗺️'"></span>
+        </button>
+        <div x-show="open" x-transition.opacity x-cloak class="flex flex-col gap-2">
+            <button id="m-layer-topo" onclick="document.getElementById('layer-topo').click()" aria-label="Topo"
+                    class="w-11 h-11 rounded-full bg-emerald-500 text-white shadow-lg flex items-center justify-center text-base active:scale-95 ring-2 ring-white/60 dark:ring-black/60">🗺️</button>
+            <button id="m-layer-sat" onclick="document.getElementById('layer-sat').click()" aria-label="Satélite"
+                    class="w-11 h-11 rounded-full bg-white/95 dark:bg-black/80 backdrop-blur-md shadow-lg border border-white/40 dark:border-white/10 flex items-center justify-center text-base active:scale-95">🛰️</button>
+            <button id="m-toggle-3d" onclick="document.getElementById('toggle-3d').click(); this.classList.toggle('bg-emerald-500'); this.classList.toggle('text-white');" aria-label="3D"
+                    class="w-11 h-11 rounded-full bg-emerald-500 text-white shadow-lg flex items-center justify-center text-[10px] font-black active:scale-95 ring-2 ring-white/60 dark:ring-black/60">3D</button>
+        </div>
+    </div>
+
+    <!-- M3. Bottom Sheet (3 snap points: peek / half / full) -->
+    <div x-data="bottomSheet()" x-ref="sheet"
+         class="md:hidden absolute left-0 right-0 bottom-0 z-30 bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl border-t border-x border-gray-200 dark:border-white/10 flex flex-col"
+         :class="{ 'cursor-grabbing': isDragging }"
+         :style="`height: 85%; transform: translateY(${currentY}px); transition: ${isDragging ? 'none' : 'transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)'}; will-change: transform;`">
+
+        <!-- Drag Handle -->
+        <div @touchstart="startDrag($event)" @touchmove="onDrag($event)" @touchend="endDrag()"
+             @mousedown="startDrag($event)"
+             class="pt-3 pb-2 flex flex-col items-center shrink-0 select-none"
+             style="touch-action: none">
+            <div class="w-12 h-1.5 rounded-full bg-gray-300 dark:bg-gray-700"></div>
+        </div>
+
+        <!-- PEEK content (always visible) -->
+        <div class="px-5 pb-3 shrink-0">
+            <div class="flex items-baseline justify-between gap-3 mb-3">
+                <h1 class="text-xl font-black text-gray-900 dark:text-white leading-tight truncate flex-1">{{ route.name }}</h1>
+                <button @click="cycleSnap()" class="shrink-0 text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800" x-text="currentSnap === 'full' ? 'Cerrar' : 'Detalles'"></button>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mb-3">
+                <div class="bg-emerald-50 dark:bg-emerald-900/30 px-3 py-2 rounded-xl">
+                    <p class="text-[9px] uppercase font-black text-emerald-700/70 dark:text-emerald-400/70 tracking-widest mb-0.5">Distancia</p>
+                    <p class="text-lg font-black text-emerald-700 dark:text-emerald-400 leading-tight">{{ route.distance_km|floatformat:1 }}<span class="text-[10px] font-bold ml-1 opacity-60">km</span></p>
+                </div>
+                <div class="bg-blue-50 dark:bg-blue-900/30 px-3 py-2 rounded-xl">
+                    <p class="text-[9px] uppercase font-black text-blue-700/70 dark:text-blue-400/70 tracking-widest mb-0.5">Desnivel</p>
+                    <p class="text-lg font-black text-blue-700 dark:text-blue-400 leading-tight">+{{ route.elevation_gain|floatformat:0 }}<span class="text-[10px] font-bold ml-1 opacity-60">m</span></p>
+                </div>
+            </div>
+            <div class="flex items-stretch gap-2">
+                <a href="{% url 'follow_route' route.id %}"
+                   class="flex-1 flex items-center justify-center gap-2 bg-emerald-600 active:bg-emerald-700 text-white font-black text-sm uppercase tracking-widest py-3.5 rounded-xl shadow-lg shadow-emerald-900/40 transition">
+                    <span class="animate-pulse">🔴</span> Iniciar Tactical HUD
+                </a>
+                <button id="btn-download-offline-mobile" onclick="downloadRouteOffline()" aria-label="Cargar offline"
+                        class="shrink-0 w-14 flex items-center justify-center bg-gray-800 active:bg-gray-700 text-white rounded-xl shadow-lg border border-gray-700 transition text-lg">
+                    💾
+                </button>
+            </div>
+        </div>
+
+        <!-- Scrollable expanded content -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar px-5 pb-8 pt-2 space-y-5"
+             :style="`overscroll-behavior: contain; ${currentSnap === 'peek' ? 'pointer-events: none' : ''}`">
+            <!-- Meta -->
+            <div class="flex items-center justify-between text-[11px] font-bold text-gray-500 dark:text-gray-400 pt-1">
+                <span class="flex items-center gap-1.5">👤 {{ route.user.username }}</span>
+                <span class="flex items-center gap-1.5">📅 {{ route.created_at|date:"d M, Y" }}</span>
+            </div>
+
+            {% if route.description %}
+            <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{{ route.description }}</p>
+            {% endif %}
+
+            <!-- Terrain Analysis -->
+            <div>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-base">⛰️</span>
+                    <h3 class="text-sm font-black text-gray-900 dark:text-white tracking-tight">Análisis del Terreno</h3>
+                </div>
+                <div class="w-full h-3 flex rounded-lg overflow-hidden mb-2 shadow-inner">
+                    <div class="bg-gray-800 dark:bg-gray-600 h-full" style="width: 60%"></div>
+                    <div class="bg-amber-600 h-full" style="width: 30%"></div>
+                    <div class="bg-emerald-500 h-full" style="width: 10%"></div>
+                </div>
+                <div class="flex flex-wrap gap-3 text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gray-800 dark:bg-gray-600"></span>Asfalto <span class="text-gray-400 font-normal">60%</span></span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-600"></span>Pista <span class="text-gray-400 font-normal">30%</span></span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>Sendero <span class="text-gray-400 font-normal">10%</span></span>
+                </div>
+            </div>
+
+            <!-- POI list -->
+            <div>
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-base">🎒</span>
+                    <h3 class="text-sm font-black text-gray-900 dark:text-white tracking-tight">Logística</h3>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ pois|length }} punto{{ pois|length|pluralize:"s" }}</span>
+                </div>
+                {% if not pois %}
+                    <div class="text-center py-5 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                        <div class="text-2xl mb-1 opacity-50">🌵</div>
+                        <p class="text-xs font-bold text-gray-500">Ruta sin puntos cercanos</p>
+                    </div>
+                {% else %}
+                    <div class="space-y-1.5">
+                        {% for poi in pois %}
+                        <div class="flex items-center gap-2.5 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm
+                                {% if poi.poi_type == 'water' %} bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400
+                                {% elif poi.poi_type == 'shelter' %} bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400
+                                {% elif poi.poi_type == 'cafe' %} bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400
+                                {% elif poi.poi_type == 'station' %} bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400
+                                {% else %} bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 {% endif %}">
+                                {% if poi.poi_type == 'water' %}💧{% elif poi.poi_type == 'shelter' %}⛺{% elif poi.poi_type == 'cafe' %}☕{% elif poi.poi_type == 'station' %}🚉{% else %}📍{% endif %}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-xs font-black text-gray-900 dark:text-white truncate leading-tight">{{ poi.name|default:"Punto sin nombre" }}</div>
+                                <div class="text-[9px] uppercase font-bold text-gray-400 tracking-wider mt-0.5">{{ poi.get_poi_type_display }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
 
     <!-- Flight Control Deck (Scrubber) -->
     <c-adventure.flight_deck />
@@ -500,10 +639,14 @@
         }
     });
 
+    // Sheet móvil (referencia para ocultar/mostrar durante flyover)
+    const mobileSheetEl = document.querySelector('[x-data^="bottomSheet"]');
+
     fcStop.addEventListener('click', () => {
         isPaused = true;
         flightDeck.classList.add('hidden');
         document.getElementById('btn-flyover').style.display = 'flex';
+        if (mobileSheetEl) mobileSheetEl.style.display = '';
         // Reiniciamos cámara si lo deseamos, pero dejarla donde está permite seguir viendo.
     });
 
@@ -587,7 +730,8 @@
 
     // Initialization
     document.getElementById('btn-flyover').addEventListener('click', (e) => {
-        e.target.style.display = 'none'; 
+        e.target.style.display = 'none';
+        if (mobileSheetEl) mobileSheetEl.style.display = 'none';
         flyoverCoords = routeGeoJSON.coordinates.flat(1);
         if (flyoverCoords.length === 0) return;
         
@@ -602,26 +746,101 @@
         animationStep();
     });
 
+    // Bottom Sheet (mobile) — Alpine component
+    function bottomSheet() {
+        return {
+            snapPositions: { full: 0, half: 0, peek: 0 },
+            currentSnap: 'peek',
+            currentY: 0,
+            startTouchY: 0,
+            startY: 0,
+            isDragging: false,
+            init() {
+                this.$nextTick(() => this.computeSnaps());
+                window.addEventListener('resize', () => this.computeSnaps());
+            },
+            computeSnaps() {
+                const sheet = this.$el;
+                const sheetHeight = sheet.offsetHeight;
+                const containerHeight = sheet.parentElement.clientHeight;
+                this.snapPositions = {
+                    full: 0,
+                    half: Math.max(0, sheetHeight - containerHeight * 0.5),
+                    peek: Math.max(0, sheetHeight - 210)
+                };
+                this.currentY = this.snapPositions[this.currentSnap];
+            },
+            startDrag(e) {
+                this.isDragging = true;
+                this.startTouchY = e.touches ? e.touches[0].clientY : e.clientY;
+                this.startY = this.currentY;
+            },
+            onDrag(e) {
+                if (!this.isDragging) return;
+                const y = e.touches ? e.touches[0].clientY : e.clientY;
+                const delta = y - this.startTouchY;
+                const newY = this.startY + delta;
+                this.currentY = Math.max(this.snapPositions.full, Math.min(this.snapPositions.peek, newY));
+            },
+            endDrag() {
+                if (!this.isDragging) return;
+                this.isDragging = false;
+                const entries = Object.entries(this.snapPositions);
+                let closest = entries[0];
+                entries.forEach(([name, y]) => {
+                    if (Math.abs(this.currentY - y) < Math.abs(this.currentY - closest[1])) closest = [name, y];
+                });
+                this.currentSnap = closest[0];
+                this.currentY = closest[1];
+            },
+            cycleSnap() {
+                const order = ['peek', 'half', 'full'];
+                const next = this.currentSnap === 'full' ? 'peek' : order[order.indexOf(this.currentSnap) + 1];
+                this.currentSnap = next;
+                this.currentY = this.snapPositions[next];
+            }
+        };
+    }
+    // Expose globally so Alpine can resolve it
+    window.bottomSheet = bottomSheet;
+
     // Offline maps downloading system
     const routeId = {{ route.id }};
-    
+
+    function getOfflineButtons() {
+        return [
+            document.getElementById('btn-download-offline'),
+            document.getElementById('btn-download-offline-mobile')
+        ].filter(Boolean);
+    }
+
+    const isMobileOfflineBtn = (b) => b.id === 'btn-download-offline-mobile';
+
     // Check if previously downloaded
     if (localStorage.getItem(`route-offline-${routeId}`) === 'true') {
-        const btn = document.getElementById('btn-download-offline');
-        if (btn) {
-            btn.innerHTML = `✅ Disponible Offline`;
+        getOfflineButtons().forEach(btn => {
+            btn.innerHTML = isMobileOfflineBtn(btn) ? `✅` : `✅ Disponible Offline`;
             btn.classList.remove('bg-gray-800', 'hover:bg-gray-700');
             btn.classList.add('bg-emerald-700');
-        }
+        });
     }
 
     async function downloadRouteOffline() {
         const coords = routeGeoJSON.coordinates.flat(1);
         if (!coords || coords.length === 0) return;
 
-        const btn = document.getElementById('btn-download-offline');
-        const originalText = btn.innerHTML;
-        btn.disabled = true;
+        const btns = getOfflineButtons();
+        if (btns.length === 0) return;
+        const originalTexts = new Map(btns.map(b => [b, b.innerHTML]));
+        btns.forEach(b => b.disabled = true);
+        const setText = (html, shortHtml) => btns.forEach(b => {
+            b.innerHTML = isMobileOfflineBtn(b) ? (shortHtml ?? html) : html;
+        });
+        const setStateDownloaded = () => btns.forEach(b => {
+            b.innerHTML = isMobileOfflineBtn(b) ? `✅` : `✅ Disponible Offline`;
+            b.classList.remove('bg-gray-800', 'hover:bg-gray-700');
+            b.classList.add('bg-emerald-700');
+        });
 
         // Define tile sources
         const sources = [
@@ -685,19 +904,17 @@
                 }));
                 
                 const progress = Math.round((downloaded / total) * 100);
-                btn.innerHTML = `💾 Descargando... ${progress}%`;
+                setText(`💾 Descargando... ${progress}%`, `${progress}%`);
             }
 
-            btn.innerHTML = `✅ Disponible Offline`;
-            btn.classList.remove('bg-gray-800', 'hover:bg-gray-700');
-            btn.classList.add('bg-emerald-700');
+            setStateDownloaded();
             localStorage.setItem(`route-offline-${routeId}`, 'true');
 
         } catch (e) {
             console.error("Error en descarga offline", e);
-            btn.innerHTML = `❌ Error en Descarga`;
-            btn.disabled = false;
-            setTimeout(() => { btn.innerHTML = originalText; }, 3000);
+            setText(`❌ Error en Descarga`, `❌`);
+            btns.forEach(b => b.disabled = false);
+            setTimeout(() => btns.forEach(b => b.innerHTML = originalTexts.get(b)), 3000);
         }
     }
 </script>

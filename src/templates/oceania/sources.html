@@ -1,0 +1,185 @@
+{% load i18n %}
+<c-layouts.main title="{% trans 'Origen de Datos y Metodología' %} - Pacific Climate Horizon">
+  <c-slot name="extra_head">
+    <style>
+      /* Micro-animations and premium styles */
+      .source-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .source-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        border-color: rgba(20, 184, 166, 0.3); /* Teal glow */
+      }
+      .dark .source-card {
+        background: rgba(15, 23, 42, 0.65);
+      }
+      .light .source-card {
+        background: rgba(255, 255, 255, 0.7);
+        border-color: rgba(0, 0, 0, 0.05);
+      }
+      .light .source-card:hover {
+        border-color: rgba(20, 184, 166, 0.4);
+      }
+      .gradient-heading {
+        background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+    </style>
+  </c-slot>
+
+  <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto">
+      
+      <!-- Back button -->
+      <div class="mb-8">
+        <a href="{% url 'oceania:home' %}" class="inline-flex items-center text-sm font-medium text-teal-600 dark:text-teal-400 hover:underline">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          {% trans "Volver al Dashboard" %}
+        </a>
+      </div>
+
+      <!-- Header Section -->
+      <div class="text-center mb-16">
+        <span class="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400 bg-teal-100 dark:bg-teal-900/30 rounded-full">
+          {% trans "Transparencia de Datos" %}
+        </span>
+        <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight">
+          <span class="gradient-heading">{% trans "Metodología y Origen de Datos" %}</span>
+        </h1>
+        <p class="mt-4 max-w-2xl mx-auto text-base text-gray-500 dark:text-gray-400">
+          {% trans "De acuerdo con las bases del Pacific Dataviz Challenge 2026, nuestra aplicación está construida sobre bases científicas rigurosas y mapas georreferenciados oficiales del Pacific Data Hub." %}
+        </p>
+      </div>
+
+      <!-- Primary Sources Section -->
+      <div class="space-y-8">
+        
+        <!-- Card 1: Sea Level Rise -->
+        <div class="source-card rounded-2xl p-6 md:p-8 backdrop-blur-md">
+          <div class="md:flex md:items-start md:justify-between">
+            <div class="flex items-center space-x-4 mb-4 md:mb-0">
+              <div class="p-3 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-xl">
+                <!-- Sea/Waves icon -->
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0a3 3 0 11-6 0m16 0a3 3 0 11-6 0"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">{% trans "Simulador de Aumento del Nivel del Mar" %}</h3>
+                <p class="text-sm text-teal-600 dark:text-teal-400 font-medium">{% trans "Pacific Sea Level and Geodetic Monitoring Project (PSLMP)" %}</p>
+              </div>
+            </div>
+            <a href="https://pacificdata.org" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-teal-600 hover:bg-teal-700 transition shadow-sm">
+              {% trans "Ver en Pacific Data Hub" %}
+              <svg class="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+              </svg>
+            </a>
+          </div>
+
+          <div class="mt-6 border-t border-gray-100 dark:border-gray-800 pt-6">
+            <h4 class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{% trans "Metodología de Visualización" %}</h4>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+              {% trans "Utilizamos las elevaciones geodésicas medias de los atolones de baja altitud (Funafuti en Tuvalu, Tarawa en Kiribati y Majuro en las Islas Marshall) provistas por la División de Geociencia, Energía y Marítima (GEM) de la Comunidad del Pacífico (SPC). El simulador modela en tiempo real el solapamiento de la pérdida de tierra habitable permanente y la franja de erosión crítica/salinización de acuíferos provocada por mareas de tempestad." %}
+            </p>
+            <div class="mt-4 bg-gray-50 dark:bg-slate-900/40 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
+              <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">{% trans "Cita APA oficial" %}</span>
+              <code class="text-xs text-gray-700 dark:text-gray-300 block leading-relaxed select-all">
+                {% trans "Pacific Community (SPC). (2024). Pacific Sea Level and Geodetic Monitoring Project (PSLMP). Geoscience, Energy and Maritime Division. Pacific Data Hub Repository. Retrieved from https://pacificdata.org" %}
+              </code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Tropical Cyclones -->
+        <div class="source-card rounded-2xl p-6 md:p-8 backdrop-blur-md">
+          <div class="md:flex md:items-start md:justify-between">
+            <div class="flex items-center space-x-4 mb-4 md:mb-0">
+              <div class="p-3 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-xl">
+                <!-- Cyclone icon -->
+                <svg class="w-6 h-6 animate-spin-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                  <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">{% trans "Trayectorias de Ciclones Históricos" %}</h3>
+                <p class="text-sm text-teal-600 dark:text-teal-400 font-medium">{% trans "South Pacific Tropical Cyclone tracks (SPTC)" %}</p>
+              </div>
+            </div>
+            <a href="https://pacificdata.org" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-teal-600 hover:bg-teal-700 transition shadow-sm">
+              {% trans "Ver en Pacific Data Hub" %}
+              <svg class="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+              </svg>
+            </a>
+          </div>
+
+          <div class="mt-6 border-t border-gray-100 dark:border-gray-800 pt-6">
+            <h4 class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{% trans "Metodología de Visualización" %}</h4>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+              {% trans "Extraído del catálogo conjunto de SPREP y SPC. El reproductor animado traza las coordenadas espaciales exactas, la velocidad del viento (nudos escalados a km/h) y el impacto financiero de los ciclones tropicales Pam (2015), Winston (2016) y Gita (2018), que establecieron precedentes de devastación económica de categoría 5." %}
+            </p>
+            <div class="mt-4 bg-gray-50 dark:bg-slate-900/40 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
+              <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">{% trans "Cita APA oficial" %}</span>
+              <code class="text-xs text-gray-700 dark:text-gray-300 block leading-relaxed select-all">
+                {% trans "Secretariat of the Pacific Regional Environment Programme (SPREP). (2025). South Pacific Tropical Cyclone historical tracks database. WMO Regional Association V. Pacific Data Hub catalog. Retrieved from https://pacificdata.org" %}
+              </code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Climate Justice & Emissions -->
+        <div class="source-card rounded-2xl p-6 md:p-8 backdrop-blur-md">
+          <div class="md:flex md:items-start md:justify-between">
+            <div class="flex items-center space-x-4 mb-4 md:mb-0">
+              <div class="p-3 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-xl">
+                <!-- Bar chart icon -->
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">{% trans "Justicia Climática y Deuda de Carbono" %}</h3>
+                <p class="text-sm text-teal-600 dark:text-teal-400 font-medium">{% trans "Pacific Energy and Climate Change Indicators Database" %}</p>
+              </div>
+            </div>
+            <a href="https://pacificdata.org" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-teal-600 hover:bg-teal-700 transition shadow-sm">
+              {% trans "Ver en Pacific Data Hub" %}
+              <svg class="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+              </svg>
+            </a>
+          </div>
+
+          <div class="mt-6 border-t border-gray-100 dark:border-gray-800 pt-6">
+            <h4 class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{% trans "Metodología de Visualización" %}</h4>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+              {% trans "Los datos de emisiones per cápita de CO₂ de los países de Oceanía provienen de los indicadores consolidados de energía y cambio climático del PDH. Para el análisis comparativo global de justicia climática, cruzamos estas métricas con el ND-GAIN Country Index (Notre Dame Global Adaptation Initiative), graficando la brecha asimétrica entre los mayores emisores mundiales de carbono y la extrema vulnerabilidad física de los Pequeños Estados Insulares en Desarrollo (SIDS)." %}
+            </p>
+            <div class="mt-4 bg-gray-50 dark:bg-slate-900/40 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
+              <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">{% trans "Cita APA oficial" %}</span>
+              <code class="text-xs text-gray-700 dark:text-gray-300 block leading-relaxed select-all">
+                {% trans "Notre Dame Global Adaptation Initiative (ND-GAIN). (2025). Country Vulnerability and Readiness Index. University of Notre Dame. Retrieved from https://gain.nd.edu" %}
+              </code>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Disclaimer / IA Usage Notice -->
+      <div class="mt-16 text-center border-t border-gray-100 dark:border-gray-800 pt-8">
+        <p class="text-xs text-gray-400 dark:text-gray-500 max-w-lg mx-auto">
+          {% trans "Este portal y su código base han sido desarrollados de forma original para la participación oficial en el Pacific Dataviz Challenge 2026. Todos los derechos de datos corresponden a sus respectivos proveedores bajo licencias Creative Commons de Open Data." %}
+        </p>
+      </div>
+
+    </div>
+  </div>
+</c-layouts.main>

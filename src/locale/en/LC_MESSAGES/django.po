@@ -2,12 +2,12 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-# 
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-23 15:43+0200\n"
+"POT-Creation-Date: 2026-05-23 15:59+0200\n"
 "PO-Revision-Date: 2026-04-27 23:15+0200\n"
 "Last-Translator: Antigravity AI\n"
 "Language-Team: English\n"
@@ -1602,7 +1602,9 @@ msgstr "Climate Horizon"
 msgid ""
 "Exploración de la justicia climática, inundación de atolones y trayectorias "
 "de ciclones en Oceanía."
-msgstr "Exploring climate justice, low-lying atoll flooding, and historical cyclone tracks in Oceania."
+msgstr ""
+"Exploring climate justice, low-lying atoll flooding, and historical cyclone "
+"tracks in Oceania."
 
 #: templates/oceania/home.html:78
 msgid "Justicia"
@@ -1620,7 +1622,9 @@ msgstr "The Inequity of Carbon Debt"
 msgid ""
 "Los países del Pacífico apenas emiten gases contaminantes, pero pagan el "
 "precio más alto debido a su extrema vulnerabilidad física y económica."
-msgstr "Pacific island nations emit negligible greenhouse gases, yet pay the highest price due to their extreme physical and economic vulnerability."
+msgstr ""
+"Pacific island nations emit negligible greenhouse gases, yet pay the highest "
+"price due to their extreme physical and economic vulnerability."
 
 #: templates/oceania/home.html:106
 msgid "Emisiones vs Vulnerabilidad"
@@ -1635,13 +1639,15 @@ msgid ""
 "Las naciones del Pacífico (en verde en el gráfico) se sitúan en el cuadrante "
 "superior izquierdo: extremadamente vulnerables con emisiones per cápita "
 "insignificantes."
-msgstr "Pacific nations (highlighted green in the chart) sit in the top-left quadrant: highly vulnerable with negligible per-capita emissions."
+msgstr ""
+"Pacific nations (highlighted green in the chart) sit in the top-left "
+"quadrant: highly vulnerable with negligible per-capita emissions."
 
 #: templates/oceania/home.html:125
 msgid "Vulnerabilidad por País"
 msgstr "Vulnerability by Country"
 
-#: templates/oceania/home.html:153
+#: templates/oceania/home.html:153 templates/oceania/sources.html:73
 msgid "Simulador de Aumento del Nivel del Mar"
 msgstr "Sea Level Rise Simulator"
 
@@ -1650,7 +1656,9 @@ msgid ""
 "Los atolones de coral del Pacífico tienen elevaciones medias de apenas 2 "
 "metros sobre el nivel del mar. Usa el control para ver el impacto estimado "
 "de la inundación."
-msgstr "Pacific coral atolls have average elevations of barely 2 meters. Adjust the slider to visualize the estimated flooding impact."
+msgstr ""
+"Pacific coral atolls have average elevations of barely 2 meters. Adjust the "
+"slider to visualize the estimated flooding impact."
 
 #: templates/oceania/home.html:163
 msgid "Elevación del Mar"
@@ -1676,7 +1684,9 @@ msgstr "History of Devastating Cyclones"
 msgid ""
 "El calentamiento del océano intensifica los ciclones tropicales en la "
 "región. Anima las trayectorias de los eventos históricos más intensos."
-msgstr "Ocean warming intensifies tropical cyclones in the region. Play the animated paths of the most intense historical events."
+msgstr ""
+"Ocean warming intensifies tropical cyclones in the region. Play the animated "
+"paths of the most intense historical events."
 
 #: templates/oceania/home.html:232
 msgid "Seleccionar Ciclón"
@@ -1699,7 +1709,9 @@ msgstr "Loss and Damage:"
 msgid ""
 "Para un país pequeño como Vanuatu o Tuvalu, un solo ciclón de Categoría 5 "
 "puede destruir más del 60%% de su PIB en cuestión de horas."
-msgstr "For a small nation like Vanuatu or Tuvalu, a single Category 5 cyclone can destroy more than 60%% of its GDP in a matter of hours."
+msgstr ""
+"For a small nation like Vanuatu or Tuvalu, a single Category 5 cyclone can "
+"destroy more than 60%% of its GDP in a matter of hours."
 
 #: templates/oceania/home.html:293
 msgid "Visitar Pacific Dataviz Challenge 2026"
@@ -1716,6 +1728,124 @@ msgstr "Climate Vulnerability"
 #: templates/oceania/home.html:319
 msgid "Categoría del Ciclón"
 msgstr "Cyclone Category"
+
+#: templates/oceania/sources.html:2
+msgid "Origen de Datos y Metodología"
+msgstr "Data Sources & Methodology"
+
+#: templates/oceania/sources.html:42
+msgid "Volver al Dashboard"
+msgstr "Back to Dashboard"
+
+#: templates/oceania/sources.html:49
+msgid "Transparencia de Datos"
+msgstr "Data Transparency"
+
+#: templates/oceania/sources.html:52
+msgid "Metodología y Origen de Datos"
+msgstr "Methodology & Data Sources"
+
+#: templates/oceania/sources.html:55
+msgid ""
+"De acuerdo con las bases del Pacific Dataviz Challenge 2026, nuestra "
+"aplicación está construida sobre bases científicas rigurosas y mapas "
+"georreferenciados oficiales del Pacific Data Hub."
+msgstr "In accordance with the rules of the Pacific Dataviz Challenge 2026, our application is built on a rigorous scientific foundation using official georeferenced maps from the Pacific Data Hub."
+
+#: templates/oceania/sources.html:74
+msgid "Pacific Sea Level and Geodetic Monitoring Project (PSLMP)"
+msgstr "Pacific Sea Level and Geodetic Monitoring Project (PSLMP)"
+
+#: templates/oceania/sources.html:78 templates/oceania/sources.html:116
+#: templates/oceania/sources.html:153
+msgid "Ver en Pacific Data Hub"
+msgstr "View in Pacific Data Hub"
+
+#: templates/oceania/sources.html:86 templates/oceania/sources.html:124
+#: templates/oceania/sources.html:161
+msgid "Metodología de Visualización"
+msgstr "Visualization Methodology"
+
+#: templates/oceania/sources.html:88
+msgid ""
+"Utilizamos las elevaciones geodésicas medias de los atolones de baja altitud "
+"(Funafuti en Tuvalu, Tarawa en Kiribati y Majuro en las Islas Marshall) "
+"provistas por la División de Geociencia, Energía y Marítima (GEM) de la "
+"Comunidad del Pacífico (SPC). El simulador modela en tiempo real el "
+"solapamiento de la pérdida de tierra habitable permanente y la franja de "
+"erosión crítica/salinización de acuíferos provocada por mareas de tempestad."
+msgstr "We utilize the mean geodetic elevations of low-lying atolls (Funafuti in Tuvalu, Tarawa in Kiribati, and Majuro in the Marshall Islands) provided by the Geoscience, Energy and Maritime (GEM) Division of the Pacific Community (SPC). The simulator models in real-time the overlap between permanent habitable land loss and the critical storm surge erosion/aquifer salinization zone."
+
+#: templates/oceania/sources.html:91 templates/oceania/sources.html:129
+#: templates/oceania/sources.html:166
+msgid "Cita APA oficial"
+msgstr "Official APA Citation"
+
+#: templates/oceania/sources.html:93
+msgid ""
+"Pacific Community (SPC). (2024). Pacific Sea Level and Geodetic Monitoring "
+"Project (PSLMP). Geoscience, Energy and Maritime Division. Pacific Data Hub "
+"Repository. Retrieved from https://pacificdata.org"
+msgstr "Pacific Community (SPC). (2024). Pacific Sea Level and Geodetic Monitoring Project (PSLMP). Geoscience, Energy and Maritime Division. Pacific Data Hub Repository. Retrieved from https://pacificdata.org"
+
+#: templates/oceania/sources.html:111
+msgid "Trayectorias de Ciclones Históricos"
+msgstr "Historical Cyclone Tracks"
+
+#: templates/oceania/sources.html:112
+msgid "South Pacific Tropical Cyclone tracks (SPTC)"
+msgstr "South Pacific Tropical Cyclone tracks (SPTC)"
+
+#: templates/oceania/sources.html:126
+msgid ""
+"Extraído del catálogo conjunto de SPREP y SPC. El reproductor animado traza "
+"las coordenadas espaciales exactas, la velocidad del viento (nudos escalados "
+"a km/h) y el impacto financiero de los ciclones tropicales Pam (2015), "
+"Winston (2016) y Gita (2018), que establecieron precedentes de devastación "
+"económica de categoría 5."
+msgstr "Extracted from the joint catalog of SPREP and SPC. The animated track player traces the exact spatial coordinates, wind speed (knots scaled to km/h), and financial damages of Category 5 tropical cyclones Pam (2015), Winston (2016), and Gita (2018)."
+
+#: templates/oceania/sources.html:131
+msgid ""
+"Secretariat of the Pacific Regional Environment Programme (SPREP). (2025). "
+"South Pacific Tropical Cyclone historical tracks database. WMO Regional "
+"Association V. Pacific Data Hub catalog. Retrieved from https://"
+"pacificdata.org"
+msgstr "Secretariat of the Pacific Regional Environment Programme (SPREP). (2025). South Pacific Tropical Cyclone historical tracks database. WMO Regional Association V. Pacific Data Hub catalog. Retrieved from https://pacificdata.org"
+
+#: templates/oceania/sources.html:148
+msgid "Justicia Climática y Deuda de Carbono"
+msgstr "Climate Justice & Carbon Debt"
+
+#: templates/oceania/sources.html:149
+msgid "Pacific Energy and Climate Change Indicators Database"
+msgstr "Pacific Energy and Climate Change Indicators Database"
+
+#: templates/oceania/sources.html:163
+msgid ""
+"Los datos de emisiones per cápita de CO₂ de los países de Oceanía provienen "
+"de los indicadores consolidados de energía y cambio climático del PDH. Para "
+"el análisis comparativo global de justicia climática, cruzamos estas "
+"métricas con el ND-GAIN Country Index (Notre Dame Global Adaptation "
+"Initiative), graficando la brecha asimétrica entre los mayores emisores "
+"mundiales de carbono y la extrema vulnerabilidad física de los Pequeños "
+"Estados Insulares en Desarrollo (SIDS)."
+msgstr "Per-capita CO₂ emissions data for Pacific nations are sourced from the consolidated PDH energy and climate change indicators. For the global climate justice comparative analysis, we cross-reference these metrics with the ND-GAIN Country Index (Notre Dame Global Adaptation Initiative), mapping the stark asymmetry between global heavy carbon emitters and the extreme physical vulnerability of Small Island Developing States (SIDS)."
+
+#: templates/oceania/sources.html:168
+msgid ""
+"Notre Dame Global Adaptation Initiative (ND-GAIN). (2025). Country "
+"Vulnerability and Readiness Index. University of Notre Dame. Retrieved from "
+"https://gain.nd.edu"
+msgstr "Notre Dame Global Adaptation Initiative (ND-GAIN). (2025). Country Vulnerability and Readiness Index. University of Notre Dame. Retrieved from https://gain.nd.edu"
+
+#: templates/oceania/sources.html:179
+msgid ""
+"Este portal y su código base han sido desarrollados de forma original para "
+"la participación oficial en el Pacific Dataviz Challenge 2026. Todos los "
+"derechos de datos corresponden a sus respectivos proveedores bajo licencias "
+"Creative Commons de Open Data."
+msgstr "This portal and its codebase have been originally developed for official participation in the Pacific Dataviz Challenge 2026. All data rights belong to their respective providers under Creative Commons Open Data licenses."
 
 #: templates/pintxos/account_panel.html:3
 msgid "My pintxos"

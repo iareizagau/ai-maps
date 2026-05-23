@@ -273,3 +273,7 @@ def cyclone_geojson(request):
         "type": "FeatureCollection",
         "features": features
     })
+
+def sources(request):
+    """Renders the data sources, bibliography and methodology page."""
+    return render(request, 'oceania/sources.html')

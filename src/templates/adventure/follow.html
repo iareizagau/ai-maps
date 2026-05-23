@@ -32,6 +32,28 @@
             ⚠️ Fuera de Ruta
         </div>
     </div>
+
+    <!-- Right-side FAB stack: Capas / Brújula / Recentrar -->
+    <div class="absolute right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-3">
+        <button id="btn-layer" aria-label="Cambiar capa"
+                class="w-12 h-12 rounded-full bg-gray-900/80 backdrop-blur-md border border-gray-700 text-white shadow-lg flex items-center justify-center text-lg active:scale-95 transition">
+            <span id="btn-layer-icon">🛰️</span>
+        </button>
+
+        <button id="btn-compass" aria-label="Reiniciar orientación"
+                class="w-12 h-12 rounded-full bg-gray-900/80 backdrop-blur-md border border-gray-700 text-white shadow-lg flex items-center justify-center active:scale-95 transition relative overflow-hidden">
+            <div id="compass-inner" class="w-full h-full flex items-center justify-center relative" style="transition: transform 0.15s linear">
+                <div class="absolute top-1 left-1/2 -translate-x-1/2 w-0 h-0" style="border-left: 4px solid transparent; border-right: 4px solid transparent; border-bottom: 7px solid #ef4444;"></div>
+                <div class="absolute bottom-1 left-1/2 -translate-x-1/2 w-0 h-0" style="border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 7px solid #6b7280;"></div>
+                <span id="compass-label" class="text-[10px] font-black text-white">N</span>
+            </div>
+        </button>
+
+        <button id="btn-recenter" aria-label="Recentrar"
+                class="w-12 h-12 rounded-full bg-emerald-600 text-white shadow-lg flex items-center justify-center text-lg active:scale-95 transition hidden">
+            <span>📍</span>
+        </button>
+    </div>
     
     <!-- Bottom HUD Bar -->
     <div class="absolute bottom-0 left-0 w-full z-10 bg-gradient-to-t from-black/90 to-transparent p-6 pb-8">
@@ -41,7 +63,19 @@
                 Intel Detectado a <span id="intel-dist">--</span>m
             </div>
             
-            <h3 class="font-bold text-white mb-1 mt-2 text-center truncate px-2">{{ route.name }}</h3>
+            <h3 class="font-bold text-white mb-2 mt-2 text-center truncate px-2">{{ route.name }}</h3>
+
+            <div class="grid grid-cols-2 gap-2 mb-2 px-2">
+                <div class="bg-black/40 rounded-xl px-3 py-2 text-center border border-gray-800">
+                    <div class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-0.5">Restante</div>
+                    <div class="text-lg font-black text-emerald-400 leading-none"><span id="dist-remaining">--</span><span class="text-[10px] text-gray-500 font-bold ml-1">km</span></div>
+                </div>
+                <div class="bg-black/40 rounded-xl px-3 py-2 text-center border border-gray-800">
+                    <div class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-0.5">Progreso</div>
+                    <div class="text-lg font-black text-white leading-none"><span id="progress-pct">--</span><span class="text-[10px] text-gray-500 font-bold ml-1">%</span></div>
+                </div>
+            </div>
+
             <p id="intel-desc" class="text-xs text-gray-400 text-center line-clamp-2 px-2">Vigilando perímetro...</p>
         </div>
     </div>
@@ -61,6 +95,10 @@
     let alertedIntelIds = new Set();
     let userMarker = null;
     let watchId = null;
+    let autoFollow = true;
+    let lastUserPos = null;
+    let layerMode = 'dark'; // 'dark' | 'satellite'
+    const totalRouteKm = turf.length(turf.lineString(rawGeojson.coordinates[0]));
 
     const map = new maplibregl.Map({
         container: 'map',
@@ -78,7 +116,21 @@
     map.on('load', () => {
         // Force AMOLED Black background to save battery
         map.setPaintProperty('background', 'background-color', '#000000');
-        
+
+        // Satellite source (initially hidden, used by layer toggle)
+        map.addSource('satellite', {
+            type: 'raster',
+            tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+            tileSize: 256,
+            attribution: '&copy; Esri'
+        });
+        map.addLayer({
+            id: 'sat-layer',
+            type: 'raster',
+            source: 'satellite',
+            layout: { visibility: 'none' }
+        });
+
         // Add Route Source
         map.addSource('route', {
             type: 'geojson',
@@ -135,6 +187,59 @@
         startTracking();
     });
 
+    // === Compass: sync with map bearing ===
+    const compassInner = document.getElementById('compass-inner');
+    const compassLabel = document.getElementById('compass-label');
+    function updateCompass() {
+        const bearing = map.getBearing();
+        compassInner.style.transform = `rotate(${-bearing}deg)`;
+        // Cardinal currently "up" on the map (bearing=90 → E at top, bearing=270 → O at top)
+        const norm = ((bearing % 360) + 360) % 360;
+        let label = 'N';
+        if (norm >= 45 && norm < 135) label = 'E';
+        else if (norm >= 135 && norm < 225) label = 'S';
+        else if (norm >= 225 && norm < 315) label = 'O';
+        compassLabel.style.transform = `rotate(${bearing}deg)`; // keep letter upright
+        compassLabel.innerText = label;
+    }
+    map.on('rotate', updateCompass);
+    map.on('rotateend', updateCompass);
+
+    // === Compass click: snap bearing back to North ===
+    document.getElementById('btn-compass').addEventListener('click', () => {
+        map.easeTo({ bearing: 0, pitch: 60, duration: 600 });
+    });
+
+    // === Layer toggle: dark <-> satellite overlay ===
+    document.getElementById('btn-layer').addEventListener('click', () => {
+        if (layerMode === 'dark') {
+            map.setLayoutProperty('sat-layer', 'visibility', 'visible');
+            document.getElementById('btn-layer-icon').innerText = '🌙';
+            layerMode = 'satellite';
+        } else {
+            map.setLayoutProperty('sat-layer', 'visibility', 'none');
+            document.getElementById('btn-layer-icon').innerText = '🛰️';
+            layerMode = 'dark';
+        }
+    });
+
+    // === Recenter button ===
+    const btnRecenter = document.getElementById('btn-recenter');
+    btnRecenter.addEventListener('click', () => {
+        if (!lastUserPos) return;
+        autoFollow = true;
+        btnRecenter.classList.add('hidden');
+        map.flyTo({ center: lastUserPos, zoom: 16, bearing: 0, pitch: 60, duration: 600 });
+    });
+
+    // === Detect user pan/zoom: disable auto-follow ===
+    map.on('dragstart', () => {
+        if (autoFollow) {
+            autoFollow = false;
+            btnRecenter.classList.remove('hidden');
+        }
+    });
+
     function getIntelIcon(type) {
         const icons = { 'warning': '⚠️', 'photo_epic': '📸', 'water_ok': '💧', 'water_dry': '🏜️', 'surface_mud': '💩', 'surface_snow': '❄️', 'shelter_ok': '⛺', 'shelter_bad': '🏚️' };
         return icons[type] || '📍';
@@ -161,13 +266,16 @@
                 
                 // Update UI
                 document.getElementById('gps-accuracy').innerText = `±${accuracy.toFixed(0)}m`;
-                
+
                 // Move marker
                 userMarker.setLngLat([lng, lat]);
-                
-                // Center Map (smooth follow)
-                map.flyTo({ center: [lng, lat], speed: 0.5 });
-                
+                lastUserPos = [lng, lat];
+
+                // Center Map (smooth follow) only if user hasn't taken control
+                if (autoFollow) {
+                    map.flyTo({ center: [lng, lat], speed: 0.5 });
+                }
+
                 // Turf checks
                 runSentinelChecks(lng, lat);
             },
@@ -182,7 +290,17 @@
 
     function runSentinelChecks(lng, lat) {
         const currentPt = turf.point([lng, lat]);
-        
+
+        // 0. Progress along route (distance remaining + %)
+        try {
+            const snapped = turf.nearestPointOnLine(routeLine, currentPt, { units: 'kilometers' });
+            const traveledKm = snapped.properties.location || 0;
+            const remainingKm = Math.max(0, totalRouteKm - traveledKm);
+            const pct = totalRouteKm > 0 ? Math.min(100, Math.round((traveledKm / totalRouteKm) * 100)) : 0;
+            document.getElementById('dist-remaining').innerText = remainingKm.toFixed(1);
+            document.getElementById('progress-pct').innerText = pct;
+        } catch (e) { /* ignore */ }
+
         // 1. Off-Route Check
         const distanceToRouteKm = turf.pointToLineDistance(currentPt, routeLine);
         const distanceMeters = distanceToRouteKm * 1000;

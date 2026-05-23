@@ -179,11 +179,10 @@
          :class="{ 'cursor-grabbing': isDragging }"
          :style="`height: 85%; transform: translateY(${currentY}px); transition: ${isDragging ? 'none' : 'transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)'}; will-change: transform;`">
 
-        <!-- Drag Handle (también toggle al tocar) -->
+        <!-- Drag Handle -->
         <div @touchstart="startDrag($event)" @touchmove="onDrag($event)" @touchend="endDrag()"
              @mousedown="startDrag($event)"
-             @click="if (!isDragging && Math.abs(currentY - startY) < 4) toggleExpand()"
-             class="pt-3 pb-2 flex flex-col items-center shrink-0 select-none cursor-pointer"
+             class="pt-3 pb-2 flex flex-col items-center shrink-0 select-none cursor-grab active:cursor-grabbing"
              style="touch-action: none">
             <div class="w-12 h-1.5 rounded-full bg-gray-300 dark:bg-gray-700"></div>
         </div>

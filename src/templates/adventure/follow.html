@@ -27,9 +27,18 @@
     </div>
 
     <!-- Red Danger Overlay (Off-route) -->
-    <div id="danger-overlay" class="absolute top-0 left-0 w-full h-full border-[8px] border-red-600 bg-red-600/10 opacity-0 transition-opacity duration-300 z-20 flex items-center justify-center pointer-events-none">
-        <div class="bg-red-600 text-white font-black text-2xl uppercase tracking-widest px-6 py-3 rounded-xl shadow-2xl animate-pulse">
+    <div id="danger-overlay" class="absolute top-0 left-0 w-full h-full border-[8px] border-red-600 bg-red-600/10 opacity-0 transition-opacity duration-300 z-20 flex flex-col items-center justify-center pointer-events-none gap-3">
+        <!-- Flecha back-to-route (rota según bearing al punto más cercano) -->
+        <div id="back-arrow-wrapper" class="w-28 h-28 text-red-500" style="transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)">
+            <svg viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-2xl animate-pulse">
+                <path d="M50 8 L82 50 L62 50 L62 92 L38 92 L38 50 L18 50 Z" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <div class="bg-red-600 text-white font-black text-xl uppercase tracking-widest px-5 py-2 rounded-xl shadow-2xl">
             ⚠️ Fuera de Ruta
+        </div>
+        <div class="bg-black/70 backdrop-blur-md text-white font-black text-2xl px-5 py-1 rounded-lg shadow-2xl border border-red-500/40">
+            a <span id="off-route-distance">--</span> m
         </div>
     </div>
 
@@ -98,7 +107,15 @@
     let autoFollow = true;
     let lastUserPos = null;
     let layerMode = 'dark'; // 'dark' | 'satellite'
-    const totalRouteKm = turf.length(turf.lineString(rawGeojson.coordinates[0]));
+
+    // Route geometry: rawGeojson is a MultiLineString — turf.pointToLineDistance
+    // y nearestPointOnLine solo aceptan LineString, así que iteramos por segmento.
+    const subLines = rawGeojson.coordinates.map(coords => turf.lineString(coords));
+    const subLineLengths = subLines.map(line => turf.length(line, { units: 'kilometers' }));
+    const cumulativeLengthsKm = []; // longitud acumulada al inicio de cada segmento
+    let _acc = 0;
+    subLineLengths.forEach(len => { cumulativeLengthsKm.push(_acc); _acc += len; });
+    const totalRouteKm = _acc;
 
     const map = new maplibregl.Map({
         container: 'map',
@@ -110,8 +127,7 @@
         attributionControl: false
     });
 
-    // The route line string for Turf.js
-    const routeLine = turf.lineString(rawGeojson.coordinates[0]);
+    // (route geometry pre-procesada arriba como subLines/cumulativeLengthsKm)
 
     map.on('load', () => {
         // Force AMOLED Black background to save battery
@@ -187,28 +203,98 @@
         startTracking();
     });
 
-    // === Compass: sync with map bearing ===
+    // === Compass: sync visual with map bearing ===
     const compassInner = document.getElementById('compass-inner');
     const compassLabel = document.getElementById('compass-label');
-    function updateCompass() {
+    const btnCompass = document.getElementById('btn-compass');
+    function updateCompassVisual() {
         const bearing = map.getBearing();
         compassInner.style.transform = `rotate(${-bearing}deg)`;
-        // Cardinal currently "up" on the map (bearing=90 → E at top, bearing=270 → O at top)
         const norm = ((bearing % 360) + 360) % 360;
         let label = 'N';
         if (norm >= 45 && norm < 135) label = 'E';
         else if (norm >= 135 && norm < 225) label = 'S';
         else if (norm >= 225 && norm < 315) label = 'O';
-        compassLabel.style.transform = `rotate(${bearing}deg)`; // keep letter upright
+        compassLabel.style.transform = `rotate(${bearing}deg)`;
         compassLabel.innerText = label;
+        updateBackArrow(); // la flecha off-route depende del bearing del mapa
     }
-    map.on('rotate', updateCompass);
-    map.on('rotateend', updateCompass);
+    map.on('rotate', updateCompassVisual);
+    map.on('rotateend', updateCompassVisual);
 
-    // === Compass click: snap bearing back to North ===
-    document.getElementById('btn-compass').addEventListener('click', () => {
-        map.easeTo({ bearing: 0, pitch: 60, duration: 600 });
+    // === Heading-up mode (mapa rota con el dispositivo) ===
+    let headingUpMode = false;
+    let deviceHeading = null;
+    let smoothedHeading = null;
+
+    function onOrientation(event) {
+        let raw;
+        if (event.webkitCompassHeading !== undefined) {
+            raw = event.webkitCompassHeading; // iOS, ya en sentido horario desde N
+        } else if (event.absolute && event.alpha !== null) {
+            raw = (360 - event.alpha) % 360; // Android
+        } else {
+            return;
+        }
+        // Filtro paso-bajo para evitar saltos por ruido del magnetómetro
+        if (smoothedHeading === null) smoothedHeading = raw;
+        else {
+            const diff = ((raw - smoothedHeading + 540) % 360) - 180;
+            smoothedHeading = (smoothedHeading + diff * 0.25 + 360) % 360;
+        }
+        deviceHeading = smoothedHeading;
+        if (headingUpMode) {
+            const current = map.getBearing();
+            const diff = ((deviceHeading - current + 540) % 360) - 180;
+            if (Math.abs(diff) > 1) map.setBearing(deviceHeading);
+        }
+    }
+
+    async function enableHeadingUp() {
+        // iOS 13+ requiere pedir permiso desde gesto del usuario
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            try {
+                const perm = await DeviceOrientationEvent.requestPermission();
+                if (perm !== 'granted') return false;
+            } catch (e) { return false; }
+        }
+        window.addEventListener('deviceorientationabsolute', onOrientation, true);
+        window.addEventListener('deviceorientation', onOrientation, true);
+        headingUpMode = true;
+        btnCompass.classList.add('ring-2', 'ring-emerald-400', 'bg-emerald-600/30');
+        btnCompass.classList.remove('bg-gray-900/80');
+        return true;
+    }
+
+    function disableHeadingUp() {
+        headingUpMode = false;
+        window.removeEventListener('deviceorientationabsolute', onOrientation, true);
+        window.removeEventListener('deviceorientation', onOrientation, true);
+        btnCompass.classList.remove('ring-2', 'ring-emerald-400', 'bg-emerald-600/30');
+        btnCompass.classList.add('bg-gray-900/80');
+        map.easeTo({ bearing: 0, pitch: 60, duration: 500 });
+    }
+
+    btnCompass.addEventListener('click', async () => {
+        if (headingUpMode) {
+            disableHeadingUp();
+        } else {
+            const ok = await enableHeadingUp();
+            if (!ok) {
+                // Sin permiso/sensor → fallback: snap a Norte
+                map.easeTo({ bearing: 0, pitch: 60, duration: 600 });
+            }
+        }
     });
+
+    // === Flecha back-to-route: actualiza rotación al moverse el mapa ===
+    let offRouteBearing = 0; // último bearing geográfico hacia el punto más cercano
+    function updateBackArrow() {
+        if (!isOffRoute) return;
+        const rotation = offRouteBearing - map.getBearing();
+        const el = document.getElementById('back-arrow-wrapper');
+        if (el) el.style.transform = `rotate(${rotation}deg)`;
+    }
 
     // === Layer toggle: dark <-> satellite overlay ===
     document.getElementById('btn-layer').addEventListener('click', () => {
@@ -229,7 +315,9 @@
         if (!lastUserPos) return;
         autoFollow = true;
         btnRecenter.classList.add('hidden');
-        map.flyTo({ center: lastUserPos, zoom: 16, bearing: 0, pitch: 60, duration: 600 });
+        // Si heading-up está activo, conserva el bearing del dispositivo
+        const targetBearing = headingUpMode && deviceHeading !== null ? deviceHeading : 0;
+        map.flyTo({ center: lastUserPos, zoom: 16, bearing: targetBearing, pitch: 60, duration: 600 });
     });
 
     // === Detect user pan/zoom: disable auto-follow ===
@@ -273,7 +361,8 @@
 
                 // Center Map (smooth follow) only if user hasn't taken control
                 if (autoFollow) {
-                    map.flyTo({ center: [lng, lat], speed: 0.5 });
+                    // easeTo solo center: no toca bearing (importante para heading-up)
+                    map.easeTo({ center: [lng, lat], duration: 800 });
                 }
 
                 // Turf checks
@@ -291,19 +380,29 @@
     function runSentinelChecks(lng, lat) {
         const currentPt = turf.point([lng, lat]);
 
-        // 0. Progress along route (distance remaining + %)
-        try {
-            const snapped = turf.nearestPointOnLine(routeLine, currentPt, { units: 'kilometers' });
-            const traveledKm = snapped.properties.location || 0;
-            const remainingKm = Math.max(0, totalRouteKm - traveledKm);
-            const pct = totalRouteKm > 0 ? Math.min(100, Math.round((traveledKm / totalRouteKm) * 100)) : 0;
-            document.getElementById('dist-remaining').innerText = remainingKm.toFixed(1);
-            document.getElementById('progress-pct').innerText = pct;
-        } catch (e) { /* ignore */ }
+        // 0. Encontrar segmento más cercano (iteramos toda la MultiLineString)
+        let bestDistanceKm = Infinity;
+        let bestSegmentIdx = 0;
+        let bestSnapped = null;
+        subLines.forEach((line, i) => {
+            const snapped = turf.nearestPointOnLine(line, currentPt, { units: 'kilometers' });
+            const d = snapped.properties.dist; // distancia ortogonal al segmento en km
+            if (d < bestDistanceKm) {
+                bestDistanceKm = d;
+                bestSegmentIdx = i;
+                bestSnapped = snapped;
+            }
+        });
 
-        // 1. Off-Route Check
-        const distanceToRouteKm = turf.pointToLineDistance(currentPt, routeLine);
-        const distanceMeters = distanceToRouteKm * 1000;
+        // Progress: distancia acumulada hasta el inicio del segmento + posición dentro
+        const traveledKm = cumulativeLengthsKm[bestSegmentIdx] + (bestSnapped?.properties.location || 0);
+        const remainingKm = Math.max(0, totalRouteKm - traveledKm);
+        const pct = totalRouteKm > 0 ? Math.min(100, Math.round((traveledKm / totalRouteKm) * 100)) : 0;
+        document.getElementById('dist-remaining').innerText = remainingKm.toFixed(1);
+        document.getElementById('progress-pct').innerText = pct;
+
+        // 1. Off-Route Check (distancia al segmento más cercano de la ruta completa)
+        const distanceMeters = bestDistanceKm * 1000;
         
         const dangerOverlay = document.getElementById('danger-overlay');
         const statusBadge = document.getElementById('status-badge');
@@ -315,6 +414,12 @@
                 statusBadge.className = "bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-1 shadow-lg backdrop-blur-sm";
                 statusBadge.innerText = "❌ PELIGRO";
                 if(navigator.vibrate) navigator.vibrate([500, 200, 500]); // Aggressive vibrate
+            }
+            // Actualiza distancia + flecha al punto más cercano
+            if (bestSnapped) {
+                document.getElementById('off-route-distance').innerText = Math.round(distanceMeters);
+                offRouteBearing = turf.bearing(currentPt, bestSnapped); // -180..180, 0 = N geográfico
+                updateBackArrow();
             }
         } else {
             if (isOffRoute) {

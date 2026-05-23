@@ -624,11 +624,11 @@
           const pacificData = this.chartData.filter(d => d.is_pacific).map(d => [d.co2, d.vulnerability, d.name]);
 
           const option = {
-            grid: { top: 25, right: 15, bottom: 35, left: 35 },
+            grid: { top: 25, right: 15, bottom: 65, left: 40 },
             xAxis: {
               name: 'CO₂ per capita',
               nameLocation: 'middle',
-              nameGap: 22,
+              nameGap: 38,
               splitLine: { lineStyle: { color: splitLineColor } },
               axisLabel: { color: labelColor, fontSize: 9 },
               axisLine: { lineStyle: { color: axisLineColor } }
@@ -636,13 +636,29 @@
             yAxis: {
               name: 'Vulnerabilidad',
               nameLocation: 'middle',
-              nameGap: 22,
+              nameGap: 24,
               min: 0.2,
               max: 0.65,
               splitLine: { lineStyle: { color: splitLineColor } },
               axisLabel: { color: labelColor, fontSize: 9 },
               axisLine: { lineStyle: { color: axisLineColor } }
             },
+            dataZoom: [
+              {
+                type: 'inside',
+                xAxisIndex: [0],
+                filterMode: 'filter'
+              },
+              {
+                type: 'slider',
+                show: true,
+                xAxisIndex: [0],
+                filterMode: 'filter',
+                height: 15,
+                bottom: 8,
+                textStyle: { fontSize: 8, color: labelColor }
+              }
+            ],
             tooltip: {
               trigger: 'item',
               formatter: function (params) {
@@ -674,6 +690,9 @@
                   color: textLabelColor,
                   fontSize: 8,
                   fontWeight: 'bold'
+                },
+                labelLayout: {
+                  hideOverlap: true
                 }
               }
             ]

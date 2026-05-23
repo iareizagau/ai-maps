@@ -223,6 +223,180 @@
             background: rgba(255,255,255,0.02) !important;
         }
     }
+    
+    /* TACTICAL ADVENTURE COMPASS WIDGET */
+    .adventure-compass-container {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 100;
+        width: 100px;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 20px;
+        padding: 12px 8px 8px 8px;
+        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.15);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        cursor: pointer;
+        user-select: none;
+    }
+    .dark .adventure-compass-container {
+        background: rgba(17, 24, 39, 0.85);
+        border-color: rgba(255, 255, 255, 0.06);
+        box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.4);
+    }
+    .adventure-compass-container:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 12px 35px -5px rgba(245, 158, 11, 0.15);
+        border-color: rgba(245, 158, 11, 0.3);
+    }
+    .dark .adventure-compass-container:hover {
+        box-shadow: 0 12px 35px -5px rgba(245, 158, 11, 0.25);
+        border-color: rgba(245, 158, 11, 0.4);
+    }
+    .adventure-compass-container:active {
+        transform: scale(0.97);
+    }
+    
+    .compass-lubber-line {
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 7px solid #ef4444;
+        margin-bottom: 4px;
+        filter: drop-shadow(0 1px 2px rgba(239, 68, 68, 0.3));
+    }
+    
+    .compass-disk {
+        width: 76px;
+        height: 76px;
+        transition: transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.06));
+    }
+    .dark .compass-disk {
+        filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));
+    }
+    
+    /* Compass SVG Styles */
+    .compass-ring-bg {
+        fill: rgba(249, 250, 251, 0.6);
+        transition: fill 0.3s;
+    }
+    .dark .compass-ring-bg {
+        fill: rgba(31, 41, 55, 0.6);
+    }
+    .compass-ring-border {
+        stroke: rgba(0,0,0,0.08);
+        stroke-width: 1.5;
+        fill: none;
+        transition: stroke 0.3s;
+    }
+    .dark .compass-ring-border {
+        stroke: rgba(255,255,255,0.08);
+    }
+    
+    .tick {
+        stroke: #9ca3af;
+        stroke-linecap: round;
+        stroke-width: 1;
+    }
+    .dark .tick {
+        stroke: #4b5563;
+    }
+    .tick.major {
+        stroke: #4b5563;
+        stroke-width: 1.5;
+    }
+    .dark .tick.major {
+        stroke: #9ca3af;
+    }
+    
+    .label {
+        font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+        font-weight: 700;
+        font-size: 9px;
+        text-anchor: middle;
+        dominant-baseline: middle;
+        fill: #6b7280;
+        transition: fill 0.3s;
+    }
+    .dark .label {
+        fill: #9ca3af;
+    }
+    .label-n {
+        fill: #ef4444;
+        font-weight: 900;
+        font-size: 11px;
+    }
+    .dark .label-n {
+        fill: #f87171;
+    }
+    
+    .needle-north {
+        fill: #ef4444;
+        filter: drop-shadow(0 2px 2px rgba(239, 68, 68, 0.2));
+    }
+    .needle-south {
+        fill: #9ca3af;
+    }
+    .dark .needle-south {
+        fill: #4b5563;
+    }
+    .needle-pivot {
+        fill: #374151;
+        stroke: #ffffff;
+        stroke-width: 1;
+    }
+    .dark .needle-pivot {
+        fill: #e5e7eb;
+        stroke: #111827;
+    }
+    
+    .compass-readout {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 6px;
+        border-top: 1px solid rgba(0,0,0,0.05);
+        width: 100%;
+        padding-top: 4px;
+    }
+    .dark .compass-readout {
+        border-top-color: rgba(255,255,255,0.05);
+    }
+    
+    @media (max-width: 768px) {
+        .adventure-compass-container {
+            top: 12px;
+            right: 12px;
+            width: 72px;
+            padding: 8px 4px 4px 4px;
+            border-radius: 16px;
+        }
+        .compass-disk {
+            width: 52px;
+            height: 52px;
+        }
+        .compass-lubber-line {
+            border-left-width: 4px;
+            border-right-width: 4px;
+            border-top-width: 5px;
+            margin-bottom: 2px;
+        }
+        .compass-readout #compass-pitch-val {
+            display: none; /* Hide pitch on small screens to save vertical space */
+        }
+        .compass-readout {
+            margin-top: 4px;
+            padding-top: 2px;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -326,6 +500,52 @@
     </div>
 
     <div id="map"></div>
+
+    <!-- Interactive Tactical Compass -->
+    <div id="adventure-compass" class="adventure-compass-container" title="Brújula Táctica - Clic para orientar al Norte">
+        <div class="compass-lubber-line"></div>
+        <div class="compass-disk" id="compass-disk">
+            <svg viewBox="0 0 100 100" class="w-full h-full">
+                <circle cx="50" cy="50" r="45" class="compass-ring-bg" />
+                <circle cx="50" cy="50" r="45" class="compass-ring-border" />
+                
+                <!-- Degree Ticks -->
+                <line x1="50" y1="8" x2="50" y2="12" class="tick major" />
+                <line x1="71" y1="13.5" x2="69" y2="17" class="tick" transform="rotate(30 50 50)" />
+                <line x1="86.5" y1="29" x2="83" y2="31" class="tick" transform="rotate(60 50 50)" />
+                <line x1="92" y1="50" x2="88" y2="50" class="tick major" transform="rotate(90 50 50)" />
+                <line x1="86.5" y1="71" x2="83" y2="69" class="tick" transform="rotate(120 50 50)" />
+                <line x1="71" y1="86.5" x2="69" y2="83" class="tick" transform="rotate(150 50 50)" />
+                <line x1="50" y1="92" x2="50" y2="88" class="tick major" transform="rotate(180 50 50)" />
+                <line x1="29" y1="86.5" x2="31" y2="83" class="tick" transform="rotate(210 50 50)" />
+                <line x1="13.5" y1="71" x2="17" y2="69" class="tick" transform="rotate(240 50 50)" />
+                <line x1="8" y1="50" x2="12" y2="50" class="tick major" transform="rotate(270 50 50)" />
+                <line x1="13.5" y1="29" x2="17" y2="31" class="tick" transform="rotate(300 50 50)" />
+                <line x1="29" y1="13.5" x2="31" y2="17" class="tick" transform="rotate(330 50 50)" />
+
+                <!-- Cardinal Letters -->
+                <text x="50" y="23" class="label label-n">N</text>
+                <text x="77" y="53" class="label">E</text>
+                <text x="50" y="81" class="label">S</text>
+                <text x="23" y="53" class="label">W</text>
+                
+                <!-- Needle -->
+                <polygon points="50,15 54,50 50,54" class="needle-north" />
+                <polygon points="50,85 54,50 50,54" class="needle-south" />
+                <circle cx="50" cy="50" r="4.5" class="needle-pivot" />
+            </svg>
+        </div>
+        
+        <div class="compass-readout">
+            <div class="flex justify-center items-center gap-1 font-mono text-[11px] font-black text-gray-800 dark:text-gray-200">
+                <span id="compass-bearing-val">0°</span>
+                <span id="compass-bearing-cardinal" class="text-amber-500 font-extrabold">N</span>
+            </div>
+            <div class="text-[8px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-extrabold mt-0.5" id="compass-pitch-val">
+                TILT: 0°
+            </div>
+        </div>
+    </div>
 
 
     <div class="profile-panel collapsed" id="profile-container">
@@ -1196,6 +1416,81 @@
                 sheet.classList.remove('sheet-collapsed', 'sheet-mid');
                 sheet.classList.add('sheet-expanded');
             }
+        });
+    }
+
+    // ==========================================
+    // TACTICAL COMPASS INTERACTIVE CONTROLLER
+    // ==========================================
+    const compassDisk = document.getElementById('compass-disk');
+    const compassBearingVal = document.getElementById('compass-bearing-val');
+    const compassBearingCardinal = document.getElementById('compass-bearing-cardinal');
+    const compassPitchVal = document.getElementById('compass-pitch-val');
+    const compassContainer = document.getElementById('adventure-compass');
+
+    function updateCompassTelemetry() {
+        if (typeof map === 'undefined' || !map) return;
+        
+        const bearing = map.getBearing();
+        let angle = bearing;
+        if (angle < 0) angle += 360;
+        
+        const roundedAngle = Math.round(angle);
+        
+        // Cardinal direction
+        const cardinals = ["N", "NE", "E", "SE", "S", "SW", "W", "NW", "N"];
+        const index = Math.round((angle % 360) / 45);
+        const cardinal = cardinals[index];
+        
+        // Rotate compass disk counter-clockwise to match map rotation
+        if (compassDisk) {
+            compassDisk.style.transform = `rotate(${-bearing}deg)`;
+        }
+        
+        // Update readouts
+        if (compassBearingVal) compassBearingVal.innerText = `${roundedAngle}°`;
+        if (compassBearingCardinal) compassBearingCardinal.innerText = cardinal;
+        
+        // Update Pitch
+        if (compassPitchVal) {
+            const pitch = Math.round(map.getPitch());
+            compassPitchVal.innerText = `TILT: ${pitch}°`;
+            if (pitch > 0) {
+                compassPitchVal.classList.add('text-amber-500');
+                compassPitchVal.classList.remove('text-gray-400', 'dark:text-gray-500');
+            } else {
+                compassPitchVal.classList.remove('text-amber-500');
+                compassPitchVal.classList.add('text-gray-400', 'dark:text-gray-500');
+            }
+        }
+    }
+
+    // Sync with MapLibre camera events
+    map.on('rotate', updateCompassTelemetry);
+    map.on('pitch', updateCompassTelemetry);
+    map.on('move', updateCompassTelemetry);
+
+    // Initial update
+    map.on('load', updateCompassTelemetry);
+    // Trigger immediately in case load already fired
+    setTimeout(updateCompassTelemetry, 100);
+
+    // Interactive Reset to North
+    if (compassContainer) {
+        compassContainer.addEventListener('click', () => {
+            map.easeTo({
+                bearing: 0,
+                // Keep the current pitch of the map
+                pitch: map.getPitch(),
+                duration: 1000,
+                essential: true
+            });
+            
+            // Add a visual flash/feedback class on click
+            compassContainer.style.borderColor = 'rgba(245, 158, 11, 0.8)';
+            setTimeout(() => {
+                compassContainer.style.borderColor = '';
+            }, 300);
         });
     }
 

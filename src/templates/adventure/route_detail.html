@@ -4,78 +4,95 @@
 <!-- MapLibre GL JS -->
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+<!-- ECharts & Turf for Tactical Elevation Profile -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 {% endblock %}
 
 {% block content %}
 <div style="height: calc(100vh - 72px); max-height: calc(100vh - 72px);" class="w-full relative bg-gray-200 dark:bg-gray-900 overflow-hidden">
     <!-- Premium Navigation (Desktop) -->
-    <div class="hidden md:block absolute left-0 w-full z-50 pointer-events-none top-4">
+    <div class="hidden md:flex justify-center absolute left-0 w-full z-50 pointer-events-none top-4">
         <c-adventure_nav />
     </div>
 
     <!-- Mapa Detalle 3D (Background) -->
     <div id="route-map" class="w-full h-full absolute inset-0 z-0"></div>
     
-    <!-- 1. TOP LEFT: Título y Estadísticas Base (DESKTOP ONLY) -->
-    <div class="hidden md:block absolute top-4 md:top-6 left-4 md:left-6 z-10 w-[90%] md:w-[340px]">
-        <div class="bg-white bg-opacity-90 dark:bg-black dark:bg-opacity-80 backdrop-blur-lg border border-white border-opacity-40 dark:border-white dark:border-opacity-10 p-5 rounded-3xl shadow-2xl">
+    <!-- LEFT SIDEBAR (Desktop) -->
+    <div class="hidden md:flex absolute top-4 md:top-6 left-4 md:left-6 z-10 w-[360px] flex-col pointer-events-none" style="max-height: calc(100vh - 48px);">
+        
+        <!-- MASTER CARD -->
+        <div class="pointer-events-auto bg-white bg-opacity-90 dark:bg-black dark:bg-opacity-80 backdrop-blur-lg border border-white border-opacity-40 dark:border-white dark:border-opacity-10 p-5 rounded-3xl shadow-2xl flex flex-col w-full">
+            
             <a href="javascript:history.back()" class="text-[11px] font-bold text-gray-500 hover:text-emerald-600 mb-3 flex items-center gap-1 uppercase tracking-widest transition-colors w-max">
                 <span class="text-base leading-none">←</span> Volver al Hub
             </a>
             
-            <h1 class="text-3xl font-black text-gray-900 dark:text-white leading-tight mb-2 truncate">{{ route.name }}</h1>
+            <h1 class="text-3xl font-black text-gray-900 dark:text-white leading-tight mb-1 truncate">{{ route.name }}</h1>
             <p class="text-gray-600 dark:text-gray-300 text-xs font-medium mb-4 leading-relaxed line-clamp-2">{{ route.description|default:"Sin descripción." }}</p>
             
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-white bg-opacity-60 dark:bg-black dark:bg-opacity-50 p-3 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
-                    <p class="text-[9px] uppercase font-black text-gray-400 tracking-widest mb-1">Distancia</p>
-                    <p class="text-xl font-black text-emerald-600 dark:text-emerald-400">{{ route.distance_km|floatformat:1 }}<span class="text-xs text-gray-400 font-bold ml-1">km</span></p>
+            <!-- TABS HEADER -->
+            <div class="flex items-center gap-2 mb-4 border-b border-gray-200 dark:border-gray-800 pb-2">
+                <button onclick="switchTab('resumen')" id="tab-btn-resumen" class="text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white transition-colors">Misión</button>
+                <button onclick="switchTab('terreno')" id="tab-btn-terreno" class="text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-lg text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">Terreno</button>
+            </div>
+
+            <!-- TAB CONTENT: RESUMEN -->
+            <div id="tab-content-resumen" class="flex flex-col gap-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white bg-opacity-60 dark:bg-black dark:bg-opacity-50 p-3 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                        <p class="text-[9px] uppercase font-black text-gray-400 tracking-widest mb-1">Distancia</p>
+                        <p class="text-xl font-black text-emerald-600 dark:text-emerald-400">{{ route.distance_km|floatformat:1 }}<span class="text-xs text-gray-400 font-bold ml-1">km</span></p>
+                    </div>
+                    <div class="bg-white bg-opacity-60 dark:bg-black dark:bg-opacity-50 p-3 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                        <p class="text-[9px] uppercase font-black text-gray-400 tracking-widest mb-1">Desnivel</p>
+                        <p class="text-xl font-black text-blue-600 dark:text-blue-400">+{{ route.elevation_gain|floatformat:0 }}<span class="text-xs text-gray-400 font-bold ml-1">m</span></p>
+                    </div>
                 </div>
-                <div class="bg-white bg-opacity-60 dark:bg-black dark:bg-opacity-50 p-3 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
-                    <p class="text-[9px] uppercase font-black text-gray-400 tracking-widest mb-1">Desnivel</p>
-                    <p class="text-xl font-black text-blue-600 dark:text-blue-400">+{{ route.elevation_gain|floatformat:0 }}<span class="text-xs text-gray-400 font-bold ml-1">m</span></p>
+
+                <div class="flex items-center justify-between text-[10px] font-bold text-gray-400 px-1">
+                    <span class="flex items-center gap-1">👤 {{ route.user.username }}</span>
+                    <span class="flex items-center gap-1">📅 {{ route.created_at|date:"d M, Y" }}</span>
+                </div>
+
+                <!-- Follow Route Button -->
+                <a href="{% url 'follow_route' route.id %}" class="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm uppercase tracking-widest py-3 rounded-xl shadow-lg shadow-emerald-900/50 transition-all transform hover:-translate-y-0.5">
+                    <span class="animate-pulse">🔴</span> Tactical HUD
+                </a>
+
+                <!-- Offline Caching Button -->
+                <button id="btn-download-offline" onclick="downloadRouteOffline()" class="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white font-black text-xs uppercase tracking-widest py-3 rounded-xl shadow-lg border border-gray-700 transition-all transform hover:-translate-y-0.5">
+                    💾 Cargar Offline
+                </button>
+            </div>
+
+            <!-- TAB CONTENT: TERRENO -->
+            <div id="tab-content-terreno" class="hidden flex-col gap-2">
+                <h3 class="text-sm font-black text-gray-900 dark:text-white tracking-tight uppercase text-[10px] mb-1 opacity-50">Distribución de Superficies</h3>
+                <div class="w-full h-3 flex rounded-lg overflow-hidden shadow-inner">
+                    <div class="bg-gray-800 dark:bg-gray-600 h-full w-[60%] hover:brightness-110 transition cursor-help" title="Asfalto: 60%"></div>
+                    <div class="bg-amber-600 h-full w-[30%] hover:brightness-110 transition cursor-help" title="Pista / Tierra: 30%"></div>
+                    <div class="bg-emerald-500 h-full w-[10%] hover:brightness-110 transition cursor-help" title="Carril Bici / Sendero: 10%"></div>
+                </div>
+                
+                <div class="flex flex-wrap gap-4 text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gray-800 dark:bg-gray-600 shadow-sm"></span> Asfalto <span class="text-gray-400 font-normal ml-0.5">60%</span></div>
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-600 shadow-sm"></span> Pista <span class="text-gray-400 font-normal ml-0.5">30%</span></div>
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm"></span> Sendero <span class="text-gray-400 font-normal ml-0.5">10%</span></div>
+                </div>
+
+                <div class="h-px w-full bg-gray-200 dark:bg-gray-800 mb-2 opacity-50"></div>
+                
+                <h3 class="text-sm font-black text-gray-900 dark:text-white tracking-tight uppercase text-[10px] opacity-50">Perfil Altimétrico</h3>
+                <!-- ECharts Container -->
+                <div id="tactical-chart-desktop" style="width: 100%; height: 160px;" class="w-full"></div>
+                
+                <div class="flex flex-wrap gap-4 text-[10px] font-bold text-gray-500 dark:text-gray-400 mt-2 justify-center" id="terrain-legend-desktop">
+                    <!-- Leyenda rellenada vía JS -->
                 </div>
             </div>
 
-            <div class="mt-4 flex items-center justify-between text-[10px] font-bold text-gray-400 px-1">
-                <span class="flex items-center gap-1">👤 {{ route.user.username }}</span>
-                <span class="flex items-center gap-1">📅 {{ route.created_at|date:"d M, Y" }}</span>
-            </div>
-
-            <!-- Follow Route Button -->
-            <a href="{% url 'follow_route' route.id %}" class="mt-4 w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm uppercase tracking-widest py-3 rounded-xl shadow-lg shadow-emerald-900/50 transition-all transform hover:-translate-y-0.5">
-                <span class="animate-pulse">🔴</span> Tactical HUD
-            </a>
-
-            <!-- Offline Caching Button -->
-            <button id="btn-download-offline" onclick="downloadRouteOffline()" class="mt-2 w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white font-black text-xs uppercase tracking-widest py-3 rounded-xl shadow-lg border border-gray-700 transition-all transform hover:-translate-y-0.5">
-                💾 Cargar Offline
-            </button>
-        </div>
-    </div>
-
-    <!-- 2. BOTTOM LEFT: Análisis del Terreno (Oculto en móviles para no colapsar) -->
-    <div class="hidden lg:block absolute bottom-6 left-6 z-10 w-[420px]">
-        <div class="bg-white bg-opacity-90 dark:bg-black dark:bg-opacity-80 backdrop-blur-lg border border-white border-opacity-40 dark:border-white dark:border-opacity-10 p-5 rounded-3xl shadow-2xl">
-            <div class="flex items-center gap-2 mb-3">
-                <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-sm">⛰️</div>
-                <h3 class="text-lg font-black text-gray-900 dark:text-white tracking-tight">Análisis del Terreno</h3>
-            </div>
-            
-            <p class="text-[11px] text-gray-500 font-medium mb-4">Estimación de superficies vía OpenStreetMap.</p>
-            
-            <!-- Mockup de barras de progreso -->
-            <div class="w-full h-4 flex rounded-lg overflow-hidden mb-4 shadow-inner">
-                <div class="bg-gray-800 dark:bg-gray-600 h-full w-[60%] hover:brightness-110 transition cursor-help" title="Asfalto: 60%"></div>
-                <div class="bg-amber-600 h-full w-[30%] hover:brightness-110 transition cursor-help" title="Pista / Tierra: 30%"></div>
-                <div class="bg-emerald-500 h-full w-[10%] hover:brightness-110 transition cursor-help" title="Carril Bici / Sendero: 10%"></div>
-            </div>
-            
-            <div class="flex flex-wrap gap-4 text-xs font-bold text-gray-500 dark:text-gray-400">
-                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-gray-800 dark:bg-gray-600 shadow-sm border border-black border-opacity-10"></span> Asfalto <span class="text-gray-400 font-normal ml-1">60%</span></div>
-                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-600 shadow-sm border border-black border-opacity-10"></span> Pista <span class="text-gray-400 font-normal ml-1">30%</span></div>
-                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500 shadow-sm border border-black border-opacity-10"></span> Sendero <span class="text-gray-400 font-normal ml-1">10%</span></div>
-            </div>
         </div>
     </div>
     
@@ -249,15 +266,24 @@
                     <span class="text-base">⛰️</span>
                     <h3 class="text-sm font-black text-gray-900 dark:text-white tracking-tight">Análisis del Terreno</h3>
                 </div>
-                <div class="w-full h-3 flex rounded-lg overflow-hidden mb-2 shadow-inner">
-                    <div class="bg-gray-800 dark:bg-gray-600 h-full" style="width: 60%"></div>
-                    <div class="bg-amber-600 h-full" style="width: 30%"></div>
-                    <div class="bg-emerald-500 h-full" style="width: 10%"></div>
+                
+                <h3 class="font-black text-gray-900 dark:text-white tracking-tight uppercase text-[9px] mb-1.5 opacity-50">Superficies</h3>
+                <div class="w-full h-2.5 flex rounded-md overflow-hidden mb-2 shadow-inner">
+                    <div class="bg-gray-800 dark:bg-gray-600 h-full w-[60%]"></div>
+                    <div class="bg-amber-600 h-full w-[30%]"></div>
+                    <div class="bg-emerald-500 h-full w-[10%]"></div>
                 </div>
-                <div class="flex flex-wrap gap-3 text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                <div class="flex flex-wrap gap-3 text-[9px] font-bold text-gray-500 dark:text-gray-400 mb-4">
                     <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gray-800 dark:bg-gray-600"></span>Asfalto <span class="text-gray-400 font-normal">60%</span></span>
                     <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-600"></span>Pista <span class="text-gray-400 font-normal">30%</span></span>
                     <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>Sendero <span class="text-gray-400 font-normal">10%</span></span>
+                </div>
+                
+                <h3 class="font-black text-gray-900 dark:text-white tracking-tight uppercase text-[9px] mb-1 opacity-50">Perfil Altimétrico</h3>
+                <!-- ECharts Container Mobile -->
+                <div id="tactical-chart-mobile" style="width: 100%; height: 120px;" class="w-full"></div>
+                <div class="flex flex-wrap gap-3 text-[9px] font-bold text-gray-500 dark:text-gray-400 justify-center mt-1" id="terrain-legend-mobile">
+                    <!-- Leyenda rellenada vía JS -->
                 </div>
             </div>
 
@@ -342,6 +368,7 @@
     console.log("Iniciando renderizado del mapa 3D...");
     
     const routeGeoJSON = {{ route_geojson|safe }};
+    const terrainGeojson = {{ terrain_geojson|safe }};
     console.log("GeoJSON cargado:", routeGeoJSON);
     
     // MapLibre init
@@ -839,6 +866,176 @@
             btn.classList.add('bg-emerald-700');
         });
     }
+    let tacticalChartDesktop = null;
+    let tacticalChartMobile = null;
+    let profileHoverMarker = null;
+
+    function switchTab(tabName) {
+        const btnR = document.getElementById('tab-btn-resumen');
+        const btnT = document.getElementById('tab-btn-terreno');
+        const contentR = document.getElementById('tab-content-resumen');
+        const contentT = document.getElementById('tab-content-terreno');
+
+        if (tabName === 'resumen') {
+            btnR.classList.add('bg-gray-100', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white');
+            btnR.classList.remove('text-gray-500', 'hover:bg-gray-50', 'dark:hover:bg-gray-900');
+            
+            btnT.classList.remove('bg-gray-100', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white');
+            btnT.classList.add('text-gray-500', 'hover:bg-gray-50', 'dark:hover:bg-gray-900');
+            
+            contentR.classList.remove('hidden');
+            contentR.classList.add('flex');
+            contentT.classList.add('hidden');
+            contentT.classList.remove('flex');
+        } else {
+            btnT.classList.add('bg-gray-100', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white');
+            btnT.classList.remove('text-gray-500', 'hover:bg-gray-50', 'dark:hover:bg-gray-900');
+            
+            btnR.classList.remove('bg-gray-100', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white');
+            btnR.classList.add('text-gray-500', 'hover:bg-gray-50', 'dark:hover:bg-gray-900');
+            
+            contentT.classList.remove('hidden');
+            contentT.classList.add('flex');
+            contentR.classList.add('hidden');
+            contentR.classList.remove('flex');
+
+            if (tacticalChartDesktop) {
+                setTimeout(() => tacticalChartDesktop.resize(), 50);
+            }
+        }
+    }
+
+    function initTacticalProfile() {
+        if (!window.echarts || !window.turf) return;
+
+        let coords = routeGeoJSON.coordinates;
+        if (routeGeoJSON.type === 'Feature') coords = routeGeoJSON.geometry.coordinates;
+        if (routeGeoJSON.type === 'MultiLineString') coords = coords.flat(1);
+
+        if (!coords || coords.length === 0) return;
+
+        let totalDistance = 0;
+        let chartData = [];
+        let minEle = 9999;
+        let maxEle = -9999;
+        
+        const hasZ = coords[0].length >= 3;
+        
+        for (let i = 0; i < coords.length; i++) {
+            if (i > 0) {
+                const p1 = turf.point(coords[i-1]);
+                const p2 = turf.point(coords[i]);
+                totalDistance += turf.distance(p1, p2, {units: 'kilometers'});
+            }
+            // Use Z if available, else a mockup sine wave based on distance to show the chart is working if Z is missing
+            let elevation = hasZ ? coords[i][2] : (100 + Math.sin(totalDistance * 5) * 50 + totalDistance * 10);
+            minEle = Math.min(minEle, elevation);
+            maxEle = Math.max(maxEle, elevation);
+            
+            chartData.push([totalDistance, elevation, coords[i]]);
+        }
+        
+        const option = {
+            backgroundColor: 'transparent',
+            grid: { top: 10, right: 10, bottom: 20, left: 35 },
+            tooltip: {
+                trigger: 'axis',
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                borderColor: '#374151',
+                textStyle: { color: '#fff', fontSize: 10 },
+                formatter: function (params) {
+                    const data = params[0].data;
+                    const dist = data[0].toFixed(2);
+                    const ele = data[1].toFixed(0);
+                    const coord = data[2];
+                    
+                    if (!profileHoverMarker) {
+                        const el = document.createElement('div');
+                        el.className = 'w-4 h-4 bg-red-600 border-2 border-white rounded-full shadow-[0_0_15px_rgba(220,38,38,0.9)] animate-pulse';
+                        profileHoverMarker = new maplibregl.Marker({element: el}).setLngLat(coord).addTo(map);
+                    } else {
+                        profileHoverMarker.setLngLat(coord);
+                    }
+                    
+                    return `<span style="color:#9ca3af;font-weight:900;">DIST:</span> ${dist} km<br/><span style="color:#9ca3af;font-weight:900;">ALT:</span> ${ele} m`;
+                }
+            },
+            xAxis: {
+                type: 'value',
+                min: 0,
+                max: totalDistance,
+                axisLabel: { formatter: '{value}k', color: '#9ca3af', fontSize: 9, margin: 4 },
+                splitLine: { show: false },
+                axisLine: { show: false },
+                axisTick: { show: false }
+            },
+            yAxis: {
+                type: 'value',
+                min: Math.floor(minEle / 100) * 100,
+                axisLabel: { formatter: '{value}m', color: '#9ca3af', fontSize: 9, margin: 4 },
+                splitLine: { show: true, lineStyle: { color: 'rgba(255,255,255,0.05)' } },
+                axisLine: { show: false },
+                axisTick: { show: false }
+            },
+            visualMap: {
+                show: false,
+                dimension: 1,
+                min: minEle,
+                max: maxEle,
+                inRange: {
+                    color: ['#10b981', '#f59e0b', '#ef4444'] // Green to Orange to Red
+                }
+            },
+            series: [{
+                type: 'line',
+                data: chartData,
+                smooth: 0.2,
+                symbol: 'none',
+                lineStyle: { width: 2 },
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(245, 158, 11, 0.5)' }, // Amber
+                        { offset: 1, color: 'rgba(245, 158, 11, 0.0)' }
+                    ])
+                }
+            }]
+        };
+
+        const chartDesktopEl = document.getElementById('tactical-chart-desktop');
+        if (chartDesktopEl) {
+            tacticalChartDesktop = echarts.init(chartDesktopEl);
+            tacticalChartDesktop.setOption(option);
+            chartDesktopEl.addEventListener('mouseleave', () => {
+                if (profileHoverMarker) { profileHoverMarker.remove(); profileHoverMarker = null; }
+            });
+        }
+        
+        const chartMobileEl = document.getElementById('tactical-chart-mobile');
+        if (chartMobileEl) {
+            tacticalChartMobile = echarts.init(chartMobileEl);
+            tacticalChartMobile.setOption(option);
+            chartMobileEl.addEventListener('mouseleave', () => {
+                if (profileHoverMarker) { profileHoverMarker.remove(); profileHoverMarker = null; }
+            });
+        }
+        
+        window.addEventListener('resize', () => {
+            if (tacticalChartDesktop) tacticalChartDesktop.resize();
+            if (tacticalChartMobile) tacticalChartMobile.resize();
+        });
+        
+        const legendHTML = `
+            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500 shadow-sm border border-black border-opacity-20"></span> Llano / Bajada</div>
+            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-500 shadow-sm border border-black border-opacity-20"></span> Falso Llano</div>
+            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500 shadow-sm border border-black border-opacity-20"></span> Rampa Dura</div>
+        `;
+        const legD = document.getElementById('terrain-legend-desktop');
+        const legM = document.getElementById('terrain-legend-mobile');
+        if (legD) legD.innerHTML = legendHTML;
+        if (legM) legM.innerHTML = legendHTML.replace(/w-3 h-3/g, 'w-2 h-2');
+    }
+
+    setTimeout(initTacticalProfile, 500);
 
     async function downloadRouteOffline() {
         const coords = routeGeoJSON.coordinates.flat(1);

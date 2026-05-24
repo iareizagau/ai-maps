@@ -102,11 +102,40 @@ def route_detail_view(request, route_id):
         label = p.get_poi_type_display()
         poi_counts[label] = poi_counts.get(label, 0) + 1
         
+    # Generate terrain FeatureCollection for data-driven styling
+    edges = TrailEdge.objects.filter(geom__dwithin=(route.geom, 0.0001))
+    terrain_features = []
+    for edge in edges:
+        terrain_features.append({
+            "type": "Feature",
+            "geometry": json.loads(edge.geom.geojson),
+            "properties": {
+                "surface": edge.surface or "unknown",
+                "highway": edge.highway or "unknown"
+            }
+        })
+        
+    if not terrain_features:
+        terrain_features.append({
+            "type": "Feature",
+            "geometry": json.loads(route.geom.geojson),
+            "properties": {
+                "surface": "unknown",
+                "highway": "unknown"
+            }
+        })
+        
+    terrain_geojson = {
+        "type": "FeatureCollection",
+        "features": terrain_features
+    }
+        
     context = {
         "title": route.name,
         "app_slug": "adventure",
         "route": route,
         "route_geojson": route.geom.geojson,
+        "terrain_geojson": json.dumps(terrain_geojson),
         "pois": pois,
         "poi_counts": poi_counts
     }

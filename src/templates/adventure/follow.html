@@ -4,9 +4,10 @@
 <script src="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.js"></script>
 <link href="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 
 <!-- AMOLED Black Theme container -->
-<div style="height: calc(100vh - 72px);" class="w-full relative bg-black font-sans overflow-hidden" id="follow-container">
+<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100;" class="bg-black font-sans overflow-hidden" id="follow-container">
     
     <!-- Map container (Full screen background) -->
     <div id="map" class="absolute top-0 left-0 w-full h-full z-0"></div>
@@ -64,63 +65,56 @@
         </button>
     </div>
     
-    <!-- Unified Tactical Dashboard (Strava / Komoot style) -->
-    <div id="tactical-dashboard" class="absolute bottom-0 left-0 w-full bg-gray-900 rounded-t-3xl shadow-2xl transition-all duration-500 ease-in-out flex flex-col" style="background-color: #131722; height: 180px; box-shadow: 0 -20px 50px rgba(0,0,0,0.6); z-index: 50;">
+    <!-- Unified Tactical Dashboard -->
+    <div id="tactical-dashboard" class="absolute bottom-0 left-0 right-0 rounded-t-3xl shadow-2xl transition-all duration-500 ease-in-out flex flex-col overflow-hidden border-t border-white/10" style="height: 180px; z-index: 50; background-color: #111827;">
         
-        <!-- Progress Bar (Compact edge) -->
-        <div class="absolute top-0 left-0 w-full h-1 bg-gray-800/80 rounded-t-3xl overflow-hidden pointer-events-none">
-            <div id="compact-progress-bar" class="h-full bg-[#f85c14] transition-all duration-500" style="width: 0%;"></div>
+                <!-- Predictive Chart embedded as top header strip -->
+        <div id="predictive-profile-container" class="relative w-full shrink-0 transition-opacity duration-300" style="height:70px;">
+            <div class="absolute top-2 left-4 right-4 flex justify-between items-center z-10 pointer-events-none">
+                <span class="text-[9px] font-black text-white/60 uppercase tracking-widest">Proximos 3 km</span>
+                <span class="text-[10px] font-black text-emerald-400 uppercase tracking-widest" id="pred-ele-diff">--</span>
+            </div>
+            <div id="predictive-chart" class="absolute inset-0 w-full h-full opacity-90"></div>
+            <div class="absolute bottom-0 left-0 w-full h-[3px] bg-gray-800">
+                <div id="compact-progress-bar" class="h-full bg-emerald-500 transition-all duration-500" style="width:0%"></div>
+            </div>
+            <div class="absolute bottom-[3px] left-0 w-full h-[3px] flex overflow-hidden opacity-70" id="terrain-bar"></div>
         </div>
 
-        <!-- Predictive Terrain Bar -->
-        <div class="absolute top-1.5 left-0 w-full h-1.5 flex overflow-hidden pointer-events-none px-6 opacity-80" id="terrain-bar">
-            <!-- Filled via JS -->
-        </div>
-
-        <!-- Drag Handle / Toggle Area -->
-        <div id="dashboard-handle" class="w-full flex justify-center py-4 cursor-pointer mt-1">
-            <div class="w-12 h-1.5 bg-gray-600 rounded-full"></div>
-        </div>
-
-        <div id="view-compact" class="px-8 flex-1 flex flex-col justify-between pb-8 transition-opacity duration-300">
-            <!-- Header: Route Name & GPS Status -->
-            <div class="flex justify-between items-center mb-6 cursor-pointer group dashboard-toggle" title="Expandir Panel">
-                <h3 class="font-bold text-white text-base truncate flex-1 group-hover:text-emerald-400 transition">{{ route.name }}</h3>
-                <div id="intel-alert" class="hidden bg-amber-500 text-amber-950 font-black text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full animate-pulse ml-2 mr-3">
-                    Intel: <span id="intel-dist">--</span>m
+        <!-- Compact telemetry row -->
+        <div id="view-compact" class="flex-1 flex flex-col justify-between px-4 py-3 transition-opacity duration-300">
+            <div class="flex justify-between items-end">
+                <div class="flex flex-col items-start">
+                    <div class="text-[8px] font-black text-gray-500 uppercase tracking-widest">Tiempo</div>
+                    <div class="text-[22px] font-black text-white leading-none font-mono tabular-nums" id="elapsed-time">00:00</div>
                 </div>
-                <button class="text-white group-hover:text-gray-300 transition active:scale-95 shrink-0" aria-label="Expandir vista de datos">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>
+                <div class="flex flex-col items-start">
+                    <div class="text-[8px] font-black text-gray-500 uppercase tracking-widest">km/h</div>
+                    <div class="text-[22px] font-black text-white leading-none tabular-nums" id="current-speed">0.0</div>
+                </div>
+                <div class="flex flex-col items-start">
+                    <div class="text-[8px] font-black text-gray-500 uppercase tracking-widest">km</div>
+                    <div class="text-[22px] font-black text-white leading-none tabular-nums" id="dist-traveled">0.00</div>
+                </div>
+                <div class="flex flex-col items-start">
+                    <div class="text-[8px] font-black text-gray-500 uppercase tracking-widest">alt m</div>
+                    <div class="text-[22px] font-black text-white leading-none tabular-nums" id="current-altitude">--</div>
+                </div>
+                <button class="w-10 h-10 bg-emerald-500 hover:bg-emerald-400 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 active:scale-95 transition shrink-0 ml-1">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                 </button>
             </div>
-
-            <!-- Compact Telemetry Row (1x4) -->
-            <div class="flex justify-between items-center mb-5 px-1">
-                <div class="flex flex-col items-start">
-                    <div class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-0.5">Tiempo</div>
-                    <div class="text-xl font-black text-white leading-none font-mono tracking-tighter" id="elapsed-time">00:00</div>
+            <div class="flex items-center justify-end mt-1">
+                <div id="intel-alert" class="hidden bg-amber-500 text-amber-950 font-black text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full animate-pulse mr-auto">
+                    Intel: <span id="intel-dist">--</span>m
                 </div>
-                <div class="flex flex-col items-start">
-                    <div class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-0.5">Km/h</div>
-                    <div class="text-xl font-black text-white leading-none tabular-nums" id="current-speed">0.0</div>
-                </div>
-                <div class="flex flex-col items-start">
-                    <div class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-0.5">Km</div>
-                    <div class="text-xl font-black text-white leading-none tabular-nums" id="dist-traveled">0.00</div>
-                </div>
-                <div class="flex flex-col items-start">
-                    <div class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-0.5">Alt (m)</div>
-                    <div class="text-xl font-black text-white leading-none tabular-nums" id="current-altitude">--</div>
-                </div>
+                <button class="text-gray-500 hover:text-white transition active:scale-95 dashboard-toggle p-1 cursor-pointer" aria-label="Expandir vista">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>
+                </button>
             </div>
-
-            <button class="w-full text-white font-black text-xl uppercase tracking-widest py-4 mt-auto active:scale-95 transition flex items-center justify-center gap-3">
-                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                Pausar
-            </button>
         </div>
 
-        <!-- EXPANDED VIEW (Strava style) -->
+                <!-- EXPANDED VIEW (Strava style) -->
         <div id="view-expanded" class="absolute inset-0 pt-6 px-6 pb-8 flex flex-col justify-between opacity-0 pointer-events-none transition-opacity duration-300">
             
             <!-- Top section: Time & Collapse Toggle -->
@@ -188,7 +182,7 @@
                 terrainGeojson.features.forEach(f => {
                     const surface = f.properties.surface || 'unknown';
                     let color = '#34d399'; // Emerald default
-                    if (['asphalt', 'paved', 'concrete', 'chipseal'].includes(surface)) color = '#9ca3af'; // Gray
+                    if (['asphalt', 'paved', 'concrete', 'chipseal'].includes(surface)) color = '#ffffff'; // White (High contrast)
                     else if (['unpaved', 'compacted', 'fine_gravel', 'gravel'].includes(surface)) color = '#f59e0b'; // Amber
                     else if (['dirt', 'earth', 'ground', 'mud'].includes(surface)) color = '#b45309'; // Brown
                     else if (['grass', 'sand', 'wood'].includes(surface)) color = '#84cc16'; // Green
@@ -220,6 +214,39 @@
     let timerInterval = null;
     let smoothedSpeed = 0;
 
+    // Predictive Profile State
+    let fullProfileData = [];
+    let predictiveChart = null;
+    let hasElevationData = false;
+
+    function initPredictiveData() {
+        if (!window.echarts || !window.turf) return;
+        
+        let coords = rawGeojson.type === 'Feature' ? rawGeojson.geometry.coordinates : rawGeojson.coordinates;
+        if (rawGeojson.type === 'MultiLineString') coords = coords.flat(1);
+        if (!coords || coords.length === 0) return;
+
+        hasElevationData = coords[0].length >= 3;
+        let cumulativeDist = 0;
+        
+        for (let i = 0; i < coords.length; i++) {
+            if (i > 0) {
+                const p1 = turf.point(coords[i-1]);
+                const p2 = turf.point(coords[i]);
+                cumulativeDist += turf.distance(p1, p2, {units: 'kilometers'});
+            }
+            let ele = hasElevationData ? coords[i][2] : (100 + Math.sin(cumulativeDist * 5) * 50 + cumulativeDist * 10);
+            fullProfileData.push([cumulativeDist, ele]);
+        }
+
+        const chartEl = document.getElementById('predictive-chart');
+        if (chartEl) {
+            predictiveChart = echarts.init(chartEl);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', initPredictiveData);
+
     function updateTimer() {
         if (!startTime) return;
         const diffSecs = Math.floor((Date.now() - startTime) / 1000);
@@ -241,7 +268,9 @@
     function toggleDashboard() {
         dashboardExpanded = !dashboardExpanded;
         if (dashboardExpanded) {
-            dashboard.style.height = '100%'; // Fill the container, not 100vh which overflows
+            dashboard.classList.remove('bottom-0', 'left-0', 'right-0', 'rounded-t-3xl');
+            dashboard.classList.add('bottom-0', 'left-0', 'right-0', 'rounded-none');
+            dashboard.style.height = '100%';
             
             // Fade out Top HUD and FABs
             document.getElementById('top-hud').style.opacity = '0';
@@ -255,8 +284,19 @@
             viewExpanded.style.opacity = '1';
             viewExpanded.style.pointerEvents = 'auto';
             
+            // Hide predictive profile
+            const predProfile = document.getElementById('predictive-profile-container');
+            if (predProfile) {
+                predProfile.style.opacity = '0';
+                predProfile.style.pointerEvents = 'none';
+            }
+            
+            
         } else {
-            dashboard.style.height = '180px'; // Compact Map view
+            dashboard.classList.remove('rounded-none');
+            dashboard.classList.add('rounded-t-3xl');
+            dashboard.style.height = '180px';
+            setTimeout(function() { if (typeof predictiveChart !== 'undefined' && predictiveChart) predictiveChart.resize(); }, 520);
             
             // Fade in Top HUD and FABs
             document.getElementById('top-hud').style.opacity = '1';
@@ -269,11 +309,16 @@
             viewExpanded.style.pointerEvents = 'none';
             viewCompact.style.opacity = '1';
             viewCompact.style.pointerEvents = 'auto';
+
+            // Show predictive profile
+            const predProfile = document.getElementById('predictive-profile-container');
+            if (predProfile) {
+                predProfile.style.opacity = '1';
+            }
         }
     }
 
     // Bind toggles
-    document.getElementById('dashboard-handle').addEventListener('click', toggleDashboard);
     document.querySelectorAll('.dashboard-toggle').forEach(el => el.addEventListener('click', toggleDashboard));
 
     // Route geometry: rawGeojson is a MultiLineString — turf.pointToLineDistance
@@ -349,7 +394,7 @@
                 'line-color': [
                     'match',
                     ['get', 'surface'],
-                    ['asphalt', 'paved', 'concrete', 'chipseal'], '#9ca3af',
+                    ['asphalt', 'paved', 'concrete', 'chipseal'], '#ffffff',
                     ['unpaved', 'compacted', 'fine_gravel', 'gravel'], '#f59e0b',
                     ['dirt', 'earth', 'ground', 'mud'], '#b45309',
                     ['grass', 'sand', 'wood'], '#84cc16',
@@ -642,6 +687,9 @@
         document.getElementById('fs-progress-pct').innerText = Math.round(progressPct);
         document.getElementById('compact-progress-bar').style.width = `${progressPct}%`;
         
+        // Actualizar Perfil Predictivo
+        updatePredictiveProfile(traveledKm);
+        
         // 1. Off-Route Check (distancia al segmento más cercano de la ruta completa)
         const distanceMeters = bestDistanceKm * 1000;
         
@@ -706,5 +754,140 @@
     window.addEventListener('beforeunload', () => {
         if(watchId) navigator.geolocation.clearWatch(watchId);
     });
+
+    map.on('error', (e) => {
+        console.error("MapLibre Error:", e);
+    });
+
+    function updatePredictiveProfile(currentKm) {
+        if (!predictiveChart || fullProfileData.length === 0) return;
+
+        const forwardKm = 3.0; // Mostrar los próximos 3km
+        const endKm = currentKm + forwardKm;
+
+        let windowData = [];
+        let minEle = 9999;
+        let maxEle = -9999;
+
+        for (let i = 0; i < fullProfileData.length; i++) {
+            const pt = fullProfileData[i];
+            if (pt[0] >= currentKm && pt[0] <= endKm) {
+                const relDist = pt[0] - currentKm;
+                windowData.push([relDist, pt[1]]);
+                minEle = Math.min(minEle, pt[1]);
+                maxEle = Math.max(maxEle, pt[1]);
+            }
+        }
+
+        if (windowData.length === 0) return;
+
+        const currentEle = windowData[0][1];
+        const endEle = windowData[windowData.length - 1][1];
+        const diff = endEle - currentEle;
+        const diffEl = document.getElementById('pred-ele-diff');
+        
+        if (diff > 0) {
+            diffEl.innerText = `+${Math.round(diff)}m ↗`;
+            diffEl.className = "text-[10px] font-black text-red-500 uppercase tracking-widest";
+        } else {
+            diffEl.innerText = `${Math.round(diff)}m ↘`;
+            diffEl.className = "text-[10px] font-black text-emerald-400 uppercase tracking-widest";
+        }
+
+        const option = {
+            animation: false, 
+            grid: { top: 5, right: 0, bottom: 5, left: 0 },
+            xAxis: { type: 'value', min: 0, max: forwardKm, show: false },
+            yAxis: { type: 'value', min: Math.floor(minEle / 50) * 50, max: Math.ceil(maxEle / 50) * 50, show: false },
+            visualMap: {
+                show: false,
+                dimension: 1,
+                min: minEle,
+                max: maxEle,
+                inRange: { color: ['#10b981', '#f59e0b', '#ef4444'] }
+            },
+            series: [{
+                type: 'line',
+                data: windowData,
+                smooth: 0.3,
+                symbol: 'none',
+                lineStyle: { width: 3 },
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(239, 68, 68, 0.4)' },
+                        { offset: 1, color: 'rgba(239, 68, 68, 0.0)' }
+                    ])
+                }
+            }]
+        };
+
+        predictiveChart.setOption(option);
+    }
+
+
+    function updatePredictiveProfile(currentKm) {
+        if (!predictiveChart || fullProfileData.length === 0) return;
+
+        const forwardKm = 3.0; // Mostrar los próximos 3km
+        const endKm = currentKm + forwardKm;
+
+        let windowData = [];
+        let minEle = 9999;
+        let maxEle = -9999;
+
+        for (let i = 0; i < fullProfileData.length; i++) {
+            const pt = fullProfileData[i];
+            if (pt[0] >= currentKm && pt[0] <= endKm) {
+                const relDist = pt[0] - currentKm;
+                windowData.push([relDist, pt[1]]);
+                minEle = Math.min(minEle, pt[1]);
+                maxEle = Math.max(maxEle, pt[1]);
+            }
+        }
+
+        if (windowData.length === 0) return;
+
+        const currentEle = windowData[0][1];
+        const endEle = windowData[windowData.length - 1][1];
+        const diff = endEle - currentEle;
+        const diffEl = document.getElementById('pred-ele-diff');
+        
+        if (diff > 0) {
+            diffEl.innerText = `+${Math.round(diff)}m ↗`;
+            diffEl.className = "text-[10px] font-black text-red-500 uppercase tracking-widest";
+        } else {
+            diffEl.innerText = `${Math.round(diff)}m ↘`;
+            diffEl.className = "text-[10px] font-black text-emerald-400 uppercase tracking-widest";
+        }
+
+        const option = {
+            animation: false, 
+            grid: { top: 5, right: 0, bottom: 5, left: 0 },
+            xAxis: { type: 'value', min: 0, max: forwardKm, show: false },
+            yAxis: { type: 'value', min: Math.floor(minEle / 50) * 50, max: Math.ceil(maxEle / 50) * 50, show: false },
+            visualMap: {
+                show: false,
+                dimension: 1,
+                min: minEle,
+                max: maxEle,
+                inRange: { color: ['#10b981', '#f59e0b', '#ef4444'] }
+            },
+            series: [{
+                type: 'line',
+                data: windowData,
+                smooth: 0.3,
+                symbol: 'none',
+                lineStyle: { width: 3 },
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(239, 68, 68, 0.4)' },
+                        { offset: 1, color: 'rgba(239, 68, 68, 0.0)' }
+                    ])
+                }
+            }]
+        };
+
+        predictiveChart.setOption(option);
+    }
 </script>
 {% endblock %}

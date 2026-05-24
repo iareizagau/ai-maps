@@ -72,6 +72,11 @@
             <div id="compact-progress-bar" class="h-full bg-[#f85c14] transition-all duration-500" style="width: 0%;"></div>
         </div>
 
+        <!-- Predictive Terrain Bar -->
+        <div class="absolute top-1.5 left-0 w-full h-1.5 flex overflow-hidden pointer-events-none px-6 opacity-80" id="terrain-bar">
+            <!-- Filled via JS -->
+        </div>
+
         <!-- Drag Handle / Toggle Area -->
         <div id="dashboard-handle" class="w-full flex justify-center py-4 cursor-pointer mt-1">
             <div class="w-12 h-1.5 bg-gray-600 rounded-full"></div>
@@ -167,7 +172,34 @@
 
 <script>
     const rawGeojson = {{ route_geojson|safe }};
+    const terrainGeojson = {{ terrain_geojson|safe }};
     const routeId = {{ route.id }};
+    
+    // Build Predictive Terrain Bar
+    document.addEventListener('DOMContentLoaded', () => {
+        const terrainBar = document.getElementById('terrain-bar');
+        if (terrainBar && terrainGeojson.features) {
+            let totalPts = 0;
+            terrainGeojson.features.forEach(f => {
+                if (f.geometry && f.geometry.coordinates) totalPts += f.geometry.coordinates.length;
+            });
+            if (totalPts > 0) {
+                let html = '';
+                terrainGeojson.features.forEach(f => {
+                    const surface = f.properties.surface || 'unknown';
+                    let color = '#34d399'; // Emerald default
+                    if (['asphalt', 'paved', 'concrete', 'chipseal'].includes(surface)) color = '#9ca3af'; // Gray
+                    else if (['unpaved', 'compacted', 'fine_gravel', 'gravel'].includes(surface)) color = '#f59e0b'; // Amber
+                    else if (['dirt', 'earth', 'ground', 'mud'].includes(surface)) color = '#b45309'; // Brown
+                    else if (['grass', 'sand', 'wood'].includes(surface)) color = '#84cc16'; // Green
+                    
+                    const pct = (f.geometry.coordinates.length / totalPts) * 100;
+                    html += `<div style="width: ${pct}%; background-color: ${color}; height: 100%;"></div>`;
+                });
+                terrainBar.innerHTML = html;
+            }
+        }
+    });
     
     // Config
     const OFF_ROUTE_THRESHOLD_METERS = 50;
@@ -293,6 +325,11 @@
             }
         });
         
+        map.addSource('terrain-route', {
+            type: 'geojson',
+            data: terrainGeojson
+        });
+        
         // Outer glow
         map.addLayer({
             id: 'route-glow',
@@ -302,13 +339,24 @@
             paint: { 'line-color': '#10b981', 'line-width': 12, 'line-opacity': 0.2, 'line-blur': 10 }
         });
         
-        // Inner core
+        // Inner core (Data-Driven Styling based on terrain)
         map.addLayer({
             id: 'route-core',
             type: 'line',
-            source: 'route',
+            source: 'terrain-route',
             layout: { 'line-join': 'round', 'line-cap': 'round' },
-            paint: { 'line-color': '#34d399', 'line-width': 4 }
+            paint: { 
+                'line-color': [
+                    'match',
+                    ['get', 'surface'],
+                    ['asphalt', 'paved', 'concrete', 'chipseal'], '#9ca3af',
+                    ['unpaved', 'compacted', 'fine_gravel', 'gravel'], '#f59e0b',
+                    ['dirt', 'earth', 'ground', 'mud'], '#b45309',
+                    ['grass', 'sand', 'wood'], '#84cc16',
+                    '#34d399' // fallback
+                ],
+                'line-width': 4 
+            }
         });
 
         // Create User Marker Element (Blue dot + Tactical FOV Cone)

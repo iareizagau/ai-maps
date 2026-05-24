@@ -1,7 +1,8 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Route, PointOfInterest
+from .models import Route, PointOfInterest, TrailEdge
 from apps.core.models import Follow
+import json
 
 def map_view(request):
     """
@@ -123,11 +124,43 @@ def scout_view(request):
 @login_required
 def follow_view(request, route_id):
     route = get_object_or_404(Route, id=route_id)
+    
+    # Generate terrain FeatureCollection for data-driven styling
+    edges = TrailEdge.objects.filter(geom__dwithin=(route.geom, 0.0001))
+    terrain_features = []
+    for edge in edges:
+        terrain_features.append({
+            "type": "Feature",
+            "geometry": json.loads(edge.geom.geojson),
+            "properties": {
+                "surface": edge.surface or "unknown",
+                "highway": edge.highway or "unknown"
+            }
+        })
+        
+    # Fallback: Si la ruta se importó de GPX o está en una zona sin datos de TrailEdge,
+    # inyectamos la geometría original para que la línea no desaparezca.
+    if not terrain_features:
+        terrain_features.append({
+            "type": "Feature",
+            "geometry": json.loads(route.geom.geojson),
+            "properties": {
+                "surface": "unknown",
+                "highway": "unknown"
+            }
+        })
+        
+    terrain_geojson = {
+        "type": "FeatureCollection",
+        "features": terrain_features
+    }
+
     context = {
         "title": f"Siguiendo: {route.name}",
         "app_slug": "adventure",
         "route": route,
         "route_geojson": route.geom.geojson,
+        "terrain_geojson": json.dumps(terrain_geojson),
     }
     return render(request, "adventure/follow.html", context)
 

@@ -8,6 +8,11 @@
 
 {% block content %}
 <div style="height: calc(100vh - 72px); max-height: calc(100vh - 72px);" class="w-full relative bg-gray-200 dark:bg-gray-900 overflow-hidden">
+    <!-- Premium Navigation (Desktop) -->
+    <div class="hidden md:block absolute left-0 w-full z-50 pointer-events-none top-4">
+        <c-adventure_nav />
+    </div>
+
     <!-- Mapa Detalle 3D (Background) -->
     <div id="route-map" class="w-full h-full absolute inset-0 z-0"></div>
     
@@ -132,7 +137,7 @@
     </div>
 
     <!-- Tactical Layers Control (Pill Flotante Center) -->
-    <div style="position: absolute; top: 24px; left: 50%; transform: translateX(-50%);" class="z-50 bg-white/90 dark:bg-black/80 backdrop-blur-md p-1.5 rounded-full shadow-2xl flex items-center gap-1 border border-white/40 dark:border-white/10 hidden md:flex">
+    <div style="position: absolute; top: 84px; left: 50%; transform: translateX(-50%);" class="z-50 bg-white/90 dark:bg-black/80 backdrop-blur-md p-1.5 rounded-full shadow-2xl flex items-center gap-1 border border-white/40 dark:border-white/10 hidden md:flex">
         <button id="layer-topo" class="px-4 py-2 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 font-bold text-[10px] uppercase tracking-wider shadow-inner transition flex items-center gap-2">🗺️ Topo</button>
         <button id="layer-sat" class="px-4 py-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold text-[10px] uppercase tracking-wider transition flex items-center gap-2">🛰️ Sat</button>
         <div class="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-1"></div>
@@ -147,14 +152,20 @@
     <!-- ===== MOBILE LAYOUT ===== -->
 
     <!-- M1. Header pill flotante -->
-    <div class="md:hidden absolute top-3 left-3 right-3 z-30 flex items-center gap-2 pointer-events-none">
+    <div class="md:hidden absolute top-3 left-3 right-3 z-30 flex items-start gap-2 pointer-events-none">
+        <!-- Botón volver -->
         <a href="javascript:history.back()" aria-label="Volver"
-           class="pointer-events-auto flex items-center justify-center w-10 h-10 rounded-full bg-white/95 dark:bg-black/80 backdrop-blur-md shadow-lg border border-white/40 dark:border-white/10 active:scale-95 transition">
-            <span class="text-lg leading-none">←</span>
+           class="pointer-events-auto flex shrink-0 items-center justify-center w-[46px] h-[46px] rounded-full bg-white/95 dark:bg-black/80 backdrop-blur-md shadow-lg border border-white/40 dark:border-white/10 active:scale-95 transition text-gray-900 dark:text-white">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
         </a>
-        <div class="pointer-events-auto flex-1 bg-white/95 dark:bg-black/80 backdrop-blur-md rounded-full shadow-lg border border-white/40 dark:border-white/10 px-4 py-2.5 min-w-0">
-            <h1 class="text-sm font-black text-gray-900 dark:text-white truncate leading-tight">{{ route.name }}</h1>
+        
+        <!-- Navegación móvil (Iconos) -->
+        <div class="pointer-events-auto flex-1 flex justify-center">
+            <c-adventure_nav />
         </div>
+        
+        <!-- Espaciador fantasma para equilibrio -->
+        <div class="w-[46px] shrink-0"></div>
     </div>
 
     <!-- M2. FAB de capas (vertical stack) -->

@@ -402,6 +402,11 @@
 
 {% block content %}
 <div class="relative w-full">
+    <!-- Premium Navigation -->
+    <div class="absolute top-4 left-0 w-full z-50 pointer-events-none">
+        <c-adventure_nav active="inicio" />
+    </div>
+
     <div class="adventure-controls sheet-collapsed">
         <div class="sheet-handle" id="sheet-toggle"></div>
         <div class="flex justify-between items-center mb-1">

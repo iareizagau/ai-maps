@@ -1,12 +1,20 @@
 {% extends "base.html" %}
+{% load static %}
 
+{% block extra_head %}
+  <meta name="description" content="Reconstruye rutas a partir de fotos con datos EXIF.">
+  <link rel="stylesheet" href="{% static 'css/toast.css' %}">
+{% endblock %}
 {% block content %}
-<script src="https://unpkg.com/exifr/dist/full.umd.js"></script>
-<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 
-<div class="max-w-6xl mx-auto p-4 md:p-8 flex flex-col md:flex-row gap-8">
+<script src="{% static 'js/exifr.full.umd.js' %}"></script>
+    <script src="{% static 'js/maplibre-gl.js' %}"></script>
+    <link href="{% static 'css/maplibre-gl.css' %}" rel="stylesheet" />
+    <script src="{% static 'js/turf.min.js' %}"></script>
+
+<div class="max-w-6xl mx-auto p-4 md:p-8">
+<c-adventure_nav active="fotos" />
+    <div class="flex flex-col md:flex-row gap-8">
     <!-- Left panel: Uploader -->
     <div class="w-full md:w-1/3 flex flex-col gap-6">
         <div>
@@ -14,10 +22,10 @@
             <p class="text-gray-500 mt-2 text-sm">Sube las fotos de tu aventura. Extraeremos las coordenadas secretas (EXIF) y dibujaremos cronológicamente tu ruta sin haber gastado batería.</p>
         </div>
         
-        <div id="dropzone" class="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-3xl p-8 flex flex-col items-center justify-center text-center bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer">
+        <div id="dropzone" role="button" aria-label="Añadir fotografías" aria-describedby="dropzone-instructions" class="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-3xl p-8 flex flex-col items-center justify-center text-center bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer">
             <div class="text-4xl mb-4">📸</div>
             <p class="font-bold dark:text-white mb-2">Añadir Fotografías</p>
-            <p class="text-xs text-gray-400">Arrastra tus fotos aquí o haz clic para abrir la galería</p>
+            <p class="text-xs text-gray-400" id="dropzone-instructions">Arrastra tus fotos aquí o haz clic para abrir la galería</p>
             <input type="file" id="file-input" multiple accept="image/jpeg, image/png, image/heic" class="hidden" />
         </div>
 
@@ -58,6 +66,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 
 <script>
@@ -132,7 +141,7 @@
         }
         
         if (pts.length < 2) {
-            alert("Se necesitan al menos 2 fotos con datos GPS (Localización activada en la cámara) para trazar una ruta.");
+            showToast('Se necesitan al menos 2 fotos con datos GPS (Localización activada en la cámara) para trazar una ruta.', true);
             document.getElementById('processing-status').classList.add('hidden');
             return;
         }
@@ -228,7 +237,7 @@
             if(data.success) {
                 window.location.href = `/adventure/ruta/${data.id}/`;
             } else {
-                alert(data.error || "Error al guardar la ruta");
+                showToast(data.error || "Error al guardar la ruta", true);
                 btn.innerText = "Guardar Expedición Mágica";
                 btn.disabled = false;
             }

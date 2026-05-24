@@ -1,0 +1,16 @@
+<div class="w-full flex justify-center md:mb-8 px-2 md:px-0 pointer-events-none">
+    <nav class="pointer-events-auto inline-flex overflow-x-auto gap-2 bg-gray-100/80 dark:bg-gray-800/50 p-2 rounded-2xl max-w-full backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 shadow-sm custom-scrollbar snap-x snap-mandatory">
+        <a href="/adventure/" class="shrink-0 snap-center whitespace-nowrap px-3 md:px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 {% if active == 'inicio' %}bg-white dark:bg-gray-700 text-black dark:text-white shadow-md{% else %}text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700 hover:text-black dark:hover:text-white hover:shadow-sm{% endif %}">
+            <svg class="w-5 h-5 md:w-4 md:h-4 {% if active == 'inicio' %}text-blue-500{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+            <span class="hidden md:inline">Inicio</span>
+        </a>
+        <a href="/adventure/crear-desde-fotos/" class="shrink-0 snap-center whitespace-nowrap px-3 md:px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 {% if active == 'fotos' %}bg-white dark:bg-gray-700 text-black dark:text-white shadow-md{% else %}text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700 hover:text-black dark:hover:text-white hover:shadow-sm{% endif %}">
+            <svg class="w-5 h-5 md:w-4 md:h-4 {% if active == 'fotos' %}text-emerald-500{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span class="hidden md:inline">Crear desde fotos</span>
+        </a>
+        <a href="/adventure/mis-rutas/" class="shrink-0 snap-center whitespace-nowrap px-3 md:px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 {% if active == 'mis_rutas' %}bg-white dark:bg-gray-700 text-black dark:text-white shadow-md{% else %}text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700 hover:text-black dark:hover:text-white hover:shadow-sm{% endif %}">
+            <svg class="w-5 h-5 md:w-4 md:h-4 {% if active == 'mis_rutas' %}text-purple-500{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+            <span class="hidden md:inline">Mis rutas</span>
+        </a>
+    </nav>
+</div>

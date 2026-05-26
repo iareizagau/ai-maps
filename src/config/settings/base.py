@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'apps.adventure',
     'apps.solar',
     'apps.oceania',
+    'apps.mubil',
 ]
 
 MIDDLEWARE = [

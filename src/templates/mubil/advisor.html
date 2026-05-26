@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Mubil Advisor — TCO EV vs Combustión{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <div class="mb-10">
+    <a href="{% url 'mubil:index' %}"
+       class="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      Volver
+    </a>
+    <h1 class="mt-3 text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">
+      Advisor <span class="text-cyan-500">·</span> ¿Eléctrico o combustión?
+    </h1>
+    <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+      Compara coste total a 10 años con datos de electricidad (PVPC ESIOS),
+      combustibles (MINCOTUR) y red de carga en Euskadi.
+      <span class="text-amber-600 dark:text-amber-400">Datos demo F0 — wireado real cuando lleguen tokens.</span>
+    </p>
+  </div>
+
+  <div class="flex flex-col lg:flex-row gap-8">
+
+    {# ---------- FORM ---------- #}
+    <form id="advisor-form"
+          hx-post="{% url 'mubil:advisor_quote' %}"
+          hx-target="#advisor-result"
+          hx-swap="innerHTML"
+          hx-indicator="#advisor-loading"
+          class="w-full lg:w-2/5 space-y-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
+
+      {% csrf_token %}
+
+      <div class="space-y-2">
+        <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Código postal</label>
+        <input type="text" name="cp" value="20018" required pattern="[0-9]{5}" maxlength="5"
+               class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+        <p class="text-xs text-slate-500 dark:text-slate-400">Demo: 20018 Donostia · 20100 Errenteria · 20300 Irun · 48001 Bilbao · 01001 Vitoria</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-2">
+          <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Km / año</label>
+          <input type="number" name="km_year" value="15000" min="1000" max="60000" step="500" required
+                 class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+        </div>
+        <div class="space-y-2">
+          <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Horizonte (años)</label>
+          <input type="number" name="years_horizon" value="10" min="1" max="20" required
+                 class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Vehículo actual (combustión / híbrido)</label>
+        <select name="vehicle_current_id" required
+                class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+          {% for v in ice_vehicles %}
+            <option value="{{ v.id }}" {% if v.id == default_current_id %}selected{% endif %}>
+              {{ v.make }} {{ v.model }} ({{ v.year }}) · {{ v.get_propulsion_display }}{% if v.price_eur %} · {{ v.price_eur }}€{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Vehículo objetivo (eléctrico / PHEV)</label>
+        <select name="vehicle_target_id" required
+                class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+          {% for v in ev_vehicles %}
+            <option value="{{ v.id }}" {% if v.id == default_target_id %}selected{% endif %}>
+              {{ v.make }} {{ v.model }} ({{ v.year }}) · {{ v.range_wltp_km }}km WLTP{% if v.price_eur %} · {{ v.price_eur }}€{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <label class="flex items-center gap-3 cursor-pointer">
+        <input type="checkbox" name="night_charging" class="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-cyan-500 focus:ring-cyan-500" />
+        <span class="text-sm text-slate-700 dark:text-slate-300">Cargar de noche (tarifa valle PVPC P3)</span>
+      </label>
+
+      <button type="submit"
+              class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-3 font-bold text-white hover:bg-cyan-600 transition">
+        <svg id="advisor-loading" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 animate-spin htmx-indicator" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4zm2 5.3A8 8 0 014 12H0c0 3 1.1 5.8 3 7.9l3-2.6z"/>
+        </svg>
+        Calcular comparativa
+      </button>
+
+      <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+        Cálculo determinista (sin IA). Precios actuales:
+        PVPC 0,165 €/kWh diurno · 0,085 €/kWh nocturno ·
+        Gasolina 1,585 €/L · Diésel 1,495 €/L.
+      </p>
+    </form>
+
+    {# ---------- RESULT PANEL ---------- #}
+    <div id="advisor-result" class="w-full lg:w-3/5 space-y-6">
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-10 text-center text-slate-500 dark:text-slate-400">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 text-slate-400 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        <p class="text-sm">Rellena el formulario y pulsa <strong>Calcular comparativa</strong>.</p>
+        <p class="mt-2 text-xs">Verás coste total, ahorro, payback, CO₂ evitado y cargadores a 5 km.</p>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<style>
+  .htmx-indicator { opacity: 0; transition: opacity .2s; }
+  .htmx-request .htmx-indicator { opacity: 1; }
+  .htmx-request.htmx-indicator { opacity: 1; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Definida en el template PADRE (no en el partial) para evitar race con HTMX:
+// cuando Alpine ejecuta `x-init` sobre el partial recién insertado, esta función
+// ya está disponible en window porque el padre fue parseado mucho antes.
+window.mubilAdvisorRender = function (q) {
+
+  // ---------- ECharts: stacked bar breakdown ----------
+  const chartEl = document.getElementById('advisor-chart');
+  if (chartEl && window.echarts) {
+    if (chartEl._chart) { try { chartEl._chart.dispose(); } catch (e) {} }
+    const chart = echarts.init(chartEl, null, { renderer: 'svg' });
+    chartEl._chart = chart;
+    const cur = q.breakdown_current, tgt = q.breakdown_target;
+    chart.setOption({
+      backgroundColor: 'transparent',
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      legend: { top: 0 },
+      grid: { left: 70, right: 20, top: 40, bottom: 30 },
+      xAxis: { type: 'value', axisLabel: { formatter: '{value} €' } },
+      yAxis: { type: 'category', data: ['Actual', 'Eléctrico'] },
+      series: [
+        { name: 'Energía',       type: 'bar', stack: 'tco', data: [+cur.energy, +tgt.energy],         itemStyle: { color: '#06b6d4' } },
+        { name: 'Mantenimiento', type: 'bar', stack: 'tco', data: [+cur.maintenance, +tgt.maintenance], itemStyle: { color: '#0ea5e9' } },
+        { name: 'Seguro',        type: 'bar', stack: 'tco', data: [+cur.insurance, +tgt.insurance],    itemStyle: { color: '#6366f1' } },
+        { name: 'Impuestos',     type: 'bar', stack: 'tco', data: [+cur.taxes, +tgt.taxes],            itemStyle: { color: '#a855f7' } },
+      ],
+    });
+    window.addEventListener('resize', () => chart.resize());
+  }
+
+  // ---------- Leaflet: chargers map ----------
+  const mapEl = document.getElementById('advisor-map');
+  if (mapEl && window.L && q.nearby_chargers && q.nearby_chargers.length) {
+    if (mapEl._leaflet_id) {
+      try { mapEl._map.remove(); } catch (e) {}
+      mapEl.innerHTML = '';
+    }
+    const lats = q.nearby_chargers.map(c => c.latitude);
+    const lons = q.nearby_chargers.map(c => c.longitude);
+    const centroid = [
+      lats.reduce((a, b) => a + b, 0) / lats.length,
+      lons.reduce((a, b) => a + b, 0) / lons.length,
+    ];
+    const map = L.map(mapEl, { zoomControl: true }).setView(centroid, 13);
+    mapEl._map = map;
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const tileUrl = isDark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+    const tiles = L.tileLayer(tileUrl, {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19,
+    }).addTo(map);
+
+    let fellBackToOsm = false;
+    tiles.on('tileerror', () => {
+      if (fellBackToOsm) return;
+      fellBackToOsm = true;
+      console.warn('mubil: CARTO tiles fallaron, fallback a OSM directo');
+      map.removeLayer(tiles);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+        maxZoom: 19,
+      }).addTo(map);
+    });
+
+    const group = L.featureGroup();
+    q.nearby_chargers.forEach(c => {
+      const color = c.power_kw >= 150 ? '#10b981' : (c.power_kw >= 50 ? '#06b6d4' : '#f59e0b');
+      L.circleMarker([c.latitude, c.longitude], {
+        radius: 9, fillColor: color, color: '#0f172a', weight: 2, opacity: 1, fillOpacity: 0.9,
+      })
+        .bindPopup(`<strong>${c.operator}</strong><br>${c.power_kw} kW<br><span style="color:#64748b">${c.address}</span><br><small>${(+c.distance_km).toFixed(2)} km</small>`)
+        .addTo(group);
+    });
+    group.addTo(map);
+    try { map.fitBounds(group.getBounds().pad(0.25)); } catch (e) {}
+
+    requestAnimationFrame(() => map.invalidateSize());
+    setTimeout(() => map.invalidateSize(), 250);
+    setTimeout(() => map.invalidateSize(), 600);
+  }
+};
+</script>
+{% endblock %}

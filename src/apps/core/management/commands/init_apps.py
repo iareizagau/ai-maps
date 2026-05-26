@@ -98,6 +98,18 @@ class Command(BaseCommand):
                 'description': 'Cartografía interactiva del aumento de nivel del mar, trayectorias de ciclones e inequidad de carbono en Oceanía.',
                 'is_featured': True
             },
+            {
+                # Naming display provisional — decisión final pendiente (§1, §17 PROPUESTA.md)
+                'slug': 'mubil',
+                'name': 'Mubil Maps',
+                'tagline': 'Inteligencia abierta de movilidad sostenible vasca.',
+                'domain': 'https://ai.maps.eus/mubil/',
+                'icon': 'route',
+                'primary_color': '#06b6d4', # Cyan
+                'hero_title': 'Movilidad inteligente para Euskal Herria',
+                'description': 'Asesor TCO (EV vs combustión), Q&A con IA sobre datos abiertos, planificador EV multimodal y heatmap de demanda de carga. Candidatura MUBIL Mobility Awards 2026.',
+                'is_featured': True
+            },
         ]
 
         for app_data in apps:

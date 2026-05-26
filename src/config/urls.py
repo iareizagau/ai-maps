@@ -45,6 +45,7 @@ urlpatterns += [
     path('adventure/', include('apps.adventure.urls')),
     path('solar/', include('apps.solar.urls')),
     path('oceania/', include('apps.oceania.urls')),
+    path('mubil/', include('apps.mubil.urls')),
 ]
 if settings.DEBUG:
     from django.conf.urls.static import static

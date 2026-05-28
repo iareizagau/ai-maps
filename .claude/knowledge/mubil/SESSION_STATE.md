@@ -1,13 +1,74 @@
 ![1779832249241](image/SESSION_STATE/1779832249241.png)![1779832254381](image/SESSION_STATE/1779832254381.png)# Mubil — Session State (snapshot para reanudar)
 
-**Última actualización:** 2026-05-28
+**Última actualización:** 2026-05-28 (tarde — segunda sesión del día)
 **Deadline confirmado:** **2026-06-19** (22 días naturales / ~15 hábiles desde hoy)
-**Objetivo activo:** `ask` MUST — validación end-to-end + ingesta full corpus + embed
+**Objetivo activo:** desbloquear live-test `ask` — pendiente reset quota Gemini (mañana 09:00 Madrid)
 **Reanudar leyendo:** este archivo §0 (último avance) → §4 (próximos pasos) → §2 (issues conocidos)
 
 ---
 
-## 0. Avance sesión 2026-05-28 (`ask` MUST escrito, pendiente validar live)
+## 0. Avance sesión 2026-05-28 tarde (PVPC end-to-end + `ask` bloqueado por quota)
+
+**Hecho hoy:**
+
+| Pieza | Estado |
+|---|---|
+| PVPC pipeline ESIOS → DB → advisor | ✅ **en prod**, cron `:15` Madrid activo |
+| `apps.mubil.data.esios_client` (cliente HTTP genérico para cualquier indicador ESIOS) | ✅ commit `2ce312f`/`ee01422` |
+| `apps.mubil.data.pvpc_ingest` (clasificador 2.0TD + upsert idempotente + queries con fallback) | ✅ |
+| `migration 0003_seed_pvpc_schedule` (auto-registro `PeriodicTask` en BD) | ✅ aplicada en prod |
+| `tasks.py` `mubil.ingest_pvpc_hourly` activada | ✅ |
+| `advisor/services.py` ahora usa `pvpc_ingest.current_price_eur_kwh()` (con fallback a `DEFAULT_PVPC_*` si tabla vacía) | ✅ |
+| Tests PVPC (clasificador + cliente + ingesta + queries) | ✅ 19 nuevos, 70/70 verde en prod |
+| Fix CKAN: separar `JSONDecodeError` (skip page) de `RequestException` (abort crawl) | ✅ commit `e4a3da1` |
+| Ingesta CKAN en prod | ✅ 750 docs creados (1 página perdida por JSON malformed) |
+| Embed corpus | ❌ **bloqueado**: 0/750 embedded, quota `embed_content_free_tier_requests` (1K RPD) agotada al empezar |
+
+**Datos reales fluyendo en prod**:
+
+- PVPC valle = 0.1097 €/kWh (vs default antiguo 0.10)
+- PVPC blend = 0.1233 €/kWh (vs default antiguo 0.18 → **advisor estaba sobreestimando ~46%** el coste eléctrico fuera de horario nocturno)
+
+**Decisiones tomadas:**
+
+- Cron PVPC en `:15 * * * *` Europe/Madrid (evita spike :00, ESIOS publica día siguiente ~20:00 Madrid → tick siguiente lo recoge).
+- Ventana ingesta hourly: 48h (self-heal de runs perdidos).
+- Window avg para queries del advisor: 30 días (`DEFAULT_AVG_WINDOW_DAYS`).
+- Holidays nacionales NO honrados en clasificación P1/P2/P3 (~12 días/año sobreestimados). No bloquea pitch.
+- Rotación key Gemini hecha por el usuario hoy. **No reseta quota** — el bucket es per-project en GCP.
+
+**Riesgo nuevo identificado:**
+
+- Quota free-tier insuficiente para el día del pitch (20 RPD generación). Ver §2 issue 9.
+
+**Pendiente para mañana (reset Gemini midnight Pacific = 09:00 Madrid):**
+
+```bash
+# 1. Confirmar reset
+docker compose exec web python manage.py shell -c "
+from apps.mubil.models import MobilityDocument
+print('pending:', MobilityDocument.objects.filter(embedding__isnull=True).count())"
+
+# 2. Re-tirar embed (idempotente, retoma desde id=1)
+docker compose exec web python manage.py embed_ask_corpus 2>&1 | tail -20
+# Esperado: ~750 embedded en ~75s (1K RPD da margen, throttle 0.1s)
+# Si falla a mitad, repetir — solo embebe filas con embedding IS NULL.
+
+# 3. Smoke test del endpoint RAG
+curl -s -X POST http://localhost:9000/mubil/api/v1/ask/query \
+  -H "Content-Type: application/json" \
+  -d '{"q":"¿Qué ayudas MOVES III hay en Bizkaia?"}' | head -80
+
+# 4. (Opcional) Re-tirar ingesta para recuperar las páginas 16-19 que perdimos (~200 docs extra)
+docker compose exec web python manage.py ingest_ask_corpus --source=ckan
+# Y vuelta al paso 2 para embebir los nuevos.
+
+# 5. Visual: http://<dominio-prod>/mubil/ask/   (5 prompts gold pre-cargados)
+```
+
+---
+
+## 0.1. Avance sesión 2026-05-28 mañana (`ask` MUST escrito, sin live-test)
 
 **Escrito + listo para correr (todo bajo `src/apps/mubil/ask/`):**
 
@@ -144,6 +205,13 @@ Smoke test reproducible: ver §3 abajo.
    - Añadir input `subvencion_eur` (MOVES III + Plan Renove EH).
    - O cambiar baseline a un coche más caro (Audi A4 ~45k€).
 
+9. **⚠️ Quota Gemini free tier insuficiente para el pitch (NUEVO 2026-05-28).**
+   - Embedding: 1K RPD — basta para corpus one-shot (750 docs).
+   - **Generación: 20 RPD** (2.5-flash-lite, modelo MUBIL actual) — insuficiente para ensayos + demo en vivo + preguntas del jurado.
+   - Rotar la API key NO resetea quota (bucket per-project en GCP).
+   - **Acción requerida antes del 12-jun**: habilitar billing en GCP project `maps-eus`. Coste real para estos volúmenes: céntimos.
+   - Memoria: ver [[project-mubil-gemini-quotas]].
+
 ---
 
 ## 3. Comandos de "arrancar limpio" mañana
@@ -195,19 +263,25 @@ URLs útiles:
 
 ### Bloque B — Wiring de datos reales (cuando lleguen tokens)
 
-- [ ] Solicitar token ESIOS → email a `consultasios@ree.es` (PROPUESTA §18).
-- [ ] Solicitar API key DGT NAP + Gemini.
+- [x] Solicitar token ESIOS → email a `consultasios@ree.es` (recibido 2026-05-28, mismo día).
+- [ ] Solicitar API key DGT NAP.
+- [x] API key Gemini (configurada en prod, rotada hoy).
 - [ ] Crear API key OpenChargeMap (instantáneo).
-- [ ] Implementar `tasks.py` Celery: `ingest_pvpc_hourly`, `ingest_fuel_stations`, `ingest_charging_stations`.
-- [ ] Sustituir `price_defaults` por queries a `EnergyPricePVPC` / `FuelStation` cuando haya datos reales.
+- [x] Implementar `tasks.py` Celery: `ingest_pvpc_hourly` ✅ (cron `:15` Madrid en prod).
+- [ ] Pendiente: `ingest_fuel_stations` (MINCOTUR daily 06:00), `ingest_charging_stations` (OpenData EH + OpenChargeMap weekly).
+- [x] Sustituir `price_defaults` PVPC por queries a `EnergyPricePVPC` ✅ (advisor lee `pvpc_ingest.current_price_eur_kwh()`).
+- [ ] Sustituir `price_defaults` combustible por queries a `FuelStation` cuando esté `ingest_fuel_stations`.
 
 ### Bloque C — `ask` MUST (7-9d, segundo módulo del scope)
 
-- [ ] Endpoint `POST /mubil/api/v1/ask/query`.
-- [ ] Pipeline RAG: embed Gemini `text-embedding-004` (768d) → pgvector cosine top-k → compose prompt → Gemini Flash.
-- [ ] Ingesta CKAN `datos.gob.es/apidata/catalog/dataset?theme=transport`.
-- [ ] 5 prompts gold pre-calentados como red de seguridad para la demo.
-- [ ] UI consola HTMX con spinner "thinking…" para latencias ≥3s.
+- [x] Endpoint `POST /mubil/api/v1/ask/query` ✅.
+- [x] Pipeline RAG: embed Gemini `text-embedding-004` (768d) → pgvector cosine top-k → compose prompt → Gemini Flash ✅ (escrito, mocked tests verdes).
+- [x] Ingesta CKAN `datos.gob.es/apidata/catalog/dataset/theme/transporte` ✅ (750 docs en prod).
+- [ ] **Embed batch del corpus — bloqueado hasta reset quota mañana 09:00 Madrid.**
+- [ ] Live-test endpoint con query real → confirmar latencia y calidad de las respuestas.
+- [x] 5 prompts gold pre-calentados como red de seguridad para la demo ✅.
+- [x] UI consola HTMX ✅ (`templates/mubil/ask.html`).
+- [ ] (Opcional, post-live-test) Re-ingestar para recuperar las ~200 docs de páginas 16-19.
 
 ### Bloque D — MOCKs (4-6d cada uno, scope cut decidido en §17)
 

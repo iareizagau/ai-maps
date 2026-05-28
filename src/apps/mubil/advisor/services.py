@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Optional
 
-from apps.mubil.data import cp_centroids
+from apps.mubil.data import cp_centroids, pvpc_ingest
 from apps.mubil.data.price_defaults import (
     CO2_KG_PER_KWH_MIX_ES,
     CO2_KG_PER_LITRE_DIESEL,
@@ -27,8 +27,6 @@ from apps.mubil.data.price_defaults import (
     DEFAULT_INSURANCE_EUR_YEAR_ICE,
     DEFAULT_MAINTENANCE_EUR_YEAR_EV,
     DEFAULT_MAINTENANCE_EUR_YEAR_ICE,
-    DEFAULT_PVPC_EUR_KWH,
-    DEFAULT_PVPC_VALLE_EUR_KWH,
     DEFAULT_TAX_EUR_YEAR_EV,
     DEFAULT_TAX_EUR_YEAR_ICE,
 )
@@ -85,7 +83,7 @@ def _annual_energy_cost(
     if _is_electric(vehicle):
         kwh_100 = vehicle.consumption_kwh_100km or Decimal("17.0")
         kwh = (kwh_100 * km) / Decimal("100")
-        price = DEFAULT_PVPC_VALLE_EUR_KWH if night_charging else DEFAULT_PVPC_EUR_KWH
+        price = pvpc_ingest.current_price_eur_kwh(night_charging=night_charging)
         return (kwh * price).quantize(Decimal("0.01"))
     # combustión / híbrido — usar consumption_l_100km
     l_100 = vehicle.consumption_l_100km or Decimal("6.0")

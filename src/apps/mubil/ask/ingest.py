@@ -199,8 +199,14 @@ def ingest_ckan(
     for page in range(max_pages):
         try:
             payload = _fetch_ckan_page(page, page_size, theme_slug)
+        except requests.exceptions.JSONDecodeError as e:
+            # CKAN occasionally returns truncated JSON for a single page —
+            # skip it instead of aborting the whole crawl.
+            log.warning("CKAN page %d JSON malformed, skipping: %s", page, e)
+            stats.errors += 1
+            continue
         except requests.RequestException as e:
-            log.error("CKAN page %d failed: %s", page, e)
+            log.error("CKAN page %d HTTP failed, aborting crawl: %s", page, e)
             stats.errors += 1
             break
 

@@ -61,6 +61,7 @@ class TCOQuote:
     co2_kg_year_target: Decimal
     payback_years: Optional[Decimal]
     nearby_chargers: list[ChargingStation]
+    subvencion_eur: Decimal = Decimal("0")
 
 
 # ------------------------------------------------------------------ helpers
@@ -134,16 +135,20 @@ def _payback_years(
     current: Vehicle,
     target: Vehicle,
     annual_savings: Decimal,
+    subvencion_eur: Decimal = Decimal("0"),
 ) -> Optional[Decimal]:
-    """Payback simple: diferencia de precio compra / ahorro anual.
+    """Payback simple: (delta precio − subvención) / ahorro anual.
+
+    `subvencion_eur` representa ayudas públicas/privadas que se restan del
+    sobrecoste de compra del target (típicamente MOVES III + Plan Renove EH).
 
     Devuelve None si no hay datos de precio o no hay ahorro positivo.
     """
     if not current.price_eur or not target.price_eur or annual_savings <= 0:
         return None
-    delta_price = Decimal(target.price_eur - current.price_eur)
+    delta_price = Decimal(target.price_eur - current.price_eur) - subvencion_eur
     if delta_price <= 0:
-        # el target es más barato → payback inmediato
+        # el target neto sale más barato → payback inmediato
         return Decimal("0")
     return (delta_price / annual_savings).quantize(Decimal("0.1"))
 
@@ -168,8 +173,13 @@ def calculate_tco_quote(
     vehicle_target_id: int,
     years_horizon: int = 10,
     night_charging: bool = False,
+    subvencion_eur: int = 0,
 ) -> TCOQuote:
     """Calcula la comparativa TCO para el `advisor`.
+
+    `subvencion_eur` es la ayuda total a la compra del target (MOVES III + Plan
+    Renove EH + descuento marca). Se resta del sobrecoste de compra para el
+    payback. Rango admitido: 0-12.000€.
 
     Lanza Vehicle.DoesNotExist si los IDs no existen y ValueError si los
     parámetros son inválidos.
@@ -178,6 +188,8 @@ def calculate_tco_quote(
         raise ValueError(f"km_year fuera de rango (1.000-60.000): {km_year}")
     if not (1 <= years_horizon <= 20):
         raise ValueError(f"years_horizon fuera de rango (1-20): {years_horizon}")
+    if not (0 <= subvencion_eur <= 12_000):
+        raise ValueError(f"subvencion_eur fuera de rango (0-12.000): {subvencion_eur}")
 
     current = Vehicle.objects.get(pk=vehicle_current_id)
     target = Vehicle.objects.get(pk=vehicle_target_id)
@@ -211,6 +223,9 @@ def calculate_tco_quote(
         breakdown_target=bd_target,
         co2_kg_year_current=_annual_co2_kg(current, km_year),
         co2_kg_year_target=_annual_co2_kg(target, km_year),
-        payback_years=_payback_years(current, target, annual_savings),
+        payback_years=_payback_years(
+            current, target, annual_savings, Decimal(subvencion_eur)
+        ),
         nearby_chargers=_nearby_chargers(cp),
+        subvencion_eur=Decimal(subvencion_eur),
     )

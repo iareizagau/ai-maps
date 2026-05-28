@@ -8,6 +8,7 @@ from django.views.decorators.http import require_http_methods
 
 from .advisor import services as advisor_services
 from .advisor.api import _quote_to_out
+from .ask import services as ask_services
 from .models import Vehicle
 
 
@@ -55,6 +56,7 @@ def advisor_quote(request):
             'vehicle_target_id': int(request.POST['vehicle_target_id']),
             'years_horizon': int(request.POST.get('years_horizon', 10)),
             'night_charging': request.POST.get('night_charging') == 'on',
+            'subvencion_eur': int(request.POST.get('subvencion_eur', 0) or 0),
         }
     except (KeyError, ValueError) as e:
         return HttpResponseBadRequest(f"Datos del formulario inválidos: {e}")
@@ -76,7 +78,32 @@ def advisor_quote(request):
 
 def ask_page(request):
     """Q&A console with Gemini + RAG (MUST). PROPUESTA.md §3.2."""
-    return render(request, 'mubil/ask.html')
+    return render(request, 'mubil/ask.html', {
+        'suggested': ask_services.SUGGESTED_PROMPTS,
+    })
+
+
+@require_http_methods(["POST"])
+def ask_query(request):
+    """HTMX endpoint — returns the answer + sources partial."""
+    query = (request.POST.get('q') or '').strip()
+    if not query:
+        return HttpResponseBadRequest("Falta la pregunta.")
+    try:
+        k = int(request.POST.get('k', 8))
+    except ValueError:
+        k = 8
+    municipality = (request.POST.get('municipality_naia') or '').strip() or None
+
+    try:
+        result = ask_services.answer(query=query, k=k, municipality_naia=municipality)
+    except ValueError as e:
+        return HttpResponseBadRequest(str(e))
+
+    return render(request, 'mubil/_ask_result.html', {
+        'query': query,
+        'answer': result.to_out(),
+    })
 
 
 def route_page(request):

@@ -47,3 +47,15 @@ media
 staticfiles
 *.sqlite3
 *.log
+
+# Large data artifacts (OSM extracts, GTFS bundles, CSV dumps)
+*.pbf
+*.osm
+*.osm.bz2
+*.gtfs.zip
+*.csv.gz
+*.parquet
+
+# Dev temp files that sneak into src/ root
+src/temp_*
+src/*.osm.pbf

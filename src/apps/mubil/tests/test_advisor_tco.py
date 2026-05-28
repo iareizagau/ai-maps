@@ -129,6 +129,62 @@ class TCOServiceTests(TestCase):
                 vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
             )
 
+    # ---------- subsidy / payback ----------
+
+    def test_subvencion_reduces_payback_years(self):
+        base = services.calculate_tco_quote(
+            cp="20018", km_year=15000,
+            vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+        )
+        subsidized = services.calculate_tco_quote(
+            cp="20018", km_year=15000,
+            vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+            subvencion_eur=7000,
+        )
+        self.assertIsNotNone(base.payback_years)
+        self.assertIsNotNone(subsidized.payback_years)
+        self.assertLess(subsidized.payback_years, base.payback_years)
+        self.assertEqual(subsidized.subvencion_eur, Decimal("7000"))
+
+    def test_subvencion_larger_than_delta_yields_zero_payback(self):
+        # Golf 28.500€ → Niro 41.500€ → delta 13.000€. Con 12k de ayuda (max),
+        # delta queda en 1.000€ y aún hay payback >0.
+        # Para forzar payback=0 hace falta delta_price <= subvencion. Modifico
+        # el precio del Niro a 30k para que delta=1500 y subvencion=12k → 0.
+        cheap_niro = Vehicle.objects.create(
+            make="Kia", model="Niro EV LE", year=2025,
+            propulsion=Vehicle.Propulsion.BEV,
+            consumption_kwh_100km=Decimal("16.2"),
+            price_eur=30_000,
+        )
+        q = services.calculate_tco_quote(
+            cp="20018", km_year=15000,
+            vehicle_current_id=self.golf.id, vehicle_target_id=cheap_niro.id,
+            subvencion_eur=12_000,
+        )
+        self.assertEqual(q.payback_years, Decimal("0"))
+
+    def test_subvencion_out_of_range_raises(self):
+        with self.assertRaises(ValueError):
+            services.calculate_tco_quote(
+                cp="20018", km_year=15000,
+                vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+                subvencion_eur=-100,
+            )
+        with self.assertRaises(ValueError):
+            services.calculate_tco_quote(
+                cp="20018", km_year=15000,
+                vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+                subvencion_eur=20_000,
+            )
+
+    def test_default_subvencion_is_zero(self):
+        q = services.calculate_tco_quote(
+            cp="20018", km_year=15000,
+            vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+        )
+        self.assertEqual(q.subvencion_eur, Decimal("0"))
+
 
 class NearbyChargersTests(TestCase):
     """Filtro espacial GIST."""

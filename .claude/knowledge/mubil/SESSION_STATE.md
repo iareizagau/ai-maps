@@ -1,8 +1,67 @@
 ![1779832249241](image/SESSION_STATE/1779832249241.png)![1779832254381](image/SESSION_STATE/1779832254381.png)# Mubil — Session State (snapshot para reanudar)
 
-**Última actualización:** 2026-05-26
-**Objetivo activo:** MUBIL Mobility Awards 2026 — `advisor` MUST funcional para defensa
-**Reanudar leyendo:** este archivo + `PROPUESTA.md` §17 (decisiones) + §18 (tareas abiertas)
+**Última actualización:** 2026-05-28
+**Deadline confirmado:** **2026-06-19** (22 días naturales / ~15 hábiles desde hoy)
+**Objetivo activo:** `ask` MUST — validación end-to-end + ingesta full corpus + embed
+**Reanudar leyendo:** este archivo §0 (último avance) → §4 (próximos pasos) → §2 (issues conocidos)
+
+---
+
+## 0. Avance sesión 2026-05-28 (`ask` MUST escrito, pendiente validar live)
+
+**Escrito + listo para correr (todo bajo `src/apps/mubil/ask/`):**
+
+| Pieza | Archivo | Tests | Estado |
+|---|---|---|---|
+| Ingest CKAN datos.gob.es | `ask/ingest.py` | 12 verde | **live-validado**: 5 docs reales en DB, 40+ por theme |
+| Embedding service Gemini | `ask/embeddings.py` | 10 verde (mocked) | live test pendiente |
+| RAG pipeline | `ask/services.py` | ~10 verde (mocked) | live test pendiente |
+| Schemas Ninja | `ask/schemas.py` | — | — |
+| API endpoints | `ask/api.py` | — | `/health`, `/suggested`, `/corpus/stats`, `POST /query` |
+| HTMX view | `views.py:77-103` (`ask_query`) | — | wired en `urls.py` |
+| Templates | `templates/mubil/ask.html` + `_ask_result.html` | — | con 5 prompts gold pre-cargados |
+| Mgmt commands | `ingest_ask_corpus`, `embed_ask_corpus` | — | con `--dry-run` |
+
+**Decisiones tomadas:**
+- Modelo embeddings: `text-embedding-004` (768d), modelo gen: `gemini-2.0-flash`. Configurables vía `GEMINI_EMBEDDING_MODEL`/`GEMINI_GENERATION_MODEL` en settings.
+- Estrategia: **ingesta-first** (corpus poblado antes de embed batch).
+- Fuentes MVP: **solo CKAN** datos.gob.es theme=transporte (~500 docs estimados).
+- OpenData Euskadi **diferido** — sólo si CKAN <500 docs o pitch necesita sesgo EH.
+- Pipeline RAG: top-k=8, sin re-ranking, sin streaming, MIN_SCORE=0.40 para descartar matches débiles.
+
+**Cambios de infra:**
+- `requirements.txt`: añadido `google-generativeai>=0.8`.
+- `settings/base.py:209-213`: vars `GEMINI_API_KEY`, `GEMINI_EMBEDDING_MODEL`, `GEMINI_GENERATION_MODEL`.
+- **`GEMINI_API_KEY` está en `src/.env` línea 1 (39 chars) Y `.env` raíz línea 12** — el contenedor lee del `.env` raíz vía `env_file`. **⚠️ Key expuesta en log de sesión del 2026-05-28 (cat / od) — considerar rotación.**
+- `.dockerignore`: añadido `*.pbf`, `*.osm*`, `*.parquet`, `src/temp_*`, etc. Build context bajó de 3.74 GB → ~70 MB.
+- `docker-compose.override.yml`: **eliminado** debugpy + puerto 5678:5678. Ahora `command: python manage.py runserver 0.0.0.0:9000 --noreload`.
+
+**Bugs encontrados y corregidos durante live-validation del CKAN:**
+- Endpoint correcto: `GET /apidata/catalog/dataset/theme/{slug}` (no `?theme=URI`).
+- URL de cada dataset está en `_about`, no `@id`.
+
+**Pendiente de la sesión que viene:**
+
+```bash
+# Suite completa (debería pasar 35+ tests, ya pasaron en mock)
+docker exec maps_web python manage.py test apps.mubil --noinput
+
+# Ingesta completa CKAN (~500 docs reales, ~30-60s)
+docker exec maps_web python manage.py ingest_ask_corpus --source=ckan
+
+# Embed batch del corpus (~500 calls Gemini, ~50-90s con throttle 0.1s)
+docker exec maps_web python manage.py embed_ask_corpus
+
+# Smoke test live del endpoint RAG
+curl -X POST http://localhost:9000/mubil/api/v1/ask/query \
+  -H "Content-Type: application/json" \
+  -d '{"q":"¿Qué ayudas MOVES III hay en Bizkaia?"}'
+
+# Visual UI con prompts gold
+# → http://localhost:9000/mubil/ask/
+```
+
+---
 
 ---
 

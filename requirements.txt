@@ -19,6 +19,9 @@ django-leaflet
 # Vector search
 pgvector
 
+# Mubil — Gemini (embeddings + generation for RAG `ask`)
+google-genai>=1.0
+
 # Testing
 pytest
 pytest-django

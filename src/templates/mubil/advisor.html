@@ -93,6 +93,19 @@
         <span class="text-sm text-slate-700 dark:text-slate-300">Cargar de noche (tarifa valle PVPC P3)</span>
       </label>
 
+      <div class="space-y-2">
+        <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+          Subvención total (€)
+        </label>
+        <input type="number" name="subvencion_eur" value="0" min="0" max="12000" step="100"
+               class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          MOVES III estándar BEV: 4.500€ · con achatarramiento: 7.000€ · +
+          Plan Renove EH: hasta ~9.000€. Reduce el sobrecoste de compra del
+          objetivo para el payback.
+        </p>
+      </div>
+
       <button type="submit"
               class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-3 font-bold text-white hover:bg-cyan-600 transition">
         <svg id="advisor-loading" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 animate-spin htmx-indicator" fill="none" viewBox="0 0 24 24">

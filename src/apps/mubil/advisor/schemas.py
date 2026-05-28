@@ -13,6 +13,7 @@ class AdvisorQuoteIn(Schema):
     vehicle_target_id: int
     years_horizon: int = 10
     night_charging: bool = False
+    subvencion_eur: int = 0
 
 
 class VehicleSummary(Schema):
@@ -57,4 +58,5 @@ class AdvisorQuoteOut(Schema):
     co2_kg_year_target: Decimal
     co2_saved_kg_year: Decimal
     payback_years: Optional[Decimal] = None
+    subvencion_eur: Decimal = Decimal("0")
     nearby_chargers: List[ChargerOut] = []

@@ -7,7 +7,7 @@ from ninja import Schema
 
 class AskQueryIn(Schema):
     q: str
-    k: int = 5
+    k: int = 8
     municipality_naia: Optional[str] = None
 
 
@@ -22,3 +22,14 @@ class AskAnswerOut(Schema):
     answer_md: str
     sources: List[AskSource]
     latency_ms: int
+
+
+class SuggestedPromptOut(Schema):
+    id: str
+    label: str
+
+
+class CorpusStatsOut(Schema):
+    total_documents: int
+    with_embedding: int
+    pending_embedding: int

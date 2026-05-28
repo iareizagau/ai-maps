@@ -206,6 +206,21 @@ LOGIN_REDIRECT_URL = 'home'
 EUSKALMET_API_KEY = env('EUSKALMET_API_KEY', default='')
 OPENWEATHERMAP_API_KEY = env('OPENWEATHERMAP_API_KEY', default='')
 
+# Mubil — Gemini (embeddings gemini-embedding-001 @768d + generation gemini-3.5-flash).
+# Obtener gratis en https://aistudio.google.com/app/apikey
+# Note: text-embedding-004 was deprecated late 2025; gemini-embedding-001 replaces
+# it. Native dim is 3072 with MRL — embeddings.py passes output_dimensionality=768
+# via the google-genai SDK to keep the existing VectorField(dimensions=768) schema.
+# Generation uses gemini-3.5-flash (newest Flash GA as of 2026-05); previous
+# default gemini-2.5-flash was free-tier-throttled to 20 RPD, useless for demos.
+GEMINI_API_KEY = env('GEMINI_API_KEY', default='')
+GEMINI_EMBEDDING_MODEL = env('GEMINI_EMBEDDING_MODEL', default='gemini-embedding-001')
+GEMINI_GENERATION_MODEL = env('GEMINI_GENERATION_MODEL', default='gemini-3.5-flash')
+
+# Mubil — ESIOS (Red Eléctrica) for PVPC hourly prices, indicator 1001.
+# Token obtained via email to consultasios@ree.es; sent in `x-api-key` header.
+ESIOS_TOKEN = env('ESIOS_TOKEN', default='')
+
 # Celery
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://redis:6379/0')
 CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://redis:6379/1')

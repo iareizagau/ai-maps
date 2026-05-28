@@ -36,6 +36,7 @@
       <p class="mt-1 text-xs text-amber-600 dark:text-amber-200">
         {{ q.co2_kg_year_current|floatformat:0 }} → {{ q.co2_kg_year_target|floatformat:0 }} kg/año
         {% if q.payback_years is not None %}· Payback compra: <strong>{{ q.payback_years }} años</strong>{% endif %}
+        {% if q.subvencion_eur and q.subvencion_eur > 0 %}<br/>Subvención aplicada: −{{ q.subvencion_eur|floatformat:0 }} €{% endif %}
       </p>
     </div>
 

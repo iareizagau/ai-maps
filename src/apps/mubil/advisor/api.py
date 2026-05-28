@@ -87,6 +87,7 @@ def _quote_to_out(quote: services.TCOQuote) -> dict:
         "co2_kg_year_target": quote.co2_kg_year_target,
         "co2_saved_kg_year": saved,
         "payback_years": quote.payback_years,
+        "subvencion_eur": quote.subvencion_eur,
         "nearby_chargers": chargers,
     }
 
@@ -136,6 +137,7 @@ def post_quote(request, payload: AdvisorQuoteIn):
             vehicle_target_id=payload.vehicle_target_id,
             years_horizon=payload.years_horizon,
             night_charging=payload.night_charging,
+            subvencion_eur=payload.subvencion_eur,
         )
     except Vehicle.DoesNotExist:
         return 404, {"message": "Vehículo no encontrado"}

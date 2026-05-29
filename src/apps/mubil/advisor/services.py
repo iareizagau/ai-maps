@@ -16,13 +16,11 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Optional
 
-from apps.mubil.data import cp_centroids, pvpc_ingest
+from apps.mubil.data import cp_centroids, fuel_ingest, pvpc_ingest
 from apps.mubil.data.price_defaults import (
     CO2_KG_PER_KWH_MIX_ES,
     CO2_KG_PER_LITRE_DIESEL,
     CO2_KG_PER_LITRE_GASOLINA,
-    DEFAULT_GASOLEO_A_EUR_L,
-    DEFAULT_GASOLINA_95_EUR_L,
     DEFAULT_INSURANCE_EUR_YEAR_EV,
     DEFAULT_INSURANCE_EUR_YEAR_ICE,
     DEFAULT_MAINTENANCE_EUR_YEAR_EV,
@@ -77,8 +75,15 @@ def _annual_energy_cost(
     vehicle: Vehicle,
     km_year: int,
     night_charging: bool,
+    *,
+    postal_code: Optional[str] = None,
 ) -> Decimal:
-    """Coste anual de energía (€) en función del vehículo, km y régimen tarifario."""
+    """Coste anual de energía (€) en función del vehículo, km y régimen tarifario.
+
+    Precio combustible: MINCOTUR via :func:`fuel_ingest.current_price_eur_l`,
+    filtrado por CP cuando hay datos locales frescos, con fallback a la media
+    provincial y de ahí a constantes en :mod:`price_defaults`.
+    """
     km = Decimal(km_year)
     if _is_electric(vehicle):
         kwh_100 = vehicle.consumption_kwh_100km or Decimal("17.0")
@@ -88,7 +93,8 @@ def _annual_energy_cost(
     # combustión / híbrido — usar consumption_l_100km
     l_100 = vehicle.consumption_l_100km or Decimal("6.0")
     litres = (l_100 * km) / Decimal("100")
-    price = DEFAULT_GASOLEO_A_EUR_L if _is_diesel(vehicle) else DEFAULT_GASOLINA_95_EUR_L
+    fuel_key = "gasoleo_a" if _is_diesel(vehicle) else "gasolina_95_e5"
+    price = fuel_ingest.current_price_eur_l(fuel_key=fuel_key, postal_code=postal_code)
     return (litres * price).quantize(Decimal("0.01"))
 
 
@@ -110,9 +116,13 @@ def _breakdown(
     km_year: int,
     years_horizon: int,
     night_charging: bool,
+    *,
+    postal_code: Optional[str] = None,
 ) -> CostBreakdown:
     horizon = Decimal(years_horizon)
-    energy = _annual_energy_cost(vehicle, km_year, night_charging) * horizon
+    energy = _annual_energy_cost(
+        vehicle, km_year, night_charging, postal_code=postal_code,
+    ) * horizon
     if _is_electric(vehicle):
         maint = DEFAULT_MAINTENANCE_EUR_YEAR_EV * horizon
         insur = DEFAULT_INSURANCE_EUR_YEAR_EV * horizon
@@ -192,16 +202,16 @@ def calculate_tco_quote(
     current = Vehicle.objects.get(pk=vehicle_current_id)
     target = Vehicle.objects.get(pk=vehicle_target_id)
 
-    bd_current = _breakdown(current, km_year, years_horizon, night_charging)
-    bd_target = _breakdown(target, km_year, years_horizon, night_charging)
+    bd_current = _breakdown(current, km_year, years_horizon, night_charging, postal_code=cp)
+    bd_target = _breakdown(target, km_year, years_horizon, night_charging, postal_code=cp)
 
     annual_savings = (
-        _annual_energy_cost(current, km_year, night_charging)
+        _annual_energy_cost(current, km_year, night_charging, postal_code=cp)
         + (DEFAULT_MAINTENANCE_EUR_YEAR_ICE if not _is_electric(current) else DEFAULT_MAINTENANCE_EUR_YEAR_EV)
         + (DEFAULT_INSURANCE_EUR_YEAR_ICE if not _is_electric(current) else DEFAULT_INSURANCE_EUR_YEAR_EV)
         + (DEFAULT_TAX_EUR_YEAR_ICE if not _is_electric(current) else DEFAULT_TAX_EUR_YEAR_EV)
     ) - (
-        _annual_energy_cost(target, km_year, night_charging)
+        _annual_energy_cost(target, km_year, night_charging, postal_code=cp)
         + (DEFAULT_MAINTENANCE_EUR_YEAR_ICE if not _is_electric(target) else DEFAULT_MAINTENANCE_EUR_YEAR_EV)
         + (DEFAULT_INSURANCE_EUR_YEAR_ICE if not _is_electric(target) else DEFAULT_INSURANCE_EUR_YEAR_EV)
         + (DEFAULT_TAX_EUR_YEAR_ICE if not _is_electric(target) else DEFAULT_TAX_EUR_YEAR_EV)

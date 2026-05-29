@@ -217,6 +217,39 @@ GEMINI_API_KEY = env('GEMINI_API_KEY', default='')
 GEMINI_EMBEDDING_MODEL = env('GEMINI_EMBEDDING_MODEL', default='gemini-embedding-001')
 GEMINI_GENERATION_MODEL = env('GEMINI_GENERATION_MODEL', default='gemini-3.5-flash')
 
+# Ordered fallback ladder for generation. The advisor RAG iterates this list
+# on quota / temp-unavailable / not-found / empty-completion so a depleted
+# bucket or safety filter on one model doesn't blank the demo. Order has
+# been tuned live: pick by *expected wall-clock to a usable answer*, not
+# RPD alone — a model with 1.5K RPD that returns empty in 25 s is worse
+# than one with 500 RPD that returns the answer in 3 s.
+#
+#   - gemini-3.1-flash-lite :   500 RPD, ~3 s answers, citation-friendly
+#                               (FIRST: lots of headroom + verified quality
+#                               on the demo prompts).
+#   - gemini-2.5-flash-lite :    20 RPD, ~3 s answers.
+#   - gemini-3-flash        :    20 RPD.
+#   - gemini-3.5-flash      :    20 RPD, newest Flash GA.
+#   - gemini-2.5-flash      :    20 RPD, oldest, usually drained first.
+#   - gemma-4-26b-a4b-it    : 1.5K RPD but observed empty completions on
+#                             Spanish gov-policy prompts (safety filter).
+#                             Kept as last-resort overflow.
+#   - gemma-4-31b-it        : 1.5K RPD shared bucket — overflow companion.
+# Names verified against client.models.list() on 2026-05-29.
+# Override via env to pin a single model end-to-end.
+GEMINI_GENERATION_FALLBACK_MODELS = env.list(
+    'GEMINI_GENERATION_FALLBACK_MODELS',
+    default=[
+        'gemini-3.1-flash-lite',
+        'gemini-2.5-flash-lite',
+        'gemini-3-flash',
+        'gemini-3.5-flash',
+        'gemini-2.5-flash',
+        'gemma-4-26b-a4b-it',
+        'gemma-4-31b-it',
+    ],
+)
+
 # Mubil — ESIOS (Red Eléctrica) for PVPC hourly prices, indicator 1001.
 # Token obtained via email to consultasios@ree.es; sent in `x-api-key` header.
 ESIOS_TOKEN = env('ESIOS_TOKEN', default='')

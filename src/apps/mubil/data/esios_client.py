@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 
 BASE_URL = "https://api.esios.ree.es"
 HTTP_TIMEOUT = 30
-USER_AGENT = "mubil/0.1 (dev@zenitsolar.eu)"
+USER_AGENT = "mubil/0.1 (iareizagau@gmail.com)"
 
 # ESIOS indicator IDs we care about — extend as needed.
 INDICATOR_PVPC = 1001          # PVPC 2.0TD horario (€/MWh)

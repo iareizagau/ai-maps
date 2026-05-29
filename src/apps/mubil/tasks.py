@@ -15,7 +15,7 @@ import logging
 
 from celery import shared_task
 
-from apps.mubil.data import pvpc_ingest
+from apps.mubil.data import fuel_ingest, pvpc_ingest
 
 log = logging.getLogger(__name__)
 
@@ -30,4 +30,18 @@ def ingest_pvpc_hourly(hours: int = 48) -> dict:
     """
     stats = pvpc_ingest.ingest_recent_hours(hours=hours)
     log.info("ingest_pvpc_hourly stats=%s", stats.as_dict())
+    return stats.as_dict()
+
+
+@shared_task(name="mubil.ingest_fuel_stations")
+def ingest_fuel_stations() -> dict:
+    """Snapshot all EH fuel stations from MINCOTUR.
+
+    Idempotent upsert by `ideess`; refreshes `last_seen_at` so the advisor's
+    freshness filter can ignore province snapshots that stopped updating.
+    MINCOTUR refreshes ~daily (afternoon) — a 06:30 Madrid cron picks up the
+    previous day's snapshot reliably.
+    """
+    stats = fuel_ingest.ingest_default()
+    log.info("ingest_fuel_stations stats=%s", stats.as_dict())
     return stats.as_dict()

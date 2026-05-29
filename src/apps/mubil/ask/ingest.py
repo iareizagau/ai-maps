@@ -29,7 +29,7 @@ CKAN_BASE = "https://datos.gob.es/apidata"
 # the dcat:theme URI `http://datos.gob.es/kos/sector-publico/sector/{slug}`.
 CKAN_THEME_SLUG = "transporte"
 HTTP_TIMEOUT = 30
-USER_AGENT = "mubil/0.1 (dev@zenitsolar.eu)"
+USER_AGENT = "mubil/0.1 (iareizagau@gmail.com)"
 
 
 # ---------------------------------------------------------------- helpers

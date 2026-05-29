@@ -12,8 +12,9 @@ running `makemigrations mubil` — do NOT auto-generate.
 
 from decimal import Decimal
 
-from django.db import models
 from django.contrib.gis.db import models as gis_models
+from django.contrib.postgres.indexes import GinIndex
+from django.db import models
 from django.utils.translation import gettext_lazy as _
 from pgvector.django import VectorField
 
@@ -30,7 +31,11 @@ class BaseModel(models.Model):
 
 
 class Vehicle(BaseModel):
-    """EV / ICE / hybrid catalog. Seed from DGT + investigacoches.es (atribuir)."""
+    """EV / ICE / hybrid catalog. Authoritative source: IDAE base de datos
+    (coches.idae.es) — WLTP homologated + DGT energy label. Manual seed rows
+    keep `idae_id=NULL`; the partial unique constraint allows that without
+    blocking the natural-key one.
+    """
 
     class Propulsion(models.TextChoices):
         BEV = 'BEV', _('Eléctrico (BEV)')
@@ -38,24 +43,110 @@ class Vehicle(BaseModel):
         HEV = 'HEV', _('Híbrido')
         ICE = 'ICE', _('Gasolina')
         DIESEL = 'DIESEL', _('Diésel')
+        CNG = 'CNG', _('Gas Natural Comprimido')
+        LPG = 'LPG', _('GLP / Autogás')
 
-    make = models.CharField(max_length=80)
-    model = models.CharField(max_length=120)
+    class DGTLabel(models.TextChoices):
+        CERO = '0', _('Cero emisiones')
+        ECO = 'ECO', _('ECO')
+        C = 'C', _('C')
+        B = 'B', _('B')
+        SIN = 'SIN', _('Sin etiqueta')
+
+    class Category(models.TextChoices):
+        M1 = 'M1', _('Turismo')
+        M2 = 'M2', _('Autobús ligero')
+        N1 = 'N1', _('Furgoneta ligera')
+        N2 = 'N2', _('Furgón pesado')
+        L3e = 'L3e', _('Motocicleta')
+        L6e = 'L6e', _('Cuadriciclo ligero')
+        L7e = 'L7e', _('Cuadriciclo pesado')
+
+    class EnergyClass(models.TextChoices):
+        A = 'A', _('A')
+        B = 'B', _('B')
+        C = 'C', _('C')
+        D = 'D', _('D')
+        E = 'E', _('E')
+        F = 'F', _('F')
+        G = 'G', _('G')
+        S = 'S', _('Sin clasificar')
+
+    # Idempotency key for the IDAE ingest. NULL for manual seed rows.
+    idae_id = models.PositiveIntegerField(null=True, blank=True, db_index=True)
+
+    make = models.CharField(max_length=80, db_index=True)
+    # IDAE concatenates model + variant + sub-trim into the same Modelo
+    # string, so 200 chars is needed to fit edge cases like long
+    # "Touareg R eHybrid …" lines.
+    model = models.CharField(max_length=200)
+    # Distinguishes the dozens of versions a single (make, model, year) hides
+    # in IDAE (TFSI 110 / TDI 115 / GTI / R). Empty string for legacy rows.
+    variant = models.CharField(max_length=200, blank=True, default='')
     year = models.PositiveSmallIntegerField()
     propulsion = models.CharField(max_length=8, choices=Propulsion.choices, db_index=True)
 
+    # Búsqueda y filtrado por etiqueta DGT / categoría / segmento — los chips
+    # que va a tocar el jurado en el pitch.
+    dgt_label = models.CharField(
+        max_length=4, choices=DGTLabel.choices, blank=True, db_index=True,
+    )
+    category = models.CharField(
+        max_length=4, choices=Category.choices, blank=True, db_index=True,
+    )
+    energy_class = models.CharField(
+        max_length=1, choices=EnergyClass.choices, blank=True,
+    )
+    segment = models.CharField(max_length=40, blank=True, db_index=True)
+
+    mtma_kg = models.PositiveIntegerField(null=True, blank=True)
     battery_kwh = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     range_wltp_km = models.PositiveIntegerField(null=True, blank=True)
     consumption_kwh_100km = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     consumption_l_100km = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+
+    # CO₂ WLTP — rango por las 4 fases. Para vehículos eléctricos se reporta 0.
+    co2_g_km_min = models.PositiveSmallIntegerField(null=True, blank=True)
+    co2_g_km_max = models.PositiveSmallIntegerField(null=True, blank=True)
+
+    # No lo da IDAE; queda nullable. Se rellena manualmente o desde un fetch
+    # complementario (e.g. coches.net) en una fase posterior.
     price_eur = models.PositiveIntegerField(null=True, blank=True)
 
     source_url = models.URLField(blank=True)
 
     class Meta:
-        unique_together = ('make', 'model', 'year')
         ordering = ['make', 'model', '-year']
-        indexes = [models.Index(fields=['propulsion', 'year'])]
+        constraints = [
+            # IDAE id es la clave natural cuando existe (ingesta idempotente).
+            models.UniqueConstraint(
+                fields=['idae_id'],
+                condition=models.Q(idae_id__isnull=False),
+                name='vehicle_idae_unique',
+            ),
+            # Clave natural extendida solo para filas MANUALES (idae_id NULL):
+            # IDAE tiene varias versiones del mismo (make, model, variant) con
+            # distinto idae_id y year=0, así que no podemos imponer este
+            # constraint sobre filas importadas.
+            models.UniqueConstraint(
+                fields=['make', 'model', 'variant', 'year'],
+                condition=models.Q(idae_id__isnull=True),
+                name='vehicle_manual_natural_unique',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['propulsion', 'year']),
+            models.Index(fields=['propulsion', 'dgt_label']),
+            models.Index(fields=['category', 'segment']),
+            # Fuzzy text search across make/model/variant — drives the
+            # advisor's "type your car" autocomplete. Requires the pg_trgm
+            # extension, created in migration 0005.
+            GinIndex(
+                name='vehicle_text_trgm',
+                fields=['make', 'model', 'variant'],
+                opclasses=['gin_trgm_ops', 'gin_trgm_ops', 'gin_trgm_ops'],
+            ),
+        ]
 
     def __str__(self):
         return f"{self.make} {self.model} ({self.year})"

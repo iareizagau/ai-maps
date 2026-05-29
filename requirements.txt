@@ -22,6 +22,10 @@ pgvector
 # Mubil — Gemini (embeddings + generation for RAG `ask`)
 google-genai>=1.0
 
+# Mubil — corpus ingest for `ask` (HTML main-content + PDF text extraction)
+trafilatura>=1.10
+pypdf>=4.3
+
 # Testing
 pytest
 pytest-django

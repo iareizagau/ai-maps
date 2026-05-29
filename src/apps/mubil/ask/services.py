@@ -152,8 +152,74 @@ def compose_prompt(query: str, docs: List[RetrievedDoc]) -> str:
 # ---------------------------------------------------------------- generation
 
 
+# Errors we want to retry on a different model in the fallback ladder.
+# Two flavours:
+#   - Bucket exhausted / temporarily unavailable → another model may still have
+#     RPD/RPM left.
+#   - Model name unknown / unsupported region → catalog drifts (Gemma renames,
+#     "preview" suffixes drop). Falling through avoids breaking the demo when
+#     a single entry rots.
+_FALLBACK_MARKERS = (
+    "quota",
+    "rate limit",
+    "resource_exhausted",
+    "429",
+    "503",
+    "unavailable",
+    "high demand",
+    "not found",
+    "404",
+    "invalid argument",
+    "is not supported",
+    "is not found",
+    "model not found",
+    "permission denied for model",
+)
+
+# Auth / config errors that won't get better on the next model — re-raise.
+_HARD_ERROR_MARKERS = (
+    "api key not valid",
+    "api_key_invalid",
+    "401",
+    "unauthenticated",
+)
+
+
+def _should_fallback(exc: Exception) -> bool:
+    """True if ``exc`` from one model is worth retrying on the next one.
+
+    We string-match because google-genai's error hierarchy
+    (``ClientError``/``ServerError``/``APIError``) isn't stable across SDK
+    versions. Hard auth errors short-circuit so we don't burn the whole
+    ladder when the API key is wrong.
+    """
+    msg = (str(exc) or "").lower()
+    if any(m in msg for m in _HARD_ERROR_MARKERS):
+        return False
+    return any(m in msg for m in _FALLBACK_MARKERS)
+
+
+def _generation_ladder() -> List[str]:
+    """Resolve the model fallback list.
+
+    Honours ``GEMINI_GENERATION_FALLBACK_MODELS`` if present; otherwise
+    promotes ``GEMINI_GENERATION_MODEL`` to a single-element list (legacy
+    behaviour). Always returns at least one model.
+    """
+    ladder = list(getattr(settings, "GEMINI_GENERATION_FALLBACK_MODELS", []) or [])
+    if ladder:
+        return ladder
+    return [settings.GEMINI_GENERATION_MODEL]
+
+
 def _call_gemini_generate(prompt: str) -> str:
-    """Call Gemini Flash. Wrapped so tests can mock it cleanly."""
+    """Call Gemini Flash with a fallback ladder. Wrapped so tests can mock.
+
+    Iterates :func:`_generation_ladder`. The first non-quota response (text
+    or hard error) is returned to the caller. If every model in the ladder
+    yields a quota-style failure the last error is re-raised so the caller
+    surfaces the "temporarily unavailable" message.
+    """
     if not settings.GEMINI_API_KEY:
         raise embeddings.EmbeddingError("GEMINI_API_KEY is not set.")
 
@@ -161,15 +227,35 @@ def _call_gemini_generate(prompt: str) -> str:
     from google.genai import types
 
     client = genai.Client(api_key=settings.GEMINI_API_KEY)
-    response = client.models.generate_content(
-        model=settings.GEMINI_GENERATION_MODEL,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            temperature=0.2,
-            max_output_tokens=ANSWER_MAX_TOKENS,
-        ),
+    cfg = types.GenerateContentConfig(
+        temperature=0.2,
+        max_output_tokens=ANSWER_MAX_TOKENS,
     )
-    return response.text
+
+    ladder = _generation_ladder()
+    last_exc: Optional[Exception] = None
+    for model in ladder:
+        try:
+            response = client.models.generate_content(
+                model=model, contents=prompt, config=cfg,
+            )
+        except Exception as e:  # noqa: BLE001
+            if _should_fallback(e):
+                log.warning("Gemini model %s soft-failed (%s) — falling through.", model, e)
+                last_exc = e
+                continue
+            raise
+        text = (response.text or "").strip()
+        if not text:
+            # Empty completion is treated as a soft failure (filter / safety).
+            log.warning("Gemini model %s returned empty text — falling through.", model)
+            last_exc = RuntimeError(f"{model} returned empty completion")
+            continue
+        if model != ladder[0]:
+            log.info("Gemini fallback succeeded with %s.", model)
+        return text
+
+    raise last_exc or RuntimeError("All generation models in the ladder failed.")
 
 
 # ---------------------------------------------------------------- public API

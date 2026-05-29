@@ -48,11 +48,13 @@
             </h2>
             <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
                 {% for app in apps %}
-                <c-molecules.app_launcher_tile
-                    name="{{ app.name }}"
-                    icon="{{ app.icon }}"
-                    url="{{ app.get_absolute_url }}"
-                    accent_color="{{ app.primary_color }}" />
+                    {% if app.is_active %}
+                    <c-molecules.app_launcher_tile
+                        name="{{ app.name }}"
+                        icon="{{ app.icon }}"
+                        url="{{ app.get_absolute_url }}"
+                        accent_color="{{ app.primary_color }}" />
+                    {% endif %}
                 {% endfor %}
             </div>
         </div>

@@ -4,6 +4,13 @@ from ninja import NinjaAPI
 from . import views
 from .api import router
 
+# NOTE: the NinjaAPI instance is exported and mounted directly in
+# `config/urls.py` (NOT inside this `urlpatterns`). Reason: `app_name = 'mubil'`
+# below makes `include()` treat every nested path as living under the
+# `mubil:` instance namespace. Ninja registers its own namespace
+# (`mubil_api`) on `api.urls` and internally calls
+# `reverse('mubil_api:openapi-json')` to render the docs page — that lookup
+# only succeeds when the namespace is registered at the top level, not nested.
 api = NinjaAPI(
     title='Mubil API',
     description='Sustainable mobility intelligence for Euskal Herria — advisor, ask, route, plan.',
@@ -23,5 +30,4 @@ urlpatterns = [
     path('route/', views.route_page, name='route'),
     path('route/plan/', views.route_plan, name='route_plan'),
     path('plan/', views.plan_page, name='plan'),
-    path('api/', api.urls),
 ]

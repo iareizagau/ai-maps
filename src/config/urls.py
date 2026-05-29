@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.urls import path, include
 from django.conf import settings
 from apps.core.api import api
+from apps.mubil.urls import api as mubil_api
 from django.contrib.sitemaps.views import sitemap
 from apps.sbk.sitemaps import SbkCitySitemap, SbkTypeSitemap, SbkStaticSitemap, SbkPersonSitemap
 from django.views.generic import TemplateView
@@ -45,6 +46,9 @@ urlpatterns += [
     path('adventure/', include('apps.adventure.urls')),
     path('solar/', include('apps.solar.urls')),
     path('oceania/', include('apps.oceania.urls')),
+    # The mubil API is mounted at the top level so its NinjaAPI namespace
+    # (`mubil_api`) stays un-nested — see comment in apps/mubil/urls.py.
+    path('mubil/api/', mubil_api.urls),
     path('mubil/', include('apps.mubil.urls')),
 ]
 if settings.DEBUG:

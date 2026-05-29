@@ -9,14 +9,64 @@ from django.views.decorators.http import require_http_methods
 from .advisor import services as advisor_services
 from .advisor.api import _quote_to_out
 from .ask import services as ask_services
-from .models import DemandHex, Vehicle
+from .models import (
+    ChargingStation,
+    DemandHex,
+    EVRoutePlan,
+    FuelStation,
+    MobilityDocument,
+    Vehicle,
+)
 from .plan import services as plan_services
 from .route import services as route_services
 
 
 def index(request):
-    """Landing of the mubil sub-domain — 4 module cards."""
-    return render(request, 'mubil/index.html')
+    """Public landing of the mubil sub-domain (PROPUESTA.md §6 deliverables).
+
+    Stats below are read live from the production DB — counts are cheap (≤600
+    rows on the heaviest tables) so the page stays sub-50 ms without caching.
+    Numbers feed the headline "datos reales en producción" claim of the
+    submission.
+    """
+    from apps.mubil.data import pvpc_ingest
+
+    embedded_docs = MobilityDocument.objects.filter(embedding__isnull=False).count()
+    stats = {
+        'vehicles': Vehicle.objects.count(),
+        'charging_stations': ChargingStation.objects.count(),
+        'fuel_stations': FuelStation.objects.count(),
+        'docs_indexed': MobilityDocument.objects.count(),
+        'docs_embedded': embedded_docs,
+        'demand_hexes': DemandHex.objects.count(),
+        'route_demos': EVRoutePlan.objects.count(),
+    }
+
+    # Live PVPC for the hero card. Falls back to the static constant if the
+    # table is empty (e.g. fresh deploy before the first cron tick).
+    pvpc_blended = pvpc_ingest.current_price_eur_kwh(night_charging=False)
+    pvpc_valley = pvpc_ingest.current_price_eur_kwh(night_charging=True)
+
+    # Highest-scoring DemandHex — backs the third hero card.
+    top_hex = DemandHex.objects.order_by('-score_now').first()
+
+    hero_live = {
+        'pvpc_eur_kwh': float(pvpc_blended),
+        'pvpc_valley_eur_kwh': float(pvpc_valley),
+        'top_hex_slug': top_hex.h3_index if top_hex else None,
+        'top_hex_score': float(top_hex.score_now) if top_hex else None,
+    }
+
+    tech_tags = [
+        'Django 6', 'PostGIS', 'pgvector', 'TimescaleDB', 'Django Ninja',
+        'HTMX', 'Alpine.js', 'Tailwind', 'Cotton', 'Leaflet', 'ECharts',
+        'Gemini', 'Celery', 'Docker', 'Coolify',
+    ]
+    return render(request, 'mubil/index.html', {
+        'stats': stats,
+        'hero_live': hero_live,
+        'tech_tags': tech_tags,
+    })
 
 
 def advisor_page(request):

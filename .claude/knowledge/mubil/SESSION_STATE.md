@@ -1,9 +1,61 @@
 ![1779832249241](image/SESSION_STATE/1779832249241.png)![1779832254381](image/SESSION_STATE/1779832254381.png)# Mubil — Session State (snapshot para reanudar)
 
-**Última actualización:** 2026-05-29 (Bloque B cerrado)
+**Última actualización:** 2026-05-29 tarde (Bloque B + Bloque D cerrados)
 **Deadline confirmado:** **2026-06-19** (21 días naturales desde hoy)
-**Objetivo activo:** arrancar Bloque D (route MOCK + plan MOCK) o reciclar tiempo en pulir advisor con los datos nuevos.
+**Objetivo activo:** Bloque E — landing pública, vídeo 3min, executive summary, memoria, papeleo administrativo.
 **Reanudar leyendo:** este archivo §0 (último avance) → §4 (próximos pasos) → §2 (issues conocidos)
+
+---
+
+## 0. Avance sesión 2026-05-29 tarde (Bloque D cerrado — route MOCK + plan MOCK)
+
+**Hecho hoy (segunda mitad):**
+
+| Pieza | Estado |
+|---|---|
+| `route/services.py` (5 polylines hardcoded Donostia↔Bilbao/Vitoria/Iruñea/Tolosa/Eibar, energy+SOC+stop logic, `upsert_demo_plans`) | ✅ |
+| `route/api.py` (`GET /demos`, `GET /demos/{slug}`, `POST /plan` con nearest-demo snap) | ✅ |
+| `views.route_page` + `views.route_plan` (HTMX preload via `hx-trigger=load`, GET+POST) | ✅ |
+| `templates/mubil/route.html` + `_route_result.html` (selector ruta+vehículo+SOC, Leaflet polyline, stat cards, SOC bar, segmentos) | ✅ |
+| `management/commands/seed_route_demos.py` (idempotente, auto-elige Niro EV de IDAE) | ✅ |
+| `plan/services.py` (grid 20×30 = 600 celdas Gipuzkoa, slugs `sq{row}_{col}` PK-safe, scoring `pop*0.4 + od*0.4 − supply*0.2`) | ✅ |
+| `plan/api.py` (`GET /heatmap` GeoJSON FC, `GET /top-locations`) | ✅ |
+| `views.plan_page` con horizon switcher 1/3/5 | ✅ |
+| `templates/mubil/plan.html` (Leaflet choropleth con gradiente cyan→indigo + sidebar top-10) | ✅ |
+| `management/commands/compute_demand_scores.py` (idempotente, --dry-run, --keep-stale) | ✅ |
+| `tasks.py` `mubil.compute_demand_scores` Celery task | ✅ |
+| Migración `0010_seed_demand_schedule` (cron monthly 1st 07:00 Madrid) | ✅ aplicada |
+| Tests `test_route_services.py` (12) + `test_plan_services.py` (18) | ✅ verde |
+
+**Datos reales en prod**:
+- `EVRoutePlan.objects.count() = 5` (seedeado con Kia E-NIRO Emotion Long Range del catálogo IDAE).
+- `DemandHex.objects.count() = 600` (Gipuzkoa, score 0..1).
+- Top-3 demanda (horizonte +3 años): `sq014_016` 0.905 (~Tolosa, AP-1), `sq015_017` 0.902, `sq015_018` ≈ Donostia oeste.
+
+**Decisiones tomadas:**
+- **No usar h3-py**: el grid es cuadrado de 2.5km con slug `sq{row:03d}_{col:03d}` (≤15 chars, encaja en `DemandHex.h3_index` PK sin migración). Drop-in path a H3 real cuando llegue (sustituir `iter_grid`).
+- Iteración por índice entero (no `while lat < max_lat`) — el float-incremental daba 651 celdas en lugar de 600 por overshoot.
+- Polylines: 5-10 waypoints por ruta, suficientes para línea reconocible sin GeoJSON de 200 puntos.
+- Carga rápida modelada como `100 kW @ 0.45 €/kWh`, cap 45 min/stop, reserva SOC 10%.
+- "Snap nearest demo" en `POST /plan` para que el endpoint Ninja acepte cualquier lat/lon dentro de EH sin romper la demo MOCK.
+- Plan API es read-only — todo el coste va a `compute_demand_scores` offline. Sub-ms latency en heatmap (~30KB GeoJSON FC).
+
+**Suite tests prod:**
+- 160/160 verde (130 → 160, +30 nuevos: 12 route + 18 plan).
+
+**Smoke endpoints (todos 200)**:
+- `GET /mubil/route/` → 1.07 MB (Leaflet + Niro selector + HTMX preload).
+- `GET /mubil/route/plan/?slug=donostia-bilbao&soc_start=80` → 5 KB partial.
+- `GET /mubil/plan/` → 28 KB (server-rendered + JS fetch del heatmap).
+- `GET /mubil/api/v1/route/demos` → JSON 5 rutas.
+- `GET /mubil/api/v1/plan/health` → `{"hexes": 600}`.
+- `GET /mubil/api/v1/plan/top-locations?horizon=3&limit=10` → ranked list con componentes.
+
+**Pendientes Bloque D (no bloqueantes):**
+- Munipality NAIA enrichment en `DemandHex.municipality_naia` (post-MVP, requiere shapefile NAIA o INE polygons).
+- Verificación visual del heatmap en navegador — el endpoint sirve los 600 hexes pero todavía no he abierto la página interactivamente.
+
+---
 
 ---
 
@@ -328,10 +380,12 @@ URLs útiles:
 - [x] UI consola HTMX ✅ (`templates/mubil/ask.html`).
 - [ ] (Opcional, post-live-test) Re-ingestar para recuperar las ~200 docs de páginas 16-19.
 
-### Bloque D — MOCKs (4-6d cada uno, scope cut decidido en §17)
+### Bloque D — MOCKs — ✅ CERRADO 2026-05-29 tarde
 
-- [ ] `route` MOCK: 5 rutas O-D precomputadas Donostia↔Bilbao/Vitoria/etc., Leaflet polyline + paradas carga visuales.
-- [ ] `plan` MOCK: heatmap H3 Gipuzkoa con scoring heurístico precomputado por management command.
+- [x] `route` MOCK: 5 rutas precomputadas, polylines hardcoded, energy+cost+SOC+stop logic, Leaflet polyline + paradas + selector ruta/vehículo/SOC.
+- [x] `plan` MOCK: grid cuadrado 2,5km × 600 celdas Gipuzkoa, scoring `pop*0.4 + od*0.4 − supply*0.2`, Leaflet choropleth + top-10 sidebar + horizon switch 1/3/5.
+- [ ] (post-MVP) NAIA enrichment por celda — necesita shapefile INE.
+- [ ] (post-MVP) Migración a H3 real — drop-in en `iter_grid()`.
 
 ### Bloque E — Envío MUBIL (sem 7)
 

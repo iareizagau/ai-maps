@@ -1,0 +1,30 @@
+{% load i18n %}
+{# Fila de novedad: chip de app + texto user-friendly + when. #}
+<c-vars app_name="" accent_color="#f97316" icon="sparkles" url="#" text="" when="" />
+
+<a href="{{ url }}"
+   class="group flex items-start gap-3 sm:gap-4 px-3 py-3 rounded-2xl hover:bg-slate-100/60 dark:hover:bg-white/5 transition-colors"
+   style="--accent: {{ accent_color }};">
+
+    <span class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+          style="background-color: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent);">
+        <i data-lucide="{{ icon }}" class="w-4 h-4"></i>
+    </span>
+
+    <div class="min-w-0 flex-1">
+        <p class="text-[10px] font-black uppercase tracking-widest mb-0.5"
+           style="color: var(--accent);">
+            {{ app_name }}
+        </p>
+        <p class="text-sm text-slate-700 dark:text-slate-200 leading-snug group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+            {{ text }}
+        </p>
+        {% if when %}
+        <p class="text-[10px] uppercase tracking-widest text-slate-400 mt-1">
+            {{ when }}
+        </p>
+        {% endif %}
+    </div>
+
+    <i data-lucide="arrow-right" class="w-4 h-4 text-slate-300 dark:text-slate-600 mt-2 shrink-0 group-hover:text-[var(--accent)] group-hover:translate-x-0.5 transition-all"></i>
+</a>

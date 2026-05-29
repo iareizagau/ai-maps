@@ -15,7 +15,8 @@ import logging
 
 from celery import shared_task
 
-from apps.mubil.data import fuel_ingest, pvpc_ingest
+from apps.mubil.data import charging_ingest, fuel_ingest, pvpc_ingest
+from apps.mubil.plan import services as plan_services
 
 log = logging.getLogger(__name__)
 
@@ -44,4 +45,35 @@ def ingest_fuel_stations() -> dict:
     """
     stats = fuel_ingest.ingest_default()
     log.info("ingest_fuel_stations stats=%s", stats.as_dict())
+    return stats.as_dict()
+
+
+@shared_task(name="mubil.compute_demand_scores")
+def compute_demand_scores() -> dict:
+    """Monthly recompute of `DemandHex` scores for the `plan` heatmap.
+
+    Score is a pure function of (population proxy, corridor proxy, current
+    charger density). Only the charger density changes meaningfully month
+    to month, so a monthly cadence is enough — see
+    `apps.mubil.plan.services` for the heuristic and PROPUESTA.md §3.4 for
+    the weight rationale.
+    """
+    stats = plan_services.compute_demand_scores()
+    log.info("compute_demand_scores stats=%s", stats.as_dict())
+    return stats.as_dict()
+
+
+@shared_task(name="mubil.ingest_charging_stations")
+def ingest_charging_stations() -> dict:
+    """Weekly OpenChargeMap refresh of EV charging POIs in the EH bbox.
+
+    The MITECO CSV is one-shot on first deploy (`ingest_charging_stations`
+    management command with `--source miteco`). This task only hits OCM —
+    re-running the bundled CSV every week wastes I/O on an unchanging file.
+
+    No-ops with a warning log if `OPENCHARGEMAP_API_KEY` is unset, so a
+    missing-key state doesn't mark the task as failed in Celery beat.
+    """
+    stats = charging_ingest.ingest_default()
+    log.info("ingest_charging_stations stats=%s", stats.as_dict())
     return stats.as_dict()

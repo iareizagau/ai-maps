@@ -64,10 +64,65 @@ def _base(app):
     return {
         'url': app.get_absolute_url,
         'app_name': app.name,
+        'app_slug': app.slug,
         'icon': app.icon,
         'accent': app.primary_color,
         'is_live': False,
+        'lat': None,
+        'lon': None,
     }
+
+
+def _coords_from_point(point):
+    """PostGIS Point → (lat, lon) tuple or (None, None)."""
+    if point is None:
+        return None, None
+    try:
+        return point.y, point.x
+    except Exception:
+        return None, None
+
+
+# Fallback solo si la ciudad/municipio es de Euskal Herria; no fabricamos
+# coordenadas para eventos fuera (e.g. SBK en Francia se queda fuera del mapa,
+# que es lo honesto: la card de pulse igualmente aparece en texto).
+_EH_CITY_COORDS = {
+    'bilbao': (43.263, -2.935),
+    'bilbo': (43.263, -2.935),
+    'donostia': (43.318, -1.981),
+    'donostia / san sebastián': (43.318, -1.981),
+    'san sebastián': (43.318, -1.981),
+    'san sebastian': (43.318, -1.981),
+    'vitoria': (42.846, -2.672),
+    'vitoria-gasteiz': (42.846, -2.672),
+    'gasteiz': (42.846, -2.672),
+    'iruñea': (42.812, -1.645),
+    'iruña': (42.812, -1.645),
+    'pamplona': (42.812, -1.645),
+    'pamplona/iruña': (42.812, -1.645),
+    'bizkaia': (43.263, -2.935),
+    'vizcaya': (43.263, -2.935),
+    'gipuzkoa': (43.318, -1.981),
+    'guipúzcoa': (43.318, -1.981),
+    'álava': (42.846, -2.672),
+    'araba': (42.846, -2.672),
+    'navarra': (42.812, -1.645),
+    'nafarroa': (42.812, -1.645),
+}
+
+
+def _coords_or_city_fallback(point, *cities):
+    """Real Point if available, else first known EH city/province match."""
+    lat, lon = _coords_from_point(point)
+    if lat is not None and lon is not None:
+        return lat, lon
+    for city in cities:
+        if not city:
+            continue
+        key = str(city).strip().lower()
+        if key in _EH_CITY_COORDS:
+            return _EH_CITY_COORDS[key]
+    return None, None
 
 
 def _inguru_pulse(app):
@@ -97,12 +152,15 @@ def _inguru_pulse(app):
         label = _("Baja")
 
     city = latest.station.municipality or latest.station.name
+    lat, lon = _coords_or_city_fallback(latest.station.location, city, latest.station.province)
     return {
         **_base(app),
         'headline': _("Aire en %(city)s: %(label)s") % {'city': city, 'label': label},
         'subline': _("Eco-score %(s)s/100") % {'s': score} if score else None,
         'meta': _humanize_age(latest.timestamp),
         'is_live': True,
+        'lat': lat,
+        'lon': lon,
     }
 
 
@@ -125,11 +183,16 @@ def _kultur_pulse(app):
         else:
             headline = title
             subline = venue or None
+        lat, lon = _coords_or_city_fallback(
+            first.location, first.municipality_es, first.municipality_eu, first.province
+        )
         return {
             **_base(app),
             'headline': headline,
             'subline': subline,
             'meta': _("Esta noche"),
+            'lat': lat,
+            'lon': lon,
         }
 
     upcoming = (CulturalEvent.objects
@@ -140,11 +203,16 @@ def _kultur_pulse(app):
         return None
 
     title = upcoming.title_es or upcoming.title_eu or _("Evento")
+    lat, lon = _coords_or_city_fallback(
+        upcoming.location, upcoming.municipality_es, upcoming.municipality_eu, upcoming.province
+    )
     return {
         **_base(app),
         'headline': title,
         'subline': upcoming.venue_name_es or upcoming.venue_name_eu or None,
         'meta': upcoming.start_date.strftime('%d %b'),
+        'lat': lat,
+        'lon': lon,
     }
 
 
@@ -171,11 +239,14 @@ def _sbk_pulse(app):
              if hasattr(next_event, 'get_primary_style_display')
              else next_event.primary_style)
 
+    lat, lon = _coords_or_city_fallback(getattr(next_event, 'location', None), next_event.city)
     return {
         **_base(app),
         'headline': _("Próxima social: %(s)s") % {'s': style},
         'subline': next_event.city or None,
         'meta': meta,
+        'lat': lat,
+        'lon': lon,
     }
 
 
@@ -190,11 +261,16 @@ def _pintxos_pulse(app):
     if not top:
         return None
 
+    lat, lon = (None, None)
+    if top.restaurant_id:
+        lat, lon = _coords_or_city_fallback(top.restaurant.location, top.restaurant.address)
     return {
         **_base(app),
         'headline': top.name,
         'subline': _("en %(r)s") % {'r': top.restaurant.name} if top.restaurant_id else None,
         'meta': f"★ {top.avg_rating:.1f} · {top.rating_count}",
+        'lat': lat,
+        'lon': lon,
     }
 
 

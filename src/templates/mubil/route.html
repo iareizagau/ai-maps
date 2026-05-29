@@ -1,11 +1,173 @@
 {% extends "base.html" %}
+{% load i18n %}
+
 {% block title %}Mubil Route — EV multimodal{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+{% endblock %}
+
 {% block content %}
-<section class="max-w-3xl mx-auto px-4 py-12">
-  <h1 class="text-3xl font-bold mb-2">Route <span class="text-amber-600 text-base font-semibold">(MOCK)</span></h1>
-  <p class="text-gray-600 mb-8">Planificador EV-aware con 5 rutas precomputadas. (Placeholder.)</p>
-  <div class="p-6 border rounded-2xl bg-gray-50 text-sm text-gray-500">
-    Mapa Leaflet + segmentos a implementar en F3a. PROPUESTA.md §3.3.
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <div class="mb-10">
+    <a href="{% url 'mubil:index' %}"
+       class="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      Volver
+    </a>
+    <h1 class="mt-3 text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">
+      Route <span class="text-cyan-500">·</span> Planificador EV
+    </h1>
+    <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+      5 rutas precomputadas Donostia ↔ destinos clave de Euskal Herria.
+      Energía, coste y paradas de carga se calculan con tu vehículo y SOC inicial.
+      <span class="text-amber-600 dark:text-amber-400">MOCK — pgRouting + SOC dinámico llegará post-premio (§6).</span>
+    </p>
   </div>
+
+  <div class="flex flex-col lg:flex-row gap-8">
+
+    {# ---------- FORM ---------- #}
+    <form id="route-form"
+          hx-post="{% url 'mubil:route_plan' %}"
+          hx-target="#route-result"
+          hx-swap="innerHTML"
+          hx-indicator="#route-loading"
+          hx-trigger="change, submit"
+          class="w-full lg:w-2/5 space-y-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
+
+      {% csrf_token %}
+
+      <div class="space-y-2">
+        <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Ruta</label>
+        <select name="slug" required
+                class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+          {% for d in demos %}
+            <option value="{{ d.slug }}" {% if d.slug == default_slug %}selected{% endif %}>
+              {{ d.label }} · {{ d.distance_km|floatformat:0 }} km · {{ d.via }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Vehículo eléctrico</label>
+        <select name="vehicle_id"
+                class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+          <option value="">Genérico (18 kWh/100km)</option>
+          {% for v in ev_vehicles %}
+            <option value="{{ v.id }}" {% if v.id == default_vehicle_id %}selected{% endif %}>
+              {{ v.make }} {{ v.model }}{% if v.range_wltp_km %} · {{ v.range_wltp_km }} km WLTP{% endif %}{% if v.battery_kwh %} · {{ v.battery_kwh }} kWh{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="space-y-2">
+        <label class="flex justify-between text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+          <span>SOC inicial</span>
+          <span id="soc-readout" class="text-cyan-600 dark:text-cyan-400">80%</span>
+        </label>
+        <input type="range" name="soc_start" min="10" max="100" step="5" value="80"
+               oninput="document.getElementById('soc-readout').textContent = this.value + '%'"
+               class="w-full accent-cyan-500" />
+      </div>
+
+      <button type="submit"
+              class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-3 font-bold text-white hover:bg-cyan-600 transition">
+        <svg id="route-loading" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 animate-spin htmx-indicator" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4zm2 5.3A8 8 0 014 12H0c0 3 1.1 5.8 3 7.9l3-2.6z"/>
+        </svg>
+        Planificar ruta
+      </button>
+
+      <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+        Cálculo determinista. Coste calculado con PVPC nocturna (carga en origen) +
+        carga rápida 0,45 €/kWh si es necesaria. Margen de reserva: 10% SOC.
+      </p>
+    </form>
+
+    {# ---------- RESULT PANEL ---------- #}
+    <div id="route-result" class="w-full lg:w-3/5 space-y-6"
+         hx-get="{% url 'mubil:route_plan' %}"
+         hx-trigger="load"
+         hx-include="#route-form"
+         hx-swap="innerHTML">
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-10 text-center text-slate-500 dark:text-slate-400">
+        <p class="text-sm">Cargando ruta…</p>
+      </div>
+    </div>
+  </div>
+
 </section>
+
+<style>
+  .htmx-indicator { opacity: 0; transition: opacity .2s; }
+  .htmx-request .htmx-indicator { opacity: 1; }
+  .htmx-request.htmx-indicator { opacity: 1; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+window.mubilRouteRender = function (r) {
+  const mapEl = document.getElementById('route-map');
+  if (!mapEl || !window.L) return;
+
+  if (mapEl._leaflet_id) {
+    try { mapEl._map.remove(); } catch (e) {}
+    mapEl.innerHTML = '';
+  }
+  const map = L.map(mapEl, { zoomControl: true });
+  mapEl._map = map;
+
+  const isDark = document.documentElement.classList.contains('dark');
+  const tileUrl = isDark
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  const tiles = L.tileLayer(tileUrl, {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19,
+  }).addTo(map);
+
+  let fellBackToOsm = false;
+  tiles.on('tileerror', () => {
+    if (fellBackToOsm) return;
+    fellBackToOsm = true;
+    map.removeLayer(tiles);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap', maxZoom: 19,
+    }).addTo(map);
+  });
+
+  const line = L.polyline(r.polyline, { color: '#06b6d4', weight: 5, opacity: 0.85 }).addTo(map);
+  // Origin / dest markers.
+  L.circleMarker(r.origin, { radius: 8, fillColor: '#10b981', color: '#0f172a', weight: 2, fillOpacity: 1 })
+    .bindPopup(`<strong>${r.origin_name}</strong>`).addTo(map);
+  L.circleMarker(r.dest, { radius: 8, fillColor: '#ef4444', color: '#0f172a', weight: 2, fillOpacity: 1 })
+    .bindPopup(`<strong>${r.dest_name}</strong>`).addTo(map);
+
+  // Charge stops, if any.
+  r.segments.forEach(s => {
+    if (s.kind === 'charge_stop' && s.meta && s.meta.location) {
+      L.marker(s.meta.location)
+        .bindPopup(`<strong>Carga rápida</strong><br>+${s.meta.kwh_added} kWh · ${s.duration_min} min`)
+        .addTo(map);
+    }
+  });
+
+  try { map.fitBounds(line.getBounds().pad(0.15)); } catch (e) { map.setView(r.origin, 9); }
+  requestAnimationFrame(() => map.invalidateSize());
+  setTimeout(() => map.invalidateSize(), 250);
+  setTimeout(() => map.invalidateSize(), 600);
+};
+</script>
 {% endblock %}

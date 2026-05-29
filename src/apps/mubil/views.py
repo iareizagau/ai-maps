@@ -9,7 +9,9 @@ from django.views.decorators.http import require_http_methods
 from .advisor import services as advisor_services
 from .advisor.api import _quote_to_out
 from .ask import services as ask_services
-from .models import Vehicle
+from .models import DemandHex, Vehicle
+from .plan import services as plan_services
+from .route import services as route_services
 
 
 def index(request):
@@ -108,9 +110,63 @@ def ask_query(request):
 
 def route_page(request):
     """EV-aware route planner (MOCK). PROPUESTA.md §3.3."""
-    return render(request, 'mubil/route.html')
+    ev_vehicles = list(Vehicle.objects.filter(
+        propulsion__in=(Vehicle.Propulsion.BEV, Vehicle.Propulsion.PHEV),
+    ).order_by('make', 'model'))
+    default_vehicle = next(
+        (v for v in ev_vehicles if 'Niro' in v.model),
+        ev_vehicles[0] if ev_vehicles else None,
+    )
+    return render(request, 'mubil/route.html', {
+        'demos': route_services.list_demos(),
+        'default_slug': route_services.ROUTE_DEMOS[0]['slug'],
+        'ev_vehicles': ev_vehicles,
+        'default_vehicle_id': default_vehicle.id if default_vehicle else None,
+    })
+
+
+@require_http_methods(["GET", "POST"])
+def route_plan(request):
+    """HTMX endpoint — returns the route plan partial.
+
+    Accepts both GET (used for the page's initial preload via
+    ``hx-trigger="load"``) and POST (used by form submission / change).
+    """
+    src = request.POST if request.method == "POST" else request.GET
+    slug = (src.get('slug') or '').strip()
+    if not slug:
+        slug = route_services.ROUTE_DEMOS[0]['slug']
+    try:
+        vehicle_id_raw = src.get('vehicle_id') or ''
+        vehicle_id = int(vehicle_id_raw) if vehicle_id_raw else None
+        soc_start = float(src.get('soc_start', 80))
+    except ValueError as e:
+        return HttpResponseBadRequest(f"Datos del formulario inválidos: {e}")
+
+    try:
+        result = route_services.plan(
+            slug=slug, vehicle_id=vehicle_id, soc_start_pct=soc_start,
+        )
+    except ValueError as e:
+        return HttpResponseBadRequest(str(e))
+
+    out = result.to_dict()
+    return render(request, 'mubil/_route_result.html', {
+        'r': out,
+        'r_json': json.dumps(out),
+    })
 
 
 def plan_page(request):
     """Demand heatmap (MOCK). PROPUESTA.md §3.4."""
-    return render(request, 'mubil/plan.html')
+    try:
+        horizon = int(request.GET.get('horizon', 3))
+    except ValueError:
+        horizon = 3
+    if horizon not in (1, 3, 5):
+        horizon = 3
+    return render(request, 'mubil/plan.html', {
+        'horizon': horizon,
+        'top_locations': plan_services.top_locations(horizon=horizon, limit=10),
+        'hex_count': DemandHex.objects.count(),
+    })

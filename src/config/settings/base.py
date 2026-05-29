@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.postgres',
     'django.contrib.gis',
     'django.contrib.sites',
+    'django.contrib.humanize',
     
     # 3rd party
     'django_cotton',
@@ -253,6 +254,12 @@ GEMINI_GENERATION_FALLBACK_MODELS = env.list(
 # Mubil — ESIOS (Red Eléctrica) for PVPC hourly prices, indicator 1001.
 # Token obtained via email to consultasios@ree.es; sent in `x-api-key` header.
 ESIOS_TOKEN = env('ESIOS_TOKEN', default='')
+
+# Mubil — OpenChargeMap, weekly refresh of EV charging POIs for the EH bbox.
+# Free key, instant signup at https://openchargemap.org/site/develop/api .
+# Sent in the `X-API-Key` header. Empty → weekly cron logs a warning and noops
+# so a missing key never crashes the demo.
+OPENCHARGEMAP_API_KEY = env('OPENCHARGEMAP_API_KEY', default='')
 
 # Celery
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://redis:6379/0')

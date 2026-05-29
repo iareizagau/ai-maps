@@ -1,19 +1,102 @@
-"""`route` sub-router — EV-aware multimodal (MOCK, datos precomputados).
+"""`route` sub-router — EV-aware multimodal (MOCK demo).
 
 Endpoints (PROPUESTA.md §3.3):
-  POST /ev-plan   → EVPlanIn → EVPlanOut
+    GET  /health
+    GET  /demos                 → list of 5 precomputed O-D pairs
+    GET  /demos/{slug}          → full plan for one demo (default vehicle)
+    POST /plan                  → plan one demo with a chosen vehicle + SOC
 
-MVP demo set: 5 pares O-D precomputados (Donostia ↔ Bilbao/Vitoria/Pamplona/Tolosa/Eibar).
-Para queries fuera del set, fallback simple Dijkstra (sin SOC dinámico, sin GTFS).
-
-Construcción real (pgRouting+SOC+GTFS multimodal): fuera de scope, ver §6.
+The real implementation (pgRouting + dynamic SOC + GTFS multimodal) is §6
+follow-up; here we serve the cached 5-route grid that backs the demo card.
 """
 
+from __future__ import annotations
+
+from typing import List, Optional
+
 from ninja import Router
+
+from apps.mubil.route import services
+from apps.mubil.route.schemas import EVPlanIn, EVPlanOut, RouteSegment
 
 router = Router()
 
 
 @router.get('/health')
 def health(request):
-    return {'status': 'ok', 'module': 'route'}
+    return {'status': 'ok', 'module': 'route', 'demos': len(services.ROUTE_DEMOS)}
+
+
+@router.get('/demos')
+def demos(request) -> List[dict]:
+    """Lightweight metadata for the 5 precomputed routes."""
+    return services.list_demos()
+
+
+@router.get('/demos/{slug}')
+def demo_detail(request, slug: str):
+    """Full :class:`RoutePlanResult` for one demo slug.
+
+    No vehicle — uses the generic 18 kWh/100km default. Useful for the
+    landing card before the user has picked a Vehicle.
+    """
+    try:
+        result = services.plan(slug=slug)
+    except ValueError as e:
+        return router.api.create_response(request, {"detail": str(e)}, status=404)
+    return result.to_dict()
+
+
+@router.post('/plan', response=EVPlanOut)
+def plan(request, payload: EVPlanIn):
+    """Plan one demo with a specific vehicle + SOC.
+
+    The schema uses lat/lon for forward compatibility with the real planner;
+    in MOCK mode we snap the request to whichever demo has the closest
+    origin-destination pair so the visual stays consistent.
+    """
+    demo = _nearest_demo(payload.origin_lat, payload.origin_lon,
+                         payload.dest_lat, payload.dest_lon)
+    result = services.plan(
+        slug=demo["slug"],
+        vehicle_id=payload.vehicle_id,
+        soc_start_pct=payload.soc_start,
+    )
+    polyline = [[lat, lon] for lat, lon in result.polyline]
+    segments = [
+        RouteSegment(
+            kind=s.kind,
+            distance_km=float(s.distance_km) if s.distance_km is not None else None,
+            duration_min=s.duration_min,
+            meta=s.meta,
+        )
+        for s in result.segments
+    ]
+    return EVPlanOut(
+        polyline=polyline,
+        segments=segments,
+        distance_km=float(result.distance_km),
+        duration_min=result.duration_min,
+        energy_kwh=float(result.energy_kwh),
+        estimated_cost_eur=float(result.estimated_cost_eur),
+    )
+
+
+def _nearest_demo(o_lat: float, o_lon: float, d_lat: float, d_lon: float) -> dict:
+    """Snap an arbitrary O-D to the closest precomputed demo (sum-of-haversine).
+
+    Strictly visual: as long as the user picks a pair within Euskal Herria
+    they get a plausible cached route. Real routing is §6.
+    """
+    best: Optional[dict] = None
+    best_score = float("inf")
+    for d in services.ROUTE_DEMOS:
+        score = (
+            abs(d["origin"][0] - o_lat) + abs(d["origin"][1] - o_lon)
+            + abs(d["dest"][0] - d_lat) + abs(d["dest"][1] - d_lon)
+        )
+        if score < best_score:
+            best = d
+            best_score = score
+    assert best is not None
+    return best

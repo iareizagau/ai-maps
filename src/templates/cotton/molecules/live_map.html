@@ -1,0 +1,159 @@
+{% load i18n %}
+{# Live map hero: shows pulse_items as colored markers on a clean CartoDB basemap. #}
+{# Centered on Euskal Herria (~43.0, -2.5). Carga diferida via Alpine init. #}
+<c-vars points_json="[]" height="h-[420px] sm:h-[480px]" />
+
+<div class="relative rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl {{ height }}"
+     x-data="liveMap({{ points_json }})"
+     x-init="init()">
+
+    <div id="home-live-map" class="w-full h-full z-0 bg-slate-100 dark:bg-slate-900"></div>
+
+    <!-- En vivo badge -->
+    <div class="absolute top-4 left-4 z-10 pointer-events-none">
+        <div class="glass px-3 py-1.5 rounded-full border border-white/20 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-emerald-400">
+                {% trans "En vivo" %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Sin datos: fallback overlay -->
+    <template x-if="!points || points.length === 0">
+        <div class="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+            <div class="glass px-6 py-4 rounded-2xl text-center max-w-xs">
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    {% trans "Cargando lo que pasa hoy en Euskal Herria…" %}
+                </p>
+            </div>
+        </div>
+    </template>
+
+    <style>
+        .leaflet-container { font-family: inherit; background: #f8fafc; }
+        .dark .leaflet-container { background: #0f172a; }
+        .pulse-marker {
+            border-radius: 9999px;
+            box-shadow: 0 0 0 4px rgba(255,255,255,0.7), 0 0 0 8px var(--marker-color, #f97316);
+            animation: pulse-ring 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .dark .pulse-marker {
+            box-shadow: 0 0 0 4px rgba(15,23,42,0.7), 0 0 0 8px var(--marker-color, #f97316);
+        }
+        @keyframes pulse-ring {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.85; }
+        }
+        .pulse-popup .leaflet-popup-content-wrapper {
+            background: rgba(255,255,255,0.95) !important;
+            backdrop-filter: blur(12px);
+            border-radius: 16px !important;
+            border: 1px solid rgba(0,0,0,0.05);
+            padding: 4px;
+        }
+        .dark .pulse-popup .leaflet-popup-content-wrapper {
+            background: rgba(30,41,59,0.95) !important;
+            color: white !important;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .pulse-popup .leaflet-popup-tip {
+            background: rgba(255,255,255,0.95) !important;
+        }
+        .dark .pulse-popup .leaflet-popup-tip {
+            background: rgba(30,41,59,0.95) !important;
+        }
+    </style>
+</div>
+
+<script>
+function liveMap(initialPoints) {
+    return {
+        map: null,
+        points: initialPoints,
+        initialized: false,
+
+        init() {
+            // Esperar a Leaflet (cargado en extra_head de home.html)
+            this.waitForLeaflet(() => this.$nextTick(() => this.buildMap()));
+        },
+
+        waitForLeaflet(cb, attempts = 0) {
+            if (window.L) return cb();
+            if (attempts > 50) return; // ~5s, render-fallback
+            setTimeout(() => this.waitForLeaflet(cb, attempts + 1), 100);
+        },
+
+        buildMap() {
+            if (this.initialized) return;
+            this.initialized = true;
+
+            this.map = L.map('home-live-map', {
+                scrollWheelZoom: false,
+                zoomControl: false,
+                attributionControl: false,
+            }).setView([43.05, -2.4], 8);
+
+            // CartoDB Voyager — limpio, sin API key, gratis para uso razonable
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                subdomains: 'abcd',
+                maxZoom: 19,
+            }).addTo(this.map);
+
+            L.control.attribution({ position: 'bottomleft', prefix: false })
+                .addAttribution('© <a href="https://www.openstreetmap.org/copyright">OSM</a> · <a href="https://carto.com/attributions">CARTO</a>')
+                .addTo(this.map);
+
+            this.renderMarkers();
+
+            setTimeout(() => this.map.invalidateSize(), 300);
+        },
+
+        renderMarkers() {
+            if (!this.points || this.points.length === 0) return;
+
+            const markers = [];
+            this.points.forEach((p) => {
+                if (p.lat == null || p.lon == null) return;
+
+                const icon = L.divIcon({
+                    className: '',
+                    html: `<div class="pulse-marker" style="--marker-color: ${p.accent}; width: 14px; height: 14px; background: ${p.accent};"></div>`,
+                    iconSize: [14, 14],
+                    iconAnchor: [7, 7],
+                });
+
+                const marker = L.marker([p.lat, p.lon], { icon }).addTo(this.map);
+                const sublineHtml = p.subline
+                    ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${this.escape(p.subline)}</p>`
+                    : '';
+                marker.bindPopup(`
+                    <div class="px-3 py-2 min-w-[180px]">
+                        <p class="text-[9px] font-black uppercase tracking-widest mb-1" style="color: ${p.accent}">${this.escape(p.app_name)}</p>
+                        <p class="text-sm font-bold text-slate-900 dark:text-white leading-snug">${this.escape(p.headline)}</p>
+                        ${sublineHtml}
+                        <a href="${p.url}" class="inline-flex items-center gap-1 mt-2 text-[10px] font-black uppercase tracking-widest" style="color: ${p.accent}">
+                            {% trans "Ver" %} →
+                        </a>
+                    </div>
+                `, { className: 'pulse-popup', maxWidth: 260, closeButton: false });
+
+                markers.push(marker);
+            });
+
+            if (markers.length > 1) {
+                const group = L.featureGroup(markers);
+                this.map.fitBounds(group.getBounds().pad(0.4));
+            } else if (markers.length === 1) {
+                this.map.setView(markers[0].getLatLng(), 11);
+            }
+        },
+
+        escape(s) {
+            return String(s ?? '').replace(/[&<>"']/g, c => ({
+                '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+            })[c]);
+        },
+    }
+}
+</script>

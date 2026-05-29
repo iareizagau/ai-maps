@@ -1,0 +1,77 @@
+{% load i18n %}
+<div x-data="{ r: {{ r_json|safe }} }" x-init="window.mubilRouteRender && window.mubilRouteRender(r)">
+
+  {# ---------- Headline ---------- #}
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">{{ r.label }}</h2>
+      <span class="text-xs uppercase tracking-widest text-cyan-600 dark:text-cyan-400 font-bold">vía {{ r.via }}</span>
+    </div>
+    {% if r.vehicle_label %}
+      <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">{{ r.vehicle_label }}</p>
+    {% else %}
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400 italic">Vehículo genérico (18 kWh/100km)</p>
+    {% endif %}
+  </div>
+
+  {# ---------- Stat cards ---------- #}
+  <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+      <p class="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Distancia</p>
+      <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{{ r.distance_km|floatformat:0 }} <span class="text-sm font-normal text-slate-500">km</span></p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+      <p class="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Duración</p>
+      <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{{ r.duration_min }} <span class="text-sm font-normal text-slate-500">min</span></p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+      <p class="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Energía</p>
+      <p class="mt-1 text-2xl font-bold text-cyan-600 dark:text-cyan-400">{{ r.energy_kwh|floatformat:1 }} <span class="text-sm font-normal text-slate-500">kWh</span></p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+      <p class="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Coste estimado</p>
+      <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{{ r.estimated_cost_eur|floatformat:2 }} <span class="text-sm font-normal text-slate-500">€</span></p>
+    </div>
+  </div>
+
+  {# ---------- SOC bar ---------- #}
+  <div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+    <div class="flex justify-between text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">
+      <span>SOC inicial: <strong class="text-slate-900 dark:text-white">{{ r.soc_start_pct|floatformat:0 }}%</strong></span>
+      <span>SOC final: <strong class="text-slate-900 dark:text-white">{{ r.soc_end_pct|floatformat:0 }}%</strong></span>
+    </div>
+    <div class="mt-2 w-full h-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+      <div class="h-full rounded-full"
+           style="width: {{ r.soc_end_pct|floatformat:0 }}%; background: linear-gradient(90deg, #ef4444 0%, #f59e0b 30%, #10b981 60%);">
+      </div>
+    </div>
+  </div>
+
+  {# ---------- Map ---------- #}
+  <div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+    <p class="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Trazado y paradas</p>
+    <div id="route-map" style="width:100%; height:380px; position:relative; z-index:0; border-radius: 0.75rem;"></div>
+  </div>
+
+  {# ---------- Segments timeline ---------- #}
+  <div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+    <p class="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">Segmentos</p>
+    <ol class="space-y-2">
+      {% for s in r.segments %}
+        <li class="flex items-center gap-3 text-sm">
+          {% if s.kind == 'drive' %}
+            <span class="inline-flex items-center justify-center h-7 w-7 rounded-full bg-cyan-100 dark:bg-cyan-900 text-cyan-700 dark:text-cyan-300">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+            </span>
+            <span class="text-slate-700 dark:text-slate-300">Conducción · {{ s.distance_km|floatformat:0 }} km · {{ s.duration_min }} min</span>
+          {% else %}
+            <span class="inline-flex items-center justify-center h-7 w-7 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </span>
+            <span class="text-slate-700 dark:text-slate-300">Carga rápida · +{{ s.meta.kwh_added|floatformat:1 }} kWh @ {{ s.meta.kw_session|floatformat:0 }} kW · {{ s.duration_min }} min</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </div>
+</div>

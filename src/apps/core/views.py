@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render, redirect
 from django import forms
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
@@ -18,10 +20,51 @@ class CustomUserCreationForm(UserCreationForm):
 
 
 def home(request):
-    apps = AppRegistry.objects.filter(is_active=True)
+    # Jerarquía por madurez: live destacadas, beta en strip, coming soon como teaser.
+    # Listas separadas para que la home cuente historia en lugar de un grid plano.
+    live_apps = list(AppRegistry.objects.filter(
+        is_active=True,
+        launch_status=AppRegistry.STATUS_LIVE,
+    ))
+    beta_apps = list(AppRegistry.objects.filter(
+        is_active=True,
+        launch_status=AppRegistry.STATUS_BETA,
+    ))
+    coming_soon_apps = list(AppRegistry.objects.filter(
+        launch_status=AppRegistry.STATUS_COMING_SOON,
+    ))
+
+    # Novedades: 3 últimos cambios en lenguaje usuario (editables desde admin)
+    latest_updates = list(AppRegistry.objects.filter(
+        is_active=True,
+        latest_update__gt='',
+        latest_update_at__isnull=False,
+    ).order_by('-latest_update_at')[:3])
+
+    pulse_items = pulse.get_pulse_items()
+    # Solo los pulse items con coords reales van al mapa hero; el resto se queda en cards.
+    map_points = [
+        {
+            'lat': it['lat'],
+            'lon': it['lon'],
+            'app_name': it['app_name'],
+            'app_slug': it.get('app_slug', ''),
+            'accent': it['accent'],
+            'headline': it['headline'],
+            'subline': it.get('subline') or '',
+            'url': it['url'],
+        }
+        for it in pulse_items
+        if it.get('lat') is not None and it.get('lon') is not None
+    ]
+
     return render(request, 'home.html', {
-        'apps': apps,
-        'pulse_items': pulse.get_pulse_items(),
+        'live_apps': live_apps,
+        'beta_apps': beta_apps,
+        'coming_soon_apps': coming_soon_apps,
+        'latest_updates': latest_updates,
+        'pulse_items': pulse_items,
+        'map_points_json': json.dumps(map_points),
     })
 
 

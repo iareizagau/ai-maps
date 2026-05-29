@@ -1,6 +1,6 @@
 {% load i18n %}
 {# Navigation Bar #}
-<nav class="glass sticky top-0 z-50 px-4 sm:px-6 py-4" x-data="{ mobileMenuOpen: false }">
+<nav class="glass sticky top-0 z-50 px-4 sm:px-6 py-4" x-data="{ mobileMenuOpen: false, userMenuOpen: false }">
     <div class="max-w-7xl mx-auto flex justify-between items-center">
         <div class="flex items-center gap-2">
             <a href="/" class="flex items-center gap-2">
@@ -25,23 +25,43 @@
             </div>
             
             <!-- Auth Links (Desktop) -->
-            <div class="hidden sm:flex items-center gap-4">
+            <div class="hidden sm:flex items-center gap-3">
                 {% if user.is_authenticated %}
-                    <a href="{% url 'account_identity' %}" class="flex items-center gap-2 group">
-                        <div class="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-[10px] font-bold text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                    {# Avatar dropdown: un solo punto de entrada en vez de '<avatar> + <username> + <logout>' apilados. #}
+                    <div class="relative" @click.outside="userMenuOpen = false">
+                        <button @click="userMenuOpen = !userMenuOpen"
+                                class="w-9 h-9 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-[11px] font-bold text-primary hover:bg-primary hover:text-white transition-all"
+                                aria-label="{% trans 'Menú de usuario' %}">
                             {{ user.username|first|upper }}
+                        </button>
+                        <div x-show="userMenuOpen" x-cloak
+                             x-transition:enter="transition ease-out duration-150"
+                             x-transition:enter-start="opacity-0 -translate-y-1"
+                             x-transition:enter-end="opacity-100 translate-y-0"
+                             class="absolute right-0 mt-2 w-56 rounded-2xl glass border border-slate-200/50 dark:border-white/10 shadow-2xl p-2 z-50">
+                            <div class="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1">
+                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">{% trans "Sesión" %}</p>
+                                <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ user.username }}</p>
+                            </div>
+                            <a href="{% url 'account_identity' %}" class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+                                <i data-lucide="user" class="w-4 h-4"></i>
+                                {% trans "Perfil" %}
+                            </a>
+                            {% if user.is_staff %}
+                            <a href="/admin/" class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+                                <i data-lucide="settings" class="w-4 h-4"></i>
+                                {% trans "Admin" %}
+                            </a>
+                            {% endif %}
+                            <a href="/accounts/logout/" class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-slate-500 hover:text-red-500 hover:bg-red-500/5 transition-colors">
+                                <i data-lucide="log-out" class="w-4 h-4"></i>
+                                {% trans "Cerrar sesión" %}
+                            </a>
                         </div>
-                        <span class="text-xs text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{{ user.username }}</span>
-                    </a>
-                    <a href="/accounts/logout/" class="bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full text-xs font-bold transition-all border border-white/10">
-                        {% trans "Logout" %}
-                    </a>
+                    </div>
                 {% else %}
-                    <a href="/accounts/login/" class="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
-                        {% trans "Login" %}
-                    </a>
-                    <a href="/accounts/signup/" class="bg-primary hover:bg-primary_hover px-4 py-2 rounded-full text-xs font-bold text-white transition-all shadow-lg shadow-primary/20">
-                        {% trans "Register" %}
+                    <a href="/accounts/login/" class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-primary transition-colors">
+                        {% trans "Entrar" %}
                     </a>
                 {% endif %}
             </div>
@@ -87,12 +107,9 @@
                     <a href="/accounts/logout/" class="text-xs font-bold text-red-500 dark:text-red-400">{% trans "Logout" %}</a>
                 </div>
             {% else %}
-                <div class="grid grid-cols-2 gap-3 px-4">
+                <div class="px-4">
                     <a href="/accounts/login/" class="flex items-center justify-center py-3 bg-slate-200 dark:bg-white/5 rounded-xl text-xs font-bold text-slate-900 dark:text-white">
-                        {% trans "Login" %}
-                    </a>
-                    <a href="/accounts/signup/" class="flex items-center justify-center py-3 bg-primary rounded-xl text-xs font-bold text-white">
-                        {% trans "Register" %}
+                        {% trans "Entrar" %}
                     </a>
                 </div>
             {% endif %}

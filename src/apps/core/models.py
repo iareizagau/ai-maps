@@ -94,6 +94,30 @@ class AppRegistry(models.Model):
     icon = models.CharField(max_length=50, default="map-pin", help_text="Lucide icon name")
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False, help_text="Show this app in the Home Hero section")
+
+    # Editorial ordering & lifecycle
+    STATUS_LIVE = "live"
+    STATUS_BETA = "beta"
+    STATUS_COMING_SOON = "coming_soon"
+    STATUS_ARCHIVED = "archived"
+    LAUNCH_STATUS_CHOICES = [
+        (STATUS_LIVE, "Live"),
+        (STATUS_BETA, "Beta"),
+        (STATUS_COMING_SOON, "Coming soon"),
+        (STATUS_ARCHIVED, "Archived"),
+    ]
+
+    display_priority = models.PositiveSmallIntegerField(
+        default=100,
+        help_text="Landing sort order (0 = first). Use multiples of 10 to leave room between apps.",
+        db_index=True,
+    )
+    launch_status = models.CharField(
+        max_length=16,
+        choices=LAUNCH_STATUS_CHOICES,
+        default=STATUS_LIVE,
+        help_text="Drives landing badges and filtering (replaces is_featured as lifecycle signal).",
+    )
     
     # Branding
     primary_color = models.CharField(max_length=7, default="#f97316", help_text="Hex color")
@@ -111,11 +135,17 @@ class AppRegistry(models.Model):
     has_reviews = models.BooleanField(default=True)
     has_maps = models.BooleanField(default=True)
     has_bookings = models.BooleanField(default=False)
-    
+
+    # Editorial: short user-facing "what's new" line for the home Novedades section.
+    # Lenguaje de usuario, no de dev (ej. "Ya puedes ver eventos de dantza", no "HNSW index").
+    latest_update = models.CharField(max_length=255, blank=True, default='')
+    latest_update_at = models.DateTimeField(null=True, blank=True, db_index=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name_plural = "App Registries"
+        ordering = ["display_priority", "name"]
 
     def __str__(self):
         return f"{self.name} ({self.slug})"

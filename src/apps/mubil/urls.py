@@ -21,6 +21,7 @@ urlpatterns = [
     path('ask/', views.ask_page, name='ask'),
     path('ask/query/', views.ask_query, name='ask_query'),
     path('route/', views.route_page, name='route'),
+    path('route/plan/', views.route_plan, name='route_plan'),
     path('plan/', views.plan_page, name='plan'),
     path('api/', api.urls),
 ]

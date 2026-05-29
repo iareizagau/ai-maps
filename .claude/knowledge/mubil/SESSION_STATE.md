@@ -1,9 +1,52 @@
 ![1779832249241](image/SESSION_STATE/1779832249241.png)![1779832254381](image/SESSION_STATE/1779832254381.png)# Mubil — Session State (snapshot para reanudar)
 
-**Última actualización:** 2026-05-28 (tarde — segunda sesión del día)
-**Deadline confirmado:** **2026-06-19** (22 días naturales / ~15 hábiles desde hoy)
-**Objetivo activo:** desbloquear live-test `ask` — pendiente reset quota Gemini (mañana 09:00 Madrid)
+**Última actualización:** 2026-05-29 (Bloque B cerrado)
+**Deadline confirmado:** **2026-06-19** (21 días naturales desde hoy)
+**Objetivo activo:** arrancar Bloque D (route MOCK + plan MOCK) o reciclar tiempo en pulir advisor con los datos nuevos.
 **Reanudar leyendo:** este archivo §0 (último avance) → §4 (próximos pasos) → §2 (issues conocidos)
+
+---
+
+## 0. Avance sesión 2026-05-29 (Bloque B cerrado — wiring de datos reales completo)
+
+**Hecho hoy:**
+
+| Pieza | Estado |
+|---|---|
+| `data/openchargemap_client.py` (HTTP client bbox EH, parseo POIs OCM, X-API-Key header) | ✅ |
+| `data/charging_ingest.py` (MITECO CSV one-shot + OCM weekly, upsert por (source, external_id), graceful fallback sin key) | ✅ |
+| `management/commands/ingest_charging_stations.py` (flags `--source miteco/ocm/all`, `--csv-path`, `--all-spain`, `--dry-run`) | ✅ |
+| `settings/base.py` añadido `OPENCHARGEMAP_API_KEY` (vacío por defecto → cron noop con warning) | ✅ |
+| `tasks.py` `mubil.ingest_charging_stations` Celery task | ✅ |
+| Migración `0009_seed_charging_schedule` (cron weekly Mon 06:45 Madrid) | ✅ aplicada |
+| Tests `test_charging_ingest.py` (18 nuevos: parser, MITECO filter EH, idempotencia, OCM mock, fallback sin key) | ✅ verde |
+| **MITECO real ingestado one-shot** | ✅ **580 estaciones EH** (de 16 025 filas globales — Bizkaia + Gipuzkoa + Araba/Álava + Navarra) |
+
+**Datos reales fluyendo en prod**:
+- `ChargingStation.objects.count()` = 586 (580 MITECO + 6 demo seed)
+- Top cargadores rápidos identificados: 400kW Iberdrola en Pamplona (Maria Lacunza 18), 350kW Iberdrola en Bizkaia (Zabalandi 22).
+- `.nearby(longitude, latitude, radius_km=5)` testeado live para CP 20018 Donostia → devuelve 5+ estaciones <1km.
+
+**Decisiones tomadas:**
+- MITECO es **one-shot** (CSV en repo, refresh manual cuando DGT publique drop nuevo). El cron semanal SOLO hace OCM.
+- Filtro provincial vía `EH_PROVINCES` con normalización ASCII (acepta "ÁLAVA" y "ARABA").
+- Natural key = `(source, external_id)` con `update_or_create`. **Sin UNIQUE constraint** — cross-source dedup ("mismo poste en MITECO + OCM") queda como post-MVP (PROPUESTA §3).
+- Cron offsets: PVPC :15 / MINCOTUR fuel :30 / OCM Mon 06:45 — sin solapes.
+
+**Bloque B — estado final del checklist (§4):**
+- [x] token ESIOS, [x] API key Gemini, [x] task PVPC hourly, [x] task fuel daily, [x] **task charging weekly**.
+- [x] PVPC sustituido en advisor, [x] **fuel sustituido en advisor** (`fuel_ingest.current_price_eur_l`).
+- [x] **`ingest_charging_stations` task** activa.
+- DGT NAP API key — **descartado** (sustituido por foto-permiso + Gemini Vision, ver [[mubil-user-vehicle-identification]]).
+- OpenChargeMap API key — pendiente que el usuario haga signup gratis en https://openchargemap.org/site/develop/api . Sin key, el cron logea warning y noop (no crashea).
+
+**Suite tests prod:**
+- 130/130 verde (subió de 70 con todo lo nuevo: IDAE + fuel + normativa + HNSW + charging).
+
+**Riesgo nuevo identificado:**
+- Algunas estaciones MITECO publican `PotenciaMaxima=0.02` (literal 0.02 kW, no 22 kW typo): operador MAKSU en Donostia centro. Es dato de fuente, no del ingest. Si toca el pitch, anotar como "el dato MINCOTUR a veces miente — UI mostrará 'sin potencia confiable' si <1kW".
+
+---
 
 ---
 
@@ -261,16 +304,18 @@ URLs útiles:
 - [ ] Añadir input `subvencion_eur` para mejorar el payback (PROPUESTA §6 issue conocido).
 - [ ] Añadir ~30 vehículos más al seed (DGT top matriculaciones 2025) → un poco más de profundidad demo.
 
-### Bloque B — Wiring de datos reales (cuando lleguen tokens)
+### Bloque B — Wiring de datos reales — ✅ CERRADO 2026-05-29
 
-- [x] Solicitar token ESIOS → email a `consultasios@ree.es` (recibido 2026-05-28, mismo día).
-- [ ] Solicitar API key DGT NAP.
-- [x] API key Gemini (configurada en prod, rotada hoy).
-- [ ] Crear API key OpenChargeMap (instantáneo).
-- [x] Implementar `tasks.py` Celery: `ingest_pvpc_hourly` ✅ (cron `:15` Madrid en prod).
-- [ ] Pendiente: `ingest_fuel_stations` (MINCOTUR daily 06:00), `ingest_charging_stations` (OpenData EH + OpenChargeMap weekly).
-- [x] Sustituir `price_defaults` PVPC por queries a `EnergyPricePVPC` ✅ (advisor lee `pvpc_ingest.current_price_eur_kwh()`).
-- [ ] Sustituir `price_defaults` combustible por queries a `FuelStation` cuando esté `ingest_fuel_stations`.
+- [x] Token ESIOS → email `consultasios@ree.es` (2026-05-28).
+- [x] API key Gemini configurada y rotada.
+- [x] `ingest_pvpc_hourly` Celery task (cron `:15` Madrid).
+- [x] `ingest_fuel_stations` Celery task (cron daily 06:30 Madrid, MINCOTUR).
+- [x] `ingest_charging_stations` Celery task (cron weekly Mon 06:45 Madrid, OCM).
+- [x] PVPC sustituido en advisor (`pvpc_ingest.current_price_eur_kwh()`).
+- [x] Combustible sustituido en advisor (`fuel_ingest.current_price_eur_l()`).
+- [x] MITECO `PuntosCarga.csv` ingestado one-shot → 580 estaciones EH en `ChargingStation`.
+- [~] **OpenChargeMap API key** — pendiente signup gratis (https://openchargemap.org/site/develop/api). Sin key el cron noop con warning. No bloquea.
+- [~] DGT NAP API key — descartada, ver [[mubil-user-vehicle-identification]].
 
 ### Bloque C — `ask` MUST (7-9d, segundo módulo del scope)
 

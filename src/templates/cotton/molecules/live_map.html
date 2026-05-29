@@ -1,19 +1,19 @@
 {% load i18n %}
 {# Live map hero: shows pulse_items as colored markers on a clean CartoDB basemap. #}
 {# Centered on Euskal Herria (~43.0, -2.5). Carga diferida via Alpine init. #}
-<c-vars points_json="[]" height="h-[420px] sm:h-[480px]" />
+<c-vars points_json="[]" height="h-[360px] sm:h-[480px]" />
 
-<div class="relative rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl {{ height }}"
+<div class="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-xl sm:shadow-2xl {{ height }}"
      x-data="liveMap({{ points_json }})"
      x-init="init()">
 
     <div id="home-live-map" class="w-full h-full z-0 bg-slate-100 dark:bg-slate-900"></div>
 
     <!-- En vivo badge -->
-    <div class="absolute top-4 left-4 z-10 pointer-events-none">
-        <div class="glass px-3 py-1.5 rounded-full border border-white/20 flex items-center gap-2">
+    <div class="absolute top-3 left-3 sm:top-4 sm:left-4 z-10 pointer-events-none">
+        <div class="glass px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full border border-white/20 flex items-center gap-1.5 sm:gap-2">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span class="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-emerald-400">
+            <span class="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-emerald-400">
                 {% trans "En vivo" %}
             </span>
         </div>

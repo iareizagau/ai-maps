@@ -8,6 +8,7 @@ django-extensions
 whitenoise
 django-allauth
 requests
+beautifulsoup4
 PyJWT
 cryptography
 Pillow

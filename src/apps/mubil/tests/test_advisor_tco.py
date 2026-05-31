@@ -131,15 +131,17 @@ class TCOServiceTests(TestCase):
 
     # ---------- subsidy / payback ----------
 
-    def test_subvencion_reduces_payback_years(self):
+    def test_subvencion_override_reduces_payback_years(self):
+        # Override fuerza un total explícito ignorando el cálculo automático.
         base = services.calculate_tco_quote(
             cp="20018", km_year=15000,
             vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+            subvencion_override_eur=0,
         )
         subsidized = services.calculate_tco_quote(
             cp="20018", km_year=15000,
             vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
-            subvencion_eur=7000,
+            subvencion_override_eur=7000,
         )
         self.assertIsNotNone(base.payback_years)
         self.assertIsNotNone(subsidized.payback_years)
@@ -147,10 +149,6 @@ class TCOServiceTests(TestCase):
         self.assertEqual(subsidized.subvencion_eur, Decimal("7000"))
 
     def test_subvencion_larger_than_delta_yields_zero_payback(self):
-        # Golf 28.500€ → Niro 41.500€ → delta 13.000€. Con 12k de ayuda (max),
-        # delta queda en 1.000€ y aún hay payback >0.
-        # Para forzar payback=0 hace falta delta_price <= subvencion. Modifico
-        # el precio del Niro a 30k para que delta=1500 y subvencion=12k → 0.
         cheap_niro = Vehicle.objects.create(
             make="Kia", model="Niro EV LE", year=2025,
             propulsion=Vehicle.Propulsion.BEV,
@@ -160,7 +158,7 @@ class TCOServiceTests(TestCase):
         q = services.calculate_tco_quote(
             cp="20018", km_year=15000,
             vehicle_current_id=self.golf.id, vehicle_target_id=cheap_niro.id,
-            subvencion_eur=12_000,
+            subvencion_override_eur=12_000,
         )
         self.assertEqual(q.payback_years, Decimal("0"))
 
@@ -175,15 +173,18 @@ class TCOServiceTests(TestCase):
             services.calculate_tco_quote(
                 cp="20018", km_year=15000,
                 vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
-                subvencion_eur=20_000,
+                subvencion_eur=40_000,
             )
 
-    def test_default_subvencion_is_zero(self):
+    def test_default_profile_particular_computes_auto_incentives(self):
+        # Sin override y perfil 'particular' por defecto, debe inyectar
+        # Moves III particular (4.500 €) como mínimo.
         q = services.calculate_tco_quote(
             cp="20018", km_year=15000,
             vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
         )
-        self.assertEqual(q.subvencion_eur, Decimal("0"))
+        self.assertIsNotNone(q.incentives)
+        self.assertGreaterEqual(q.subvencion_eur, Decimal("4500"))
 
 
 class NearbyChargersTests(TestCase):
@@ -219,3 +220,193 @@ class NearbyChargersTests(TestCase):
         found = services._nearby_chargers("20018", radius_km=10.0)
         distances = [c.distance.km for c in found]
         self.assertEqual(distances, sorted(distances))
+
+
+class IncentivesTests(TestCase):
+    """Reglas de `advisor.incentives.compute_incentives`."""
+
+    def test_particular_no_scrap_basics(self):
+        from apps.mubil.advisor.incentives import compute_incentives
+        b = compute_incentives(
+            profile="particular", cp="20018", vehicle_price_eur=41500,
+            scrapping=False, needs_wallbox=False, years_horizon=10,
+        )
+        codes = {i.code for i in b.items}
+        self.assertIn("moves3_vehicle", codes)
+        self.assertIn("irpf_15", codes)
+        self.assertIn("ivtm_bonif", codes)  # CP de Gipuzkoa
+        self.assertNotIn("iva_deducible", codes)
+        self.assertNotIn("moves3_wallbox", codes)
+        # Moves III particular sin scrap = 4.500 €
+        moves = next(i for i in b.items if i.code == "moves3_vehicle")
+        self.assertEqual(moves.amount_eur, Decimal("4500"))
+
+    def test_particular_with_scrap_jumps_to_7000(self):
+        from apps.mubil.advisor.incentives import compute_incentives
+        b = compute_incentives(
+            profile="particular", cp="20018", vehicle_price_eur=41500,
+            scrapping=True, needs_wallbox=False, years_horizon=10,
+        )
+        moves = next(i for i in b.items if i.code == "moves3_vehicle")
+        self.assertEqual(moves.amount_eur, Decimal("7000"))
+
+    def test_wallbox_adds_moves3_line(self):
+        from apps.mubil.advisor.incentives import compute_incentives
+        b = compute_incentives(
+            profile="particular", cp="20018", vehicle_price_eur=41500,
+            scrapping=False, needs_wallbox=True, years_horizon=10,
+        )
+        self.assertIn("moves3_wallbox", {i.code for i in b.items})
+
+    def test_empresa_iva_deducible_100(self):
+        from apps.mubil.advisor.incentives import compute_incentives
+        b = compute_incentives(
+            profile="empresa", cp="20018", vehicle_price_eur=41500,
+            scrapping=False, needs_wallbox=False, years_horizon=10,
+        )
+        codes = {i.code for i in b.items}
+        self.assertIn("iva_deducible", codes)
+        self.assertNotIn("irpf_15", codes)  # no aplica a empresas
+        iva = next(i for i in b.items if i.code == "iva_deducible")
+        # 41500 * 21/121 = 7202 €
+        self.assertAlmostEqual(float(iva.amount_eur), 7202.48, delta=1)
+
+    def test_autonomo_iva_deducible_50(self):
+        from apps.mubil.advisor.incentives import compute_incentives
+        b = compute_incentives(
+            profile="autonomo", cp="20018", vehicle_price_eur=41500,
+            scrapping=False, needs_wallbox=False, years_horizon=10,
+        )
+        iva = next(i for i in b.items if i.code == "iva_deducible")
+        self.assertAlmostEqual(float(iva.amount_eur), 3601.24, delta=1)
+
+    def test_ivtm_recurring_capitalises_with_horizon(self):
+        from apps.mubil.advisor.incentives import compute_incentives
+        b10 = compute_incentives(
+            profile="particular", cp="48001", vehicle_price_eur=41500,
+            scrapping=False, needs_wallbox=False, years_horizon=10,
+        )
+        b5 = compute_incentives(
+            profile="particular", cp="48001", vehicle_price_eur=41500,
+            scrapping=False, needs_wallbox=False, years_horizon=5,
+        )
+        ivtm10 = next(i for i in b10.items if i.code == "ivtm_bonif")
+        ivtm5 = next(i for i in b5.items if i.code == "ivtm_bonif")
+        # Mismo flujo anual, distinto equivalente lump-sum
+        self.assertEqual(ivtm10.amount_eur, ivtm5.amount_eur)
+        self.assertEqual(ivtm10.equivalent_lump_sum(10), ivtm5.amount_eur * 10)
+
+    def test_cp_outside_pais_vasco_no_ivtm(self):
+        from apps.mubil.advisor.incentives import compute_incentives
+        b = compute_incentives(
+            profile="particular", cp="28001",  # Madrid
+            vehicle_price_eur=41500, scrapping=False,
+            needs_wallbox=False, years_horizon=10,
+        )
+        self.assertNotIn("ivtm_bonif", {i.code for i in b.items})
+
+
+class ChargingMixTests(TestCase):
+    """Mix de carga ponderado."""
+
+    def test_normalize_residual_to_home(self):
+        from apps.mubil.advisor.charging_mix import ChargingMix
+        m = ChargingMix.normalized(50, 30, 10, 5)  # suma 95
+        self.assertEqual(m.home_pct + m.work_pct + m.public_ac_pct + m.public_dc_pct, 100)
+        self.assertEqual(m.home_pct, 55)  # residuo +5 absorbido en casa
+
+    def test_preset_home_always(self):
+        from apps.mubil.advisor.charging_mix import ChargingMix
+        m = ChargingMix.from_preset("particular", "home_always")
+        self.assertEqual(m.home_pct, 100)
+
+    def test_weighted_price_public_only_more_expensive_than_home(self):
+        from apps.mubil.advisor.charging_mix import ChargingMix
+        home = ChargingMix.from_preset("particular", "home_always")
+        public = ChargingMix.from_preset("particular", "public_only")
+        self.assertGreater(
+            public.weighted_price_eur_kwh(night_charging=False),
+            home.weighted_price_eur_kwh(night_charging=True),
+        )
+
+    def test_mix_invalid_sum_raises(self):
+        from apps.mubil.advisor.charging_mix import ChargingMix
+        with self.assertRaises(ValueError):
+            ChargingMix(50, 50, 50, 50)
+
+
+class WallboxCapexAndIntegrationTests(TestCase):
+    """Tests del flujo completo cuando entra la nueva información de v2."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.golf = Vehicle.objects.create(
+            make="Volkswagen", model="Golf 1.6 TDI", year=2024,
+            propulsion=Vehicle.Propulsion.DIESEL,
+            consumption_l_100km=Decimal("4.9"), price_eur=28_500,
+        )
+        cls.niro = Vehicle.objects.create(
+            make="Kia", model="Niro EV", year=2025,
+            propulsion=Vehicle.Propulsion.BEV,
+            consumption_kwh_100km=Decimal("16.2"), price_eur=41_500,
+        )
+
+    def test_needs_install_adds_wallbox_capex(self):
+        q = services.calculate_tco_quote(
+            cp="20018", km_year=15000,
+            vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+            wallbox_state="needs_install",
+        )
+        self.assertEqual(q.wallbox_capex_eur, Decimal("1500"))
+        # El wallbox subsidy aparece como línea de incentivo adicional
+        codes = {i.code for i in q.incentives.items}
+        self.assertIn("moves3_wallbox", codes)
+
+    def test_installed_no_wallbox_capex(self):
+        q = services.calculate_tco_quote(
+            cp="20018", km_year=15000,
+            vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+            wallbox_state="installed",
+        )
+        self.assertEqual(q.wallbox_capex_eur, Decimal("0"))
+        self.assertNotIn("moves3_wallbox", {i.code for i in q.incentives.items})
+
+    def test_charging_mix_changes_ev_energy_cost(self):
+        # Mismo coche, dos mixes distintos → coste energético distinto
+        q_home = services.calculate_tco_quote(
+            cp="20018", km_year=15000,
+            vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+            home_pct=100, work_pct=0, public_ac_pct=0, public_dc_pct=0,
+        )
+        q_public = services.calculate_tco_quote(
+            cp="20018", km_year=15000,
+            vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+            home_pct=0, work_pct=0, public_ac_pct=60, public_dc_pct=40,
+        )
+        self.assertGreater(
+            q_public.breakdown_target.energy,
+            q_home.breakdown_target.energy,
+        )
+
+    def test_empresa_profile_yields_higher_total_incentives(self):
+        q_part = services.calculate_tco_quote(
+            cp="20018", km_year=15000,
+            vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+            profile="particular",
+        )
+        q_emp = services.calculate_tco_quote(
+            cp="20018", km_year=15000,
+            vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+            profile="empresa",
+        )
+        # Empresa tiene IVA deducible (≈7k) > IRPF particular (≈3k), aunque
+        # Moves III sea menor (2.9k vs 4.5k).
+        self.assertGreater(q_emp.subvencion_eur, q_part.subvencion_eur)
+
+    def test_invalid_profile_raises(self):
+        with self.assertRaises(ValueError):
+            services.calculate_tco_quote(
+                cp="20018", km_year=15000,
+                vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+                profile="other",
+            )

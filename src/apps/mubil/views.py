@@ -101,19 +101,7 @@ def advisor_quote(request):
     the same calculation lives in `advisor/api.py` (`POST /api/v1/advisor/quote`).
     """
     try:
-        motorway_pct_raw = request.POST.get('motorway_pct')
-        motorway_pct = float(motorway_pct_raw) if (motorway_pct_raw and motorway_pct_raw.strip()) else None
-        
-        payload = {
-            'cp': request.POST['cp'].strip(),
-            'km_year': int(request.POST['km_year']),
-            'vehicle_current_id': int(request.POST['vehicle_current_id']),
-            'vehicle_target_id': int(request.POST['vehicle_target_id']),
-            'years_horizon': int(request.POST.get('years_horizon', 10)),
-            'night_charging': request.POST.get('night_charging') == 'on',
-            'subvencion_eur': int(request.POST.get('subvencion_eur', 0) or 0),
-            'motorway_pct': motorway_pct,
-        }
+        payload = _parse_advisor_payload(request.POST)
     except (KeyError, ValueError) as e:
         return HttpResponseBadRequest(f"Datos del formulario inválidos: {e}")
 
@@ -128,8 +116,80 @@ def advisor_quote(request):
     context = {
         'q': out,
         'q_json': json.dumps(out, default=str),
+        'night_charging': payload['night_charging'],
     }
     return render(request, 'mubil/_advisor_result.html', context)
+
+
+def _parse_advisor_payload(src):
+    """Normaliza un QueryDict (POST o GET) al kwargs de calculate_tco_quote."""
+
+    def _opt_float(key):
+        raw = src.get(key)
+        if raw is None or not str(raw).strip():
+            return None
+        return float(str(raw).replace(',', '.'))
+
+    def _opt_int(key):
+        raw = src.get(key)
+        if raw is None or not str(raw).strip():
+            return None
+        return int(raw)
+
+    night = src.get('night_charging')
+    night_charging = (
+        night in ('on', '1', 'true', 'True', True)
+        if night is not None
+        else False
+    )
+
+    return {
+        'cp': src['cp'].strip(),
+        'km_year': int(src['km_year']),
+        'vehicle_current_id': int(src['vehicle_current_id']),
+        'vehicle_target_id': int(src['vehicle_target_id']),
+        'years_horizon': int(src.get('years_horizon', 10)),
+        'night_charging': night_charging,
+        'subvencion_eur': int(src.get('subvencion_eur', 0) or 0),
+        'motorway_pct': _opt_float('motorway_pct'),
+        'nacional_pct': _opt_float('nacional_pct'),
+        'profile': (src.get('profile') or 'particular').strip(),
+        'scrapping': src.get('scrapping') in ('on', '1', 'true', 'True'),
+        'wallbox_state': (src.get('wallbox_state') or 'installed').strip(),
+        'home_pct': _opt_int('home_pct'),
+        'work_pct': _opt_int('work_pct'),
+        'public_ac_pct': _opt_int('public_ac_pct'),
+        'public_dc_pct': _opt_int('public_dc_pct'),
+        'subvencion_override_eur': _opt_int('subvencion_override_eur'),
+    }
+
+
+def advisor_pdf(request):
+    """Print-friendly advisor result for client-side PDF export (html2pdf.js).
+
+    Recomputes the quote from query params instead of relying on session/POST
+    state — keeps the URL shareable (jurors can paste it) and idempotent.
+    """
+    try:
+        payload = _parse_advisor_payload(request.GET)
+    except (KeyError, ValueError) as e:
+        return HttpResponseBadRequest(f"Datos inválidos: {e}")
+
+    try:
+        quote = advisor_services.calculate_tco_quote(**payload)
+    except Vehicle.DoesNotExist:
+        return HttpResponseBadRequest("Vehículo no encontrado")
+    except ValueError as e:
+        return HttpResponseBadRequest(str(e))
+
+    out = _quote_to_out(quote)
+    savings_total = out['total_cost_current'] - out['total_cost_target']
+    return render(request, 'mubil/advisor_pdf.html', {
+        'q': out,
+        'q_json': json.dumps(out, default=str),
+        'savings_total': savings_total,
+        'savings_per_month': savings_total / (out['years_horizon'] * 12),
+    })
 
 
 def ask_page(request):

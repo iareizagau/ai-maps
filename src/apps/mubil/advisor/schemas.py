@@ -16,6 +16,15 @@ class AdvisorQuoteIn(Schema):
     subvencion_eur: int = 0
     motorway_pct: Optional[float] = None
     nacional_pct: Optional[float] = None
+    # Fiscal & charging context (v2)
+    profile: str = "particular"           # particular | autonomo | empresa
+    scrapping: bool = False
+    wallbox_state: str = "installed"      # installed | needs_install | no_home
+    home_pct: Optional[int] = None
+    work_pct: Optional[int] = None
+    public_ac_pct: Optional[int] = None
+    public_dc_pct: Optional[int] = None
+    subvencion_override_eur: Optional[int] = None
 
 
 
@@ -66,6 +75,29 @@ class ChargerOut(Schema):
     distance_km: Optional[float] = None
 
 
+class IncentiveOut(Schema):
+    code: str
+    name: str
+    amount_eur: Decimal
+    recurring: bool = False
+    equivalent_eur: Decimal
+
+
+class IncentivesBreakdownOut(Schema):
+    profile: str
+    province: str
+    years_horizon: int
+    total_eur: Decimal
+    items: List[IncentiveOut] = []
+
+
+class ChargingMixOut(Schema):
+    home_pct: int
+    work_pct: int
+    public_ac_pct: int
+    public_dc_pct: int
+
+
 class AdvisorQuoteOut(Schema):
     cp: str
     cp_name: Optional[str] = None
@@ -86,3 +118,7 @@ class AdvisorQuoteOut(Schema):
     motorway_pct: Optional[float] = None
     nacional_pct: Optional[float] = None
     urban_pct: Optional[float] = None
+    charging_mix: Optional[ChargingMixOut] = None
+    weighted_charging_eur_kwh: Optional[Decimal] = None
+    incentives: Optional[IncentivesBreakdownOut] = None
+    wallbox_capex_eur: Decimal = Decimal("0")

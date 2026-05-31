@@ -95,6 +95,10 @@ def _quote_to_out(quote: services.TCOQuote) -> dict:
         "motorway_pct": quote.motorway_pct,
         "nacional_pct": quote.nacional_pct,
         "urban_pct": quote.urban_pct,
+        "charging_mix": quote.charging_mix.to_out() if quote.charging_mix else None,
+        "weighted_charging_eur_kwh": quote.weighted_charging_eur_kwh,
+        "incentives": quote.incentives.to_out() if quote.incentives else None,
+        "wallbox_capex_eur": quote.wallbox_capex_eur,
     }
 
 
@@ -152,6 +156,14 @@ def post_quote(request, payload: AdvisorQuoteIn):
             subvencion_eur=payload.subvencion_eur,
             motorway_pct=payload.motorway_pct,
             nacional_pct=payload.nacional_pct,
+            profile=payload.profile,
+            scrapping=payload.scrapping,
+            wallbox_state=payload.wallbox_state,
+            home_pct=payload.home_pct,
+            work_pct=payload.work_pct,
+            public_ac_pct=payload.public_ac_pct,
+            public_dc_pct=payload.public_dc_pct,
+            subvencion_override_eur=payload.subvencion_override_eur,
         )
     except Vehicle.DoesNotExist:
         return 404, {"message": "Vehículo no encontrado"}

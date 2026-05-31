@@ -109,9 +109,27 @@ class Vehicle(BaseModel):
     co2_g_km_min = models.PositiveSmallIntegerField(null=True, blank=True)
     co2_g_km_max = models.PositiveSmallIntegerField(null=True, blank=True)
 
-    # No lo da IDAE; queda nullable. Se rellena manualmente o desde un fetch
-    # complementario (e.g. coches.net) en una fase posterior.
+    # No lo da IDAE; queda nullable. Se rellena via la pipeline de tres
+    # capas: seed manual verificado → heurística calibrada → Gemini top-N.
+    # El advisor también acepta override puntual en el formulario que no
+    # toca esta columna.
     price_eur = models.PositiveIntegerField(null=True, blank=True)
+
+    class PriceSource(models.TextChoices):
+        UNKNOWN = 'unknown', _('Desconocido')
+        MOCK = 'mock', _('Mock (placeholder)')
+        MANUAL = 'manual', _('Verificado manual')
+        HEURISTIC = 'heuristic', _('Estimado heurístico')
+        GEMINI = 'gemini', _('Estimado Gemini')
+
+    # Trazabilidad del precio para que la UI pueda etiquetar la confianza
+    # ("PVP verificado" vs "estimado ±20 %") y los comandos de re-seed
+    # sepan qué filas pueden sobrescribir sin perder datos verificados.
+    price_source = models.CharField(
+        max_length=16, choices=PriceSource.choices,
+        default=PriceSource.UNKNOWN, db_index=True,
+    )
+    price_updated_at = models.DateTimeField(null=True, blank=True)
 
     source_url = models.URLField(blank=True)
 

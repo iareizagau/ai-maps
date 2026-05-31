@@ -25,6 +25,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('advisor/', views.advisor_page, name='advisor'),
     path('advisor/quote/', views.advisor_quote, name='advisor_quote'),
+    path('advisor/pdf/', views.advisor_pdf, name='advisor_pdf'),
     path('ask/', views.ask_page, name='ask'),
     path('ask/query/', views.ask_query, name='ask_query'),
     path('route/', views.route_page, name='route'),

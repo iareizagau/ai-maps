@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n l10n %}
 {% with current=q.vehicle_current target=q.vehicle_target bd_c=q.breakdown_current bd_t=q.breakdown_target %}
 
 <div class="space-y-4" x-data x-init="$nextTick(() => window.mubilAdvisorRender({{ q_json|escape }}))">
@@ -65,10 +65,11 @@
          eIce: {{ bd_c.energy|floatformat:0 }},
          eEv: {{ bd_t.energy|floatformat:0 }},
          chargers: {{ q.nearby_chargers|length }},
-         urban: {{ q.urban_pct|default:30 }},
-         payback: {{ q.payback_years|default:'null' }},
+         urban: {{ q.urban_pct|default:30|floatformat:0 }},
+         payback: {% if q.payback_years is not None %}{{ q.payback_years|floatformat:"-1" }}{% else %}null{% endif %},
          wltp: {{ target.range_wltp_km|default:300 }},
-         co2: {{ q.co2_saved_kg_year|floatformat:0 }}
+         co2: {{ q.co2_saved_kg_year|floatformat:0 }},
+         savings: {{ bd_c.total|floatformat:0 }} - {{ bd_t.total|floatformat:0 }}
        })">
 
     <div class="bg-gradient-to-r from-violet-600 to-purple-600 px-5 py-3 flex items-center justify-between">
@@ -138,24 +139,87 @@
           </div>
         </div>
 
-        {% if q.payback_years is not None %}
-        <div class="rounded-xl bg-violet-50 dark:bg-violet-950/40 border border-violet-100 dark:border-violet-800 p-3.5">
-          <p class="text-[10px] font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400 mb-2">📈 Línea de Amortización</p>
-          <div class="flex items-end gap-0.5 h-10">
-            <template x-for="yr in Array.from({length: yrs}, (_,i) => i+1)" :key="yr">
-              <div class="flex-1 rounded-t min-h-[4px]"
-                   :class="yr <= payback ? 'bg-red-300 dark:bg-red-700' : 'bg-emerald-400 dark:bg-emerald-600'"
-                   :style="'height:' + (yr <= payback ? Math.max(8, Math.round((1-yr/payback)*100)) : 100) + '%'"
-                   :title="'Año ' + yr"></div>
-            </template>
+        <div class="rounded-xl bg-violet-50 dark:bg-violet-950/40 border border-violet-100 dark:border-violet-800 p-3.5 flex flex-col justify-between">
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400 mb-2 flex items-center justify-between">
+              <span>📈 Línea de Amortización</span>
+              <span class="text-xs font-black text-violet-700 dark:text-violet-300"
+                    x-text="payback !== null ? 'Equilibrio: año ' + payback : 'Ahorro desde Año 1'"></span>
+            </p>
+
+            <!-- Interactive Bar Chart / Timeline -->
+            <div class="flex items-end gap-1 h-14 mt-2.5 relative">
+              <template x-for="y in yearsData" :key="y.yr">
+                <div class="flex-1 flex flex-col items-center group cursor-pointer"
+                     @mouseenter="selectedYear = y"
+                     @click="selectedYear = y">
+                  <!-- The visual bar -->
+                  <div class="w-full rounded-t transition-all duration-300 min-h-[4px]"
+                       :class="y.yr === selectedYear.yr
+                               ? (y.isAmortized ? 'bg-emerald-500 shadow-sm ring-2 ring-emerald-300' : 'bg-red-500 shadow-sm ring-2 ring-red-300')
+                               : (y.isAmortized ? 'bg-emerald-400/80 hover:bg-emerald-500' : 'bg-red-400/80 hover:bg-red-500')"
+                       :style="'height: ' + Math.max(10, y.pct) + '%'"></div>
+
+                  <!-- Dot indicating the year -->
+                  <div class="w-1.5 h-1.5 rounded-full mt-1.5"
+                       :class="y.yr === selectedYear.yr ? 'bg-violet-600' : 'bg-violet-300 dark:bg-violet-700'"></div>
+                </div>
+              </template>
+            </div>
+
+            <!-- X-Axis Labels -->
+            <div class="flex justify-between text-[9px] text-slate-400 dark:text-slate-500 mt-1 px-1">
+              <span>Año 1</span>
+              <span x-show="payback !== null" class="font-semibold text-violet-600 dark:text-violet-400" x-text="'Amortizado en Año ' + Math.ceil(payback)"></span>
+              <span x-text="'Año ' + yrs"></span>
+            </div>
           </div>
-          <div class="flex justify-between text-[9px] text-violet-500 dark:text-violet-400 mt-1.5">
-            <span>Año 1</span>
-            <span class="font-bold text-violet-700 dark:text-violet-300">Equilibrio · año {{ q.payback_years }}</span>
-            <span>Año {{ q.years_horizon }}</span>
+
+          <!-- Interactive Selected Year Detail Box -->
+          <div class="mt-3 p-2 rounded-lg bg-white dark:bg-slate-900/60 border border-violet-100/50 dark:border-violet-900/30 flex items-center justify-between transition-all duration-300">
+            <div class="min-w-0 flex-1 pr-2">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded leading-none"
+                      :class="selectedYear.isAmortized ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300'"
+                      x-text="'Año ' + selectedYear.yr"></span>
+                <span class="text-[9px] text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-wide" x-text="selectedYear.status"></span>
+              </div>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1 italic truncate" x-text="selectedYear.desc"></p>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="text-xs font-black tabular-nums"
+                    :class="selectedYear.isAmortized ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'"
+                    x-text="selectedYear.label"></span>
+            </div>
           </div>
         </div>
-        {% endif %}
+
+        <div class="rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 p-3.5"
+             x-data="chargersMini({{ q_json|escape }})">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">🔌 Red de Carga Cercana</p>
+          {% if q.nearby_chargers %}
+          <div class="flex items-center gap-4 flex-wrap">
+            <div class="text-center">
+              <div class="text-2xl font-black text-slate-700 dark:text-slate-200">{{ q.nearby_chargers|length }}</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">cargadores 5km</div>
+            </div>
+            <div class="space-y-0.5 text-[11px]">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                <span class="text-slate-600 dark:text-slate-300">
+                  <strong x-text="fastCount"></strong> ultra-rápidos (≥150 kW)
+                </span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-cyan-500 shrink-0"></span>
+                <span class="text-slate-600 dark:text-slate-300">El más cercano: <strong>{{ q.nearby_chargers.0.distance_km|floatformat:1 }} km</strong> · {{ q.nearby_chargers.0.operator }}</span>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <p class="text-[11px] text-amber-600 dark:text-amber-400">⚠️ Sin cargadores registrados en 5 km del CP {{ q.cp }}</p>
+          {% endif %}
+        </div>
 
       </div>
     </div>
@@ -197,9 +261,97 @@
 
   </div>
 
-  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-sm">
-    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">Desglose comparado a {{ q.years_horizon }} años (€)</h3>
-    <div id="advisor-chart" style="width:100%; height:240px;"></div>
+  <div class="rounded-2xl border border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 shadow-sm overflow-hidden"
+       x-data="advisorSensitivity({
+         kmBase: {{ q.km_year }},
+         yrs: {{ q.years_horizon }},
+         baseEnergyIce: {{ bd_c.energy|floatformat:0 }},
+         baseEnergyEv: {{ bd_t.energy|floatformat:0 }},
+         baseTotalIce: {{ bd_c.total|floatformat:0 }},
+         baseTotalEv: {{ bd_t.total|floatformat:0 }},
+         basePayback: {% if q.payback_years is not None %}{{ q.payback_years|floatformat:'-2' }}{% else %}null{% endif %},
+         fuelKind: '{{ current.propulsion }}',
+         basePriceFuel: {% if current.propulsion == 'DIESEL' %}1.495{% else %}1.585{% endif %}
+       })">
+
+    <div class="bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M5 6h14M5 18h14"/>
+        </svg>
+        <span class="text-[10px] font-extrabold uppercase tracking-widest text-white/95">¿Y si…? · Análisis de sensibilidad</span>
+      </div>
+      <span class="text-[10px] text-orange-50 font-semibold">Mueve los deslizadores</span>
+    </div>
+
+    <div class="p-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+      <div class="space-y-4">
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-[11px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">🛣 Km / año</label>
+            <span class="text-sm font-extrabold tabular-nums text-amber-900 dark:text-amber-100" x-text="km.toLocaleString('es-ES') + ' km'"></span>
+          </div>
+          <input type="range" min="5000" max="50000" step="500" x-model.number="km"
+                 class="w-full accent-amber-500 cursor-pointer">
+          <div class="flex justify-between text-[9px] text-amber-600/70 dark:text-amber-400/70 mt-0.5">
+            <span>5 000</span><span>27 500</span><span>50 000</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-[11px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">
+              ⛽ Precio <span x-text="fuelLabel"></span>
+            </label>
+            <span class="text-sm font-extrabold tabular-nums text-amber-900 dark:text-amber-100" x-text="priceFuel.toFixed(3).replace('.', ',') + ' €/L'"></span>
+          </div>
+          <input type="range" min="1.000" max="2.500" step="0.005" x-model.number="priceFuel"
+                 class="w-full accent-amber-500 cursor-pointer">
+          <div class="flex justify-between text-[9px] text-amber-600/70 dark:text-amber-400/70 mt-0.5">
+            <span>1,00 €</span><span>1,75 €</span><span>2,50 €</span>
+          </div>
+          <p class="text-[10px] text-amber-600 dark:text-amber-400 mt-1 italic">
+            Referencia <span x-text="basePriceFuel.toFixed(3).replace('.', ',')"></span> €/L (MINCOTUR)
+          </p>
+        </div>
+
+        <button @click="reset()" class="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 transition">
+          ↺ Restablecer
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div class="rounded-xl bg-white/70 dark:bg-slate-800/60 border border-amber-200 dark:border-amber-700/50 p-4">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300 mb-1">Ahorro neto · {{ q.years_horizon }} años</p>
+          <div class="flex items-baseline gap-2 flex-wrap">
+            <span class="text-3xl font-black tabular-nums" :class="savings >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'"
+                  x-text="(savings >= 0 ? '+' : '') + Math.round(savings).toLocaleString('es-ES') + ' €'"></span>
+            <span class="text-[11px] font-semibold" :class="savingsDelta >= 0 ? 'text-emerald-600' : 'text-red-500'"
+                  x-text="(savingsDelta >= 0 ? '▲ ' : '▼ ') + Math.abs(Math.round(savingsDelta)).toLocaleString('es-ES') + ' € vs base'"></span>
+          </div>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1"
+             x-text="'≈ ' + Math.round(savings / {{ q.years_horizon }} / 12).toLocaleString('es-ES') + ' € / mes operativo'"></p>
+        </div>
+
+        <div class="rounded-xl bg-white/70 dark:bg-slate-800/60 border border-amber-200 dark:border-amber-700/50 p-4">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300 mb-1">Punto de equilibrio</p>
+          <template x-if="payback !== null">
+            <div class="flex items-baseline gap-2 flex-wrap">
+              <span class="text-3xl font-black tabular-nums text-amber-900 dark:text-amber-100"
+                    x-text="payback.toFixed(1).replace('.', ',') + ' años'"></span>
+              <span class="text-[11px] font-semibold" :class="paybackDelta <= 0 ? 'text-emerald-600' : 'text-red-500'"
+                    x-text="(paybackDelta <= 0 ? '▼ ' : '▲ ') + Math.abs(paybackDelta).toFixed(1).replace('.', ',') + ' años'"></span>
+            </div>
+          </template>
+          <template x-if="payback === null">
+            <p class="text-sm text-slate-500 dark:text-slate-400 italic">Sin precio de compra para calcular</p>
+          </template>
+        </div>
+      </div>
+
+    </div>
   </div>
 
   {% if q.motorway_pct is not None %}
@@ -212,7 +364,7 @@
       <div class="flex gap-2 flex-wrap">
         <span class="px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 font-semibold">🛣 {{ q.motorway_pct|floatformat:0 }}% Autovía</span>
         {% if q.nacional_pct %}<span class="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-semibold">🛤 {{ q.nacional_pct|floatformat:0 }}% Nacional</span>{% endif %}
-        <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-semibold">🏙 {{ q.urban_pct|floatformat:0 }}% Urbano</span>
+        <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-semibold">🏠 {{ q.urban_pct|floatformat:0 }}% Urbano</span>
       </div>
       <p class="text-slate-500 dark:text-slate-400 leading-relaxed">
         {% if q.vehicle_target.propulsion == 'BEV' %}
@@ -225,42 +377,103 @@
   </div>
   {% endif %}
 
-  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-sm">
-    <div class="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-slate-700 pb-2">
-      <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Cargadores en tu área (5 km)</h3>
-      <span class="text-xs text-slate-400 dark:text-slate-500">{{ q.nearby_chargers|length }} disponibles</span>
-    </div>
-    {% if q.nearby_chargers %}
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-44 overflow-y-auto pr-1">
-        {% for c in q.nearby_chargers %}
-          <div class="p-2.5 rounded-xl border border-slate-100 dark:border-slate-750 bg-slate-50/50 dark:bg-slate-900/30 flex items-start gap-2.5">
-            <span class="inline-block mt-1 w-2.5 h-2.5 rounded-full shrink-0
-              {% if c.power_kw >= 150 %}bg-emerald-500{% elif c.power_kw >= 50 %}bg-cyan-500{% else %}bg-amber-500{% endif %}"></span>
-            <div class="text-xs min-w-0">
-              <div class="flex items-center gap-1.5 justify-between">
-                <span class="font-bold text-slate-800 dark:text-slate-200 truncate">{{ c.operator }}</span>
-                <span class="text-slate-400 shrink-0 font-semibold">{{ c.power_kw|floatformat:0 }} kW</span>
-              </div>
-              <p class="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">{{ c.address }}</p>
-              <div class="flex items-center justify-between mt-1 text-[10px] text-slate-500">
-                <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700">
-                  {% if c.power_kw >= 150 %}Ultra-Rápido{% elif c.power_kw >= 50 %}Rápido{% else %}Semi-Rápido{% endif %}
-                </span>
-                <span class="font-bold">{{ c.distance_km|floatformat:1 }} km</span>
-              </div>
-            </div>
-          </div>
-        {% endfor %}
+  {% if q.incentives %}
+  <div class="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-950/20 shadow-sm overflow-hidden">
+    <div class="px-5 pt-4 pb-3 flex items-center justify-between border-b border-emerald-200/60 dark:border-emerald-800/60">
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">💰 Desglose de incentivos · {{ q.incentives.profile|capfirst }}</h3>
+        <p class="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">
+          Provincia <strong>{{ q.incentives.province }}</strong> · Horizonte <strong>{{ q.years_horizon }} años</strong> · Total equivalente al año 0
+        </p>
       </div>
-    {% else %}
-      <p class="text-xs text-slate-500 dark:text-slate-400 py-4 text-center">No hay cargadores registrados cerca del CP <code>{{ q.cp }}</code> en la base de datos.</p>
-    {% endif %}
+      <span class="text-xl font-black text-emerald-700 dark:text-emerald-300 tabular-nums">{{ q.incentives.total_eur|floatformat:0 }} €</span>
+    </div>
+    <ul class="divide-y divide-emerald-200/60 dark:divide-emerald-800/60 text-sm">
+      {% for i in q.incentives.items %}
+      <li class="flex items-baseline justify-between gap-3 px-5 py-2.5">
+        <span class="text-slate-700 dark:text-slate-200 flex items-baseline gap-2">
+          <span class="text-emerald-500">✓</span>
+          <span>{{ i.name }}</span>
+          {% if i.recurring %}
+          <span class="text-[10px] text-slate-400 italic">({{ i.amount_eur|floatformat:0 }} €/año × {{ q.years_horizon }})</span>
+          {% endif %}
+        </span>
+        <span class="font-bold text-emerald-700 dark:text-emerald-400 tabular-nums whitespace-nowrap">{{ i.equivalent_eur|floatformat:0 }} €</span>
+      </li>
+      {% endfor %}
+      {% if q.wallbox_capex_eur and q.wallbox_capex_eur > 0 %}
+      <li class="flex items-baseline justify-between gap-3 px-5 py-2.5 bg-amber-50/50 dark:bg-amber-950/20">
+        <span class="text-slate-700 dark:text-slate-200 flex items-baseline gap-2">
+          <span class="text-amber-500">−</span>
+          <span>CAPEX instalación wallbox</span>
+        </span>
+        <span class="font-bold text-amber-700 dark:text-amber-400 tabular-nums whitespace-nowrap">−{{ q.wallbox_capex_eur|floatformat:0 }} €</span>
+      </li>
+      {% endif %}
+    </ul>
   </div>
+  {% endif %}
 
-  <p class="text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed text-center">
-    Cálculos con precios a 2026-05-31: PVPC nocturno 0,085 €/kWh · diurno 0,165 €/kWh.
-    Combustibles (MINCOTUR): Gasolina 1,585 €/L · Diésel 1,495 €/L.
-  </p>
+  {% if q.charging_mix %}
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-sm">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">⚡ Mix de carga ponderado</h3>
+      {% if q.weighted_charging_eur_kwh %}
+      <span class="text-sm font-extrabold text-cyan-600 dark:text-cyan-400 tabular-nums">{{ q.weighted_charging_eur_kwh|floatformat:3 }} €/kWh</span>
+      {% endif %}
+    </div>
+    <div class="h-2.5 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex">
+      <div class="h-full bg-emerald-500 transition-all" style="width: {{ q.charging_mix.home_pct }}%" title="Casa"></div>
+      <div class="h-full bg-sky-500 transition-all" style="width: {{ q.charging_mix.work_pct }}%" title="Trabajo"></div>
+      <div class="h-full bg-amber-500 transition-all" style="width: {{ q.charging_mix.public_ac_pct }}%" title="Pública AC"></div>
+      <div class="h-full bg-rose-500 transition-all" style="width: {{ q.charging_mix.public_dc_pct }}%" title="Pública DC"></div>
+    </div>
+    <div class="grid grid-cols-4 gap-2 text-center text-[10px] font-semibold mt-2">
+      <div><span class="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs">{{ q.charging_mix.home_pct }}%</span><span class="block text-[9px] uppercase tracking-wider text-slate-400">🏠 Casa</span></div>
+      <div><span class="text-sky-600 dark:text-sky-400 font-extrabold text-xs">{{ q.charging_mix.work_pct }}%</span><span class="block text-[9px] uppercase tracking-wider text-slate-400">🏢 Trabajo</span></div>
+      <div><span class="text-amber-600 dark:text-amber-400 font-extrabold text-xs">{{ q.charging_mix.public_ac_pct }}%</span><span class="block text-[9px] uppercase tracking-wider text-slate-400">⚡ AC</span></div>
+      <div><span class="text-rose-600 dark:text-rose-400 font-extrabold text-xs">{{ q.charging_mix.public_dc_pct }}%</span><span class="block text-[9px] uppercase tracking-wider text-slate-400">🔥 DC</span></div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if q.nearby_chargers %}
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm overflow-hidden">
+    <div class="px-5 pt-4 pb-2 flex items-center justify-between">
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">🗺 Mapa de cargadores · CP {{ q.cp }}</h3>
+        <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Radio 5 km · {{ q.nearby_chargers|length }} estaciones · más cercana {{ q.nearby_chargers.0.distance_km|floatformat:1 }} km</p>
+      </div>
+      <div class="hidden sm:flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400">
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> ≥150 kW</span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-cyan-500"></span> 50-149 kW</span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> &lt;50 kW</span>
+      </div>
+    </div>
+    <div class="relative overflow-hidden" style="height:260px;">
+      <div id="chargers-mini-map" style="position:absolute; inset:0; z-index:5;"
+           x-data x-init="setTimeout(() => window.mubilChargersMap({{ q_json|escape }}), 50)"></div>
+    </div>
+  </div>
+  {% else %}
+  <div class="rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 shadow-sm flex items-start gap-3">
+    <span class="text-amber-500 shrink-0">⚠️</span>
+    <p class="text-xs text-amber-700 dark:text-amber-300">No hay cargadores registrados cerca del CP <code class="px-1 py-0.5 bg-amber-100 dark:bg-amber-900/60 rounded">{{ q.cp }}</code> en la base de datos.</p>
+  </div>
+  {% endif %}
+
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+    <p class="text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed">
+      Cálculos con precios a 2026-05-31: PVPC nocturno 0,085 €/kWh · diurno 0,165 €/kWh ·
+      Gasolina 1,585 €/L · Diésel 1,495 €/L (MINCOTUR).
+    </p>
+    <a href="{% url 'mubil:advisor_pdf' %}?cp={{ q.cp }}&km_year={{ q.km_year }}&vehicle_current_id={{ current.id }}&vehicle_target_id={{ target.id }}&years_horizon={{ q.years_horizon }}&night_charging={% if night_charging %}1{% else %}0{% endif %}&subvencion_eur={{ q.subvencion_eur|floatformat:0 }}{% if q.motorway_pct is not None %}&motorway_pct={{ q.motorway_pct|unlocalize }}{% endif %}"
+       target="_blank" rel="noopener"
+       class="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold uppercase tracking-widest shadow transition">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"/></svg>
+      Descargar PDF
+    </a>
+  </div>
 
 </div>
 

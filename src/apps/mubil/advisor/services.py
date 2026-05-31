@@ -27,8 +27,12 @@ from apps.mubil.data.price_defaults import (
     DEFAULT_MAINTENANCE_EUR_YEAR_ICE,
     DEFAULT_TAX_EUR_YEAR_EV,
     DEFAULT_TAX_EUR_YEAR_ICE,
+    WALLBOX_CAPEX_EUR,
 )
 from apps.mubil.models import ChargingStation, Vehicle
+
+from .charging_mix import ChargingMix
+from .incentives import IncentivesBreakdown, compute_incentives
 
 
 @dataclass(frozen=True)
@@ -61,6 +65,10 @@ class TCOQuote:
     motorway_pct: Optional[float] = None
     nacional_pct: Optional[float] = None
     urban_pct: Optional[float] = None
+    charging_mix: Optional[ChargingMix] = None
+    weighted_charging_eur_kwh: Optional[Decimal] = None
+    incentives: Optional[IncentivesBreakdown] = None
+    wallbox_capex_eur: Decimal = Decimal("0")
 
 
 # ------------------------------------------------------------------ helpers
@@ -83,25 +91,30 @@ def _annual_energy_cost(
     motorway_pct: Optional[float] = None,
     nacional_pct: Optional[float] = None,
     urban_pct: Optional[float] = None,
+    charging_mix: Optional[ChargingMix] = None,
 ) -> Decimal:
     """Coste anual de energía (€) en función del vehículo, km, régimen y perfil de vía (3 vías).
 
     Para rutas geolocalizadas, adapta el consumo en función del tipo de vía:
       - EV: −20% en ciudad (0.80), +25% en autovía (1.25), −5% en nacional (0.95).
       - ICE/combustión: +25% en ciudad (1.25), −15% en autovía (0.85), −5% en nacional (0.95).
+
+    Para EV, si se pasa `charging_mix`, el precio se calcula ponderando los
+    cuatro canales (casa / trabajo / pública AC / pública DC). Si no, se
+    cae al binario `night_charging` legacy.
     """
     km = Decimal(km_year)
-    
+
     if motorway_pct is not None or nacional_pct is not None:
         mw = Decimal(motorway_pct or 0) / Decimal("100")
         nac = Decimal(nacional_pct or 0) / Decimal("100")
-        
+
         # Si urban_pct no está definido, lo estimamos del residuo
         if urban_pct is not None:
             urb = Decimal(urban_pct) / Decimal("100")
         else:
             urb = Decimal("1") - mw - nac
-            
+
         if _is_electric(vehicle):
             efficiency_multiplier = (Decimal("0.80") * urb) + (Decimal("1.25") * mw) + (Decimal("0.95") * nac)
         else:
@@ -112,9 +125,12 @@ def _annual_energy_cost(
     if _is_electric(vehicle):
         kwh_100 = vehicle.consumption_kwh_100km or Decimal("17.0")
         kwh = (kwh_100 * km * efficiency_multiplier) / Decimal("100")
-        price = pvpc_ingest.current_price_eur_kwh(night_charging=night_charging)
+        if charging_mix is not None:
+            price = charging_mix.weighted_price_eur_kwh(night_charging=night_charging)
+        else:
+            price = pvpc_ingest.current_price_eur_kwh(night_charging=night_charging)
         return (kwh * price).quantize(Decimal("0.01"))
-        
+
     l_100 = vehicle.consumption_l_100km or Decimal("6.0")
     litres = (l_100 * km * efficiency_multiplier) / Decimal("100")
     fuel_key = "gasoleo_a" if _is_diesel(vehicle) else "gasolina_95_e5"
@@ -168,11 +184,13 @@ def _breakdown(
     motorway_pct: Optional[float] = None,
     nacional_pct: Optional[float] = None,
     urban_pct: Optional[float] = None,
+    charging_mix: Optional[ChargingMix] = None,
 ) -> CostBreakdown:
     horizon = Decimal(years_horizon)
     energy = _annual_energy_cost(
         vehicle, km_year, night_charging, postal_code=postal_code,
-        motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct
+        motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct,
+        charging_mix=charging_mix,
     ) * horizon
     if _is_electric(vehicle):
         maint = DEFAULT_MAINTENANCE_EUR_YEAR_EV * horizon
@@ -195,10 +213,15 @@ def _payback_years(
     target: Vehicle,
     annual_savings: Decimal,
     subvencion_eur: Decimal = Decimal("0"),
+    wallbox_capex_eur: Decimal = Decimal("0"),
 ) -> Optional[Decimal]:
     if not current.price_eur or not target.price_eur or annual_savings <= 0:
         return None
-    delta_price = Decimal(target.price_eur - current.price_eur) - subvencion_eur
+    delta_price = (
+        Decimal(target.price_eur - current.price_eur)
+        + wallbox_capex_eur
+        - subvencion_eur
+    )
     if delta_price <= 0:
         return Decimal("0")
     return (delta_price / annual_savings).quantize(Decimal("0.1"))
@@ -228,27 +251,58 @@ def calculate_tco_quote(
     motorway_pct: Optional[float] = None,
     nacional_pct: Optional[float] = None,
     urban_pct: Optional[float] = None,
+    profile: str = "particular",
+    scrapping: bool = False,
+    wallbox_state: str = "installed",
+    home_pct: Optional[int] = None,
+    work_pct: Optional[int] = None,
+    public_ac_pct: Optional[int] = None,
+    public_dc_pct: Optional[int] = None,
+    subvencion_override_eur: Optional[int] = None,
 ) -> TCOQuote:
-    """Calcula la comparativa TCO para el `advisor`."""
+    """Calcula la comparativa TCO para el `advisor`.
+
+    Si se pasan los porcentajes del mix de carga, el coste energético del
+    EV se computa ponderando los cuatro canales (casa/trabajo/AC/DC). Si
+    no, se mantiene el binario `night_charging` legacy.
+
+    `subvencion_eur` es legacy y queda como total alternativo. Si se pasa
+    `profile`/`scrapping`/`wallbox_state` se calculan los incentivos
+    automáticamente y `subvencion_eur` se ignora a menos que
+    `subvencion_override_eur` esté presente.
+    """
     if not (1_000 <= km_year <= 60_000):
         raise ValueError(f"km_year fuera de rango (1.000-60.000): {km_year}")
     if not (1 <= years_horizon <= 20):
         raise ValueError(f"years_horizon fuera de rango (1-20): {years_horizon}")
-    if not (0 <= subvencion_eur <= 12_000):
-        raise ValueError(f"subvencion_eur fuera de rango (0-12.000): {subvencion_eur}")
+    if not (0 <= subvencion_eur <= 30_000):
+        raise ValueError(f"subvencion_eur fuera de rango (0-30.000): {subvencion_eur}")
+    if profile not in ("particular", "autonomo", "empresa"):
+        raise ValueError(f"profile inválido: {profile}")
+    if wallbox_state not in ("installed", "needs_install", "no_home"):
+        raise ValueError(f"wallbox_state inválido: {wallbox_state}")
 
     current = Vehicle.objects.get(pk=vehicle_current_id)
     target = Vehicle.objects.get(pk=vehicle_target_id)
 
+    # ----- Mix de carga (sólo si se aportan los 4 porcentajes) -----
+    mix: Optional[ChargingMix] = None
+    if home_pct is not None and work_pct is not None \
+            and public_ac_pct is not None and public_dc_pct is not None:
+        mix = ChargingMix.normalized(home_pct, work_pct, public_ac_pct, public_dc_pct)
+
+    # ----- Breakdowns -----
     bd_current = _breakdown(
         current, km_year, years_horizon, night_charging, postal_code=cp,
-        motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct
+        motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct,
     )
     bd_target = _breakdown(
         target, km_year, years_horizon, night_charging, postal_code=cp,
-        motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct
+        motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct,
+        charging_mix=mix,
     )
 
+    # ----- Ahorro anual (energía + opex constante) -----
     annual_savings = (
         _annual_energy_cost(current, km_year, night_charging, postal_code=cp,
                             motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct)
@@ -257,14 +311,39 @@ def calculate_tco_quote(
         + (DEFAULT_TAX_EUR_YEAR_ICE if not _is_electric(current) else DEFAULT_TAX_EUR_YEAR_EV)
     ) - (
         _annual_energy_cost(target, km_year, night_charging, postal_code=cp,
-                            motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct)
+                            motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct,
+                            charging_mix=mix)
         + (DEFAULT_MAINTENANCE_EUR_YEAR_ICE if not _is_electric(target) else DEFAULT_MAINTENANCE_EUR_YEAR_EV)
         + (DEFAULT_INSURANCE_EUR_YEAR_ICE if not _is_electric(target) else DEFAULT_INSURANCE_EUR_YEAR_EV)
         + (DEFAULT_TAX_EUR_YEAR_ICE if not _is_electric(target) else DEFAULT_TAX_EUR_YEAR_EV)
     )
 
+    # ----- Wallbox CAPEX (sólo si necesita instalar y target es BEV) -----
+    needs_wallbox = wallbox_state == "needs_install" and _is_electric(target)
+    wallbox_capex = WALLBOX_CAPEX_EUR if needs_wallbox else Decimal("0")
+
+    # ----- Incentivos: auto o override -----
+    incentives = compute_incentives(
+        profile=profile,
+        cp=cp,
+        vehicle_price_eur=target.price_eur,
+        scrapping=scrapping,
+        needs_wallbox=needs_wallbox,
+        years_horizon=years_horizon,
+    )
+    if subvencion_override_eur is not None and subvencion_override_eur >= 0:
+        total_subv = Decimal(subvencion_override_eur)
+    else:
+        total_subv = incentives.total_lump_sum_eur
+
     centroid = cp_centroids.lookup(cp)
     cp_name = centroid[2] if centroid else None
+
+    weighted_price = (
+        mix.weighted_price_eur_kwh(night_charging=night_charging)
+        if mix is not None
+        else None
+    )
 
     return TCOQuote(
         cp=cp,
@@ -278,13 +357,17 @@ def calculate_tco_quote(
         co2_kg_year_current=_annual_co2_kg(current, km_year, motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct),
         co2_kg_year_target=_annual_co2_kg(target, km_year, motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct),
         payback_years=_payback_years(
-            current, target, annual_savings, Decimal(subvencion_eur)
+            current, target, annual_savings, total_subv, wallbox_capex,
         ),
         nearby_chargers=_nearby_chargers(cp),
-        subvencion_eur=Decimal(subvencion_eur),
+        subvencion_eur=total_subv,
         motorway_pct=motorway_pct,
         nacional_pct=nacional_pct,
         urban_pct=urban_pct,
+        charging_mix=mix,
+        weighted_charging_eur_kwh=weighted_price,
+        incentives=incentives,
+        wallbox_capex_eur=wallbox_capex,
     )
 
 

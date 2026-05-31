@@ -161,6 +161,8 @@ def _parse_advisor_payload(src):
         'public_ac_pct': _opt_int('public_ac_pct'),
         'public_dc_pct': _opt_int('public_dc_pct'),
         'subvencion_override_eur': _opt_int('subvencion_override_eur'),
+        'vehicle_current_price_override_eur': _opt_int('vehicle_current_price_override_eur'),
+        'vehicle_target_price_override_eur': _opt_int('vehicle_target_price_override_eur'),
     }
 
 

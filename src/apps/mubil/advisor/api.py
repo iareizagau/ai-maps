@@ -40,6 +40,7 @@ def _vehicle_to_summary(v: Vehicle) -> dict:
         "year": v.year,
         "propulsion": v.propulsion,
         "price_eur": v.price_eur,
+        "price_source": v.price_source,
         "dgt_label": v.dgt_label or "C",
         "range_wltp_km": v.range_wltp_km,
         "consumption_kwh_100km": v.consumption_kwh_100km,
@@ -164,6 +165,8 @@ def post_quote(request, payload: AdvisorQuoteIn):
             public_ac_pct=payload.public_ac_pct,
             public_dc_pct=payload.public_dc_pct,
             subvencion_override_eur=payload.subvencion_override_eur,
+            vehicle_current_price_override_eur=payload.vehicle_current_price_override_eur,
+            vehicle_target_price_override_eur=payload.vehicle_target_price_override_eur,
         )
     except Vehicle.DoesNotExist:
         return 404, {"message": "Vehículo no encontrado"}

@@ -25,6 +25,8 @@ class AdvisorQuoteIn(Schema):
     public_ac_pct: Optional[int] = None
     public_dc_pct: Optional[int] = None
     subvencion_override_eur: Optional[int] = None
+    vehicle_current_price_override_eur: Optional[int] = None
+    vehicle_target_price_override_eur: Optional[int] = None
 
 
 
@@ -35,6 +37,7 @@ class VehicleSummary(Schema):
     year: int
     propulsion: str
     price_eur: Optional[int] = None
+    price_source: Optional[str] = None
     dgt_label: Optional[str] = None
     range_wltp_km: Optional[int] = None
     consumption_kwh_100km: Optional[Decimal] = None

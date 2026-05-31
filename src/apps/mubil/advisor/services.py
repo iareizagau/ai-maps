@@ -69,6 +69,10 @@ class TCOQuote:
     weighted_charging_eur_kwh: Optional[Decimal] = None
     incentives: Optional[IncentivesBreakdown] = None
     wallbox_capex_eur: Decimal = Decimal("0")
+    # Precios efectivos usados para el cálculo (puede diferir de
+    # vehicle.price_eur si el usuario aplicó un override en el formulario).
+    vehicle_current_price_used_eur: Optional[int] = None
+    vehicle_target_price_used_eur: Optional[int] = None
 
 
 # ------------------------------------------------------------------ helpers
@@ -214,14 +218,16 @@ def _payback_years(
     annual_savings: Decimal,
     subvencion_eur: Decimal = Decimal("0"),
     wallbox_capex_eur: Decimal = Decimal("0"),
+    *,
+    current_price_eur: Optional[int] = None,
+    target_price_eur: Optional[int] = None,
 ) -> Optional[Decimal]:
-    if not current.price_eur or not target.price_eur or annual_savings <= 0:
+    """current_price_eur / target_price_eur permiten override sin tocar BBDD."""
+    cur_p = current_price_eur if current_price_eur is not None else current.price_eur
+    tgt_p = target_price_eur if target_price_eur is not None else target.price_eur
+    if not cur_p or not tgt_p or annual_savings <= 0:
         return None
-    delta_price = (
-        Decimal(target.price_eur - current.price_eur)
-        + wallbox_capex_eur
-        - subvencion_eur
-    )
+    delta_price = Decimal(tgt_p - cur_p) + wallbox_capex_eur - subvencion_eur
     if delta_price <= 0:
         return Decimal("0")
     return (delta_price / annual_savings).quantize(Decimal("0.1"))
@@ -259,6 +265,8 @@ def calculate_tco_quote(
     public_ac_pct: Optional[int] = None,
     public_dc_pct: Optional[int] = None,
     subvencion_override_eur: Optional[int] = None,
+    vehicle_current_price_override_eur: Optional[int] = None,
+    vehicle_target_price_override_eur: Optional[int] = None,
 ) -> TCOQuote:
     """Calcula la comparativa TCO para el `advisor`.
 
@@ -322,11 +330,23 @@ def calculate_tco_quote(
     needs_wallbox = wallbox_state == "needs_install" and _is_electric(target)
     wallbox_capex = WALLBOX_CAPEX_EUR if needs_wallbox else Decimal("0")
 
+    # ----- Override de precios (sin escritura en BBDD) -----
+    current_price_used = (
+        vehicle_current_price_override_eur
+        if vehicle_current_price_override_eur is not None and vehicle_current_price_override_eur > 0
+        else current.price_eur
+    )
+    target_price_used = (
+        vehicle_target_price_override_eur
+        if vehicle_target_price_override_eur is not None and vehicle_target_price_override_eur > 0
+        else target.price_eur
+    )
+
     # ----- Incentivos: auto o override -----
     incentives = compute_incentives(
         profile=profile,
         cp=cp,
-        vehicle_price_eur=target.price_eur,
+        vehicle_price_eur=target_price_used,
         scrapping=scrapping,
         needs_wallbox=needs_wallbox,
         years_horizon=years_horizon,
@@ -358,6 +378,8 @@ def calculate_tco_quote(
         co2_kg_year_target=_annual_co2_kg(target, km_year, motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct),
         payback_years=_payback_years(
             current, target, annual_savings, total_subv, wallbox_capex,
+            current_price_eur=current_price_used,
+            target_price_eur=target_price_used,
         ),
         nearby_chargers=_nearby_chargers(cp),
         subvencion_eur=total_subv,
@@ -368,6 +390,8 @@ def calculate_tco_quote(
         weighted_charging_eur_kwh=weighted_price,
         incentives=incentives,
         wallbox_capex_eur=wallbox_capex,
+        vehicle_current_price_used_eur=current_price_used,
+        vehicle_target_price_used_eur=target_price_used,
     )
 
 

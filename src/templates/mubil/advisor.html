@@ -91,7 +91,23 @@
               </div>
             </div>
             <input type="hidden" name="vehicle_current_id" id="current_vehicle_id_input" required />
-            
+
+            <!-- Precio + override (no escribe en BBDD) -->
+            <div x-show="selectedCurrent" x-cloak class="flex items-center gap-2 text-[11px]">
+              <span class="text-slate-500 dark:text-slate-400">PVP:</span>
+              <strong class="text-slate-800 dark:text-slate-200 tabular-nums" x-text="((currentPriceOverride && currentPriceOverride > 0 ? currentPriceOverride : selectedCurrent?.price_eur) || '—').toLocaleString('es-ES') + ' €'"></strong>
+              <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"
+                    :class="priceSourceLabel(currentPriceOverride && currentPriceOverride > 0 ? 'manual_override' : selectedCurrent?.price_source).cls"
+                    x-text="currentPriceOverride && currentPriceOverride > 0 ? 'Tú lo editaste' : priceSourceLabel(selectedCurrent?.price_source).label"></span>
+              <button type="button" @click="currentPriceOverride = (currentPriceOverride === null ? (selectedCurrent?.price_eur || 0) : null)"
+                      class="ml-auto text-cyan-600 dark:text-cyan-400 hover:underline font-semibold"
+                      x-text="currentPriceOverride === null ? '✏️ editar' : '↺ usar BBDD'"></button>
+            </div>
+            <input type="number" x-show="currentPriceOverride !== null" x-cloak
+                   name="vehicle_current_price_override_eur" x-model.number="currentPriceOverride"
+                   min="1000" max="500000" step="100"
+                   class="w-full rounded-lg border border-cyan-300 dark:border-cyan-700 bg-cyan-50/40 dark:bg-cyan-950/20 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 font-bold" />
+
             <!-- Suggestions dropdown -->
             <ul x-show="showCurrentSuggestions && currentSuggestions.length" @click.away="showCurrentSuggestions = false"
                 class="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg text-sm text-slate-700 dark:text-slate-200">
@@ -121,7 +137,23 @@
               </div>
             </div>
             <input type="hidden" name="vehicle_target_id" id="target_vehicle_id_input" required />
-            
+
+            <!-- Precio + override (no escribe en BBDD) -->
+            <div x-show="selectedTarget" x-cloak class="flex items-center gap-2 text-[11px]">
+              <span class="text-slate-500 dark:text-slate-400">PVP:</span>
+              <strong class="text-slate-800 dark:text-slate-200 tabular-nums" x-text="((targetPriceOverride && targetPriceOverride > 0 ? targetPriceOverride : selectedTarget?.price_eur) || '—').toLocaleString('es-ES') + ' €'"></strong>
+              <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"
+                    :class="priceSourceLabel(targetPriceOverride && targetPriceOverride > 0 ? 'manual_override' : selectedTarget?.price_source).cls"
+                    x-text="targetPriceOverride && targetPriceOverride > 0 ? 'Tú lo editaste' : priceSourceLabel(selectedTarget?.price_source).label"></span>
+              <button type="button" @click="targetPriceOverride = (targetPriceOverride === null ? (selectedTarget?.price_eur || 0) : null)"
+                      class="ml-auto text-cyan-600 dark:text-cyan-400 hover:underline font-semibold"
+                      x-text="targetPriceOverride === null ? '✏️ editar' : '↺ usar BBDD'"></button>
+            </div>
+            <input type="number" x-show="targetPriceOverride !== null" x-cloak
+                   name="vehicle_target_price_override_eur" x-model.number="targetPriceOverride"
+                   min="1000" max="500000" step="100"
+                   class="w-full rounded-lg border border-cyan-300 dark:border-cyan-700 bg-cyan-50/40 dark:bg-cyan-950/20 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 font-bold" />
+
             <!-- Suggestions dropdown -->
             <ul x-show="showTargetSuggestions && targetSuggestions.length" @click.away="showTargetSuggestions = false"
                 class="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg text-sm text-slate-700 dark:text-slate-200">
@@ -781,6 +813,8 @@ function commutePlanner() {
     showTargetSuggestions: false,
     selectedCurrent: null,
     selectedTarget: null,
+    currentPriceOverride: null,
+    targetPriceOverride: null,
     
     // Map Routing State
     startPoint: null,
@@ -1312,15 +1346,27 @@ function commutePlanner() {
       this.searchCurrent = v.make + ' ' + v.model;
       document.getElementById('current_vehicle_id_input').value = v.id;
       this.showCurrentSuggestions = false;
+      this.currentPriceOverride = null;  // reset al cambiar de coche
       localStorage.setItem('mubil_selected_current', JSON.stringify(v));
     },
-    
+
     selectTargetVehicle(v) {
       this.selectedTarget = v;
       this.searchTarget = v.make + ' ' + v.model;
       document.getElementById('target_vehicle_id_input').value = v.id;
       this.showTargetSuggestions = false;
+      this.targetPriceOverride = null;
       localStorage.setItem('mubil_selected_target', JSON.stringify(v));
+    },
+
+    priceSourceLabel(source) {
+      return {
+        'manual':    {label: 'PVP verificado',    cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'},
+        'gemini':    {label: 'Estimado IA',       cls: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300'},
+        'heuristic': {label: 'Estimado ±20 %',    cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'},
+        'mock':      {label: 'Demo (placeholder)', cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'},
+        'unknown':   {label: 'Sin precio',        cls: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300'},
+      }[source] || {label: source || '—', cls: 'bg-slate-100 text-slate-600'};
     }
   };
 }

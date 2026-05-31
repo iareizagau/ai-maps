@@ -410,3 +410,127 @@ class WallboxCapexAndIntegrationTests(TestCase):
                 vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
                 profile="other",
             )
+
+    def test_price_override_does_not_touch_db(self):
+        # Override en sesión: el cálculo usa otro precio pero v.price_eur
+        # en BBDD queda intacto.
+        q = services.calculate_tco_quote(
+            cp="20018", km_year=15000,
+            vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+            vehicle_target_price_override_eur=50_000,  # diferente del 41.500 real
+        )
+        self.assertEqual(q.vehicle_target_price_used_eur, 50_000)
+        self.assertEqual(q.vehicle_current_price_used_eur, 28_500)
+        # BBDD intacta
+        from apps.mubil.models import Vehicle as V
+        self.assertEqual(V.objects.get(pk=self.niro.id).price_eur, 41_500)
+
+    def test_price_override_changes_payback(self):
+        base = services.calculate_tco_quote(
+            cp="20018", km_year=15000,
+            vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+            subvencion_override_eur=0,
+        )
+        with_higher = services.calculate_tco_quote(
+            cp="20018", km_year=15000,
+            vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+            subvencion_override_eur=0,
+            vehicle_target_price_override_eur=60_000,  # más caro → payback peor
+        )
+        self.assertGreater(with_higher.payback_years, base.payback_years)
+
+
+class PriceHeuristicTests(TestCase):
+    """Calibración + estimación del módulo `price_heuristic`."""
+
+    def test_tier_lookup_handles_compound_make(self):
+        from apps.mubil.data.price_heuristic import tier_for_make
+        self.assertEqual(tier_for_make("Volkswagen Canarias"), "mid")
+        self.assertEqual(tier_for_make("BMW Group"), "premium")
+        self.assertEqual(tier_for_make("Dacia"), "budget")
+        self.assertEqual(tier_for_make("MarcaInventada"), "mid")  # default
+
+    def test_calibrate_with_minimal_anchors(self):
+        from decimal import Decimal as D
+        from apps.mubil.data.price_heuristic import calibrate
+        anchors = [
+            Vehicle.objects.create(make="Dacia",   model="Spring",   year=2025,
+                                   propulsion="BEV", battery_kwh=D("26.8"),
+                                   price_eur=18500, price_source="manual"),
+            Vehicle.objects.create(make="Tesla",   model="Model 3",  year=2025,
+                                   propulsion="BEV", battery_kwh=D("60"),
+                                   price_eur=39990, price_source="manual"),
+            Vehicle.objects.create(make="BMW",     model="i4",       year=2025,
+                                   propulsion="BEV", battery_kwh=D("83.9"),
+                                   price_eur=60900, price_source="manual"),
+        ]
+        table = calibrate(anchors)
+        self.assertEqual(table.n_anchors, 3)
+        # premium mediana = (39990 + 60900) / 2 → 50445 (statistics.median)
+        self.assertEqual(table.cluster_median_price[("BEV", "premium")], 50445)
+        self.assertEqual(table.cluster_median_price[("BEV", "budget")], 18500)
+
+    def test_estimate_uses_cluster_median_and_battery_adjustment(self):
+        from decimal import Decimal as D
+        from apps.mubil.data.price_heuristic import calibrate
+        anchors = [
+            Vehicle.objects.create(make="Tesla", model="M3", year=2025,
+                                   propulsion="BEV", battery_kwh=D("60"),
+                                   price_eur=40000, price_source="manual"),
+            Vehicle.objects.create(make="BMW",   model="i4", year=2025,
+                                   propulsion="BEV", battery_kwh=D("80"),
+                                   price_eur=60000, price_source="manual"),
+        ]
+        table = calibrate(anchors)
+        # Predicción para BEV premium con 70 kWh: mediana base 50000,
+        # mediana batería 70 kWh → delta 0 → precio 50000.
+        pred = table.estimate(propulsion="BEV", make="Audi", battery_kwh=D("70"))
+        self.assertEqual(pred, 50000)
+        # 100 kWh → +30 kWh × 250 €/kWh = +7500
+        pred_big = table.estimate(propulsion="BEV", make="Porsche", battery_kwh=D("100"))
+        self.assertEqual(pred_big, 50000 + 7500)
+
+    def test_estimate_falls_back_to_propulsion_median_when_cluster_empty(self):
+        from apps.mubil.data.price_heuristic import calibrate
+        anchors = [
+            Vehicle.objects.create(make="Toyota", model="Yaris", year=2025,
+                                   propulsion="ICE", price_eur=19500,
+                                   price_source="manual"),
+        ]
+        table = calibrate(anchors)
+        # No hay nada en ICE/premium → fallback al fallback de propulsion → 19500
+        pred = table.estimate(propulsion="ICE", make="BMW", battery_kwh=None)
+        self.assertEqual(pred, 19500)
+
+
+class GeminiPriceLookupTests(TestCase):
+    """Parser de la respuesta Gemini (sin red, sólo unit)."""
+
+    def test_parses_plain_json(self):
+        from apps.mubil.data.gemini_price_lookup import _parse_response
+        est = _parse_response('{"price_eur": 34500, "confidence": 0.85}')
+        self.assertEqual(est.price_eur, 34500)
+        self.assertEqual(est.confidence, 0.85)
+
+    def test_parses_json_wrapped_in_markdown_fences(self):
+        from apps.mubil.data.gemini_price_lookup import _parse_response
+        est = _parse_response('```json\n{"price_eur": 28000, "confidence": 0.7}\n```')
+        self.assertEqual(est.price_eur, 28000)
+
+    def test_parses_json_with_leading_chatter(self):
+        from apps.mubil.data.gemini_price_lookup import _parse_response
+        est = _parse_response('Aquí tienes: {"price_eur": 22000, "confidence": 0.6}')
+        self.assertEqual(est.price_eur, 22000)
+
+    def test_returns_none_on_garbage(self):
+        from apps.mubil.data.gemini_price_lookup import _parse_response
+        est = _parse_response("no tengo ni idea")
+        self.assertIsNone(est.price_eur)
+        self.assertEqual(est.confidence, 0.0)
+
+    def test_validate_against_heuristic_within_tolerance(self):
+        from apps.mubil.data.gemini_price_lookup import validate_against_heuristic
+        # Gemini 35k vs heurística 30k → diff 16,7 % → OK
+        self.assertTrue(validate_against_heuristic(gemini_price=35000, heuristic_price=30000))
+        # Gemini 80k vs heurística 30k → diff 166 % → rechazar
+        self.assertFalse(validate_against_heuristic(gemini_price=80000, heuristic_price=30000))

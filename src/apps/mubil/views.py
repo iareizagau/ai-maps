@@ -101,6 +101,9 @@ def advisor_quote(request):
     the same calculation lives in `advisor/api.py` (`POST /api/v1/advisor/quote`).
     """
     try:
+        motorway_pct_raw = request.POST.get('motorway_pct')
+        motorway_pct = float(motorway_pct_raw) if (motorway_pct_raw and motorway_pct_raw.strip()) else None
+        
         payload = {
             'cp': request.POST['cp'].strip(),
             'km_year': int(request.POST['km_year']),
@@ -109,6 +112,7 @@ def advisor_quote(request):
             'years_horizon': int(request.POST.get('years_horizon', 10)),
             'night_charging': request.POST.get('night_charging') == 'on',
             'subvencion_eur': int(request.POST.get('subvencion_eur', 0) or 0),
+            'motorway_pct': motorway_pct,
         }
     except (KeyError, ValueError) as e:
         return HttpResponseBadRequest(f"Datos del formulario inválidos: {e}")

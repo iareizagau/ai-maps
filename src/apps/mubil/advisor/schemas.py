@@ -14,6 +14,9 @@ class AdvisorQuoteIn(Schema):
     years_horizon: int = 10
     night_charging: bool = False
     subvencion_eur: int = 0
+    motorway_pct: Optional[float] = None
+    nacional_pct: Optional[float] = None
+
 
 
 class VehicleSummary(Schema):
@@ -23,6 +26,26 @@ class VehicleSummary(Schema):
     year: int
     propulsion: str
     price_eur: Optional[int] = None
+    dgt_label: Optional[str] = None
+    range_wltp_km: Optional[int] = None
+    consumption_kwh_100km: Optional[Decimal] = None
+    consumption_l_100km: Optional[Decimal] = None
+
+
+class RouteCommuteIn(Schema):
+    start_lng: float
+    start_lat: float
+    end_lng: float
+    end_lat: float
+
+
+class RouteCommuteOut(Schema):
+    distance_km: float
+    motorway_pct: float
+    nacional_pct: float
+    urban_pct: float
+    route_geojson: dict
+
 
 
 class CostBreakdownOut(Schema):
@@ -60,3 +83,6 @@ class AdvisorQuoteOut(Schema):
     payback_years: Optional[Decimal] = None
     subvencion_eur: Decimal = Decimal("0")
     nearby_chargers: List[ChargerOut] = []
+    motorway_pct: Optional[float] = None
+    nacional_pct: Optional[float] = None
+    urban_pct: Optional[float] = None

@@ -5,11 +5,17 @@ Uses BeautifulSoup for HTML parsing and Nominatim for geocoding.
 
 Usage:
     python manage.py seed_london_bachata
-    python manage.py seed_london_bachata --url "https://www.eventbrite.com/d/united-kingdom--london--18207/bachata/?start_date=2026-06-06&end_date=2026-06-13"
+    python manage.py seed_london_bachata --url "https://www.eventbrite.com/d/..."
     python manage.py seed_london_bachata --pages 3
-    python manage.py seed_london_bachata --clear
-    python manage.py seed_london_bachata --dry-run
+    python manage.py seed_london_bachata --proxy http://user:pass@host:port
+    python manage.py seed_london_bachata --clear --dry-run
+
+NOTE: Eventbrite blocks datacenter IPs (DigitalOcean, AWS, GCP, etc.) with 405.
+      From a server, set SCRAPER_PROXY env var or pass --proxy to route through
+      a residential/SOCKS proxy.
+      Example: SCRAPER_PROXY=socks5://user:pass@host:1080
 """
+import os
 import re
 import time
 import json
@@ -34,14 +40,24 @@ DEFAULT_URL = (
     "?start_date=2026-06-06&end_date=2026-06-13"
 )
 
+# Full browser-like headers — helps with sites that check common headers.
+# Eventbrite still blocks cloud IPs regardless of headers, so use --proxy.
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/124.0.0.0 Safari/537.36"
     ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
     "Accept-Language": "en-GB,en;q=0.9",
-    "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Cache-Control": "max-age=0",
 }
 
 MONTHS = {
@@ -51,11 +67,44 @@ MONTHS = {
 
 
 # ---------------------------------------------------------------------------
-# Fetch
+# HTTP Session — shared across all requests in one command run.
+# Proxy is set once here from env var; --proxy CLI flag overrides it.
 # ---------------------------------------------------------------------------
 
-def _fetch(url: str) -> str:
-    resp = requests.get(url, headers=HEADERS, timeout=20)
+_SESSION: requests.Session | None = None
+
+
+def _get_session(proxy: str | None = None) -> requests.Session:
+    """Return (and lazily create) a shared session with browser-like headers."""
+    global _SESSION
+    if _SESSION is None:
+        _SESSION = requests.Session()
+        _SESSION.headers.update(HEADERS)
+
+        # Proxy: --proxy arg > SCRAPER_PROXY env var > none
+        effective_proxy = proxy or os.environ.get("SCRAPER_PROXY")
+        if effective_proxy:
+            _SESSION.proxies = {"http": effective_proxy, "https": effective_proxy}
+
+        # Warm up: GET the homepage first to collect cookies (helps avoid bot detection)
+        try:
+            _SESSION.get("https://www.eventbrite.com/", timeout=15)
+        except Exception:
+            pass
+
+    return _SESSION
+
+
+def _fetch(url: str, proxy: str | None = None) -> str:
+    sess = _get_session(proxy)
+    resp = sess.get(url, timeout=25)
+    if resp.status_code == 405:
+        raise requests.HTTPError(
+            f"405 Method Not Allowed — Eventbrite is blocking this server's IP "
+            f"(datacenter IPs are blacklisted). Run with --proxy or set SCRAPER_PROXY "
+            f"env var to route through a residential proxy. URL: {url}",
+            response=resp,
+        )
     resp.raise_for_status()
     return resp.text
 
@@ -333,7 +382,7 @@ def _normalise_card(ev: dict, stdout, style) -> dict | None:
 # Top-level scraper
 # ---------------------------------------------------------------------------
 
-def scrape_eventbrite(base_url: str, max_pages: int, stdout, style) -> list[dict]:
+def scrape_eventbrite(base_url: str, max_pages: int, stdout, style, proxy: str | None = None) -> list[dict]:
     all_events: list[dict] = []
     seen_names: set[str] = set()
 
@@ -345,7 +394,7 @@ def scrape_eventbrite(base_url: str, max_pages: int, stdout, style) -> list[dict
 
         stdout.write(f"\n  📄 Page {page}: {page_url}")
         try:
-            html = _fetch(page_url)
+            html = _fetch(page_url, proxy=proxy)
         except requests.RequestException as exc:
             stdout.write(style.ERROR(f"  HTTP error: {exc}"))
             break
@@ -402,14 +451,32 @@ class Command(BaseCommand):
                             help='Delete matching events before re-scraping')
         parser.add_argument('--dry-run', action='store_true',
                             help='Scrape and print without writing to DB')
+        parser.add_argument(
+            '--proxy', default=None,
+            help=(
+                'HTTP/SOCKS proxy URL (e.g. http://user:pass@host:3128 or '
+                'socks5://user:pass@host:1080). Overrides SCRAPER_PROXY env var. '
+                'Required when running from cloud servers (DigitalOcean, AWS, etc.) '
+                'because Eventbrite blocks datacenter IPs.'
+            ),
+        )
 
     def handle(self, *args, **options):
+        proxy = options.get('proxy') or os.environ.get('SCRAPER_PROXY')
+        if proxy:
+            self.stdout.write(self.style.WARNING(f"  🔀 Using proxy: {proxy}"))
+        else:
+            self.stdout.write(self.style.WARNING(
+                "  ⚠️  No proxy set. Will fail on cloud servers (Eventbrite blocks datacenter IPs).\n"
+                "     Set SCRAPER_PROXY env var or use --proxy flag."
+            ))
+
         self.stdout.write(self.style.MIGRATE_HEADING(
             f"\n🕷  Scraping Eventbrite — {options['url']}\n"
         ))
 
         events = scrape_eventbrite(
-            options['url'], options['pages'], self.stdout, self.style
+            options['url'], options['pages'], self.stdout, self.style, proxy=proxy
         )
         self.stdout.write(f"\n  ✅ Total scraped: {len(events)}\n")
 

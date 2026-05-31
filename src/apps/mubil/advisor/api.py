@@ -4,10 +4,7 @@ Endpoints (PROPUESTA.md §3.1):
   GET  /vehicles?q=&propulsion=  → autocompletar catálogo
   POST /quote                    → AdvisorQuoteIn → AdvisorQuoteOut
   GET  /cp/{cp}                  → centroide CP (helper para el formulario)
-
-Datos: ESIOS PVPC (indicator 1001), MINCOTUR `FiltroProvincia/20`, OpenData
-Euskadi recarga. Mientras los tokens no estén, se usa
-`apps.mubil.data.price_defaults`.
+  POST /route-commute            → RouteCommuteIn → RouteCommuteOut
 """
 
 from typing import List, Optional
@@ -25,6 +22,8 @@ from .schemas import (
     ChargerOut,
     CostBreakdownOut,
     VehicleSummary,
+    RouteCommuteIn,
+    RouteCommuteOut,
 )
 
 router = Router()
@@ -41,6 +40,10 @@ def _vehicle_to_summary(v: Vehicle) -> dict:
         "year": v.year,
         "propulsion": v.propulsion,
         "price_eur": v.price_eur,
+        "dgt_label": v.dgt_label or "C",
+        "range_wltp_km": v.range_wltp_km,
+        "consumption_kwh_100km": v.consumption_kwh_100km,
+        "consumption_l_100km": v.consumption_l_100km,
     }
 
 
@@ -89,6 +92,9 @@ def _quote_to_out(quote: services.TCOQuote) -> dict:
         "payback_years": quote.payback_years,
         "subvencion_eur": quote.subvencion_eur,
         "nearby_chargers": chargers,
+        "motorway_pct": quote.motorway_pct,
+        "nacional_pct": quote.nacional_pct,
+        "urban_pct": quote.urban_pct,
     }
 
 
@@ -105,15 +111,21 @@ def list_vehicles(
     request,
     q: Optional[str] = Query(None),
     propulsion: Optional[str] = Query(None),
-    limit: int = Query(20),
+    limit: int = Query(50),
 ):
     """Catálogo Vehicle. Filtra por texto libre `q` y propulsión."""
     qs = Vehicle.objects.all()
     if q:
+        # Permite buscar por make o model
         qs = qs.filter(make__icontains=q) | qs.filter(model__icontains=q)
     if propulsion:
-        qs = qs.filter(propulsion=propulsion.upper())
-    return [_vehicle_to_summary(v) for v in qs[:limit]]
+        if propulsion.upper() == "ICE_ALL":
+            qs = qs.filter(propulsion__in=["ICE", "DIESEL", "HEV"])
+        elif propulsion.upper() == "EV_ALL":
+            qs = qs.filter(propulsion__in=["BEV", "PHEV"])
+        else:
+            qs = qs.filter(propulsion=propulsion.upper())
+    return [_vehicle_to_summary(v) for v in qs.order_by("make", "model")[:limit]]
 
 
 @router.get("/cp/{cp}")
@@ -138,9 +150,26 @@ def post_quote(request, payload: AdvisorQuoteIn):
             years_horizon=payload.years_horizon,
             night_charging=payload.night_charging,
             subvencion_eur=payload.subvencion_eur,
+            motorway_pct=payload.motorway_pct,
+            nacional_pct=payload.nacional_pct,
         )
     except Vehicle.DoesNotExist:
         return 404, {"message": "Vehículo no encontrado"}
     except ValueError as e:
         return 400, {"message": str(e)}
     return 200, _quote_to_out(quote)
+
+
+@router.post("/route-commute", response={200: RouteCommuteOut, 400: dict})
+def post_route_commute(request, payload: RouteCommuteIn):
+    """Calcula la ruta óptima de pgRouting entre origen y destino."""
+    try:
+        res = services.get_commute_route(
+            start_lng=payload.start_lng,
+            start_lat=payload.start_lat,
+            end_lng=payload.end_lng,
+            end_lat=payload.end_lat
+        )
+        return 200, res
+    except Exception as e:
+        return 400, {"message": str(e)}

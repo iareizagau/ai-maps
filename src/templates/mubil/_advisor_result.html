@@ -1,91 +1,267 @@
 {% load i18n %}
-{# Result partial for /mubil/advisor/quote/ — rendered via HTMX hx-swap. #}
-
 {% with current=q.vehicle_current target=q.vehicle_target bd_c=q.breakdown_current bd_t=q.breakdown_target %}
 
-<div class="space-y-6" x-data x-init="$nextTick(() => window.mubilAdvisorRender({{ q_json|escape }}))">
+<div class="space-y-4" x-data x-init="$nextTick(() => window.mubilAdvisorRender({{ q_json|escape }}))">
 
-  {# --------- Stat cards --------- #}
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5">
-      <p class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Coste {{ q.years_horizon }} años · actual</p>
-      <p class="mt-1 text-3xl font-bold text-slate-900 dark:text-white">{{ bd_c.total|floatformat:0 }}€</p>
-      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ current.make }} {{ current.model }} ({{ current.year }})</p>
+  <div class="rounded-2xl overflow-hidden shadow-lg border border-emerald-200 dark:border-emerald-700">
+    <div class="bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span class="text-[10px] font-extrabold uppercase tracking-widest text-white/90">Veredicto TCO · {{ q.years_horizon }} años</span>
+      </div>
+      <span class="text-[10px] text-emerald-100 font-semibold">{{ q.km_year|floatformat:0 }} km/año · {{ current.make }} → {{ target.make }}</span>
     </div>
 
-    <div class="rounded-2xl border border-cyan-300 dark:border-cyan-700 bg-cyan-50 dark:bg-cyan-900/30 p-5">
-      <p class="text-xs font-bold uppercase tracking-widest text-cyan-700 dark:text-cyan-300">Coste {{ q.years_horizon }} años · eléctrico</p>
-      <p class="mt-1 text-3xl font-bold text-cyan-700 dark:text-cyan-300">{{ bd_t.total|floatformat:0 }}€</p>
-      <p class="mt-1 text-xs text-cyan-600 dark:text-cyan-200">{{ target.make }} {{ target.model }} ({{ target.year }})</p>
+    <div class="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 px-5 pt-4 pb-5">
+      <div class="flex flex-col sm:flex-row sm:items-end gap-4">
+
+        <div class="flex-1">
+          <p class="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-1">Ahorro neto total</p>
+          <div class="flex items-baseline gap-2">
+            <span class="text-5xl font-black text-emerald-700 dark:text-emerald-300 tabular-nums leading-none"
+                  x-data x-init="$el.textContent = ({{ bd_c.total|floatformat:0 }} - {{ bd_t.total|floatformat:0 }}).toLocaleString('es-ES') + ' €'"></span>
+          </div>
+          <p class="mt-1.5 text-sm text-emerald-600 dark:text-emerald-400 font-semibold"
+             x-data x-init="$el.textContent = '≈ ' + Math.round(({{ bd_c.total|floatformat:0 }} - {{ bd_t.total|floatformat:0 }}) / ({{ q.years_horizon }} * 12)).toLocaleString('es-ES') + ' € / mes de ahorro operativo'"></p>
+        </div>
+
+        <div class="flex flex-col gap-3 sm:items-end min-w-[210px]">
+          {% if q.payback_years is not None %}
+          <div class="w-full sm:w-52"
+               x-data="{ pct: Math.min(Math.round(({{ q.payback_years }} / {{ q.years_horizon }}) * 100), 100) }">
+            <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 mb-1">
+              <span>Punto de equilibrio</span>
+              <span class="text-emerald-800 dark:text-emerald-300 font-extrabold">{{ q.payback_years }} años</span>
+            </div>
+            <div class="h-2 w-full rounded-full bg-emerald-200 dark:bg-emerald-800/60 overflow-hidden">
+              <div class="h-full rounded-full bg-emerald-500 transition-all duration-700"
+                   :style="'width: ' + pct + '%'"></div>
+            </div>
+            <p class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5">A partir del año {{ q.payback_years }} ya ganas dinero neto</p>
+          </div>
+          {% else %}
+          <p class="text-xs text-emerald-600 dark:text-emerald-400 italic">Sin dato de precio de compra para calcular payback</p>
+          {% endif %}
+
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-100 dark:bg-teal-900/50 border border-teal-200 dark:border-teal-700">
+            <span class="text-lg">🌿</span>
+            <div>
+              <span class="text-xs font-extrabold text-teal-700 dark:text-teal-300">{{ q.co2_saved_kg_year|floatformat:0 }} kg CO₂</span>
+              <span class="text-[10px] text-teal-600 dark:text-teal-400"> menos / año</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="rounded-2xl border border-violet-200 dark:border-violet-800 bg-white dark:bg-slate-800 shadow-sm overflow-hidden"
+       x-data="evDictamen({
+         km: {{ q.km_year }},
+         yrs: {{ q.years_horizon }},
+         eIce: {{ bd_c.energy|floatformat:0 }},
+         eEv: {{ bd_t.energy|floatformat:0 }},
+         chargers: {{ q.nearby_chargers|length }},
+         urban: {{ q.urban_pct|default:30 }},
+         payback: {{ q.payback_years|default:'null' }},
+         wltp: {{ target.range_wltp_km|default:300 }},
+         co2: {{ q.co2_saved_kg_year|floatformat:0 }}
+       })">
+
+    <div class="bg-gradient-to-r from-violet-600 to-purple-600 px-5 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        <span class="text-[10px] font-extrabold uppercase tracking-widest text-white/90">Dictamen de Idoneidad EV</span>
+      </div>
+      <span class="text-[10px] text-violet-200 font-semibold">{{ target.make }} {{ target.model }}</span>
     </div>
 
-    <div class="rounded-2xl border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/30 p-5">
-      <p class="text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">Ahorro operativo {{ q.years_horizon }} años</p>
-      <p class="mt-1 text-3xl font-bold text-emerald-700 dark:text-emerald-300">
-        {% widthratio q.total_cost_current 1 1 %} → {% widthratio q.total_cost_target 1 1 %} €
-      </p>
-      <p class="mt-1 text-xs text-emerald-600 dark:text-emerald-200">
-        Diferencia: <strong>{{ q.total_cost_current|floatformat:0 }} − {{ q.total_cost_target|floatformat:0 }} €</strong>
-      </p>
+    <div class="p-5">
+      <div class="flex flex-col sm:flex-row gap-6">
+
+        <div class="flex flex-col items-center justify-center shrink-0">
+          <div class="relative w-32 h-32">
+            <svg viewBox="0 0 100 100" class="w-full h-full -rotate-[135deg]">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="#e2e8f0" stroke-width="8"
+                      stroke-dasharray="197.9 263.9" stroke-linecap="round" class="dark:stroke-slate-700"/>
+              <circle cx="50" cy="50" r="42" fill="none" stroke-width="8"
+                      :stroke="scoreColor" :stroke-dasharray="gaugeDash"
+                      stroke-linecap="round" style="transition: stroke-dasharray 1.2s ease"/>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="text-3xl font-black tabular-nums leading-none" :style="'color:'+scoreColor" x-text="score"></span>
+              <span class="text-[10px] font-bold text-slate-400">/100</span>
+            </div>
+          </div>
+          <div class="mt-2 px-4 py-1 rounded-full text-xs font-extrabold text-white shadow"
+               :style="'background-color:'+scoreColor" x-text="scoreLabel"></div>
+        </div>
+
+        <div class="flex-1 space-y-3">
+          <template x-for="d in dims" :key="d.label">
+            <div>
+              <div class="flex items-center justify-between mb-0.5">
+                <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                  <span x-text="d.icon"></span>
+                  <span x-text="d.label"></span>
+                </span>
+                <span class="text-[10px] font-extrabold tabular-nums" :style="'color:'+scoreColor" x-text="d.pts+'/'+d.max+' pts'"></span>
+              </div>
+              <div class="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-700" :style="'width:'+d.pct+'%;background-color:'+scoreColor"></div>
+              </div>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 italic" x-text="d.arg"></p>
+            </div>
+          </template>
+        </div>
+
+      </div>
+
+      <div class="mt-5 pt-4 border-t border-slate-100 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+        <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800 p-3.5">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-2">🌿 Impacto Ambiental / año</p>
+          <div class="flex items-center gap-4 flex-wrap">
+            <div>
+              <span class="text-2xl font-black text-emerald-700 dark:text-emerald-300" x-text="co2.toLocaleString('es-ES')"></span>
+              <span class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold"> kg CO₂</span>
+            </div>
+            <div class="text-[11px] text-emerald-600 dark:text-emerald-400 space-y-0.5">
+              <div>≈ <strong x-text="co2Trees"></strong> árboles / año</div>
+              <div>≈ <strong x-text="co2Flights"></strong> vuelos BCN–NYC</div>
+            </div>
+          </div>
+        </div>
+
+        {% if q.payback_years is not None %}
+        <div class="rounded-xl bg-violet-50 dark:bg-violet-950/40 border border-violet-100 dark:border-violet-800 p-3.5">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400 mb-2">📈 Línea de Amortización</p>
+          <div class="flex items-end gap-0.5 h-10">
+            <template x-for="yr in Array.from({length: yrs}, (_,i) => i+1)" :key="yr">
+              <div class="flex-1 rounded-t min-h-[4px]"
+                   :class="yr <= payback ? 'bg-red-300 dark:bg-red-700' : 'bg-emerald-400 dark:bg-emerald-600'"
+                   :style="'height:' + (yr <= payback ? Math.max(8, Math.round((1-yr/payback)*100)) : 100) + '%'"
+                   :title="'Año ' + yr"></div>
+            </template>
+          </div>
+          <div class="flex justify-between text-[9px] text-violet-500 dark:text-violet-400 mt-1.5">
+            <span>Año 1</span>
+            <span class="font-bold text-violet-700 dark:text-violet-300">Equilibrio · año {{ q.payback_years }}</span>
+            <span>Año {{ q.years_horizon }}</span>
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+
+  <div class="grid grid-cols-2 gap-3">
+
+
+    <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Coste actual · {{ q.years_horizon }} años</p>
+        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">{{ current.dgt_label }}</span>
+      </div>
+      <p class="text-2xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{{ bd_c.total|floatformat:0 }}€</p>
+      <p class="text-[11px] text-slate-400 mt-0.5 truncate">{{ current.make }} {{ current.model }}</p>
+      <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-700 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+        <span>⛽ Energía</span><span class="font-semibold text-right">{{ bd_c.energy|floatformat:0 }}€</span>
+        <span>🔧 Mant.</span><span class="font-semibold text-right">{{ bd_c.maintenance|floatformat:0 }}€</span>
+        <span>🛡 Seguro</span><span class="font-semibold text-right">{{ bd_c.insurance|floatformat:0 }}€</span>
+        <span>📋 Imp.</span><span class="font-semibold text-right">{{ bd_c.taxes|floatformat:0 }}€</span>
+      </div>
     </div>
 
-    <div class="rounded-2xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 p-5">
-      <p class="text-xs font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">CO₂ evitado / año</p>
-      <p class="mt-1 text-3xl font-bold text-amber-700 dark:text-amber-300">{{ q.co2_saved_kg_year|floatformat:0 }} kg</p>
-      <p class="mt-1 text-xs text-amber-600 dark:text-amber-200">
-        {{ q.co2_kg_year_current|floatformat:0 }} → {{ q.co2_kg_year_target|floatformat:0 }} kg/año
-        {% if q.payback_years is not None %}· Payback compra: <strong>{{ q.payback_years }} años</strong>{% endif %}
-        {% if q.subvencion_eur and q.subvencion_eur > 0 %}<br/>Subvención aplicada: −{{ q.subvencion_eur|floatformat:0 }} €{% endif %}
-      </p>
+    <div class="rounded-xl border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-900/20 p-4 shadow-sm">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-cyan-700 dark:text-cyan-300">Eléctrico · {{ q.years_horizon }} años</p>
+        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-100 dark:bg-cyan-800 text-cyan-800 dark:text-cyan-100">0</span>
+      </div>
+      <p class="text-2xl font-black text-cyan-700 dark:text-cyan-300 tabular-nums">{{ bd_t.total|floatformat:0 }}€</p>
+      <p class="text-[11px] text-cyan-500 dark:text-cyan-400 mt-0.5 truncate">{{ target.make }} {{ target.model }}</p>
+      <div class="mt-2.5 pt-2 border-t border-cyan-100 dark:border-cyan-800 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px] text-cyan-700 dark:text-cyan-400">
+        <span>⚡ Energía</span><span class="font-semibold text-right">{{ bd_t.energy|floatformat:0 }}€</span>
+        <span>🔧 Mant.</span><span class="font-semibold text-right">{{ bd_t.maintenance|floatformat:0 }}€</span>
+        <span>🛡 Seguro</span><span class="font-semibold text-right">{{ bd_t.insurance|floatformat:0 }}€</span>
+        <span>📋 Imp.</span><span class="font-semibold text-right">{{ bd_t.taxes|floatformat:0 }}€</span>
+      </div>
     </div>
 
   </div>
 
-  {# --------- Breakdown chart --------- #}
-  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5">
-    <h3 class="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">Desglose a {{ q.years_horizon }} años (€)</h3>
-    <div id="advisor-chart" style="width:100%; height:260px;"></div>
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-sm">
+    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">Desglose comparado a {{ q.years_horizon }} años (€)</h3>
+    <div id="advisor-chart" style="width:100%; height:240px;"></div>
   </div>
 
-  {# --------- Chargers map --------- #}
-  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5">
-    <div class="flex items-center justify-between mb-3">
-      <h3 class="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-        Cargadores a 5 km de {{ q.cp_name|default:q.cp }}
-      </h3>
-      <span class="text-xs text-slate-500 dark:text-slate-400">{{ q.nearby_chargers|length }} encontrados</span>
+  {% if q.motorway_pct is not None %}
+  <div class="rounded-xl border border-cyan-100 dark:border-cyan-800 bg-slate-50 dark:bg-slate-900/50 p-4 shadow-sm flex items-start gap-3">
+    <div class="text-cyan-500 mt-0.5 shrink-0">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <div class="text-xs space-y-1.5">
+      <h4 class="font-bold text-slate-800 dark:text-slate-200">Auditoría de Perfil de Conducción</h4>
+      <div class="flex gap-2 flex-wrap">
+        <span class="px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 font-semibold">🛣 {{ q.motorway_pct|floatformat:0 }}% Autovía</span>
+        {% if q.nacional_pct %}<span class="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-semibold">🛤 {{ q.nacional_pct|floatformat:0 }}% Nacional</span>{% endif %}
+        <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-semibold">🏙 {{ q.urban_pct|floatformat:0 }}% Urbano</span>
+      </div>
+      <p class="text-slate-500 dark:text-slate-400 leading-relaxed">
+        {% if q.vehicle_target.propulsion == 'BEV' %}
+          EV aplica <strong class="text-cyan-600">+15% de consumo en autovía</strong> (resistencia aerodinámica) con recuperación regenerativa en tramos urbanos.
+        {% else %}
+          ICE aplica <strong class="text-emerald-600">+25% de consumo en ciudad</strong> (stop &amp; go) compensado en velocidad de crucero de autopista.
+        {% endif %}
+      </p>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-sm">
+    <div class="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-slate-700 pb-2">
+      <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Cargadores en tu área (5 km)</h3>
+      <span class="text-xs text-slate-400 dark:text-slate-500">{{ q.nearby_chargers|length }} disponibles</span>
     </div>
     {% if q.nearby_chargers %}
-      <div id="advisor-map-wrapper" style="position: relative;">
-        <div id="advisor-map" style="width:100%; height:320px; position:relative; z-index:0; border-radius:0.75rem; overflow:hidden;"></div>
-      </div>
-      <ul class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700 dark:text-slate-300">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-44 overflow-y-auto pr-1">
         {% for c in q.nearby_chargers %}
-          <li class="flex items-center gap-2">
-            <span class="inline-block w-2 h-2 rounded-full
+          <div class="p-2.5 rounded-xl border border-slate-100 dark:border-slate-750 bg-slate-50/50 dark:bg-slate-900/30 flex items-start gap-2.5">
+            <span class="inline-block mt-1 w-2.5 h-2.5 rounded-full shrink-0
               {% if c.power_kw >= 150 %}bg-emerald-500{% elif c.power_kw >= 50 %}bg-cyan-500{% else %}bg-amber-500{% endif %}"></span>
-            <span class="font-medium">{{ c.operator }}</span>
-            <span class="text-slate-400">·</span>
-            <span>{{ c.power_kw|floatformat:0 }} kW</span>
-            <span class="text-slate-400 ml-auto">{{ c.distance_km|floatformat:1 }} km</span>
-          </li>
+            <div class="text-xs min-w-0">
+              <div class="flex items-center gap-1.5 justify-between">
+                <span class="font-bold text-slate-800 dark:text-slate-200 truncate">{{ c.operator }}</span>
+                <span class="text-slate-400 shrink-0 font-semibold">{{ c.power_kw|floatformat:0 }} kW</span>
+              </div>
+              <p class="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">{{ c.address }}</p>
+              <div class="flex items-center justify-between mt-1 text-[10px] text-slate-500">
+                <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700">
+                  {% if c.power_kw >= 150 %}Ultra-Rápido{% elif c.power_kw >= 50 %}Rápido{% else %}Semi-Rápido{% endif %}
+                </span>
+                <span class="font-bold">{{ c.distance_km|floatformat:1 }} km</span>
+              </div>
+            </div>
+          </div>
         {% endfor %}
-      </ul>
+      </div>
     {% else %}
-      <p class="text-sm text-slate-500 dark:text-slate-400">No hay cargadores cerca del CP <code>{{ q.cp }}</code> en el seed demo.</p>
+      <p class="text-xs text-slate-500 dark:text-slate-400 py-4 text-center">No hay cargadores registrados cerca del CP <code>{{ q.cp }}</code> en la base de datos.</p>
     {% endif %}
   </div>
 
-  <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-    <strong>Notas honestas:</strong>
-    precios PVPC y combustibles son constantes del 2026-05-26 (placeholder hasta token ESIOS).
-    Mantenimiento, seguro e impuestos son medias representativas EH.
-    El payback descuenta la subvención que indiques (MOVES III, Plan Renove EH) del sobrecoste de compra.
+  <p class="text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed text-center">
+    Cálculos con precios a 2026-05-31: PVPC nocturno 0,085 €/kWh · diurno 0,165 €/kWh.
+    Combustibles (MINCOTUR): Gasolina 1,585 €/L · Diésel 1,495 €/L.
   </p>
 
 </div>
 
 {% endwith %}
-{# El render JS (ECharts + Leaflet) vive en advisor.html → extra_js para que
-   esté siempre definido cuando HTMX inyecta este partial. Ver SESSION_STATE §2.4. #}

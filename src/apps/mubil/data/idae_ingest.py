@@ -23,9 +23,9 @@ PROPUESTA.md §3.1.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
-from typing import Dict, Iterable, List, Optional
+from typing import Callable, Dict, Iterable, List, Optional
 
 from django.db import transaction
 
@@ -33,6 +33,14 @@ from apps.mubil.data import idae_client
 from apps.mubil.models import Vehicle
 
 log = logging.getLogger(__name__)
+
+
+# Callback invocado tras cada marca con (marca, delta_stats, cumulative_stats).
+# `delta` aísla lo aportado por esta marca para que el cliente pueda mostrar
+# "78 nuevos en BMW" sin recalcular acumulados.
+MarcaCallback = Callable[
+    [idae_client.Marca, "IDAEIngestStats", "IDAEIngestStats"], None
+]
 
 
 # ─────────────────────────────────────────────── stats
@@ -60,6 +68,19 @@ class IDAEIngestStats:
             "skipped": self.skipped,
             "errors": self.errors,
         }
+
+    def __sub__(self, other: "IDAEIngestStats") -> "IDAEIngestStats":
+        """Delta entre dos snapshots — útil para reportar lo aportado por una marca."""
+        return IDAEIngestStats(
+            marcas_seen=self.marcas_seen - other.marcas_seen,
+            fetched_elec=self.fetched_elec - other.fetched_elec,
+            fetched_wltp=self.fetched_wltp - other.fetched_wltp,
+            merged=self.merged - other.merged,
+            created=self.created - other.created,
+            updated=self.updated - other.updated,
+            skipped=self.skipped - other.skipped,
+            errors=self.errors - other.errors,
+        )
 
 
 # ─────────────────────────────────────────────── dgt-label inference
@@ -227,6 +248,8 @@ def ingest_full(
     only_marcas: Optional[Iterable[int]] = None,
     throttle_s: float = idae_client.DEFAULT_THROTTLE_S,
     dry_run: bool = False,
+    on_marcas_listed: Optional[Callable[[List[idae_client.Marca]], None]] = None,
+    on_marca_done: Optional[MarcaCallback] = None,
 ) -> IDAEIngestStats:
     """Ingest the entire IDAE catalog, marca by marca.
 
@@ -235,6 +258,12 @@ def ingest_full(
             for incremental ingests or smoke tests.
         throttle_s: seconds to sleep between requests (rate-limit guard).
         dry_run: parse + merge but don't write.
+        on_marcas_listed: invocado una vez con la lista resuelta de marcas
+            (ya filtrada por `only_marcas`) — permite al cliente mostrar el
+            total antes de empezar.
+        on_marca_done: invocado tras cada marca con (marca, delta, acumulado).
+            El callback NO debería levantar; cualquier excepción se traga
+            con log.warning para no abortar la ingesta global.
     """
     session = idae_client.IDAESession(throttle_s=throttle_s)
     marcas: List[idae_client.Marca] = session.marcas()
@@ -243,10 +272,22 @@ def ingest_full(
         wanted = set(only_marcas)
         marcas = [m for m in marcas if m.idae_id in wanted]
 
+    if on_marcas_listed is not None:
+        try:
+            on_marcas_listed(marcas)
+        except Exception as e:  # noqa: BLE001
+            log.warning("on_marcas_listed callback failed: %s", e)
+
     stats = IDAEIngestStats()
     for marca in marcas:
+        snapshot = replace(stats)  # copia inmutable previa a la marca
         stats.marcas_seen += 1
         log.info("IDAE ingest marca %s (id=%s)…", marca.name, marca.idae_id)
         ingest_marca(marca.idae_id, session=session, stats=stats, dry_run=dry_run)
+        if on_marca_done is not None:
+            try:
+                on_marca_done(marca, stats - snapshot, stats)
+            except Exception as e:  # noqa: BLE001
+                log.warning("on_marca_done callback failed for %s: %s", marca.name, e)
 
     return stats

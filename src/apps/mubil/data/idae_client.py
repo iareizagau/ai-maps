@@ -54,7 +54,7 @@ BASE_URL = "https://coches.idae.es"
 FORM_PATH = "/base-datos/marca-y-modelo"
 AJAX_PATH = "/ajax"
 HTTP_TIMEOUT = 30
-USER_AGENT = "mubil/0.1 (iareizagau@gmail.com)"
+USER_AGENT = "mu/0.1"
 DEFAULT_THROTTLE_S = 1.0
 PAGE_LENGTH = 1000  # DataTables `length` — IDAE tolerates this without 4xx.
 

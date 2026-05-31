@@ -279,8 +279,8 @@ def calculate_tco_quote(
     automáticamente y `subvencion_eur` se ignora a menos que
     `subvencion_override_eur` esté presente.
     """
-    if not (1_000 <= km_year <= 60_000):
-        raise ValueError(f"km_year fuera de rango (1.000-60.000): {km_year}")
+    if not (1_000 <= km_year <= 200_000):
+        raise ValueError(f"km_year fuera de rango (1.000-200.000): {km_year}")
     if not (1 <= years_horizon <= 20):
         raise ValueError(f"years_horizon fuera de rango (1-20): {years_horizon}")
     if not (0 <= subvencion_eur <= 30_000):

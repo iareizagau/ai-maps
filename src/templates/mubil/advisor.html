@@ -225,7 +225,7 @@
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
               <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Km / año</label>
-              <input type="number" name="km_year" id="km_year_input" value="15000" min="1000" max="60000" step="500" required
+              <input type="number" name="km_year" id="km_year_input" value="15000" min="1000" max="200000" step="500" required
                      :readonly="commuteMode" :class="commuteMode ? 'bg-slate-100 dark:bg-slate-900 opacity-75 cursor-not-allowed font-extrabold' : 'bg-slate-50 dark:bg-slate-900 font-bold'"
                      class="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500" />
             </div>
@@ -1273,7 +1273,12 @@ function commutePlanner() {
       });
       
       if (totalKm > 0) {
-        document.getElementById('km_year_input').value = Math.round(totalKm);
+        // Clamp + snap-to-step para que la validación HTML5 (min=1000,
+        // max=200000, step=500) no rechace el valor calculado y dispare
+        // "invalid form control is not focusable" cuando el accordion del
+        // Step 2 está colapsado.
+        const snapped = Math.max(1000, Math.min(200000, Math.round(totalKm / 500) * 500));
+        document.getElementById('km_year_input').value = snapped;
         document.getElementById('motorway_pct_input').value = Math.round((totalMotorwayKm / totalKm) * 100);
         document.getElementById('nacional_pct_input').value = Math.round((totalNacionalKm / totalKm) * 100);
       } else {

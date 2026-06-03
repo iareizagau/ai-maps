@@ -122,91 +122,220 @@
   </div>
 </section>
 
+{% if adoption %}
+{# ─────────────────────────── ADOPCIÓN EV EUSKADI ─────────────────────────── #}
+{# Renders only when EVRegistration has data — the local adoption story for the jury. #}
+<section class="border-t border-slate-200 dark:border-estrata-teal/15 bg-gradient-to-br from-estrata-teal/5 via-white to-white dark:from-estrata-teal/10 dark:via-estrata-navy dark:to-estrata-navy">
+  <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-10 sm:py-12">
+    <div class="grid lg:grid-cols-12 gap-6 lg:gap-10 items-center">
+      <div class="lg:col-span-7">
+        <p class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light">
+          Adopción real · Euskadi
+        </p>
+        <h2 class="mt-2 text-2xl sm:text-3xl font-bold text-estrata-navy dark:text-white">
+          Ya no es el futuro. Es el {{ adoption.month }}/{{ adoption.year }}.
+        </h2>
+        <p class="mt-3 text-slate-600 dark:text-slate-400 max-w-xl">
+          De cada 100 coches matriculados en Araba, Bizkaia y Gipuzkoa,
+          <strong class="text-estrata-navy dark:text-white tabular-nums">{{ adoption.share_pct|floatformat:1 }}</strong>
+          ya son eléctricos o híbridos enchufables. Fuente: DGT · matriculaciones por provincia.
+        </p>
+      </div>
+      <div class="lg:col-span-5">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="rounded-2xl border border-estrata-teal/20 bg-white dark:bg-estrata-navy p-5">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Cuota EV+PHEV</p>
+            <p class="mt-1 text-4xl font-black text-estrata-teal dark:text-estrata-teal_light tabular-nums">
+              {{ adoption.share_pct|floatformat:1 }}<span class="text-lg">%</span>
+            </p>
+            {% if adoption.yoy_pp is not None %}
+            <p class="mt-1 text-xs font-bold tabular-nums {% if adoption.yoy_pp >= 0 %}text-estrata-teal_dark dark:text-estrata-teal_light{% else %}text-slate-500{% endif %}">
+              {% if adoption.yoy_pp >= 0 %}▲{% else %}▼{% endif %} {{ adoption.yoy_pp|floatformat:1 }} pp interanual
+            </p>
+            {% endif %}
+          </div>
+          <div class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-5">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Matriculaciones EV</p>
+            <p class="mt-1 text-4xl font-black text-estrata-navy dark:text-white tabular-nums">
+              {{ adoption.ev_count|intcomma }}
+            </p>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">este mes · EH</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
 {# ─────────────────────────── LIVE STATS STRIP ─────────────────────────── #}
 <section
   class="border-y border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy"
 >
   <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-10 sm:py-12">
-    <p
-      class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light mb-6"
-    >
-      Datos reales en producción · actualizado al cargar esta página
-    </p>
-    <dl class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
-      <div class="text-center sm:text-left">
-        <dd class="text-3xl font-black text-estrata-navy dark:text-white">
-          {{ stats.vehicles|intcomma }}
-        </dd>
-        <dt
-          class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400"
-        >
-          Vehículos catalogados
-        </dt>
-        <p class="mt-1 text-[10px] text-slate-400">IDAE WLTP</p>
+    <div class="flex flex-wrap items-end justify-between gap-3 mb-6">
+      <p class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light">
+        Datos reales en producción · leídos en vivo de la base de datos
+      </p>
+    </div>
+
+    {# ─── Data freshness panel · proof the system is live, not a screenshot ─── #}
+    <div class="mb-8 rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-slate-50/60 dark:bg-estrata-navy_deep/40 px-4 sm:px-5 py-3">
+      <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
+        <span class="inline-flex items-center gap-1.5 font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+          <span class="relative flex h-2 w-2">
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-estrata-teal opacity-75"></span>
+            <span class="relative inline-flex h-2 w-2 rounded-full bg-estrata-teal"></span>
+          </span>
+          Estado de los datos
+        </span>
+
+        {% if freshness.pvpc %}
+        <span class="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+          <span class="font-semibold text-estrata-navy dark:text-white">PVPC ESIOS</span>
+          <span class="text-slate-400 dark:text-slate-500">·</span>
+          <span class="tabular-nums">{{ freshness.pvpc|naturaltime }}</span>
+        </span>
+        {% endif %}
+        {% if freshness.fuel %}
+        <span class="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+          <span class="font-semibold text-estrata-navy dark:text-white">MINCOTUR</span>
+          <span class="text-slate-400 dark:text-slate-500">·</span>
+          <span class="tabular-nums">{{ freshness.fuel|naturaltime }}</span>
+        </span>
+        {% endif %}
+        {% if freshness.charging %}
+        <span class="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+          <span class="font-semibold text-estrata-navy dark:text-white">Recarga MITECO/OCM</span>
+          <span class="text-slate-400 dark:text-slate-500">·</span>
+          <span class="tabular-nums">{{ freshness.charging|naturaltime }}</span>
+        </span>
+        {% endif %}
+        {% if freshness.docs %}
+        <span class="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+          <span class="font-semibold text-estrata-navy dark:text-white">Corpus RAG</span>
+          <span class="text-slate-400 dark:text-slate-500">·</span>
+          <span class="tabular-nums">{{ freshness.docs|naturaltime }}</span>
+        </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
+      {# ─── HERO STAT · vehicle catalog (the heaviest, most under-sold asset) ─── #}
+      <div class="lg:col-span-5">
+        <div class="h-full rounded-2xl border border-estrata-teal/25 dark:border-estrata-teal/30 bg-gradient-to-br from-estrata-teal/5 to-white dark:from-estrata-teal/10 dark:to-estrata-navy p-6 sm:p-7">
+          <div class="flex items-center gap-2.5">
+            <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-estrata-teal/15 dark:bg-estrata-teal/25 text-estrata-teal_dark dark:text-estrata-teal_light">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13l1.5-4.5A2 2 0 016.4 7h11.2a2 2 0 011.9 1.5L21 13m-18 0v5a1 1 0 001 1h1a1 1 0 001-1v-1h12v1a1 1 0 001 1h1a1 1 0 001-1v-5m-18 0h18M7 16h.01M17 16h.01" />
+              </svg>
+            </span>
+            <p class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light">
+              Catálogo de vehículos
+            </p>
+          </div>
+          <p class="mt-2 text-5xl sm:text-6xl font-black text-estrata-navy dark:text-white tabular-nums leading-none">
+            {{ vehicles_meta.total|intcomma }}
+          </p>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            modelos con homologación WLTP, etiqueta DGT y precio. Fuente IDAE.
+          </p>
+
+          {# EV vs combustion split — we cover both sides of the comparison #}
+          <div class="mt-5">
+            <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+              <span class="text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums">
+                {{ vehicles_meta.ev|intcomma }} eléctricos
+              </span>
+              <span class="text-slate-500 dark:text-slate-400 tabular-nums">
+                {{ vehicles_meta.combustion|intcomma }} combustión
+              </span>
+            </div>
+            <div class="h-2 rounded-full bg-slate-200 dark:bg-estrata-navy_deep overflow-hidden flex">
+              {% widthratio vehicles_meta.ev vehicles_meta.total 100 as ev_pct %}
+              <div class="h-full bg-estrata-teal" style="width: {{ ev_pct }}%"></div>
+            </div>
+          </div>
+
+          {% comment %} Coverage chips — proves the catalog is enriched, not a raw dump. Range/label are EV-scoped (only meaningful for EVs); denominator is labelled to stay honest. {% endcomment %}
+          <div class="mt-5 grid grid-cols-3 gap-2 text-center">
+            <div class="rounded-lg bg-white/70 dark:bg-estrata-navy_deep/50 border border-slate-200 dark:border-estrata-teal/15 py-2">
+              <p class="text-lg font-black text-estrata-navy dark:text-white tabular-nums">{{ vehicles_meta.pct_price }}%</p>
+              <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">con precio</p>
+            </div>
+            <div class="rounded-lg bg-white/70 dark:bg-estrata-navy_deep/50 border border-slate-200 dark:border-estrata-teal/15 py-2">
+              <p class="text-lg font-black text-estrata-navy dark:text-white tabular-nums">{{ vehicles_meta.ev_pct_range }}%</p>
+              <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">EV · autonomía</p>
+            </div>
+            <div class="rounded-lg bg-white/70 dark:bg-estrata-navy_deep/50 border border-slate-200 dark:border-estrata-teal/15 py-2">
+              <p class="text-lg font-black text-estrata-navy dark:text-white tabular-nums">{{ vehicles_meta.ev_pct_label }}%</p>
+              <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">EV · etiqueta DGT</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="text-center sm:text-left">
-        <dd class="text-3xl font-black text-estrata-navy dark:text-white">
-          {{ stats.charging_stations|intcomma }}
-        </dd>
-        <dt
-          class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400"
-        >
-          Puntos de recarga
-        </dt>
-        <p class="mt-1 text-[10px] text-slate-400">MITECO · OCM</p>
+      {# ─── Secondary KPIs grid ─── #}
+      <div class="lg:col-span-7">
+        <dl class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-5 h-full">
+          {# Puntos de recarga — bolt #}
+          <div class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-5">
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            </span>
+            <dd class="text-3xl font-black text-estrata-navy dark:text-white tabular-nums">{{ stats.charging_stations|intcomma }}</dd>
+            <dt class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Puntos de recarga</dt>
+            <p class="mt-1 text-[10px] text-slate-400">MITECO · OCM</p>
+          </div>
+          {# Estaciones de servicio — fuel droplet #}
+          <div class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-5">
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c-3 4-5 6.5-5 9a5 5 0 0010 0c0-2.5-2-5-5-9z" /></svg>
+            </span>
+            <dd class="text-3xl font-black text-estrata-navy dark:text-white tabular-nums">{{ stats.fuel_stations|intcomma }}</dd>
+            <dt class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Estaciones de servicio</dt>
+            <p class="mt-1 text-[10px] text-slate-400">MINCOTUR EH</p>
+          </div>
+          {# Documentos indexados — document #}
+          <div class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-5">
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            </span>
+            <dd class="text-3xl font-black text-estrata-navy dark:text-white tabular-nums">{{ stats.docs_indexed|intcomma }}</dd>
+            <dt class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Documentos indexados</dt>
+            <p class="mt-1 text-[10px] text-slate-400">{{ stats.docs_embedded|intcomma }} embedded · RAG</p>
+          </div>
+          {# Celdas de demanda — map pin #}
+          <div class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-5">
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            </span>
+            <dd class="text-3xl font-black text-estrata-navy dark:text-white tabular-nums">{{ stats.demand_hexes|intcomma }}</dd>
+            <dt class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Celdas de demanda</dt>
+            <p class="mt-1 text-[10px] text-slate-400">Grid 2,5 km Gipuzkoa</p>
+          </div>
+          {# Rutas precomputadas — route #}
+          <div class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-5">
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+            </span>
+            <dd class="text-3xl font-black text-estrata-navy dark:text-white tabular-nums">{{ stats.route_demos|intcomma }}</dd>
+            <dt class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Rutas precomputadas</dt>
+            <p class="mt-1 text-[10px] text-slate-400">Donostia ↔ EH</p>
+          </div>
+          {# Fuentes oficiales — database #}
+          <div class="rounded-2xl border border-estrata-teal/20 dark:border-estrata-teal/25 bg-white dark:bg-estrata-navy p-5">
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-estrata-teal/15 dark:bg-estrata-teal/25 text-estrata-teal_dark dark:text-estrata-teal_light mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7c0 1.657 3.582 3 8 3s8-1.343 8-3-3.582-3-8-3-8 1.343-8 3z" /><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v5c0 1.657 3.582 3 8 3s8-1.343 8-3V7M4 12v5c0 1.657 3.582 3 8 3s8-1.343 8-3v-5" /></svg>
+            </span>
+            <dd class="text-3xl font-black text-estrata-teal dark:text-estrata-teal_light tabular-nums">5</dd>
+            <dt class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Fuentes oficiales</dt>
+            <p class="mt-1 text-[10px] text-slate-400">ESIOS · MINCOTUR · IDAE · MITECO · datos.gob.es</p>
+          </div>
+        </dl>
       </div>
-
-      <div class="text-center sm:text-left">
-        <dd class="text-3xl font-black text-estrata-navy dark:text-white">
-          {{ stats.fuel_stations|intcomma }}
-        </dd>
-        <dt
-          class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400"
-        >
-          Estaciones de servicio
-        </dt>
-        <p class="mt-1 text-[10px] text-slate-400">MINCOTUR EH</p>
-      </div>
-
-      <div class="text-center sm:text-left">
-        <dd class="text-3xl font-black text-estrata-navy dark:text-white">
-          {{ stats.docs_indexed|intcomma }}
-        </dd>
-        <dt
-          class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400"
-        >
-          Documentos indexados
-        </dt>
-        <p class="mt-1 text-[10px] text-slate-400">
-          {{ stats.docs_embedded|intcomma }} embedded · Gemini RAG
-        </p>
-      </div>
-
-      <div class="text-center sm:text-left">
-        <dd class="text-3xl font-black text-estrata-navy dark:text-white">
-          {{ stats.demand_hexes|intcomma }}
-        </dd>
-        <dt
-          class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400"
-        >
-          Celdas de demanda
-        </dt>
-        <p class="mt-1 text-[10px] text-slate-400">Grid 2,5 km Gipuzkoa</p>
-      </div>
-
-      <div class="text-center sm:text-left">
-        <dd class="text-3xl font-black text-estrata-navy dark:text-white">
-          {{ stats.route_demos|intcomma }}
-        </dd>
-        <dt
-          class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400"
-        >
-          Rutas precomputadas
-        </dt>
-        <p class="mt-1 text-[10px] text-slate-400">Donostia ↔ EH</p>
-      </div>
-    </dl>
+    </div>
   </div>
 </section>
 

@@ -1,440 +1,119 @@
-{% extends "base.html" %} {% load i18n humanize %} {% block title %}Mubil —
-Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
+{% extends "mubil/base.html" %} {% load i18n humanize static %} {% block title %}eStrata · ¿Cuánto te ahorras con un coche eléctrico?{% endblock %} {% block content %}
+
 {# ─────────────────────────── HERO ─────────────────────────── #}
 <section class="relative overflow-hidden">
   <div
-    class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-cyan-50 via-white to-emerald-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950"
+    class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-white via-white to-estrata-teal_light/10 dark:from-estrata-navy_deep dark:via-estrata-navy dark:to-estrata-navy_deep"
   ></div>
   <div
     aria-hidden="true"
-    class="pointer-events-none absolute inset-0 -z-10 opacity-20 dark:opacity-15"
-    style="
-      background-image:
-        radial-gradient(circle at 10% 0%, #06b6d4 0, transparent 40%),
-        radial-gradient(circle at 95% 100%, #10b981 0, transparent 45%);
-    "
-  ></div>
-  <div
-    aria-hidden="true"
-    class="pointer-events-none absolute inset-0 -z-10 opacity-[0.07] dark:opacity-[0.04]"
+    class="pointer-events-none absolute inset-0 -z-10 opacity-[0.06] dark:opacity-[0.04]"
     style="
       background-image:
         linear-gradient(to right, currentColor 1px, transparent 1px),
         linear-gradient(to bottom, currentColor 1px, transparent 1px);
-      background-size: 48px 48px;
-      color: #0f172a;
+      background-size: 56px 56px;
+      color: #103040;
     "
   ></div>
 
-  <div
-    class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pt-10 sm:pt-14 lg:pt-16 pb-16 sm:pb-20 lg:pb-24"
-  >
-    <div class="grid lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-12 items-center">
-      {# ─── LEFT: copy + CTAs ─── #}
-      <div class="lg:col-span-7">
-        {# Eyebrow #}
-        <div
-          class="inline-flex items-center gap-2 rounded-full border border-cyan-200 dark:border-cyan-700/60 bg-white/80 dark:bg-slate-900/70 backdrop-blur px-3 py-1 text-xs font-bold uppercase tracking-widest text-cyan-700 dark:text-cyan-300"
-        >
-          <span class="relative flex h-2 w-2">
-            <span
-              class="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75"
-            ></span>
-            <span
-              class="relative inline-flex h-2 w-2 rounded-full bg-cyan-500"
-            ></span>
-          </span>
-          MUBIL Mobility Awards 2026 · Candidatura
-        </div>
+  <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pt-12 sm:pt-16 lg:pt-20 pb-16 sm:pb-20 lg:pb-24">
+    <div class="grid lg:grid-cols-12 gap-10 sm:gap-12 lg:gap-16 items-center">
 
-        {# Headline #}
-        <h1
-          class="mt-6 text-4xl sm:text-5xl lg:text-[3.75rem] xl:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.02]"
-        >
-          Decide la movilidad
-          <span class="block"> de Euskal Herria con </span>
-          <span class="relative inline-block">
-            <span
-              class="relative z-10 bg-gradient-to-r from-cyan-500 to-emerald-500 bg-clip-text text-transparent"
-              >datos reales</span
-            >
-            <span
-              aria-hidden="true"
-              class="absolute inset-x-0 bottom-1 h-3 bg-cyan-200/60 dark:bg-cyan-500/15 -z-0 rounded"
-            ></span> </span
-          >.
+      {# ─── LEFT: anchor headline + CTA + microproof ─── #}
+      <div class="lg:col-span-6">
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-[4.25rem] font-black tracking-tight text-estrata-navy dark:text-white leading-[1.02]">
+          De
+          <span class="text-slate-400 dark:text-slate-500 line-through decoration-2 decoration-slate-300 dark:decoration-slate-600">1.300&nbsp;€</span>
+          en gasolina
+          <span class="block mt-2">
+            a
+            <span class="relative inline-block">
+              <span class="relative z-10 bg-gradient-to-r from-estrata-teal to-estrata-teal_dark bg-clip-text text-transparent">280&nbsp;€</span>
+              <span aria-hidden="true" class="absolute inset-x-0 bottom-1 h-3 bg-estrata-teal/20 dark:bg-estrata-teal/15 -z-0 rounded"></span>
+            </span>
+            en luz.
+          </span>
         </h1>
 
-        <p
-          class="mt-6 text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed"
-        >
-          Cuatro módulos · una base GIS + IA. Asesor TCO, Q&amp;A con citas,
-          planificador EV y heatmap de demanda.
-          <strong class="text-slate-900 dark:text-white">Todo abierto</strong>,
-          todo ingestado en vivo.
+        <p class="mt-6 text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed">
+          Calcula cuánto te ahorras al año cambiando tu coche actual por uno
+          <strong class="text-estrata-navy dark:text-white">eléctrico</strong>
+          en Euskadi. Tu coche, tus kilómetros, tu provincia — coste real con
+          PVPC en vivo, MINCOTUR y ayudas MOVES&nbsp;III.
         </p>
 
-        {# Live KPI pills #}
-        <div class="mt-6 sm:mt-7 grid grid-cols-3 gap-2 sm:gap-3 max-w-xl">
-          <div
-            class="rounded-xl border border-slate-200 dark:border-slate-700/70 bg-white/70 dark:bg-slate-900/60 backdrop-blur px-2.5 sm:px-3 py-2"
-          >
-            <p
-              class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400"
-            >
-              PVPC ahora
-            </p>
-            <p
-              class="mt-0.5 text-sm sm:text-lg font-black text-slate-900 dark:text-white tabular-nums"
-            >
-              {{ hero_live.pvpc_eur_kwh|floatformat:4 }}
-              <span class="text-[9px] sm:text-[10px] font-bold text-slate-400"
-                >€/kWh</span
-              >
-            </p>
-          </div>
-          <div
-            class="rounded-xl border border-slate-200 dark:border-slate-700/70 bg-white/70 dark:bg-slate-900/60 backdrop-blur px-2.5 sm:px-3 py-2"
-          >
-            <p
-              class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400"
-            >
-              Cargadores EH
-            </p>
-            <p
-              class="mt-0.5 text-base sm:text-lg font-black text-slate-900 dark:text-white tabular-nums"
-            >
-              {{ stats.charging_stations|intcomma }}
-            </p>
-          </div>
-          <div
-            class="rounded-xl border border-slate-200 dark:border-slate-700/70 bg-white/70 dark:bg-slate-900/60 backdrop-blur px-2.5 sm:px-3 py-2"
-          >
-            <p
-              class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400"
-            >
-              Tests verdes
-            </p>
-            <p
-              class="mt-0.5 text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 tabular-nums"
-            >
-              160
-              <span class="text-[9px] sm:text-[10px] font-bold text-slate-400"
-                >/160</span
-              >
-            </p>
-          </div>
-        </div>
-
-        {# CTAs #}
-        <div class="mt-8 flex flex-wrap gap-3">
+        <div class="mt-8 flex flex-wrap items-center gap-4">
           <a
             href="{% url 'mubil:advisor' %}"
-            class="inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-6 py-3 font-bold text-white hover:bg-cyan-600 transition shadow-lg shadow-cyan-500/30"
+            class="inline-flex items-center gap-2 rounded-xl bg-estrata-teal px-7 py-3.5 text-base font-bold text-white hover:bg-estrata-teal_dark transition shadow-lg shadow-estrata-teal/30"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-              />
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
             </svg>
-            Probar el Advisor
+            Calcular mi caso
           </a>
-          <a
-            href="{% url 'mubil:ask' %}"
-            class="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-6 py-3 font-bold text-slate-900 dark:text-white hover:border-cyan-500 hover:text-cyan-600 dark:hover:text-cyan-400 transition"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
-            </svg>
-            Hablar con los datos
+          <a href="#modulos" class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-estrata-teal_dark dark:hover:text-estrata-teal_light transition">
+            Cómo funciona ↓
           </a>
         </div>
 
-        <p class="mt-5 text-xs text-slate-500 dark:text-slate-400">
-          Demo en vivo · sin login · fuentes:
-          <span class="text-slate-700 dark:text-slate-300"
-            >ESIOS · MINCOTUR · IDAE · MITECO · datos.gob.es</span
-          >
+        {# Microproof bar — single line, no boxes #}
+        <p class="mt-8 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+          <span class="inline-flex items-center gap-1.5">
+            <span class="relative flex h-1.5 w-1.5">
+              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-estrata-teal opacity-75"></span>
+              <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-estrata-teal"></span>
+            </span>
+            <span class="font-bold text-slate-700 dark:text-slate-300 tabular-nums">PVPC {{ hero_live.pvpc_eur_kwh|floatformat:4 }} €/kWh</span>
+          </span>
+          <span class="text-slate-300 dark:text-slate-700">·</span>
+          <span><span class="font-bold text-slate-700 dark:text-slate-300 tabular-nums">{{ stats.charging_stations|intcomma }}</span> cargadores EH</span>
+          <span class="text-slate-300 dark:text-slate-700">·</span>
+          <span><span class="font-bold text-slate-700 dark:text-slate-300 tabular-nums">{{ stats.vehicles|intcomma }}</span> vehículos IDAE</span>
+          <span class="text-slate-300 dark:text-slate-700">·</span>
+          <span>datos abiertos</span>
         </p>
       </div>
 
-      {# ─── RIGHT: 3 floating preview cards ─── #}
-      <div class="lg:col-span-5 relative">
-        <div class="relative mx-auto max-w-md lg:max-w-none lg:ml-6 xl:ml-12">
-          {# decorative glow behind the stack #}
+      {# ─── RIGHT: hero image ─── #}
+      <div class="lg:col-span-6">
+        <div class="relative">
+          {# decorative glow #}
           <div
             aria-hidden="true"
-            class="pointer-events-none absolute -inset-6 -z-10 opacity-50 dark:opacity-40 blur-3xl"
-            style="
-              background-image: radial-gradient(
-                circle at 50% 50%,
-                #06b6d4 0,
-                transparent 60%
-              );
-            "
+            class="pointer-events-none absolute -inset-8 -z-10 opacity-40 dark:opacity-30 blur-3xl"
+            style="background-image: radial-gradient(circle at 60% 50%, #10B0A0 0, transparent 65%);"
           ></div>
 
-          {# Card 1 — PVPC #}
-          <div
-            class="relative z-30 sm:-rotate-1 sm:hover:rotate-0 transition-transform rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 backdrop-blur-sm shadow-xl p-5"
-          >
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span
-                  class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-100 dark:bg-cyan-900/60 text-cyan-600 dark:text-cyan-400"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
-                  </svg>
+          {# Hero image — Basque countryside EV charging (97% smaller than original PNG via WebP) #}
+          <div class="relative aspect-[3/2] rounded-3xl overflow-hidden border border-slate-200 dark:border-estrata-teal/20 shadow-2xl bg-slate-100 dark:bg-estrata-navy_deep">
+            <picture>
+              <source
+                type="image/webp"
+                srcset="{% static 'img/estrata/hero_vasco.webp' %} 1x, {% static 'img/estrata/hero_vasco@2x.webp' %} 2x"
+              />
+              <img
+                src="{% static 'img/estrata/hero_vasco.jpg' %}"
+                alt="Coche eléctrico cargando en un caserío vasco al amanecer"
+                width="1600"
+                height="1073"
+                loading="eager"
+                fetchpriority="high"
+                decoding="async"
+                class="absolute inset-0 w-full h-full object-cover"
+              />
+            </picture>
+
+            {# Single overlay chip — anchors the savings claim from H1 onto the image #}
+            <div class="absolute bottom-4 right-4">
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-white/95 dark:bg-estrata-navy/95 backdrop-blur px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-estrata-navy dark:text-white shadow-lg tabular-nums">
+                <span class="relative flex h-1.5 w-1.5">
+                  <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-estrata-teal opacity-75"></span>
+                  <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-estrata-teal"></span>
                 </span>
-                <p
-                  class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400"
-                >
-                  PVPC ESIOS · ahora
-                </p>
-              </div>
-              <span
-                class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400"
-              >
-                <span
-                  class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"
-                ></span>
-                Live
+                ~280 €/año en luz
               </span>
-            </div>
-            <div class="mt-3 flex items-baseline gap-2">
-              <p
-                class="text-3xl font-black text-slate-900 dark:text-white tabular-nums"
-              >
-                {{ hero_live.pvpc_eur_kwh|floatformat:4 }}
-              </p>
-              <p class="text-sm font-bold text-slate-500 dark:text-slate-400">
-                €/kWh
-              </p>
-            </div>
-            <div class="mt-2 flex items-center justify-between text-xs">
-              <span class="text-slate-500 dark:text-slate-400"
-                >Valle nocturno</span
-              >
-              <span
-                class="font-bold text-slate-900 dark:text-white tabular-nums"
-                >{{ hero_live.pvpc_valley_eur_kwh|floatformat:4 }} €/kWh</span
-              >
-            </div>
-            {# Mini sparkline (decorative, deterministic) #}
-            <svg
-              viewBox="0 0 200 32"
-              class="mt-3 w-full h-8 text-cyan-500"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              preserveAspectRatio="none"
-            >
-              <path
-                d="M0 22 L20 18 L40 24 L60 14 L80 16 L100 10 L120 14 L140 8 L160 12 L180 6 L200 10"
-              />
-              <path
-                d="M0 22 L20 18 L40 24 L60 14 L80 16 L100 10 L120 14 L140 8 L160 12 L180 6 L200 10 L200 32 L0 32 Z"
-                fill="currentColor"
-                fill-opacity="0.08"
-                stroke="none"
-              />
-            </svg>
-          </div>
-
-          {# Card 2 — Infrastructure map dots #}
-          <div
-            class="relative z-20 mt-4 sm:ml-12 sm:rotate-1 sm:hover:rotate-0 transition-transform rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 backdrop-blur-sm shadow-xl p-5"
-          >
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span
-                  class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                    />
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
-                </span>
-                <p
-                  class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400"
-                >
-                  Infraestructura EH
-                </p>
-              </div>
-              <span
-                class="text-[10px] font-bold uppercase tracking-widest text-slate-400"
-                >MITECO · OCM</span
-              >
-            </div>
-            <div class="mt-3 flex items-baseline gap-2">
-              <p
-                class="text-3xl font-black text-slate-900 dark:text-white tabular-nums"
-              >
-                {{ stats.charging_stations|intcomma }}
-              </p>
-              <p class="text-sm font-bold text-slate-500 dark:text-slate-400">
-                puntos de recarga
-              </p>
-            </div>
-            {# Map dots #}
-            <div
-              class="mt-3 relative h-20 rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 overflow-hidden"
-            >
-              <svg
-                class="absolute inset-0 w-full h-full"
-                viewBox="0 0 200 80"
-                fill="none"
-              >
-                {# coast curve #}
-                <path
-                  d="M5 20 Q50 15 90 25 T180 22"
-                  stroke="#94a3b8"
-                  stroke-opacity="0.4"
-                  stroke-width="1"
-                  fill="none"
-                />
-                {# charger dots #}
-                <circle cx="30" cy="32" r="3" fill="#06b6d4" />
-                <circle cx="55" cy="28" r="4" fill="#10b981" />
-                <circle cx="78" cy="40" r="3" fill="#06b6d4" />
-                <circle cx="92" cy="35" r="3" fill="#06b6d4" />
-                <circle cx="118" cy="42" r="4" fill="#10b981" />
-                <circle cx="135" cy="38" r="3" fill="#06b6d4" />
-                <circle cx="148" cy="50" r="3" fill="#06b6d4" />
-                <circle cx="165" cy="44" r="3" fill="#10b981" />
-                <circle cx="42" cy="55" r="3" fill="#06b6d4" />
-                <circle cx="68" cy="60" r="3" fill="#06b6d4" />
-                <circle cx="100" cy="58" r="3" fill="#06b6d4" />
-                <circle cx="125" cy="62" r="3" fill="#10b981" />
-                {# pulsing focus marker #}
-                <circle
-                  cx="60"
-                  cy="32"
-                  r="8"
-                  fill="none"
-                  stroke="#10b981"
-                  stroke-width="1.5"
-                  opacity="0.6"
-                >
-                  <animate
-                    attributeName="r"
-                    from="8"
-                    to="14"
-                    dur="2s"
-                    repeatCount="indefinite"
-                  />
-                  <animate
-                    attributeName="opacity"
-                    from="0.6"
-                    to="0"
-                    dur="2s"
-                    repeatCount="indefinite"
-                  />
-                </circle>
-              </svg>
-            </div>
-          </div>
-
-          {# Card 3 — RAG snippet (bottom, slight left tilt) #}
-          <div
-            class="relative z-10 mt-4 -ml-2 sm:-ml-4 -rotate-1 hover:rotate-0 transition-transform rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 backdrop-blur-sm shadow-xl p-5"
-          >
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span
-                  class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/60 text-violet-600 dark:text-violet-400"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                    />
-                  </svg>
-                </span>
-                <p
-                  class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400"
-                >
-                  Ask · RAG Gemini
-                </p>
-              </div>
-              <span
-                class="text-[10px] font-bold uppercase tracking-widest text-slate-400"
-                >{{ stats.docs_indexed|intcomma }} docs</span
-              >
-            </div>
-            <div
-              class="mt-3 rounded-lg bg-slate-50 dark:bg-slate-900 px-3 py-2"
-            >
-              <p class="text-xs text-slate-600 dark:text-slate-400">
-                &ldquo;¿Qué ayudas MOVES III hay en Bizkaia?&rdquo;
-              </p>
-            </div>
-            <div class="mt-2 flex items-center gap-2 text-xs">
-              <span
-                class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500 text-white text-[10px] font-bold"
-                >G</span
-              >
-              <span class="text-slate-700 dark:text-slate-300"
-                >Respuesta + 3 citas trazables al BOE/BOPV</span
-              >
             </div>
           </div>
         </div>
@@ -445,17 +124,17 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
 
 {# ─────────────────────────── LIVE STATS STRIP ─────────────────────────── #}
 <section
-  class="border-y border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+  class="border-y border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy"
 >
   <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-10 sm:py-12">
     <p
-      class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-6"
+      class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light mb-6"
     >
       Datos reales en producción · actualizado al cargar esta página
     </p>
     <dl class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
       <div class="text-center sm:text-left">
-        <dd class="text-3xl font-black text-slate-900 dark:text-white">
+        <dd class="text-3xl font-black text-estrata-navy dark:text-white">
           {{ stats.vehicles|intcomma }}
         </dd>
         <dt
@@ -467,7 +146,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
       </div>
 
       <div class="text-center sm:text-left">
-        <dd class="text-3xl font-black text-slate-900 dark:text-white">
+        <dd class="text-3xl font-black text-estrata-navy dark:text-white">
           {{ stats.charging_stations|intcomma }}
         </dd>
         <dt
@@ -479,7 +158,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
       </div>
 
       <div class="text-center sm:text-left">
-        <dd class="text-3xl font-black text-slate-900 dark:text-white">
+        <dd class="text-3xl font-black text-estrata-navy dark:text-white">
           {{ stats.fuel_stations|intcomma }}
         </dd>
         <dt
@@ -491,7 +170,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
       </div>
 
       <div class="text-center sm:text-left">
-        <dd class="text-3xl font-black text-slate-900 dark:text-white">
+        <dd class="text-3xl font-black text-estrata-navy dark:text-white">
           {{ stats.docs_indexed|intcomma }}
         </dd>
         <dt
@@ -505,7 +184,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
       </div>
 
       <div class="text-center sm:text-left">
-        <dd class="text-3xl font-black text-slate-900 dark:text-white">
+        <dd class="text-3xl font-black text-estrata-navy dark:text-white">
           {{ stats.demand_hexes|intcomma }}
         </dd>
         <dt
@@ -517,7 +196,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
       </div>
 
       <div class="text-center sm:text-left">
-        <dd class="text-3xl font-black text-slate-900 dark:text-white">
+        <dd class="text-3xl font-black text-estrata-navy dark:text-white">
           {{ stats.route_demos|intcomma }}
         </dd>
         <dt
@@ -531,23 +210,59 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
   </div>
 </section>
 
+{# ─────────────────────────── VISUAL BREAK · urbano EV ─────────────────────────── #}
+<section aria-hidden="true" class="relative h-48 sm:h-64 lg:h-72 overflow-hidden">
+  <picture>
+    <source
+      type="image/webp"
+      srcset="{% static 'img/estrata/hero_urbano.webp' %} 1x, {% static 'img/estrata/hero_urbano@2x.webp' %} 2x"
+    />
+    <img
+      src="{% static 'img/estrata/hero_urbano.jpg' %}"
+      alt=""
+      width="1600"
+      height="1073"
+      loading="lazy"
+      decoding="async"
+      class="absolute inset-0 w-full h-full object-cover"
+    />
+  </picture>
+  {# Gradient overlay — softens top/bottom edges, ensures next-section text contrast #}
+  <div class="absolute inset-0 bg-gradient-to-b from-white via-transparent to-white dark:from-estrata-navy_deep dark:via-transparent dark:to-estrata-navy_deep"></div>
+  <div class="absolute inset-0 bg-estrata-navy/10 dark:bg-estrata-navy_deep/30"></div>
+
+  {# Caption overlay — anchors why this image is here #}
+  <div class="absolute inset-0 flex items-center">
+    <div class="max-w-7xl mx-auto w-full px-5 sm:px-8 lg:px-12">
+      <p class="max-w-md text-lg sm:text-xl lg:text-2xl font-black text-white leading-tight drop-shadow-lg">
+        Cuatro capas de inteligencia
+        <span class="block text-estrata-teal_light">para que la decisión sea fácil.</span>
+      </p>
+    </div>
+  </div>
+</section>
+
 {# ─────────────────────────── 4 MÓDULOS ─────────────────────────── #}
-<section class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-12 sm:py-16">
+<section id="modulos" class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-12 sm:py-16 scroll-mt-16">
   <div class="mb-8 sm:mb-10">
     <p
-      class="text-xs font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400"
+      class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light"
     >
-      Cuatro módulos · una base
+      Cuatro capas · una decisión
     </p>
     <h2
-      class="mt-2 text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white"
+      class="mt-2 text-3xl sm:text-4xl font-bold text-estrata-navy dark:text-white"
     >
-      Para ciudadano, municipio, operador e investigador.
+      Strata: capas de inteligencia para decidir mejor.
     </h2>
     <p class="mt-3 text-slate-600 dark:text-slate-400 max-w-2xl">
-      Misma arquitectura GIS+IA · cuatro flujos especializados. Dos en
-      producción con datos reales (Advisor, Ask). Dos como mock-up visual sobre
-      la misma DB (Route, Plan) — ampliables post-premio.
+      Cada capa responde una pregunta. Dos están en producción con datos
+      reales (<strong class="text-estrata-navy dark:text-white">Advisor</strong>,
+      <strong class="text-estrata-navy dark:text-white">Ask</strong>). Dos son
+      mock-up visual sobre la misma DB
+      (<strong class="text-estrata-navy dark:text-white">Route</strong>,
+      <strong class="text-estrata-navy dark:text-white">Plan</strong>) —
+      ampliables post-premio.
     </p>
   </div>
 
@@ -555,11 +270,11 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
     {# Advisor — MUST #}
     <a
       href="{% url 'mubil:advisor' %}"
-      class="group relative rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-7 sm:p-8 hover:border-cyan-500 hover:shadow-xl transition"
+      class="group relative rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-7 sm:p-8 hover:border-estrata-teal hover:shadow-xl transition"
     >
       <div class="flex items-start justify-between">
         <div
-          class="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-cyan-100 dark:bg-cyan-900 text-cyan-600 dark:text-cyan-400"
+          class="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -577,15 +292,15 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
           </svg>
         </div>
         <span
-          class="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
+          class="inline-flex items-center gap-1 rounded-full bg-estrata-teal/15 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
         >
           <span
-            class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"
+            class="h-1.5 w-1.5 rounded-full bg-estrata-teal animate-pulse"
           ></span>
           Demo en vivo
         </span>
       </div>
-      <h3 class="mt-4 text-xl font-bold text-slate-900 dark:text-white">
+      <h3 class="mt-4 text-xl font-bold text-estrata-navy dark:text-white">
         Advisor
       </h3>
       <p class="text-sm text-slate-500 dark:text-slate-400">
@@ -598,7 +313,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
         carga real. Payback con subvenciones MOVES III + Renove EH. CO₂ evitado.
       </p>
       <div
-        class="mt-4 flex items-center text-xs font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400 group-hover:gap-3 gap-2 transition-all"
+        class="mt-4 flex items-center text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light group-hover:gap-3 gap-2 transition-all"
       >
         Probar
         <svg
@@ -621,11 +336,11 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
     {# Ask — MUST #}
     <a
       href="{% url 'mubil:ask' %}"
-      class="group relative rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-7 sm:p-8 hover:border-cyan-500 hover:shadow-xl transition"
+      class="group relative rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-7 sm:p-8 hover:border-estrata-teal hover:shadow-xl transition"
     >
       <div class="flex items-start justify-between">
         <div
-          class="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-cyan-100 dark:bg-cyan-900 text-cyan-600 dark:text-cyan-400"
+          class="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -643,15 +358,15 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
           </svg>
         </div>
         <span
-          class="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
+          class="inline-flex items-center gap-1 rounded-full bg-estrata-teal/15 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
         >
           <span
-            class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"
+            class="h-1.5 w-1.5 rounded-full bg-estrata-teal animate-pulse"
           ></span>
           Demo en vivo
         </span>
       </div>
-      <h3 class="mt-4 text-xl font-bold text-slate-900 dark:text-white">Ask</h3>
+      <h3 class="mt-4 text-xl font-bold text-estrata-navy dark:text-white">Ask</h3>
       <p class="text-sm text-slate-500 dark:text-slate-400">
         Habla con los datos.
       </p>
@@ -663,7 +378,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
         <strong>citas trazables</strong> — sin alucinaciones huérfanas.
       </p>
       <div
-        class="mt-4 flex items-center text-xs font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400 group-hover:gap-3 gap-2 transition-all"
+        class="mt-4 flex items-center text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light group-hover:gap-3 gap-2 transition-all"
       >
         Preguntar
         <svg
@@ -686,11 +401,11 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
     {# Route — MOCK #}
     <a
       href="{% url 'mubil:route' %}"
-      class="group relative rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-7 sm:p-8 hover:border-cyan-500 hover:shadow-xl transition"
+      class="group relative rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-7 sm:p-8 hover:border-estrata-teal hover:shadow-xl transition"
     >
       <div class="flex items-start justify-between">
         <div
-          class="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-cyan-100 dark:bg-cyan-900 text-cyan-600 dark:text-cyan-400"
+          class="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -708,12 +423,12 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
           </svg>
         </div>
         <span
-          class="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
+          class="inline-flex items-center gap-1 rounded-full border border-estrata-navy/20 dark:border-estrata-teal/30 text-estrata-navy dark:text-slate-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
         >
           Mock-up visual
         </span>
       </div>
-      <h3 class="mt-4 text-xl font-bold text-slate-900 dark:text-white">
+      <h3 class="mt-4 text-xl font-bold text-estrata-navy dark:text-white">
         Route
       </h3>
       <p class="text-sm text-slate-500 dark:text-slate-400">
@@ -727,7 +442,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
         con tu vehículo. pgRouting + GTFS multimodal post-premio.
       </p>
       <div
-        class="mt-4 flex items-center text-xs font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400 group-hover:gap-3 gap-2 transition-all"
+        class="mt-4 flex items-center text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light group-hover:gap-3 gap-2 transition-all"
       >
         Trazar
         <svg
@@ -750,11 +465,11 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
     {# Plan — MOCK #}
     <a
       href="{% url 'mubil:plan' %}"
-      class="group relative rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-7 sm:p-8 hover:border-cyan-500 hover:shadow-xl transition"
+      class="group relative rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-7 sm:p-8 hover:border-estrata-teal hover:shadow-xl transition"
     >
       <div class="flex items-start justify-between">
         <div
-          class="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-cyan-100 dark:bg-cyan-900 text-cyan-600 dark:text-cyan-400"
+          class="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -778,12 +493,12 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
           </svg>
         </div>
         <span
-          class="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
+          class="inline-flex items-center gap-1 rounded-full border border-estrata-navy/20 dark:border-estrata-teal/30 text-estrata-navy dark:text-slate-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
         >
           Mock-up visual
         </span>
       </div>
-      <h3 class="mt-4 text-xl font-bold text-slate-900 dark:text-white">
+      <h3 class="mt-4 text-xl font-bold text-estrata-navy dark:text-white">
         Plan
       </h3>
       <p class="text-sm text-slate-500 dark:text-slate-400">
@@ -797,7 +512,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
         Horizonte 1/3/5 años. MITMA O-D + ML post-premio.
       </p>
       <div
-        class="mt-4 flex items-center text-xs font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400 group-hover:gap-3 gap-2 transition-all"
+        class="mt-4 flex items-center text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light group-hover:gap-3 gap-2 transition-all"
       >
         Ver heatmap
         <svg
@@ -821,28 +536,31 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
 
 {# ─────────────────────────── DIFERENCIACIÓN ─────────────────────────── #}
 <section
-  class="bg-slate-50 dark:bg-slate-950 border-y border-slate-200 dark:border-slate-800"
+  class="bg-slate-50 dark:bg-estrata-navy_deep border-y border-slate-200 dark:border-estrata-teal/15"
 >
   <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-12 sm:py-16">
     <div class="mb-10 sm:mb-12">
       <p
-        class="text-xs font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400"
+        class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light"
       >
-        Por qué Mubil
+        Por qué eStrata
       </p>
       <h2
-        class="mt-2 text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white"
+        class="mt-2 text-3xl sm:text-4xl font-bold text-estrata-navy dark:text-white"
       >
-        Lo que no encuentras en otras herramientas.
+        La movilidad eléctrica no debería ser una apuesta.
       </h2>
+      <p class="mt-3 text-slate-600 dark:text-slate-400 max-w-2xl">
+        Debería ser una decisión basada en datos. Lo que no encuentras en otras herramientas:
+      </p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div
-        class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6"
+        class="rounded-2xl bg-white dark:bg-estrata-navy border border-slate-200 dark:border-estrata-teal/15 p-6"
       >
         <div
-          class="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-cyan-100 dark:bg-cyan-900 text-cyan-600 dark:text-cyan-400 mb-3"
+          class="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light mb-3"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -859,7 +577,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
             />
           </svg>
         </div>
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+        <h3 class="text-lg font-bold text-estrata-navy dark:text-white">
           Vasco-específico
         </h3>
         <p
@@ -872,10 +590,10 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
       </div>
 
       <div
-        class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6"
+        class="rounded-2xl bg-white dark:bg-estrata-navy border border-slate-200 dark:border-estrata-teal/15 p-6"
       >
         <div
-          class="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-cyan-100 dark:bg-cyan-900 text-cyan-600 dark:text-cyan-400 mb-3"
+          class="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light mb-3"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -892,7 +610,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
             />
           </svg>
         </div>
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+        <h3 class="text-lg font-bold text-estrata-navy dark:text-white">
           IA con citas
         </h3>
         <p
@@ -905,10 +623,10 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
       </div>
 
       <div
-        class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6"
+        class="rounded-2xl bg-white dark:bg-estrata-navy border border-slate-200 dark:border-estrata-teal/15 p-6"
       >
         <div
-          class="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-cyan-100 dark:bg-cyan-900 text-cyan-600 dark:text-cyan-400 mb-3"
+          class="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light mb-3"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -925,7 +643,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
             />
           </svg>
         </div>
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+        <h3 class="text-lg font-bold text-estrata-navy dark:text-white">
           Open source + HVDS-compliant
         </h3>
         <p
@@ -946,17 +664,17 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
     {# Open-data sources #}
     <div>
       <p
-        class="text-xs font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400"
+        class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light"
       >
         Fuentes abiertas
       </p>
-      <h2 class="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
+      <h2 class="mt-2 text-2xl font-bold text-estrata-navy dark:text-white">
         Ingestadas y refrescadas automáticamente.
       </h2>
       <ul class="mt-6 space-y-3 text-sm">
         <li class="flex items-start gap-3">
           <span
-            class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400"
+            class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-estrata-teal/15 dark:bg-estrata-teal/25 text-estrata-teal_dark dark:text-estrata-teal_light"
             ><svg
               xmlns="http://www.w3.org/2000/svg"
               class="h-3 w-3"
@@ -975,7 +693,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
             ><strong>ESIOS · Red Eléctrica</strong> — PVPC horario (indicator
             1001). Cron
             <code
-              class="text-xs px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800"
+              class="text-xs px-1 py-0.5 rounded bg-slate-100 dark:bg-estrata-navy_deep text-estrata-navy dark:text-estrata-teal_light"
               >:15</code
             >
             Madrid.</span
@@ -983,7 +701,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
         </li>
         <li class="flex items-start gap-3">
           <span
-            class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400"
+            class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-estrata-teal/15 dark:bg-estrata-teal/25 text-estrata-teal_dark dark:text-estrata-teal_light"
             ><svg
               xmlns="http://www.w3.org/2000/svg"
               class="h-3 w-3"
@@ -1006,7 +724,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
         </li>
         <li class="flex items-start gap-3">
           <span
-            class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400"
+            class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-estrata-teal/15 dark:bg-estrata-teal/25 text-estrata-teal_dark dark:text-estrata-teal_light"
             ><svg
               xmlns="http://www.w3.org/2000/svg"
               class="h-3 w-3"
@@ -1028,7 +746,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
         </li>
         <li class="flex items-start gap-3">
           <span
-            class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400"
+            class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-estrata-teal/15 dark:bg-estrata-teal/25 text-estrata-teal_dark dark:text-estrata-teal_light"
             ><svg
               xmlns="http://www.w3.org/2000/svg"
               class="h-3 w-3"
@@ -1051,7 +769,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
         </li>
         <li class="flex items-start gap-3">
           <span
-            class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400"
+            class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-estrata-teal/15 dark:bg-estrata-teal/25 text-estrata-teal_dark dark:text-estrata-teal_light"
             ><svg
               xmlns="http://www.w3.org/2000/svg"
               class="h-3 w-3"
@@ -1099,11 +817,11 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
     {# Tech stack #}
     <div>
       <p
-        class="text-xs font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400"
+        class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light"
       >
         Construido con
       </p>
-      <h2 class="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
+      <h2 class="mt-2 text-2xl font-bold text-estrata-navy dark:text-white">
         Stack moderno, abierto, sin lock-in.
       </h2>
       <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">
@@ -1112,14 +830,14 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
       <div class="mt-6 flex flex-wrap gap-2">
         {% for tag in tech_tags %}
         <span
-          class="rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1 text-xs font-bold text-slate-700 dark:text-slate-300"
+          class="rounded-full border border-slate-300 dark:border-estrata-teal/25 bg-white dark:bg-estrata-navy px-3 py-1 text-xs font-bold text-estrata-navy dark:text-slate-300"
           >{{ tag }}</span
         >
         {% endfor %}
       </div>
 
       <div
-        class="mt-8 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-5"
+        class="mt-8 rounded-2xl border border-slate-200 dark:border-estrata-teal/20 bg-slate-50 dark:bg-estrata-navy p-5"
       >
         <p
           class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2"
@@ -1128,7 +846,7 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
         </p>
         <div class="flex items-baseline gap-2">
           <span
-            class="text-3xl font-black text-emerald-600 dark:text-emerald-400"
+            class="text-3xl font-black text-estrata-teal dark:text-estrata-teal_light"
             >160</span
           >
           <span class="text-sm text-slate-600 dark:text-slate-400"
@@ -1146,31 +864,46 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
 </section>
 
 {# ─────────────────────────── FOOTER / ENVÍO ─────────────────────────── #}
-<section
-  class="border-t border-slate-200 dark:border-slate-800 bg-gradient-to-br from-cyan-50 to-emerald-50 dark:from-slate-950 dark:to-slate-900"
->
+<section class="bg-estrata-navy dark:bg-estrata-navy_deep">
   <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-12">
+    {# Brand bar inside footer — wordmark + tagline on navy #}
+    <div class="flex items-center gap-3 mb-10">
+      <img
+        src="{% static 'img/estrata/symbol.png' %}"
+        alt="eStrata"
+        class="h-10 w-auto"
+      />
+      <div class="flex flex-col leading-tight">
+        <span class="text-2xl font-black tracking-tight text-white">
+          e<span class="text-estrata-teal_light">Strata</span>
+        </span>
+        <span class="text-[10px] font-bold uppercase tracking-[0.18em] text-estrata-teal_light/70">
+          Data-driven decisions. Clear path forward.
+        </span>
+      </div>
+    </div>
+
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
       <div>
         <p
-          class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2"
+          class="text-xs font-bold uppercase tracking-widest text-estrata-teal_light/70 mb-2"
         >
           Candidatura
         </p>
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+        <h3 class="text-lg font-bold text-white">
           MUBIL Mobility Awards 2026
         </h3>
-        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+        <p class="mt-1 text-sm text-slate-400">
           Categoría: movilidad eléctrica + conectada + infraestructuras.
         </p>
-        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+        <p class="mt-1 text-sm text-slate-400">
           Persona física · Gipuzkoa.
         </p>
       </div>
 
       <div>
         <p
-          class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2"
+          class="text-xs font-bold uppercase tracking-widest text-estrata-teal_light/70 mb-2"
         >
           Probar
         </p>
@@ -1178,35 +911,35 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
           <li>
             <a
               href="{% url 'mubil:advisor' %}"
-              class="text-cyan-600 dark:text-cyan-400 hover:underline"
+              class="text-estrata-teal_light hover:text-white hover:underline"
               >Advisor TCO</a
             >
           </li>
           <li>
             <a
               href="{% url 'mubil:ask' %}"
-              class="text-cyan-600 dark:text-cyan-400 hover:underline"
+              class="text-estrata-teal_light hover:text-white hover:underline"
               >Ask · Q&amp;A</a
             >
           </li>
           <li>
             <a
               href="{% url 'mubil:route' %}"
-              class="text-cyan-600 dark:text-cyan-400 hover:underline"
+              class="text-estrata-teal_light hover:text-white hover:underline"
               >Route · EV planner</a
             >
           </li>
           <li>
             <a
               href="{% url 'mubil:plan' %}"
-              class="text-cyan-600 dark:text-cyan-400 hover:underline"
+              class="text-estrata-teal_light hover:text-white hover:underline"
               >Plan · Heatmap</a
             >
           </li>
           <li>
             <a
               href="/mubil/api/docs"
-              class="text-cyan-600 dark:text-cyan-400 hover:underline"
+              class="text-estrata-teal_light hover:text-white hover:underline"
               >API REST · OpenAPI</a
             >
           </li>
@@ -1215,21 +948,21 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
 
       <div>
         <p
-          class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2"
+          class="text-xs font-bold uppercase tracking-widest text-estrata-teal_light/70 mb-2"
         >
           Proyecto
         </p>
-        <p class="text-sm text-slate-600 dark:text-slate-400">
+        <p class="text-sm text-slate-400">
           Construido sobre
-          <a href="/" class="text-cyan-600 dark:text-cyan-400 hover:underline"
+          <a href="/" class="text-estrata-teal_light hover:text-white hover:underline"
             >Maps.eus</a
           >, ecosistema GIS modular para Euskal Herria.
         </p>
-        <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+        <p class="mt-2 text-sm text-slate-400">
           Open source · contacto:
           <a
             href="mailto:iareizagau@gmail.com"
-            class="text-cyan-600 dark:text-cyan-400 hover:underline"
+            class="text-estrata-teal_light hover:text-white hover:underline"
             >iareizagau@gmail.com</a
           >
         </p>
@@ -1237,10 +970,15 @@ Inteligencia abierta de movilidad sostenible{% endblock %} {% block content %}
     </div>
 
     <div
-      class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-500"
+      class="mt-8 pt-6 border-t border-estrata-teal/15 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500"
     >
-      © 2026 · Hecho en Gipuzkoa con datos abiertos. Las cifras de esta página
-      se leen en vivo de la base de datos en cada carga.
+      <p>
+        © 2026 · Hecho en Gipuzkoa con datos abiertos. Las cifras se leen en
+        vivo de la base de datos en cada carga.
+      </p>
+      <p class="font-semibold italic text-estrata-teal_light/80">
+        We don't sell electric cars. We make electric decisions clear.
+      </p>
     </div>
   </div>
 </section>

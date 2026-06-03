@@ -9,6 +9,9 @@ Endpoints (PROPUESTA.md §3.1):
 
 from typing import List, Optional
 
+from django.contrib.postgres.search import TrigramSimilarity
+from django.db.models import Case, FloatField, Q, Value, When
+from django.db.models.functions import Greatest
 from ninja import Query, Router
 from ninja.errors import HttpError
 
@@ -118,11 +121,10 @@ def list_vehicles(
     propulsion: Optional[str] = Query(None),
     limit: int = Query(50),
 ):
-    """Catálogo Vehicle. Filtra por texto libre `q` y propulsión."""
+    """Catálogo Vehicle. Filtra por texto libre `q` (tolerante a typos vía
+    trigram, usa el índice GIN `vehicle_text_trgm` de la migración 0005) y
+    propulsión."""
     qs = Vehicle.objects.all()
-    if q:
-        # Permite buscar por make o model
-        qs = qs.filter(make__icontains=q) | qs.filter(model__icontains=q)
     if propulsion:
         if propulsion.upper() == "ICE_ALL":
             qs = qs.filter(propulsion__in=["ICE", "DIESEL", "HEV"])
@@ -130,7 +132,30 @@ def list_vehicles(
             qs = qs.filter(propulsion__in=["BEV", "PHEV"])
         else:
             qs = qs.filter(propulsion=propulsion.upper())
-    return [_vehicle_to_summary(v) for v in qs.order_by("make", "model")[:limit]]
+    if q:
+        q = q.strip()
+        # Umbral bajo (0.08) porque las queries cortas tipo "mer" o "gol"
+        # tienen similitud trigram baja por construcción aunque el usuario
+        # vaya bien encaminado. Subirlo descarta resultados válidos en
+        # autocomplete de 2-3 chars; ya lo afinaré con dataset real.
+        # Boost +1.0 cuando la query es prefijo de make/model: en autocomplete
+        # el usuario casi siempre escribe el principio del nombre, no el
+        # medio. Sin esto, "gol" rankea GoldenLion antes que Golf, "mer"
+        # rankea Mercury antes que Mercedes — pierdes el caso común.
+        qs = qs.annotate(
+            sim=Greatest(
+                TrigramSimilarity("make", q),
+                TrigramSimilarity("model", q),
+            ),
+            prefix_boost=Case(
+                When(Q(make__istartswith=q) | Q(model__istartswith=q), then=Value(1.0)),
+                default=Value(0.0),
+                output_field=FloatField(),
+            ),
+        ).filter(sim__gt=0.08).order_by("-prefix_boost", "-sim", "make", "model")
+    else:
+        qs = qs.order_by("make", "model")
+    return [_vehicle_to_summary(v) for v in qs[:limit]]
 
 
 @router.get("/cp/{cp}")

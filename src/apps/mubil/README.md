@@ -72,13 +72,27 @@ Documentación OpenAPI auto-generada: `GET /mubil/api/v1/docs`
 |---|---|---|
 | GET | `/mubil/api/v1/health` | ✅ implementado |
 | GET | `/mubil/api/v1/{advisor,ask,route,plan}/health` | ✅ implementado |
-| POST | `/mubil/api/v1/advisor/quote` | ⏳ F1 |
-| GET  | `/mubil/api/v1/advisor/vehicles?q=` | ⏳ F1 |
+| POST | `/mubil/api/v1/advisor/quote` | ✅ implementado |
+| GET  | `/mubil/api/v1/advisor/vehicles?q=` | ✅ implementado (trigram, tolerante a typos) |
 | POST | `/mubil/api/v1/ask/query` | ⏳ F2 |
 | GET  | `/mubil/api/v1/ask/suggested` | ⏳ F2 |
 | POST | `/mubil/api/v1/route/ev-plan` | ⏳ F3a (mock) |
 | GET  | `/mubil/api/v1/plan/heatmap` | ⏳ F3b (mock) |
 | GET  | `/mubil/api/v1/plan/top-locations` | ⏳ F3b (mock) |
+
+### Búsqueda de vehículos (`/advisor/vehicles?q=`)
+
+Tolerante a typos vía trigram. Ranking en dos capas:
+
+1. **Prefix boost** (`Q(make__istartswith=q) | Q(model__istartswith=q)` → +1.0).
+   Privilegia el patrón real de autocomplete: el usuario escribe el **principio** del nombre (`mer` → Mercedes, no Mercury; `gol` → Golf, no GoldenLion en cuanto teclea la 4ª letra).
+2. **Trigram similarity** (`Greatest(TrigramSimilarity(make, q), TrigramSimilarity(model, q))`)
+   contra el índice GIN `vehicle_text_trgm` (migración `0005`). Umbral `0.08` —
+   deliberadamente bajo porque queries de 2-3 chars tienen similitud baja por
+   construcción aunque el usuario vaya bien encaminado. Subirlo descarta
+   matches válidos en autocomplete.
+
+Implementación: [`advisor/api.py`](advisor/api.py) `list_vehicles`.
 
 ---
 

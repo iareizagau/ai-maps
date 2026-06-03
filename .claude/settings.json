@@ -92,7 +92,10 @@
       "Bash(grep -oE \"\\\\\\\\.[^,{}\\\\\\\\\\\\\"' ]*white[^,{}\\\\\\\\\\\\\"' :]*\" src/static/css/app.css)",
       "Bash(grep -oE \"\\\\\\\\.[a-z][a-z0-9_-]*\\\\\\\\\\\\\\\\/[0-9]+\" src/static/css/app.css)",
       "Bash(grep -cE \"\\\\\\\\\\\\\\\\/[0-9]\" src/static/css/app.css)",
-      "Bash(echo \"--- check if .bg-white\\\\\\\\/5 specifically exists ---\")"
+      "Bash(echo \"--- check if .bg-white\\\\\\\\/5 specifically exists ---\")",
+      "Bash(curl -s -i \"http://127.0.0.1:9000/mubil/api/v1/advisor/vehicles?q=mer&limit=2\")",
+      "Bash(curl -s \"http://127.0.0.1:9000/mubil/api/v1/advisor/vehicles?q=gol&limit=3\")",
+      "Bash(python -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(f'  {v[\\\\\"make\\\\\"]} | {v[\\\\\"model\\\\\"][:50]}'\\) for v in data]\")"
     ],
     "read": [
       "*"

@@ -11,6 +11,13 @@ module.exports = {
       colors: {
         primary: '#6366f1',
         primary_hover: '#4f46e5',
+        estrata: {
+          teal: '#10B0A0',
+          teal_light: '#5EE8E0',
+          teal_dark: '#0A8278',
+          navy: '#103040',
+          navy_deep: '#0A1B26',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],

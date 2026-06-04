@@ -12,63 +12,100 @@
 {% endblock %}
 
 {% block content %}
-<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-8 min-h-screen" x-data="commutePlanner()">
-  <div>
-    <a href="{% url 'mubil:index' %}" class="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-      </svg>
-      Volver
-    </a>
-    <h1 class="mt-3 text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">
-      Advisor <span class="text-cyan-500">·</span> TCO Inteligente
-    </h1>
-    <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
-      Calcula el coste total de propiedad (TCO) adaptado a tus trayectos reales en Euskadi.
-      Diseña tu commute diario en el mapa interactivo para ajustar consumos y distancias reales.
-    </p>
-  </div>
+<section x-data="commutePlanner()" class="min-h-screen pb-24" x-cloak>
 
+  <header class="border-b border-slate-200 dark:border-estrata-teal/15 bg-white/95 dark:bg-estrata-navy_deep/95 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <a href="{% url 'mubil:index' %}" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light hover:opacity-80 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Volver
+      </a>
 
-  <div class="flex flex-col lg:flex-row gap-8">
-
-    {# ---------- FORM ---------- #}
-    <form id="advisor-form"
-          hx-post="{% url 'mubil:advisor_quote' %}"
-          hx-target="#advisor-result"
-          hx-swap="innerHTML"
-          hx-indicator="#advisor-loading"
-          class="w-full lg:w-2/5 space-y-4">
-
-      {% csrf_token %}
-
-      <!-- STEP 1: VEHÍCULOS -->
-      <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm transition-all duration-300"
-           :class="step === 1 ? 'ring-1 ring-cyan-500/50 shadow-md' : ''">
-        <!-- Header -->
-        <div @click="step = 1" class="cursor-pointer px-5 py-4 bg-slate-50 dark:bg-slate-900/40 flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60">
-          <div class="flex items-center gap-3">
-            <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold transition-all duration-300"
-                  :class="step === 1 ? 'bg-cyan-500 text-white shadow-sm' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-350'">1</span>
-            <div>
-              <h3 class="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-250">Tus Vehículos</h3>
-              <p class="text-[10px] text-slate-450 dark:text-slate-400 font-semibold mt-0.5" x-show="step !== 1">
-                CP <span x-text="cp" class="font-extrabold"></span> · <span x-text="searchCurrent || 'Actual'" class="font-bold"></span> ➔ <span x-text="searchTarget || 'Objetivo'" class="font-bold"></span>
-              </p>
-            </div>
-          </div>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400 transition-transform duration-300"
-               :class="step === 1 ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-          </svg>
+      <div class="mt-3 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-estrata-navy dark:text-white">
+            Advisor <span class="text-estrata-teal">·</span> TCO inteligente
+          </h1>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+            Calcula tu ahorro real al cambiar a un coche eléctrico en Euskadi.
+          </p>
         </div>
-        <!-- Body -->
-        <div x-show="step === 1" class="p-5 space-y-4 border-t border-slate-100 dark:border-slate-700" x-collapse>
-          <!-- Codigo Postal -->
-          <div class="space-y-2">
-            <div class="flex justify-between items-center">
-              <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Código postal</label>
-              <button type="button" @click="geolocateUser(); commuteMode = true; rightTab = 'map';" class="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 transition">
+        <button type="button" x-show="submitted" @click="submitted = false"
+                class="self-start sm:self-end inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-estrata-teal_dark hover:text-estrata-teal transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+          </svg>
+          Editar simulación
+        </button>
+      </div>
+
+      {# ─── Stepper ─── #}
+      <nav x-show="!submitted" class="mt-6">
+        <ol class="grid grid-cols-4 gap-1.5 sm:gap-3">
+          <template x-for="(s, idx) in stepDefs" :key="s.id">
+            <li>
+              <button type="button" @click="goTo(s.id)" :disabled="!canGoTo(s.id)"
+                      :class="step === s.id ? 'border-estrata-teal bg-estrata-teal/5 dark:bg-estrata-teal/10' : (canGoTo(s.id) ? 'border-slate-200 dark:border-slate-700 hover:border-estrata-teal/40' : 'border-slate-100 dark:border-slate-800 opacity-50 cursor-not-allowed')"
+                      class="w-full text-left rounded-xl border-2 px-2 py-2 sm:px-3 sm:py-2.5 transition">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span :class="step === s.id ? 'bg-estrata-teal text-white' : (stepDone(s.id) ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300')"
+                        class="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-extrabold transition">
+                    <template x-if="stepDone(s.id) && step !== s.id">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                    </template>
+                    <template x-if="!stepDone(s.id) || step === s.id">
+                      <span x-text="s.short"></span>
+                    </template>
+                  </span>
+                  <div class="min-w-0 hidden sm:block">
+                    <div class="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-tight" x-text="'Paso ' + s.short"></div>
+                    <div class="text-[11px] font-bold text-slate-900 dark:text-white truncate leading-tight" x-text="s.label"></div>
+                  </div>
+                  <div class="min-w-0 sm:hidden flex-1">
+                    <div class="text-[10px] font-bold text-slate-900 dark:text-white truncate leading-tight" x-text="s.short_label"></div>
+                  </div>
+                </div>
+              </button>
+            </li>
+          </template>
+        </ol>
+      </nav>
+    </div>
+  </header>
+
+  <form id="advisor-form"
+        hx-post="{% url 'mubil:advisor_quote' %}"
+        hx-target="#advisor-result"
+        hx-swap="innerHTML"
+        hx-indicator="#advisor-loading"
+        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    {% csrf_token %}
+
+    <div x-show="!submitted" class="pt-6 lg:pt-10 grid lg:grid-cols-[minmax(0,1fr)_320px] gap-6 lg:gap-10">
+
+      {# ════════════ MAIN COLUMN ════════════ #}
+      <div class="min-w-0 space-y-6">
+
+        <section x-show="step === '1a'" x-transition.opacity class="space-y-6">
+
+          <header>
+            <h2 class="text-xl sm:text-2xl font-black text-estrata-navy dark:text-white">
+              ¿Cuál es tu coche actual?
+            </h2>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              Lo usaremos para calcular cuánto gastas hoy y compararlo con un eléctrico.
+            </p>
+          </header>
+
+          {# Código postal #}
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">¿Dónde vives o trabajas?</label>
+              <button type="button" @click="geolocateUser()"
+                      class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-estrata-teal_dark dark:text-estrata-teal_light hover:opacity-80 transition">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -77,313 +114,545 @@
               </button>
             </div>
             <input type="text" name="cp" x-model="cp" @input.debounce.500ms="updateMapToCp()" required pattern="[0-9]{5}" maxlength="5"
-                   class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500" />
-          </div>
-
-          <!-- Autocomplete Vehiculo Actual -->
-          <div class="space-y-2 relative">
-            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Vehículo actual (combustión)</label>
-            <div class="relative">
-              <input type="text" x-model="searchCurrent" @input.debounce.300ms="fetchCurrentSuggestions()" @focus="showCurrentSuggestions = true" placeholder="Buscar marca o modelo (ej. Golf)..."
-                     class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 pl-4 pr-10 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500" />
-              <div class="absolute right-3 top-3.5 text-slate-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              </div>
-            </div>
-            <input type="hidden" name="vehicle_current_id" id="current_vehicle_id_input" required />
-
-            <!-- Precio + override (no escribe en BBDD) -->
-            <div x-show="selectedCurrent" x-cloak class="flex items-center gap-2 text-[11px]">
-              <span class="text-slate-500 dark:text-slate-400">PVP:</span>
-              <strong class="text-slate-800 dark:text-slate-200 tabular-nums" x-text="((currentPriceOverride && currentPriceOverride > 0 ? currentPriceOverride : selectedCurrent?.price_eur) || '—').toLocaleString('es-ES') + ' €'"></strong>
-              <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"
-                    :class="priceSourceLabel(currentPriceOverride && currentPriceOverride > 0 ? 'manual_override' : selectedCurrent?.price_source).cls"
-                    x-text="currentPriceOverride && currentPriceOverride > 0 ? 'Tú lo editaste' : priceSourceLabel(selectedCurrent?.price_source).label"></span>
-              <button type="button" @click="currentPriceOverride = (currentPriceOverride === null ? (selectedCurrent?.price_eur || 0) : null)"
-                      class="ml-auto text-cyan-600 dark:text-cyan-400 hover:underline font-semibold"
-                      x-text="currentPriceOverride === null ? '✏️ editar' : '↺ usar BBDD'"></button>
-            </div>
-            <input type="number" x-show="currentPriceOverride !== null" x-cloak
-                   name="vehicle_current_price_override_eur" x-model.number="currentPriceOverride"
-                   min="1000" max="500000" step="100"
-                   class="w-full rounded-lg border border-cyan-300 dark:border-cyan-700 bg-cyan-50/40 dark:bg-cyan-950/20 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 font-bold" />
-
-            <!-- Suggestions dropdown -->
-            <ul x-show="showCurrentSuggestions && currentSuggestions.length" @click.away="showCurrentSuggestions = false"
-                class="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg text-sm text-slate-700 dark:text-slate-200">
-              <template x-for="v in currentSuggestions" :key="v.id">
-                <li @click="selectCurrentVehicle(v)" class="px-4 py-2.5 hover:bg-cyan-50 dark:hover:bg-slate-700 cursor-pointer flex justify-between items-center transition">
-                  <div>
-                    <span class="font-bold text-slate-900 dark:text-white" x-text="v.make + ' ' + v.model"></span>
-                    <span class="text-xs text-slate-400 ml-1" x-text="'(' + v.year + ')'"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300" x-text="v.propulsion"></span>
-                    <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400" x-text="v.consumption_l_100km ? v.consumption_l_100km + ' L' : ''"></span>
-                  </div>
-                </li>
-              </template>
-            </ul>
-          </div>
-
-          <!-- Autocomplete Vehiculo Objetivo -->
-          <div class="space-y-2 relative">
-            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Vehículo objetivo (eléctrico)</label>
-            <div class="relative">
-              <input type="text" x-model="searchTarget" @input.debounce.300ms="fetchTargetSuggestions()" @focus="showTargetSuggestions = true" placeholder="Buscar marca o modelo (ej. Niro)..."
-                     class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 pl-4 pr-10 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500" />
-              <div class="absolute right-3 top-3.5 text-slate-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              </div>
-            </div>
-            <input type="hidden" name="vehicle_target_id" id="target_vehicle_id_input" required />
-
-            <!-- Precio + override (no escribe en BBDD) -->
-            <div x-show="selectedTarget" x-cloak class="flex items-center gap-2 text-[11px]">
-              <span class="text-slate-500 dark:text-slate-400">PVP:</span>
-              <strong class="text-slate-800 dark:text-slate-200 tabular-nums" x-text="((targetPriceOverride && targetPriceOverride > 0 ? targetPriceOverride : selectedTarget?.price_eur) || '—').toLocaleString('es-ES') + ' €'"></strong>
-              <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"
-                    :class="priceSourceLabel(targetPriceOverride && targetPriceOverride > 0 ? 'manual_override' : selectedTarget?.price_source).cls"
-                    x-text="targetPriceOverride && targetPriceOverride > 0 ? 'Tú lo editaste' : priceSourceLabel(selectedTarget?.price_source).label"></span>
-              <button type="button" @click="targetPriceOverride = (targetPriceOverride === null ? (selectedTarget?.price_eur || 0) : null)"
-                      class="ml-auto text-cyan-600 dark:text-cyan-400 hover:underline font-semibold"
-                      x-text="targetPriceOverride === null ? '✏️ editar' : '↺ usar BBDD'"></button>
-            </div>
-            <input type="number" x-show="targetPriceOverride !== null" x-cloak
-                   name="vehicle_target_price_override_eur" x-model.number="targetPriceOverride"
-                   min="1000" max="500000" step="100"
-                   class="w-full rounded-lg border border-cyan-300 dark:border-cyan-700 bg-cyan-50/40 dark:bg-cyan-950/20 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 font-bold" />
-
-            <!-- Suggestions dropdown -->
-            <ul x-show="showTargetSuggestions && targetSuggestions.length" @click.away="showTargetSuggestions = false"
-                class="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg text-sm text-slate-700 dark:text-slate-200">
-              <template x-for="v in targetSuggestions" :key="v.id">
-                <li @click="selectTargetVehicle(v)" class="px-4 py-2.5 hover:bg-cyan-50 dark:hover:bg-slate-700 cursor-pointer flex justify-between items-center transition">
-                  <div>
-                    <span class="font-bold text-slate-900 dark:text-white" x-text="v.make + ' ' + v.model"></span>
-                    <span class="text-xs text-slate-400 ml-1" x-text="'(' + v.year + ')'"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-100 dark:bg-cyan-900 text-cyan-700 dark:text-cyan-200" x-text="v.range_wltp_km + ' km'"></span>
-                    <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400" x-text="v.consumption_kwh_100km + ' kWh'"></span>
-                  </div>
-                </li>
-              </template>
-            </ul>
-          </div>
-
-          <div class="pt-2">
-            <button type="button" @click="step = 2; $nextTick(() => { setTimeout(() => { if (window.commuteMap) { window.commuteMap.invalidateSize(); } }, 150); })"
-                    class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-650 rounded-xl text-xs font-extrabold text-slate-700 dark:text-white uppercase tracking-widest transition flex items-center justify-center gap-1.5">
-              <span>Siguiente: Perfil de Movilidad</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- STEP 2: MOVILIDAD -->
-      <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm transition-all duration-300"
-           :class="step === 2 ? 'ring-1 ring-cyan-500/50 shadow-md' : ''">
-        <!-- Header -->
-        <div @click="step = 2; $nextTick(() => { setTimeout(() => { if (window.commuteMap) { window.commuteMap.invalidateSize(); } }, 150); })" class="cursor-pointer px-5 py-4 bg-slate-50 dark:bg-slate-900/40 flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60">
-          <div class="flex items-center gap-3">
-            <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold transition-all duration-300"
-                  :class="step === 2 ? 'bg-cyan-500 text-white shadow-sm' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-350'">2</span>
-            <div>
-              <h3 class="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-250">Perfil de Movilidad</h3>
-              <p class="text-[10px] text-slate-450 dark:text-slate-400 font-semibold mt-0.5" x-show="step !== 2">
-                <span x-text="commuteMode ? 'Commute Map · ' + routes.length + ' commutes' : 'Ajuste Manual · ' + document.getElementById('km_year_input').value.toLocaleString() + ' km/año'" class="font-bold"></span>
-              </p>
-            </div>
-          </div>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400 transition-transform duration-300"
-               :class="step === 2 ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-        <!-- Body -->
-        <div x-show="step === 2" class="p-5 space-y-4 border-t border-slate-100 dark:border-slate-700" x-collapse>
-          
-          <!-- Mode Toggle (Manual vs Commute) -->
-          <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl w-full border border-slate-200 dark:border-slate-800">
-            <button type="button" @click="commuteMode = false; rightTab = 'results';"
-                    :class="!commuteMode ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                    class="flex-1 py-2 rounded-lg text-xs font-extrabold uppercase tracking-widest transition">
-              Manual
-            </button>
-            <button type="button" @click="commuteMode = true; rightTab = 'map'; $nextTick(() => { setTimeout(() => { window.commuteMap.invalidateSize(); if(routes.length) { window.commuteMap.fitBounds(window.routeLayerGroup.getBounds().pad(0.15)); } }, 250); })"
-                    :class="commuteMode ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                    class="flex-1 py-2 rounded-lg text-xs font-extrabold uppercase tracking-widest transition">
-              Commute Map
-            </button>
-          </div>
-
-          <!-- Trayectoria Inputs -->
-          <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-2">
-              <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Km / año</label>
-              <input type="number" name="km_year" id="km_year_input" value="15000" min="1000" max="200000" step="500" required
-                     :readonly="commuteMode" :class="commuteMode ? 'bg-slate-100 dark:bg-slate-900 opacity-75 cursor-not-allowed font-extrabold' : 'bg-slate-50 dark:bg-slate-900 font-bold'"
-                     class="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500" />
-            </div>
-            <div class="space-y-2">
-              <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Horizonte (años)</label>
-              <input type="number" name="years_horizon" value="10" min="1" max="20" required
-                     class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 font-bold" />
-            </div>
-          </div>
-
-          <!-- Perfil de Conducción Widget -->
-          <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-3 bg-slate-50/50 dark:bg-slate-900/10"
-               :class="flashHighlight ? 'ring-2 ring-cyan-500 bg-cyan-50/20 dark:bg-cyan-950/20 scale-[1.02] shadow-md transition-all duration-300' : 'transition-all duration-300'">
-            
-            <div class="flex items-center justify-between">
-              <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Perfil de Vía</label>
-              
-              <!-- Badge showing the mode -->
-              <span x-show="commuteMode" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-400 animate-pulse">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                </svg>
-                Ponderado de mapa
-              </span>
-              <span x-show="!commuteMode" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-105 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                ✍️ Ajuste manual
-              </span>
-            </div>
-
-            <!-- Hidden inputs that are always submitted in the form -->
-            <input type="hidden" name="motorway_pct" id="motorway_pct_input" :value="commuteMode ? getWeightedPct('motorway_pct') : manMotorwayPct" />
-            <input type="hidden" name="nacional_pct" id="nacional_pct_input" :value="commuteMode ? getWeightedPct('nacional_pct') : manNacionalPct" />
-
-            <!-- 1. COMMUTE MODE ACTIVE: Beautiful read-only visual summary -->
-            <div x-show="commuteMode" class="space-y-2">
-              <!-- Multi-segmented Progress Bar -->
-              <div class="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex">
-                <div class="h-full bg-cyan-500 transition-all duration-500" :style="'width: ' + getWeightedPct('motorway_pct') + '%'"></div>
-                <div class="h-full bg-indigo-500 transition-all duration-500" :style="'width: ' + getWeightedPct('nacional_pct') + '%'"></div>
-                <div class="h-full bg-emerald-500 transition-all duration-500" :style="'width: ' + (100 - getWeightedPct('motorway_pct') - getWeightedPct('nacional_pct')) + '%'"></div>
-              </div>
-              <!-- Legend showing percentages -->
-              <div class="grid grid-cols-3 gap-1 text-center text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-                <div>
-                  <span class="text-cyan-600 dark:text-cyan-400 font-bold" x-text="getWeightedPct('motorway_pct') + '%'"></span>
-                  <span class="block text-[8px] uppercase tracking-wider text-slate-450">Autovía</span>
-                </div>
-                <div>
-                  <span class="text-indigo-500 dark:text-indigo-400 font-bold" x-text="getWeightedPct('nacional_pct') + '%'"></span>
-                  <span class="block text-[8px] uppercase tracking-wider text-slate-450">Nacional</span>
-                </div>
-                <div>
-                  <span class="text-emerald-600 dark:text-emerald-400 font-bold" x-text="(100 - getWeightedPct('motorway_pct') - getWeightedPct('nacional_pct')) + '%'"></span>
-                  <span class="block text-[8px] uppercase tracking-wider text-slate-450">Urbano</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 2. MANUAL MODE: Interactive Double Range Sliders -->
-            <div x-show="!commuteMode" class="space-y-3">
-              <!-- Autovia Slider -->
-              <div class="space-y-1">
-                <div class="flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                  <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>Autovía / Autopista</span>
-                  <span class="text-cyan-600 dark:text-cyan-400 font-extrabold text-xs" x-text="manMotorwayPct + '%'"></span>
-                </div>
-                <input type="range" min="0" max="100" x-model.number="manMotorwayPct" @input="balanceSliders('motorway')"
-                       class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-cyan-500 focus:outline-none" />
-              </div>
-
-              <!-- Nacional Slider -->
-              <div class="space-y-1">
-                <div class="flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                  <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>Vía Nacional / Variante</span>
-                  <span class="text-indigo-500 dark:text-indigo-400 font-extrabold text-xs" x-text="manNacionalPct + '%'"></span>
-                </div>
-                <input type="range" min="0" :max="100 - manMotorwayPct" x-model.number="manNacionalPct" @input="balanceSliders('nacional')"
-                       class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-indigo-500 focus:outline-none" />
-              </div>
-
-              <!-- Calculated Urban displays -->
-              <div class="pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Urbano / Local (calculado)</span>
-                <span class="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs" x-text="(100 - manMotorwayPct - manNacionalPct) + '%'"></span>
-              </div>
-            </div>
-          </div>
-
-          <div class="pt-2">
-            <button type="button" @click="step = 3"
-                    class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-650 rounded-xl text-xs font-extrabold text-slate-700 dark:text-white uppercase tracking-widest transition flex items-center justify-center gap-1.5">
-              <span>Siguiente: Finanzas y Carga</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- STEP 3: PERFIL, CARGA E INCENTIVOS -->
-      <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm transition-all duration-300"
-           :class="step === 3 ? 'ring-1 ring-cyan-500/50 shadow-md' : ''">
-        <!-- Header -->
-        <div @click="step = 3" class="cursor-pointer px-5 py-4 bg-slate-50 dark:bg-slate-900/40 flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60">
-          <div class="flex items-center gap-3">
-            <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold transition-all duration-300"
-                  :class="step === 3 ? 'bg-cyan-500 text-white shadow-sm' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-350'">3</span>
-            <div>
-              <h3 class="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-250">Perfil, Carga e Incentivos</h3>
-              <p class="text-[10px] text-slate-450 dark:text-slate-400 font-semibold mt-0.5" x-show="step !== 3">
-                <span x-text="profile === 'particular' ? 'Particular' : profile === 'autonomo' ? 'Autónomo' : 'Empresa'" class="font-bold"></span>
-                · <span x-text="(homePct + workPct) >= 50 ? 'Casa/Trabajo' : 'Pública'" class="font-bold"></span>
-                · Incentivos: <span x-text="effectiveSubvencionEur.toLocaleString('es-ES') + ' €'" class="font-bold text-emerald-600 dark:text-emerald-400"></span>
-              </p>
-            </div>
-          </div>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400 transition-transform duration-300"
-               :class="step === 3 ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-        <!-- Body -->
-        <div x-show="step === 3" class="p-5 space-y-5 border-t border-slate-100 dark:border-slate-700" x-collapse>
-
-          <!-- 3.A — PERFIL FISCAL -->
-          <div class="space-y-2">
-            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Perfil fiscal</label>
-            <div class="grid grid-cols-3 gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
-              <template x-for="opt in [{v:'particular',l:'Particular'},{v:'autonomo',l:'Autónomo'},{v:'empresa',l:'Empresa'}]" :key="opt.v">
-                <button type="button"
-                        @click="profile = opt.v; onProfileChange()"
-                        :class="profile === opt.v ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                        class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition"
-                        x-text="opt.l"></button>
-              </template>
-            </div>
-            <input type="hidden" name="profile" :value="profile" />
-            <p class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-              Afecta a Moves III (importe), IVA deducible, IRPF y a los presets de mix de carga.
+                   placeholder="Código postal (5 dígitos)"
+                   class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-base font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal tabular-nums" />
+            <p class="text-[11px] text-slate-400 dark:text-slate-500">
+              Lo usamos para precios PVPC, estaciones cercanas y los incentivos provinciales.
             </p>
           </div>
 
-          <!-- 3.B — CARGA: WALLBOX + MIX -->
-          <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-4 bg-slate-50/50 dark:bg-slate-900/20">
-            <div class="flex items-center justify-between">
-              <h4 class="text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">⚡ ¿Dónde vas a cargar?</h4>
-              <span x-show="weightedPrice" class="text-[10px] font-bold text-cyan-600 dark:text-cyan-400" x-text="'~' + weightedPrice + ' €/kWh'"></span>
+          {# Selector de coche actual: 3 paths #}
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-4">
+
+            {# Modo selector — chips de path #}
+            <div class="grid grid-cols-3 gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+              <button type="button" @click="currentMode = 'search'"
+                      :class="currentMode === 'search' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                      class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                Buscar
+              </button>
+              <button type="button" disabled
+                      title="Próximamente"
+                      class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-600 cursor-not-allowed flex items-center justify-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Foto permiso
+                <span class="text-[8px] uppercase tracking-wider opacity-70">próx.</span>
+              </button>
+              <button type="button" @click="useIceGeneric()"
+                      :class="currentMode === 'generic' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                      class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m13.586 13.586l-.707-.707"/></svg>
+                Coche medio
+              </button>
             </div>
 
-            <!-- Wallbox state (sólo si perfil ≠ empresa o si tiene sentido casa) -->
+            {# Mode: search #}
+            <div x-show="currentMode === 'search'" class="space-y-3">
+              <div class="relative">
+                <input type="text" x-model="searchCurrent" @input.debounce.250ms="fetchCurrentSuggestions()" @focus="showCurrentSuggestions = true"
+                       placeholder="Marca o modelo (ej. Mercedes A-Class, VW Golf TDI…)"
+                       class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 pl-11 pr-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-4 top-3.5 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </div>
+
+              {# Suggestions inline (no dropdown, full-width cards) #}
+              <div x-show="showCurrentSuggestions && currentSuggestions.length" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <template x-for="v in currentSuggestions.slice(0, 8)" :key="v.id">
+                  <button type="button" @click="selectCurrentVehicle(v); showCurrentSuggestions = false"
+                          :class="selectedCurrent && selectedCurrent.id === v.id ? 'border-estrata-teal bg-estrata-teal/5 ring-1 ring-estrata-teal/40' : 'border-slate-200 dark:border-slate-700 hover:border-estrata-teal/40 bg-white dark:bg-slate-800/40'"
+                          class="text-left rounded-xl border-2 px-3 py-2 transition">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="min-w-0">
+                        <div class="text-[13px] font-bold text-slate-900 dark:text-white truncate" x-text="v.make + ' ' + v.model"></div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                          <span x-show="v.variant_count > 1" x-text="v.variant_count + ' variantes'" class="font-semibold"></span>
+                          <span x-show="v.variant_count > 1 && v.consumption_l_100km"> · </span>
+                          <span x-show="v.consumption_l_100km" x-text="formatConsumptionRange(v, 'L')" class="font-semibold tabular-nums"></span>
+                        </div>
+                      </div>
+                      <span x-show="v.price_eur" class="shrink-0 text-[11px] font-bold text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="v.price_eur.toLocaleString('es-ES') + ' €'"></span>
+                    </div>
+                  </button>
+                </template>
+              </div>
+            </div>
+
+            {# Mode: generic (info box) #}
+            <div x-show="currentMode === 'generic'" class="rounded-xl border border-amber-200 dark:border-amber-700/40 bg-amber-50 dark:bg-amber-900/15 px-4 py-3 text-[12px] text-amber-700 dark:text-amber-300 leading-relaxed">
+              Compararemos contra un <strong>ICE medio</strong> (6,5 L/100, etiqueta C, PVP 22.000 €).
+              Funciona bien cuando aún no sabes qué coche tienes — la comparativa será orientativa.
+            </div>
+
+            {# Selección actual confirmada #}
+            <div x-show="selectedCurrent" x-cloak
+                 class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 p-4 space-y-2">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">✓ Tu coche actual</div>
+                  <div class="mt-1 text-sm font-bold text-slate-900 dark:text-white truncate" x-text="selectedCurrent ? selectedCurrent.make + ' ' + selectedCurrent.model : ''"></div>
+                  <div class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+                    <span class="px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold" x-text="selectedCurrent?.propulsion"></span>
+                    <span x-show="selectedCurrent?.consumption_l_100km" x-text="selectedCurrent?.consumption_l_100km + ' L/100'" class="font-semibold"></span>
+                    <span x-show="selectedCurrent?.dgt_label">DGT <strong x-text="selectedCurrent?.dgt_label"></strong></span>
+                  </div>
+                </div>
+                <div class="text-right shrink-0">
+                  <div class="text-[10px] font-bold uppercase tracking-widest text-slate-500">PVP</div>
+                  <div class="text-sm font-extrabold tabular-nums text-slate-900 dark:text-white"
+                       x-text="((currentPriceOverride && currentPriceOverride > 0 ? currentPriceOverride : selectedCurrent?.price_eur) || 0).toLocaleString('es-ES') + ' €'"></div>
+                  <span class="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"
+                        :class="priceSourceLabel(currentPriceOverride && currentPriceOverride > 0 ? 'manual_override' : selectedCurrent?.price_source).cls"
+                        x-text="currentPriceOverride && currentPriceOverride > 0 ? 'Editado' : priceSourceLabel(selectedCurrent?.price_source).label"></span>
+                </div>
+              </div>
+              {# Editar precio inline #}
+              <div class="flex items-center gap-2 pt-2 border-t border-emerald-200/60 dark:border-emerald-800/40">
+                <button type="button" @click="currentPriceOverride = (currentPriceOverride === null ? (selectedCurrent?.price_eur || 0) : null)"
+                        class="text-[11px] font-bold text-estrata-teal_dark dark:text-estrata-teal_light hover:underline"
+                        x-text="currentPriceOverride === null ? '✏️ Editar PVP' : '↺ Volver al valor de BBDD'"></button>
+                <input type="number" x-show="currentPriceOverride !== null" x-cloak
+                       name="vehicle_current_price_override_eur" x-model.number="currentPriceOverride"
+                       min="1000" max="500000" step="100"
+                       class="flex-1 rounded-lg border border-estrata-teal/40 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal font-bold tabular-nums" />
+              </div>
+            </div>
+          </div>
+
+          {# Hidden input — vehicle_current_id #}
+          <input type="hidden" name="vehicle_current_id" id="current_vehicle_id_input" required />
+        </section>
+
+
+        <section x-show="step === '1b'" x-transition.opacity class="space-y-6">
+
+          <header>
+            <h2 class="text-xl sm:text-2xl font-black text-estrata-navy dark:text-white">
+              ¿Qué eléctrico quieres comparar?
+            </h2>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              Te recomendamos según tu uso. Si ya sabes cuál te interesa, búscalo directo.
+            </p>
+          </header>
+
+          {# Toggle modo objetivo #}
+          <div class="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 max-w-sm">
+            <button type="button" @click="targetMode = 'recommend'; if (!candidates.length) fetchRecommendations()"
+                    :class="targetMode === 'recommend' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                    class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              Recomiéndame
+            </button>
+            <button type="button" @click="targetMode = 'search'"
+                    :class="targetMode === 'search' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                    class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              Buscar
+            </button>
+          </div>
+
+          {# ─── Modo Recomiéndame ─── #}
+          <div x-show="targetMode === 'recommend'" class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-5">
+
+            {# Tamaño #}
             <div class="space-y-2">
-              <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Punto de carga en casa</label>
+              <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Tamaño</label>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <template x-for="opt in [{v:'small',l:'Pequeño',sub:'urbano'},{v:'mid',l:'Mediano',sub:'familiar'},{v:'large',l:'Grande',sub:'SUV/premium'},{v:'van',l:'Furgoneta',sub:'comercial'}]" :key="opt.v">
+                  <button type="button" @click="criteriaSize = opt.v; fetchRecommendations()"
+                          :class="criteriaSize === opt.v ? 'border-estrata-teal bg-estrata-teal/5 dark:bg-estrata-teal/10 text-estrata-teal_dark dark:text-estrata-teal_light ring-1 ring-estrata-teal/40' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-estrata-teal/40'"
+                          class="flex flex-col items-center justify-center gap-0.5 py-2.5 px-1 rounded-xl border-2 transition text-center">
+                    <span class="text-[12px] font-extrabold leading-tight" x-text="opt.l"></span>
+                    <span class="text-[10px] text-slate-400 dark:text-slate-500 font-semibold leading-tight" x-text="opt.sub"></span>
+                  </button>
+                </template>
+              </div>
+            </div>
+
+            {# Autonomía #}
+            <div class="space-y-2">
+              <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Autonomía mínima</label>
+              <div class="grid grid-cols-3 gap-2">
+                <template x-for="opt in [{v:'low',l:'Baja',sub:'<350 km'},{v:'mid',l:'Media',sub:'350-450 km'},{v:'high',l:'Alta',sub:'>450 km'}]" :key="opt.v">
+                  <button type="button" @click="criteriaRange = opt.v; fetchRecommendations()"
+                          :class="criteriaRange === opt.v ? 'border-estrata-teal bg-estrata-teal/5 dark:bg-estrata-teal/10 text-estrata-teal_dark dark:text-estrata-teal_light ring-1 ring-estrata-teal/40' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-estrata-teal/40'"
+                          class="flex flex-col items-center justify-center gap-0.5 py-2.5 px-1 rounded-xl border-2 transition text-center">
+                    <span class="text-[12px] font-extrabold leading-tight" x-text="opt.l"></span>
+                    <span class="text-[10px] text-slate-400 dark:text-slate-500 font-semibold leading-tight" x-text="opt.sub"></span>
+                  </button>
+                </template>
+              </div>
+            </div>
+
+            {# Presupuesto #}
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Presupuesto</label>
+                <span class="text-xs font-bold text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums">
+                  <span x-text="criteriaPriceMin.toLocaleString('es-ES')"></span> € – <span x-text="criteriaPriceMax.toLocaleString('es-ES')"></span> €
+                </span>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Mín</label>
+                  <input type="range" min="10000" max="80000" step="1000" x-model.number="criteriaPriceMin"
+                         @change="if (criteriaPriceMin > criteriaPriceMax) criteriaPriceMin = criteriaPriceMax; fetchRecommendations()"
+                         class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-estrata-teal" />
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Máx</label>
+                  <input type="range" min="10000" max="120000" step="1000" x-model.number="criteriaPriceMax"
+                         @change="if (criteriaPriceMax < criteriaPriceMin) criteriaPriceMax = criteriaPriceMin; fetchRecommendations()"
+                         class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-estrata-teal" />
+                </div>
+              </div>
+            </div>
+
+            {# Candidatos #}
+            <div class="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-700">
+              <div class="flex items-center justify-between">
+                <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                  Candidatos <span x-show="candidates.length" class="text-estrata-teal_dark" x-text="'· ' + candidates.length"></span>
+                </label>
+                <span x-show="candidatesLoading" class="text-[11px] text-slate-400 animate-pulse">Buscando…</span>
+              </div>
+
+              <div x-show="!candidatesLoading && !candidates.length" class="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
+                Ningún coche cumple esos criterios. Amplía el presupuesto o reduce la autonomía mínima.
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <template x-for="v in candidates" :key="v.id">
+                  <button type="button" @click="selectCandidate(v)"
+                          :class="selectedTarget && selectedTarget.id === v.id ? 'border-estrata-teal bg-estrata-teal/5 dark:bg-estrata-teal/10 ring-1 ring-estrata-teal/40' : 'border-slate-200 dark:border-slate-700 hover:border-estrata-teal/40 bg-white dark:bg-slate-800/40'"
+                          class="text-left rounded-xl border-2 px-3 py-3 transition flex flex-col gap-1.5">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="min-w-0">
+                        <div class="text-sm font-bold text-slate-900 dark:text-white truncate" x-text="v.make + ' ' + v.model"></div>
+                        <div x-show="v.variant_count > 1" class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug" x-text="v.variant_count + ' variantes'"></div>
+                      </div>
+                      <span class="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">0 EMIS</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1 text-[10px] mt-0.5">
+                      <div>
+                        <span class="block text-slate-400 dark:text-slate-500 text-[9px] uppercase tracking-wider">Range</span>
+                        <span class="block font-bold text-slate-700 dark:text-slate-200 tabular-nums" x-text="v.range_wltp_km + ' km'"></span>
+                      </div>
+                      <div>
+                        <span class="block text-slate-400 dark:text-slate-500 text-[9px] uppercase tracking-wider">Cons.</span>
+                        <span class="block font-bold text-slate-700 dark:text-slate-200 tabular-nums" x-text="formatConsumptionRange(v, 'kWh')"></span>
+                      </div>
+                      <div>
+                        <span class="block text-slate-400 dark:text-slate-500 text-[9px] uppercase tracking-wider">Precio</span>
+                        <span class="block font-bold text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="(v.price_eur || 0).toLocaleString('es-ES') + ' €'"></span>
+                      </div>
+                    </div>
+                  </button>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          {# ─── Modo Buscar ─── #}
+          <div x-show="targetMode === 'search'" class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-3">
+            <div class="relative">
+              <input type="text" x-model="searchTarget" @input.debounce.250ms="fetchTargetSuggestions()" @focus="showTargetSuggestions = true"
+                     placeholder="Marca o modelo (ej. Tesla Model 3, Kia Niro EV…)"
+                     class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 pl-11 pr-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-4 top-3.5 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+
+            <div x-show="showTargetSuggestions && targetSuggestions.length" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <template x-for="v in targetSuggestions.slice(0, 8)" :key="v.id">
+                <button type="button" @click="selectTargetVehicle(v); showTargetSuggestions = false"
+                        :class="selectedTarget && selectedTarget.id === v.id ? 'border-estrata-teal bg-estrata-teal/5 ring-1 ring-estrata-teal/40' : 'border-slate-200 dark:border-slate-700 hover:border-estrata-teal/40 bg-white dark:bg-slate-800/40'"
+                        class="text-left rounded-xl border-2 px-3 py-2 transition">
+                  <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                      <div class="text-[13px] font-bold text-slate-900 dark:text-white truncate" x-text="v.make + ' ' + v.model"></div>
+                      <div class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                        <span x-show="v.variant_count > 1" x-text="v.variant_count + ' variantes'" class="font-semibold"></span>
+                        <span x-show="v.variant_count > 1 && v.consumption_kwh_100km"> · </span>
+                        <span x-show="v.consumption_kwh_100km" x-text="formatConsumptionRange(v, 'kWh')" class="font-semibold tabular-nums"></span>
+                      </div>
+                    </div>
+                    <span class="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold bg-estrata-teal/10 text-estrata-teal_dark dark:bg-estrata-teal/20 dark:text-estrata-teal_light tabular-nums" x-text="v.range_wltp_km + ' km'"></span>
+                  </div>
+                  <div class="mt-1 text-right">
+                    <span x-show="v.price_eur" x-text="v.price_eur.toLocaleString('es-ES') + ' €'" class="text-[11px] font-bold text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums"></span>
+                  </div>
+                </button>
+              </template>
+            </div>
+          </div>
+
+          {# Selección objetivo confirmada #}
+          <div x-show="selectedTarget" x-cloak
+               class="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 p-4 space-y-2">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">✓ Tu eléctrico objetivo</div>
+                <div class="mt-1 text-sm font-bold text-slate-900 dark:text-white truncate" x-text="selectedTarget ? selectedTarget.make + ' ' + selectedTarget.model : ''"></div>
+                <div class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+                  <span class="px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 text-estrata-teal_dark dark:text-estrata-teal_light font-bold" x-text="selectedTarget?.range_wltp_km + ' km'"></span>
+                  <span x-show="selectedTarget?.consumption_kwh_100km" x-text="selectedTarget?.consumption_kwh_100km + ' kWh/100'" class="font-semibold"></span>
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <div class="text-[10px] font-bold uppercase tracking-widest text-slate-500">PVP</div>
+                <div class="text-sm font-extrabold tabular-nums text-slate-900 dark:text-white"
+                     x-text="((targetPriceOverride && targetPriceOverride > 0 ? targetPriceOverride : selectedTarget?.price_eur) || 0).toLocaleString('es-ES') + ' €'"></div>
+                <span class="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"
+                      :class="priceSourceLabel(targetPriceOverride && targetPriceOverride > 0 ? 'manual_override' : selectedTarget?.price_source).cls"
+                      x-text="targetPriceOverride && targetPriceOverride > 0 ? 'Editado' : priceSourceLabel(selectedTarget?.price_source).label"></span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 pt-2 border-t border-emerald-200/60 dark:border-emerald-800/40">
+              <button type="button" @click="targetPriceOverride = (targetPriceOverride === null ? (selectedTarget?.price_eur || 0) : null)"
+                      class="text-[11px] font-bold text-estrata-teal_dark dark:text-estrata-teal_light hover:underline"
+                      x-text="targetPriceOverride === null ? '✏️ Editar PVP' : '↺ Volver al valor de BBDD'"></button>
+              <input type="number" x-show="targetPriceOverride !== null" x-cloak
+                     name="vehicle_target_price_override_eur" x-model.number="targetPriceOverride"
+                     min="1000" max="500000" step="100"
+                     class="flex-1 rounded-lg border border-estrata-teal/40 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal font-bold tabular-nums" />
+            </div>
+          </div>
+
+          <input type="hidden" name="vehicle_target_id" id="target_vehicle_id_input" required />
+        </section>
+
+
+        <section x-show="step === '2'" x-transition.opacity class="space-y-6">
+
+          <header>
+            <h2 class="text-xl sm:text-2xl font-black text-estrata-navy dark:text-white">
+              ¿Cómo te mueves?
+            </h2>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              Dibuja tus rutas habituales o ajusta el perfil manualmente.
+            </p>
+          </header>
+
+          {# Toggle mapa vs manual #}
+          <div class="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 max-w-sm">
+            <button type="button" @click="commuteMode = false"
+                    :class="!commuteMode ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                    class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition">
+              ✍️ Ajuste manual
+            </button>
+            <button type="button" @click="commuteMode = true; ensureMapReady()"
+                    :class="commuteMode ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                    class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition">
+              🗺️ Mapa interactivo
+            </button>
+          </div>
+
+          {# Año / horizonte (siempre visibles) #}
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-2">
+              <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Km / año</label>
+              <input type="number" name="km_year" id="km_year_input" value="15000" min="1000" max="200000" step="500" required
+                     :readonly="commuteMode" :class="commuteMode ? 'bg-slate-100 dark:bg-slate-900 opacity-75 cursor-not-allowed' : 'bg-slate-50 dark:bg-slate-900'"
+                     class="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal font-bold tabular-nums" />
+            </div>
+            <div class="space-y-2">
+              <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Horizonte</label>
+              <input type="number" name="years_horizon" value="10" min="1" max="20" required
+                     class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal font-bold tabular-nums" />
+            </div>
+          </div>
+
+          {# Perfil de vía #}
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-4">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Perfil de vía</label>
+              <span x-show="commuteMode" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-estrata-teal/10 text-estrata-teal_dark dark:bg-estrata-teal/20 dark:text-estrata-teal_light">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                Calculado del mapa
+              </span>
+            </div>
+
+            <input type="hidden" name="motorway_pct" id="motorway_pct_input" :value="commuteMode ? getWeightedPct('motorway_pct') : manMotorwayPct" />
+            <input type="hidden" name="nacional_pct" id="nacional_pct_input" :value="commuteMode ? getWeightedPct('nacional_pct') : manNacionalPct" />
+
+            {# Modo mapa (read-only viz) #}
+            <div x-show="commuteMode" class="space-y-2">
+              <div class="h-2.5 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex">
+                <div class="h-full bg-estrata-teal transition-all duration-500" :style="'width: ' + getWeightedPct('motorway_pct') + '%'"></div>
+                <div class="h-full bg-indigo-500 transition-all duration-500" :style="'width: ' + getWeightedPct('nacional_pct') + '%'"></div>
+                <div class="h-full bg-emerald-500 transition-all duration-500" :style="'width: ' + (100 - getWeightedPct('motorway_pct') - getWeightedPct('nacional_pct')) + '%'"></div>
+              </div>
+              <div class="grid grid-cols-3 gap-1 text-center text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                <div><span class="text-estrata-teal_dark dark:text-estrata-teal_light font-extrabold text-sm" x-text="getWeightedPct('motorway_pct') + '%'"></span><br>Autovía</div>
+                <div><span class="text-indigo-500 font-extrabold text-sm" x-text="getWeightedPct('nacional_pct') + '%'"></span><br>Nacional</div>
+                <div><span class="text-emerald-600 dark:text-emerald-400 font-extrabold text-sm" x-text="(100 - getWeightedPct('motorway_pct') - getWeightedPct('nacional_pct')) + '%'"></span><br>Urbano</div>
+              </div>
+            </div>
+
+            {# Modo manual (sliders) #}
+            <div x-show="!commuteMode" class="space-y-3">
+              <div class="space-y-1">
+                <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                  <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-estrata-teal"></span>Autovía / Autopista</span>
+                  <span class="text-estrata-teal_dark dark:text-estrata-teal_light font-extrabold text-sm tabular-nums" x-text="manMotorwayPct + '%'"></span>
+                </div>
+                <input type="range" min="0" max="100" x-model.number="manMotorwayPct" @input="balanceSliders('motorway')"
+                       class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-estrata-teal" />
+              </div>
+              <div class="space-y-1">
+                <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                  <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>Nacional / Variante</span>
+                  <span class="text-indigo-500 font-extrabold text-sm tabular-nums" x-text="manNacionalPct + '%'"></span>
+                </div>
+                <input type="range" min="0" :max="100 - manMotorwayPct" x-model.number="manNacionalPct" @input="balanceSliders('nacional')"
+                       class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-indigo-500" />
+              </div>
+              <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Urbano (calculado)</span>
+                <span class="text-emerald-600 dark:text-emerald-400 font-extrabold text-sm tabular-nums" x-text="(100 - manMotorwayPct - manNacionalPct) + '%'"></span>
+              </div>
+            </div>
+          </div>
+
+          {# Mapa interactivo (sólo en commuteMode) #}
+          <div x-show="commuteMode" x-transition class="space-y-4">
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
+              <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white">Planificador geográfico</h3>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Click origen, click destino, pgRouting traza la ruta real.</p>
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-estrata-teal animate-pulse"></span>
+                  pgRouting
+                </span>
+              </div>
+
+              <div class="relative">
+                <div id="commute-leaflet-map" style="width:100%; height:380px; z-index: 10;"></div>
+                <div class="absolute bottom-3 left-3 z-[1000] bg-white/95 dark:bg-slate-800/95 px-3 py-2 rounded-lg text-xs max-w-xs border border-slate-200 dark:border-slate-700 pointer-events-none shadow-lg">
+                  <div x-show="!startPoint && !endPoint" class="text-slate-600 dark:text-slate-300">📍 Click en el mapa para marcar el <strong>origen</strong>.</div>
+                  <div x-show="startPoint && !endPoint" class="text-slate-600 dark:text-slate-300">🎯 Ahora marca el <strong>destino</strong>.</div>
+                  <div x-show="startPoint && endPoint" class="text-emerald-600 dark:text-emerald-400 font-semibold">✅ Ruta calculada — añádela abajo.</div>
+                </div>
+              </div>
+
+              {# Detalles ruta temporal #}
+              <div x-show="startPoint && endPoint" class="p-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-100 dark:border-slate-700 space-y-3" x-transition>
+                <h4 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Detalles de la ruta</h4>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nombre</label>
+                    <input type="text" x-model="newRouteName" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-white" />
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Tipo</label>
+                    <select x-model="newRouteType" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-white">
+                      <option value="roundtrip">Ida/Vuelta (x2)</option>
+                      <option value="oneway">Solo ida (x1)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Frecuencia</label>
+                    <select x-model="newRouteFreq" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-white">
+                      <option value="220">Diario (220 d)</option>
+                      <option value="365">Diario (365 d)</option>
+                      <option value="52">Semanal</option>
+                      <option value="12">Mensual</option>
+                    </select>
+                  </div>
+                  <div class="flex items-end">
+                    <button type="button" @click="saveNewRoute()"
+                            :disabled="loadingRoute || tempRoute.distance_km === 0"
+                            :class="(loadingRoute || tempRoute.distance_km === 0) ? 'opacity-50 cursor-not-allowed' : ''"
+                            class="w-full rounded-lg bg-estrata-teal hover:bg-estrata-teal_dark text-white font-bold py-2 text-xs transition shadow-sm">
+                      Añadir
+                    </button>
+                  </div>
+                </div>
+                <div class="text-[11px]">
+                  <div x-show="loadingRoute" class="text-estrata-teal_dark dark:text-estrata-teal_light font-medium animate-pulse">✨ Analizando trazado…</div>
+                  <div x-show="!loadingRoute" class="text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span>Distancia: <strong x-text="tempRoute.distance_km + ' km'"></strong></span>
+                    <span>·</span>
+                    <span>Autovía <strong class="text-estrata-teal_dark dark:text-estrata-teal_light" x-text="Math.round(tempRoute.motorway_pct) + '%'"></strong></span>
+                    <span>Nacional <strong class="text-indigo-500" x-text="Math.round(tempRoute.nacional_pct || 0) + '%'"></strong></span>
+                    <span>Urbano <strong class="text-emerald-600" x-text="Math.round(tempRoute.urban_pct) + '%'"></strong></span>
+                  </div>
+                </div>
+              </div>
+
+              {# Commutes guardados #}
+              <div class="p-4 border-t border-slate-100 dark:border-slate-700 space-y-2">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Tus commutes guardados</h4>
+                  <span class="text-[11px] text-slate-400" x-text="routes.length + ' trayectos'"></span>
+                </div>
+
+                <div class="divide-y divide-slate-100 dark:divide-slate-700 max-h-56 overflow-y-auto">
+                  <template x-for="(r, idx) in routes" :key="idx">
+                    <div class="py-2.5 flex justify-between items-center gap-3">
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                          <span class="font-bold text-sm text-slate-800 dark:text-slate-200 truncate" x-text="r.name"></span>
+                          <span class="shrink-0 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-[9px] text-slate-500 font-bold" x-text="r.frequency_name"></span>
+                        </div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5"
+                             x-text="r.distance_km + ' km · ' + (r.is_roundtrip ? 'I/V (x2)' : 'Solo ida') + ' · ' + Math.round(r.distance_km * r.frequency * (r.is_roundtrip ? 2 : 1)).toLocaleString() + ' km/año'"></div>
+                      </div>
+                      <button type="button" @click="deleteRoute(idx)" class="text-slate-400 hover:text-red-500 transition shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </div>
+                  </template>
+                  <div x-show="!routes.length" class="py-6 text-center text-xs text-slate-400">
+                    Aún no tienes commutes guardados.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <section x-show="step === '3'" x-transition.opacity class="space-y-6">
+
+          <header>
+            <h2 class="text-xl sm:text-2xl font-black text-estrata-navy dark:text-white">
+              Tu situación
+            </h2>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              Perfil fiscal, dónde vas a cargar, e incentivos aplicables.
+            </p>
+          </header>
+
+          <div class="grid lg:grid-cols-2 gap-4">
+
+            {# Perfil fiscal #}
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-3">
+              <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Perfil fiscal</label>
+              <div class="grid grid-cols-3 gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+                <template x-for="opt in [{v:'particular',l:'Particular'},{v:'autonomo',l:'Autónomo'},{v:'empresa',l:'Empresa'}]" :key="opt.v">
+                  <button type="button" @click="profile = opt.v; onProfileChange()"
+                          :class="profile === opt.v ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                          class="py-2.5 rounded-lg text-xs font-extrabold uppercase tracking-widest transition"
+                          x-text="opt.l"></button>
+                </template>
+              </div>
+              <input type="hidden" name="profile" :value="profile" />
+              <p class="text-[11px] text-slate-400 dark:text-slate-500">
+                Afecta a Moves III, IVA deducible, IRPF y presets de carga.
+              </p>
+            </div>
+
+            {# Wallbox #}
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-3">
+              <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Punto de carga en casa</label>
               <div class="grid grid-cols-3 gap-1.5">
-                <template x-for="opt in [{v:'installed',l:'Tengo wallbox',sub:'instalado'},{v:'needs_install',l:'Necesito instalar',sub:'~1.500 €'},{v:'no_home',l:'Sin garaje',sub:'sólo público'}]" :key="opt.v">
+                <template x-for="opt in [{v:'installed',l:'Tengo wallbox',sub:'instalado'},{v:'needs_install',l:'A instalar',sub:'~1.500 €'},{v:'no_home',l:'Sin garaje',sub:'sólo público'}]" :key="opt.v">
                   <button type="button" @click="wallboxState = opt.v; if (opt.v === 'no_home') { applyChargingPreset(profile === 'particular' ? 'public_only' : 'office_public'); }"
-                          :class="wallboxState === opt.v ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/30 text-cyan-700 dark:text-cyan-300 ring-1 ring-cyan-500/50' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'"
-                          class="flex flex-col items-center justify-center gap-0.5 py-2.5 px-1 rounded-lg border-2 transition text-center">
+                          :class="wallboxState === opt.v ? 'border-estrata-teal bg-estrata-teal/5 dark:bg-estrata-teal/10 text-estrata-teal_dark dark:text-estrata-teal_light ring-1 ring-estrata-teal/40' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-estrata-teal/40'"
+                          class="flex flex-col items-center justify-center gap-0.5 py-2.5 px-1 rounded-xl border-2 transition text-center">
                     <span class="text-[11px] font-extrabold" x-text="opt.l"></span>
                     <span class="text-[9px] text-slate-400 dark:text-slate-500 font-semibold" x-text="opt.sub"></span>
                   </button>
@@ -391,54 +660,55 @@
               </div>
               <input type="hidden" name="wallbox_state" :value="wallboxState" />
             </div>
+          </div>
 
-            <!-- Mix preset chips -->
-            <div class="space-y-2">
-              <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Mix típico (preset)</label>
-              <div class="flex flex-wrap gap-1.5">
-                <template x-for="p in chargingPresets" :key="p.key">
-                  <button type="button" @click="applyChargingPreset(p.key)"
-                          :class="chargingPreset === p.key ? 'bg-cyan-500 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
-                          class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition"
-                          x-text="p.label"></button>
-                </template>
-              </div>
+          {# Mix de carga #}
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-4">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">¿Dónde vas a cargar?</label>
+              <span x-show="weightedPrice" class="text-xs font-bold text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="'~' + weightedPrice + ' €/kWh'"></span>
             </div>
 
-            <!-- Mix fine sliders -->
-            <div class="space-y-2.5">
-              <!-- Casa -->
+            {# Presets #}
+            <div class="flex flex-wrap gap-1.5">
+              <template x-for="p in chargingPresets" :key="p.key">
+                <button type="button" @click="applyChargingPreset(p.key)"
+                        :class="chargingPreset === p.key ? 'bg-estrata-teal text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'"
+                        class="px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition"
+                        x-text="p.label"></button>
+              </template>
+            </div>
+
+            {# Sliders mix #}
+            <div class="grid sm:grid-cols-2 gap-x-5 gap-y-3">
               <div class="space-y-1">
-                <div class="flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
                   <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>🏠 Casa</span>
-                  <span class="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs" x-text="homePct + '%'"></span>
+                  <span class="text-emerald-600 dark:text-emerald-400 font-extrabold text-sm tabular-nums" x-text="homePct + '%'"></span>
                 </div>
                 <input type="range" min="0" max="100" x-model.number="homePct" @input="normalizeMix('home')"
                        class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-emerald-500" />
               </div>
-              <!-- Trabajo -->
               <div class="space-y-1">
-                <div class="flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                  <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>🏢 Trabajo (gratis)</span>
-                  <span class="text-sky-600 dark:text-sky-400 font-extrabold text-xs" x-text="workPct + '%'"></span>
+                <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                  <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>🏢 Trabajo</span>
+                  <span class="text-sky-600 dark:text-sky-400 font-extrabold text-sm tabular-nums" x-text="workPct + '%'"></span>
                 </div>
                 <input type="range" min="0" max="100" x-model.number="workPct" @input="normalizeMix('work')"
                        class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-sky-500" />
               </div>
-              <!-- Pública AC -->
               <div class="space-y-1">
-                <div class="flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                  <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>⚡ Pública AC (~0,42 €/kWh)</span>
-                  <span class="text-amber-600 dark:text-amber-400 font-extrabold text-xs" x-text="publicAcPct + '%'"></span>
+                <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                  <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>⚡ Pública AC</span>
+                  <span class="text-amber-600 dark:text-amber-400 font-extrabold text-sm tabular-nums" x-text="publicAcPct + '%'"></span>
                 </div>
                 <input type="range" min="0" max="100" x-model.number="publicAcPct" @input="normalizeMix('public_ac')"
                        class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-amber-500" />
               </div>
-              <!-- Pública DC -->
               <div class="space-y-1">
-                <div class="flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                  <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>🔥 Pública DC (~0,55 €/kWh)</span>
-                  <span class="text-rose-600 dark:text-rose-400 font-extrabold text-xs" x-text="publicDcPct + '%'"></span>
+                <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                  <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>🔥 Pública DC</span>
+                  <span class="text-rose-600 dark:text-rose-400 font-extrabold text-sm tabular-nums" x-text="publicDcPct + '%'"></span>
                 </div>
                 <input type="range" min="0" max="100" x-model.number="publicDcPct" @input="normalizeMix('public_dc')"
                        class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-rose-500" />
@@ -450,324 +720,263 @@
             <input type="hidden" name="public_ac_pct" :value="publicAcPct" />
             <input type="hidden" name="public_dc_pct" :value="publicDcPct" />
 
-            <!-- Tarifa nocturna (sólo si hay carga casa) -->
-            <label class="flex items-center gap-3 cursor-pointer pt-1 border-t border-slate-200/60 dark:border-slate-700/60"
+            <label class="flex items-center gap-3 cursor-pointer pt-2 border-t border-slate-100 dark:border-slate-700"
                    :class="homePct === 0 ? 'opacity-40 pointer-events-none' : ''">
               <input type="checkbox" name="night_charging" x-model="nightCharging" :disabled="homePct === 0"
-                     class="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-cyan-500 focus:ring-cyan-500" />
+                     class="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-estrata-teal focus:ring-estrata-teal" />
               <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Tarifa nocturna PVPC P3 (€0,085/kWh) en casa</span>
             </label>
           </div>
 
-          <!-- 3.C — INCENTIVOS -->
-          <div class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 p-4 space-y-3">
+          {# Incentivos #}
+          <div class="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 p-5 space-y-3">
             <div class="flex items-center justify-between">
-              <h4 class="text-[11px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-300">💰 Incentivos aplicables</h4>
-              <span class="text-base font-black text-emerald-700 dark:text-emerald-300 tabular-nums"
+              <h4 class="text-xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-300">💰 Incentivos aplicables</h4>
+              <span class="text-lg font-black text-emerald-700 dark:text-emerald-300 tabular-nums"
                     x-text="effectiveSubvencionEur.toLocaleString('es-ES') + ' €'"></span>
             </div>
 
-            <!-- Achatarramiento toggle -->
             <label class="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" name="scrapping" x-model="scrapping"
                      class="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500" />
               <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Achatarro un vehículo ≥ 7 años (Moves III +)</span>
             </label>
 
-            <!-- Toggle detalle -->
             <button type="button" @click="showIncentiveDetail = !showIncentiveDetail"
-                    class="w-full text-left text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 flex items-center justify-between py-1">
+                    class="w-full text-left text-[11px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 flex items-center justify-between py-1">
               <span x-text="showIncentiveDetail ? '▼ Ocultar desglose' : '▶ Ver desglose'"></span>
             </button>
 
-            <ul x-show="showIncentiveDetail" x-collapse class="space-y-1.5 text-[11px] border-t border-emerald-200/60 dark:border-emerald-800/60 pt-2.5">
+            <ul x-show="showIncentiveDetail" x-collapse class="space-y-1.5 text-xs border-t border-emerald-200/60 dark:border-emerald-800/60 pt-2.5">
               <template x-for="i in incentivesItems" :key="i.name">
                 <li class="flex justify-between items-baseline gap-2">
-                  <span class="text-slate-700 dark:text-slate-300">
+                  <span class="text-slate-700 dark:text-slate-300 min-w-0">
                     <span class="text-emerald-500">✓</span>
                     <span x-text="i.name"></span>
-                    <span x-show="i.recurring" class="text-[9px] text-slate-400 italic" x-text="'(' + i.eur + ' €/año × ' + (document.querySelector('[name=years_horizon]')?.value || 10) + ')'"></span>
+                    <span x-show="i.recurring" class="text-[10px] text-slate-400 italic" x-text="'(' + i.eur + ' €/año × ' + (document.querySelector('[name=years_horizon]')?.value || 10) + ')'"></span>
                   </span>
                   <span class="font-bold text-emerald-700 dark:text-emerald-400 tabular-nums whitespace-nowrap"
                         x-text="i.equivalent.toLocaleString('es-ES') + ' €'"></span>
                 </li>
               </template>
-              <li x-show="!incentivesItems.length" class="text-slate-400 italic text-center py-2">Sin incentivos aplicables con esta configuración.</li>
+              <li x-show="!incentivesItems.length" class="text-slate-400 italic text-center py-2">Sin incentivos aplicables.</li>
             </ul>
 
-            <!-- Override manual -->
             <div class="pt-2 border-t border-emerald-200/60 dark:border-emerald-800/60 space-y-1.5">
-              <label class="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+              <label class="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                 <span>Override manual</span>
                 <button type="button" @click="subvencionOverride = null" x-show="subvencionOverride !== null && subvencionOverride !== ''"
-                        class="text-cyan-600 hover:text-cyan-700 normal-case font-semibold lowercase tracking-normal">↺ usar cálculo auto</button>
+                        class="text-estrata-teal_dark hover:underline normal-case font-semibold lowercase tracking-normal">↺ usar auto</button>
               </label>
-              <input type="number" name="subvencion_override_eur" x-model="subvencionOverride" min="0" max="30000" step="100" placeholder="Dejar vacío = usar cálculo automático"
-                     class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold" />
+              <input type="number" name="subvencion_override_eur" x-model="subvencionOverride" min="0" max="30000" step="100" placeholder="Vacío = automático"
+                     class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold tabular-nums" />
             </div>
           </div>
+        </section>
 
-          <!-- Submit button -->
-          <button type="submit"
-                  class="inline-flex w-full items-center justify-center gap-2 rounded-xl text-white font-black px-4 py-3.5 transition shadow-sm text-xs uppercase tracking-widest mt-2 hover:opacity-95"
-                  style="background-color: #06b6d4 !important; color: #ffffff !important;">
+        {# ─── Footer nav ─── #}
+        <div class="flex items-center justify-between gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+          <button type="button" @click="prev()" :disabled="isFirst()"
+                  :class="isFirst() ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-800'"
+                  class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Atrás
+          </button>
+
+          <button type="button" @click="next()" x-show="!isLast()" :disabled="!canAdvance()"
+                  :class="!canAdvance() ? 'opacity-50 cursor-not-allowed' : ''"
+                  class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-estrata-teal hover:bg-estrata-teal_dark text-white font-extrabold transition shadow-lg shadow-estrata-teal/30 text-sm uppercase tracking-widest">
+            Siguiente
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+          </button>
+
+          <button type="submit" x-show="isLast()"
+                  class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-estrata-teal hover:bg-estrata-teal_dark text-white font-extrabold transition shadow-lg shadow-estrata-teal/30 text-sm uppercase tracking-widest">
             <svg id="advisor-loading" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-spin htmx-indicator" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4zm2 5.3A8 8 0 014 12H0c0 3 1.1 5.8 3 7.9l3-2.6z"/>
             </svg>
-            Calcular comparativa TCO
+            Calcular TCO
           </button>
         </div>
-      </div>
-    </form>
 
-    {# ---------- RIGHT PANEL ---------- #}
-    <div class="w-full lg:w-3/5 space-y-6">
-      
-      <!-- Right Panel Dynamic Tab Switcher -->
-      <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl w-max border border-slate-200 dark:border-slate-700/60 shadow-sm">
-        <button type="button" @click="rightTab = 'map'; $nextTick(() => { setTimeout(() => { if (window.commuteMap) window.commuteMap.invalidateSize(); }, 150); })"
-                :class="rightTab === 'map' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                class="px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition flex items-center gap-1.5">
-          <span>🗺️ Planificador Mapa</span>
-        </button>
-        <button type="button" @click="if (hasResults) rightTab = 'results';"
-                :disabled="!hasResults"
-                :class="[
-                  !hasResults ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer',
-                  rightTab === 'results' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                ]"
-                class="px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition flex items-center gap-1.5">
-          <span>📊 Resultados TCO</span>
-          <span x-show="hasResults" class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-        </button>
-      </div>
+      </div> {# /MAIN COLUMN #}
 
-      <!-- Tab 1: Commute Planner Map -->
-      <div x-show="rightTab === 'map'" class="space-y-6" x-transition>
-        <!-- Commute Planner Card -->
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
-            <div>
-              <h2 class="text-sm font-bold text-slate-900 dark:text-white">Planificador de Commutes Geográficos</h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400">Dibuja tus trayectos anuales sobre la red de carreteras</p>
+
+      {# ════════════ SIDEBAR · RESUMEN STICKY ════════════ #}
+      <aside class="lg:sticky lg:top-6 h-fit">
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-3 shadow-sm">
+          <h3 class="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Tu simulación</h3>
+
+          {# 1a: Tu coche #}
+          <button type="button" @click="goTo('1a')"
+                  :class="step === '1a' ? 'ring-1 ring-estrata-teal/40 bg-estrata-teal/5' : 'hover:bg-slate-50 dark:hover:bg-slate-900/40'"
+                  class="w-full text-left rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 transition">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">1a · Tu coche</span>
+              <span x-show="selectedCurrent" class="text-emerald-500 text-xs">✓</span>
             </div>
-            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-50 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-300 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
-              pgRouting Activo
-            </span>
+            <div class="mt-1 text-xs font-bold text-slate-900 dark:text-white truncate"
+                 x-text="selectedCurrent ? (selectedCurrent.make + ' ' + selectedCurrent.model.split(' ').slice(0,3).join(' ')) : '— pendiente —'"></div>
+            <div x-show="cp" class="text-[10px] text-slate-500 dark:text-slate-400">CP <span class="font-bold tabular-nums" x-text="cp"></span></div>
+          </button>
+
+          {# 1b: EV objetivo #}
+          <button type="button" @click="goTo('1b')"
+                  :class="step === '1b' ? 'ring-1 ring-estrata-teal/40 bg-estrata-teal/5' : 'hover:bg-slate-50 dark:hover:bg-slate-900/40'"
+                  class="w-full text-left rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 transition">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">1b · Eléctrico</span>
+              <span x-show="selectedTarget" class="text-emerald-500 text-xs">✓</span>
+            </div>
+            <div class="mt-1 text-xs font-bold text-slate-900 dark:text-white truncate"
+                 x-text="selectedTarget ? (selectedTarget.make + ' ' + selectedTarget.model.split(' ').slice(0,3).join(' ')) : '— pendiente —'"></div>
+            <div x-show="selectedTarget" class="text-[10px] text-slate-500 dark:text-slate-400">
+              <span x-text="selectedTarget?.range_wltp_km + ' km'" class="font-bold tabular-nums"></span> ·
+              <span x-text="(selectedTarget?.price_eur || 0).toLocaleString('es-ES') + ' €'" class="font-bold tabular-nums"></span>
+            </div>
+          </button>
+
+          {# 2: Movilidad #}
+          <button type="button" @click="goTo('2')"
+                  :class="step === '2' ? 'ring-1 ring-estrata-teal/40 bg-estrata-teal/5' : 'hover:bg-slate-50 dark:hover:bg-slate-900/40'"
+                  class="w-full text-left rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 transition">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">2 · Movilidad</span>
+            </div>
+            <div class="mt-1 text-xs font-bold text-slate-900 dark:text-white">
+              <span x-text="(commuteMode ? routes.reduce((acc, r) => acc + Math.round(r.distance_km * r.frequency * (r.is_roundtrip ? 2 : 1)), 0) : 15000).toLocaleString('es-ES')"></span> km/año
+            </div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+              <span x-text="(commuteMode ? getWeightedPct('motorway_pct') : manMotorwayPct) + '%'" class="font-bold"></span> autovía ·
+              <span x-text="(commuteMode ? (100 - getWeightedPct('motorway_pct') - getWeightedPct('nacional_pct')) : (100 - manMotorwayPct - manNacionalPct)) + '%'" class="font-bold"></span> urbano
+            </div>
+          </button>
+
+          {# 3: Carga e incentivos #}
+          <button type="button" @click="goTo('3')"
+                  :class="step === '3' ? 'ring-1 ring-estrata-teal/40 bg-estrata-teal/5' : 'hover:bg-slate-50 dark:hover:bg-slate-900/40'"
+                  class="w-full text-left rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 transition">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">3 · Carga + incentivos</span>
+            </div>
+            <div class="mt-1 text-xs font-bold text-slate-900 dark:text-white capitalize" x-text="profile"></div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+              Incentivos: <span class="font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums" x-text="effectiveSubvencionEur.toLocaleString('es-ES') + ' €'"></span>
+            </div>
+          </button>
+
+          {# CTA inline (mismo botón que submit del paso 3) #}
+          <button type="submit" x-show="step === '3'"
+                  class="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-estrata-teal hover:bg-estrata-teal_dark text-white font-extrabold transition shadow-lg shadow-estrata-teal/30 text-xs uppercase tracking-widest">
+            Calcular TCO →
+          </button>
+        </div>
+
+        {# ── Comparador: alternativas al EV elegido ── #}
+        <div x-show="selectedTarget && alternatives.length" x-cloak
+             class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-3 shadow-sm">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Alternativas</h3>
+            <span class="text-[10px] text-slate-400" x-show="alternativesLoading">cargando…</span>
           </div>
-
-          <!-- Map Container -->
-          <div class="relative overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
-            <div id="commute-leaflet-map" style="width:100%; height:320px; z-index: 10;"></div>
-            
-            <!-- Instructions overlay -->
-            <div class="absolute bottom-3 left-3 z-[1000] bg-white/95 dark:bg-slate-800/95 shadow px-3 py-2 rounded-lg text-xs max-w-xs border border-slate-200 dark:border-slate-700 pointer-events-none">
-              <div x-show="!startPoint && !endPoint" class="text-slate-600 dark:text-slate-300">
-                📍 Haz click en el mapa para marcar el <strong>Origen</strong> de tu trayecto.
-              </div>
-              <div x-show="startPoint && !endPoint" class="text-slate-600 dark:text-slate-300">
-                🎯 Haz click en el mapa para marcar el <strong>Destino</strong>.
-              </div>
-              <div x-show="startPoint && endPoint" class="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                <span>✅ ¡Ruta calculada! Ponle un nombre y agrégala abajo.</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Add Commute Route controls -->
-          <div x-show="startPoint && endPoint" class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl space-y-3 border border-slate-100 dark:border-slate-700" x-transition>
-            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Detalles de la nueva ruta</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-              <div>
-                <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Nombre</label>
-                <input type="text" x-model="newRouteName" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-white" />
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Tipo de Trayecto</label>
-                <select x-model="newRouteType" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-white">
-                  <option value="roundtrip">Ida y vuelta (x2)</option>
-                  <option value="oneway">Solo ida (x1)</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Frecuencia</label>
-                <select x-model="newRouteFreq" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-white">
-                  <option value="220">Diario (Trabajo - 220 días)</option>
-                  <option value="365">Diario (Todo el año - 365 días)</option>
-                  <option value="52">Semanal (52 viajes)</option>
-                  <option value="12">Mensual (12 viajes)</option>
-                </select>
-              </div>
-              <div class="flex items-end">
-                <button type="button" @click="saveNewRoute()" 
-                        :disabled="loadingRoute || tempRoute.distance_km === 0"
-                        :class="(loadingRoute || tempRoute.distance_km === 0) ? 'opacity-50 cursor-not-allowed' : ''"
-                        class="w-full rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 text-xs transition shadow-sm"
-                        style="background-color: #0891b2 !important; color: #ffffff !important;">
-                  Añadir Commute
-                </button>
-              </div>
-            </div>
-            
-            <!-- Loading status or Route Details -->
-            <div class="text-[11px] min-h-[1.5rem]">
-              <div x-show="loadingRoute" class="text-cyan-600 dark:text-cyan-400 font-medium animate-pulse flex items-center gap-1.5">
-                <svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4zm2 5.3A8 8 0 014 12H0c0 3 1.1 5.8 3 7.9l3-2.6z"></path>
-                </svg>
-                <span>✨ Analizando trazado real por tipo de vía y velocidades...</span>
-              </div>
-              
-              <div x-show="!loadingRoute" class="text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-4 gap-y-1">
-                <span>Distancia: <strong class="text-slate-700 dark:text-slate-200" x-text="tempRoute.distance_km + ' km'"></strong></span>
-                <span>·</span>
-                <span>Autovía: <strong class="text-cyan-600 dark:text-cyan-400" x-text="Math.round(tempRoute.motorway_pct) + '%'"></strong></span>
-                <span>·</span>
-                <span>Nacional: <strong class="text-indigo-500 dark:text-indigo-400" x-text="Math.round(tempRoute.nacional_pct || 0) + '%'"></strong></span>
-                <span>·</span>
-                <span>Urbano: <strong class="text-emerald-600 dark:text-emerald-400" x-text="Math.round(tempRoute.urban_pct) + '%'"></strong></span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Saved Commutes List -->
+          <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-snug">
+            EVs similares en categoría, autonomía (±15 %) y precio (±20 %). Tap para cambiar.
+          </p>
           <div class="space-y-2">
-            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex justify-between">
-              <span>Tus commutes guardados</span>
-              <span x-text="routes.length + ' trayectos'"></span>
-            </h3>
-            
-            <div class="divide-y divide-slate-100 dark:divide-slate-700 max-h-48 overflow-y-auto pr-1">
-              <template x-for="(r, idx) in routes" :key="idx">
-                <div class="py-2.5 flex justify-between items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-850 px-2 rounded-lg transition">
-                  <div>
-                    <div class="flex items-center gap-2">
-                      <span class="font-bold text-sm text-slate-800 dark:text-slate-200" x-text="r.name"></span>
-                      <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-[10px] text-slate-500 dark:text-slate-400 font-semibold" x-text="r.frequency_name"></span>
-                    </div>
-                    <div class="text-[11px] text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
-                      <span class="font-semibold text-slate-600 dark:text-slate-300" 
-                            x-text="r.is_roundtrip ? (r.distance_km + ' km (Ida) · Ida/Vuelta (x2)') : (r.distance_km + ' km (Ida) · Solo Ida (x1)')"></span>
-                      <span>·</span>
-                      <span class="text-cyan-600 dark:text-cyan-400" x-text="'Autovía: ' + Math.round(r.motorway_pct) + '%'"></span>
-                      <span>·</span>
-                      <span class="text-indigo-500 dark:text-indigo-400" x-text="'Nacional: ' + Math.round(r.nacional_pct || 0) + '%'"></span>
-                      <span>·</span>
-                      <span class="text-emerald-600 dark:text-emerald-400" x-text="'Urbano: ' + Math.round(r.urban_pct) + '%'"></span>
-                    </div>
-                    <!-- Exact calculation breakdown recipe -->
-                    <div class="text-[9.5px] text-slate-400 mt-1 italic flex items-center gap-1 bg-slate-50 dark:bg-slate-900/40 px-2 py-0.5 rounded w-max">
-                      <svg class="h-3 w-3 text-slate-450" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>Cálculo: <strong class="font-semibold text-slate-500 dark:text-slate-450" x-text="r.is_roundtrip ? ('(2 x ' + r.distance_km + ' km) x ' + r.frequency + ' viajes = ' + Math.round(r.distance_km * 2 * r.frequency).toLocaleString() + ' km/año') : ('(1 x ' + r.distance_km + ' km) x ' + r.frequency + ' viajes = ' + Math.round(r.distance_km * 1 * r.frequency).toLocaleString() + ' km/año')"></strong></span>
-                    </div>
+            <template x-for="alt in alternatives" :key="alt.id">
+              <button type="button" @click="selectTargetVehicle(alt)"
+                      class="w-full text-left rounded-xl border border-slate-200 dark:border-slate-700 hover:border-estrata-teal/40 px-3 py-2 transition">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="text-[12px] font-bold text-slate-900 dark:text-white truncate" x-text="alt.make + ' ' + alt.model"></div>
+                    <div class="text-[10px] text-slate-500 dark:text-slate-400" x-show="alt.variant_count > 1" x-text="alt.variant_count + ' variantes'"></div>
                   </div>
-                  <div class="flex items-center gap-3">
-                    <span class="font-bold text-xs text-slate-700 dark:text-slate-300" x-text="Math.round(r.distance_km * r.frequency * (r.is_roundtrip ? 2 : 1)).toLocaleString() + ' km/año'"></span>
-                    <button type="button" @click="deleteRoute(idx)" class="text-slate-400 hover:text-red-500 transition">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                    </button>
+                  <div class="shrink-0 text-right">
+                    <div class="text-[11px] font-bold tabular-nums"
+                         :class="(alt.range_wltp_km - (selectedTarget?.range_wltp_km || 0)) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'"
+                         x-text="formatDelta(alt.range_wltp_km - (selectedTarget?.range_wltp_km || 0), ' km')"></div>
+                    <div class="text-[11px] font-bold tabular-nums"
+                         :class="(alt.price_eur - (selectedTarget?.price_eur || 0)) <= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'"
+                         x-text="formatDelta(alt.price_eur - (selectedTarget?.price_eur || 0), ' €')"></div>
                   </div>
                 </div>
-              </template>
-              <div x-show="!routes.length" class="py-6 text-center text-xs text-slate-400">
-                 No tienes trayectos guardados. Utiliza el mapa interactivo para marcar tu origen y destino.
-              </div>
-            </div>
-          </div>
-
-          <!-- Commute Summary Footer -->
-          <div x-show="routes.length > 0" class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 space-y-3.5 bg-slate-50/50 dark:bg-slate-900/30 p-4 rounded-xl">
-            <div class="flex items-center justify-between">
-              <div class="space-y-0.5">
-                <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">TOTAL ACUMULADO</span>
-                <div class="flex items-baseline gap-1.5">
-                  <span class="text-xl font-extrabold text-slate-900 dark:text-white" x-text="Math.round(routes.reduce((acc, r) => acc + (r.distance_km * r.frequency * (r.is_roundtrip ? 2 : 1)), 0)).toLocaleString() + ' km'"></span>
-                  <span class="text-[11px] font-bold text-slate-400">/ año</span>
-                </div>
-              </div>
-              
-              <!-- Real-world analog insight -->
-              <div class="hidden sm:block text-right">
-                <span class="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-widest flex items-center gap-1 justify-end">
-                  <span>⚡ Impacto Geográfico</span>
-                </span>
-                <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400"
-                      x-text="'Equivale a ' + (routes.reduce((acc, r) => acc + (r.distance_km * r.frequency * (r.is_roundtrip ? 2 : 1)), 0) / 40075).toFixed(2) + ' vueltas a la Tierra'"></span>
-              </div>
-            </div>
-
-            <!-- 3-Way Weighted Distribution Progress Bar -->
-            <div class="space-y-1.5">
-              <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-555">
-                <span>Distribución por Tipo de Vía</span>
-                <span class="text-slate-400" x-text="'Total Ponderado'"></span>
-              </div>
-              
-              <!-- Multi-segmented Progress Bar -->
-              <div class="h-2.5 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex">
-                <!-- Autovía -->
-                <div class="h-full bg-cyan-500 transition-all duration-500" 
-                     :style="'width: ' + getWeightedPct('motorway_pct') + '%'"
-                     x-show="getWeightedPct('motorway_pct') > 0"
-                     :title="'Autovía: ' + getWeightedPct('motorway_pct') + '%'"></div>
-                <!-- Nacional -->
-                <div class="h-full bg-indigo-500 transition-all duration-500" 
-                     :style="'width: ' + getWeightedPct('nacional_pct') + '%'"
-                     x-show="getWeightedPct('nacional_pct') > 0"
-                     :title="'Nacional: ' + getWeightedPct('nacional_pct') + '%'"></div>
-                <!-- Urbano -->
-                <div class="h-full bg-emerald-500 transition-all duration-500" 
-                     :style="'width: ' + getWeightedPct('urban_pct') + '%'"
-                     x-show="getWeightedPct('urban_pct') > 0"
-                     :title="'Urbano: ' + getWeightedPct('urban_pct') + '%'"></div>
-              </div>
-
-              <!-- Legend with percentages -->
-              <div class="flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-500 dark:text-slate-400 flex-wrap">
-                <div class="flex items-center gap-1.5">
-                  <div class="w-2 h-2 rounded-full bg-cyan-500"></div>
-                  <span>Autovía: <strong class="text-slate-700 dark:text-slate-200" x-text="getWeightedPct('motorway_pct') + '%'"></strong></span>
-                </div>
-                <div class="flex items-center gap-1.5">
-                  <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
-                  <span>Nacional: <strong class="text-slate-700 dark:text-slate-200" x-text="getWeightedPct('nacional_pct') + '%'"></strong></span>
-                </div>
-                <div class="flex items-center gap-1.5">
-                  <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                  <span>Urbano: <strong class="text-slate-700 dark:text-slate-200" x-text="getWeightedPct('urban_pct') + '%'"></strong></span>
-                </div>
-              </div>
-            </div>
+              </button>
+            </template>
           </div>
         </div>
-      </div>
+      </aside>
 
-      <!-- Tab 2: TCO Results swap-container -->
-      <div x-show="rightTab === 'results'" class="space-y-6" x-transition>
-        <div id="advisor-result" class="space-y-6">
-          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-12 text-center text-slate-500 dark:text-slate-400 shadow-sm flex flex-col items-center justify-center">
-            <div class="p-4 rounded-full bg-cyan-50 dark:bg-cyan-950/40 text-cyan-500 mb-4 ring-4 ring-cyan-50 dark:ring-cyan-950/20">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-              </svg>
-            </div>
-            <h3 class="text-base font-bold text-slate-850 dark:text-white mb-2">Simulación lista para calcular</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
-              Completa los 3 pasos de la consola izquierda y pulsa <strong>Calcular comparativa TCO</strong> para analizar tu ahorro real.
-            </p>
-          </div>
+    </div> {# /WIZARD VIEW #}
+
+  </form>
+
+  <div x-show="submitted" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 grid grid-cols-2 lg:grid-cols-4 gap-3 shadow-sm">
+      <button type="button" @click="submitted = false; goTo('1a')"
+              class="text-left rounded-xl border border-slate-200 dark:border-slate-700 hover:border-estrata-teal/40 px-3 py-2.5 transition group">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">1a · Tu coche</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-slate-300 group-hover:text-estrata-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
         </div>
-      </div>
+        <div class="mt-1 text-sm font-bold text-slate-900 dark:text-white truncate"
+             x-text="selectedCurrent ? (selectedCurrent.make + ' ' + selectedCurrent.model) : '—'"></div>
+        <div class="text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
+          <span x-show="selectedCurrent?.consumption_l_100km" x-text="selectedCurrent?.consumption_l_100km + ' L/100'"></span>
+          <span x-show="cp"> · CP <span x-text="cp"></span></span>
+        </div>
+      </button>
 
+      <button type="button" @click="submitted = false; goTo('1b')"
+              class="text-left rounded-xl border border-slate-200 dark:border-slate-700 hover:border-estrata-teal/40 px-3 py-2.5 transition group">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">1b · Eléctrico</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-slate-300 group-hover:text-estrata-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+        </div>
+        <div class="mt-1 text-sm font-bold text-slate-900 dark:text-white truncate"
+             x-text="selectedTarget ? (selectedTarget.make + ' ' + selectedTarget.model) : '—'"></div>
+        <div class="text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
+          <span x-show="selectedTarget?.range_wltp_km" x-text="selectedTarget?.range_wltp_km + ' km'"></span>
+          <span x-show="selectedTarget?.price_eur"> · <span x-text="((targetPriceOverride && targetPriceOverride > 0 ? targetPriceOverride : selectedTarget?.price_eur) || 0).toLocaleString('es-ES')"></span> €</span>
+        </div>
+      </button>
+
+      <button type="button" @click="submitted = false; goTo('2')"
+              class="text-left rounded-xl border border-slate-200 dark:border-slate-700 hover:border-estrata-teal/40 px-3 py-2.5 transition group">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">2 · Movilidad</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-slate-300 group-hover:text-estrata-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+        </div>
+        <div class="mt-1 text-sm font-bold text-slate-900 dark:text-white tabular-nums">
+          <span x-text="(parseInt(document.getElementById('km_year_input')?.value || '0') || 0).toLocaleString('es-ES')"></span> km/año
+        </div>
+        <div class="text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
+          <span x-text="(commuteMode ? getWeightedPct('motorway_pct') : manMotorwayPct) + '%'"></span> autovía ·
+          <span x-text="(commuteMode ? (100 - getWeightedPct('motorway_pct') - getWeightedPct('nacional_pct')) : (100 - manMotorwayPct - manNacionalPct)) + '%'"></span> urbano
+        </div>
+      </button>
+
+      <button type="button" @click="submitted = false; goTo('3')"
+              class="text-left rounded-xl border border-slate-200 dark:border-slate-700 hover:border-estrata-teal/40 px-3 py-2.5 transition group">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">3 · Carga + incentivos</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-slate-300 group-hover:text-estrata-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+        </div>
+        <div class="mt-1 text-sm font-bold text-slate-900 dark:text-white capitalize" x-text="profile"></div>
+        <div class="text-[11px] text-slate-500 dark:text-slate-400">
+          <span x-text="(homePct + workPct) >= 50 ? 'Casa/Trabajo' : 'Mix público'"></span> ·
+          <span class="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums" x-text="effectiveSubvencionEur.toLocaleString('es-ES') + ' €'"></span>
+        </div>
+      </button>
+    </div>
+
+    <div id="advisor-result" class="space-y-6">
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-12 text-center text-slate-500 dark:text-slate-400 shadow-sm">
+        Pulsa "Calcular TCO" para ver tu simulación.
+      </div>
     </div>
   </div>
-
 
 </section>
 
@@ -775,6 +984,7 @@
   .htmx-indicator { opacity: 0; transition: opacity .2s; }
   .htmx-request .htmx-indicator { opacity: 1; }
   .htmx-request.htmx-indicator { opacity: 1; }
+  [x-cloak] { display: none !important; }
 </style>
 {% endblock %}
 
@@ -782,98 +992,150 @@
 <script>
 function commutePlanner() {
   return {
+    // ─── Wizard navigation ───
+    step: '1a',                                  // '1a' | '1b' | '2' | '3'
+    submitted: false,
+    mapInited: false,
+    stepDefs: [
+      { id: '1a', short: '1', short_label: 'Tu coche',    label: 'Tu coche actual' },
+      { id: '1b', short: '2', short_label: 'EV',          label: 'Coche eléctrico' },
+      { id: '2',  short: '3', short_label: 'Movilidad',   label: 'Cómo te mueves' },
+      { id: '3',  short: '4', short_label: 'Carga',       label: 'Carga e incentivos' },
+    ],
+
+    // ─── Form state ───
+    cp: '20018',
     commuteMode: false,
     routes: [],
-    cp: '20018',
-    
-    // Accordion stepper and tabs state
-    step: 1,
-    hasResults: false,
-    rightTab: 'map',
     nightCharging: false,
 
-    // --- Step 3: perfil fiscal, mix de carga, wallbox, incentivos ---
-    profile: 'particular',         // 'particular' | 'autonomo' | 'empresa'
-    scrapping: false,              // ≥7 años a achatarrar
-    wallboxState: 'installed',     // 'installed' | 'needs_install' | 'no_home'
-    chargingPreset: 'home_always', // clave preset según profile
-    homePct: 100,
-    workPct: 0,
-    publicAcPct: 0,
-    publicDcPct: 0,
-    subvencionOverride: null,      // null → usa el cálculo automático
+    // Step 1a — entry mode for current vehicle
+    currentMode: 'search',     // 'search' | 'generic' (foto permiso deferred)
+
+    // Step 1b — entry mode for target vehicle
+    targetMode: 'recommend',   // 'recommend' | 'search'
+
+    // Step 3 — perfil fiscal, mix de carga, wallbox, incentivos
+    profile: 'particular',
+    scrapping: false,
+    wallboxState: 'installed',
+    chargingPreset: 'home_always',
+    homePct: 100, workPct: 0, publicAcPct: 0, publicDcPct: 0,
+    subvencionOverride: null,
     showIncentiveDetail: false,
-    
+
+    // Recomendación (criterios)
+    criteriaSize: 'mid',
+    criteriaRange: 'mid',
+    criteriaPriceMin: 20000,
+    criteriaPriceMax: 50000,
+    candidates: [],
+    candidatesLoading: false,
+    iceGenericId: null,
+
     // Autocomplete state
-    searchCurrent: '',
-    searchTarget: '',
-    currentSuggestions: [],
-    targetSuggestions: [],
-    showCurrentSuggestions: false,
-    showTargetSuggestions: false,
-    selectedCurrent: null,
-    selectedTarget: null,
-    currentPriceOverride: null,
-    targetPriceOverride: null,
-    
-    // Map Routing State
-    startPoint: null,
-    endPoint: null,
+    searchCurrent: '', searchTarget: '',
+    currentSuggestions: [], targetSuggestions: [],
+    showCurrentSuggestions: false, showTargetSuggestions: false,
+    selectedCurrent: null, selectedTarget: null,
+    currentPriceOverride: null, targetPriceOverride: null,
+
+    // Map state
+    startPoint: null, endPoint: null,
     loadingRoute: false,
     tempRoute: { distance_km: 0, motorway_pct: 60, nacional_pct: 20, urban_pct: 20, geojson: null },
     newRouteName: 'Trabajo',
     newRouteType: 'roundtrip',
     newRouteFreq: '220',
-    
-    // Manual route profile state
+
+    // Manual route profile
     manMotorwayPct: 60,
     manNacionalPct: 20,
-    flashHighlight: false,
-    
+
     init() {
-      // 1. Load data from localStorage
       this.routes = JSON.parse(localStorage.getItem('mubil_commutes') || '[]');
       this.selectedCurrent = JSON.parse(localStorage.getItem('mubil_selected_current') || 'null');
       this.selectedTarget = JSON.parse(localStorage.getItem('mubil_selected_target') || 'null');
-      
-      // Auto select defaults
+
       if (this.selectedCurrent) {
         this.searchCurrent = this.selectedCurrent.make + ' ' + this.selectedCurrent.model;
-        document.getElementById('current_vehicle_id_input').value = this.selectedCurrent.id;
-      } else {
-        // Fallback or fetch first suggestions
-        this.fetchCurrentSuggestions('Golf');
+        this.$nextTick(() => {
+          const el = document.getElementById('current_vehicle_id_input');
+          if (el) el.value = this.selectedCurrent.id;
+        });
       }
       if (this.selectedTarget) {
         this.searchTarget = this.selectedTarget.make + ' ' + this.selectedTarget.model;
-        document.getElementById('target_vehicle_id_input').value = this.selectedTarget.id;
-      } else {
-        this.fetchTargetSuggestions('Niro');
+        this.$nextTick(() => {
+          const el = document.getElementById('target_vehicle_id_input');
+          if (el) el.value = this.selectedTarget.id;
+        });
+        this.fetchAlternatives(this.selectedTarget.id);
       }
-      
-      // Bind HTMX completion event to switch tab and scroll into view if needed
+
+      // Recomendaciones iniciales (precarga para que el panel esté listo)
+      this.fetchRecommendations();
+
+      // HTMX swap → conmuta a vista resultados
       document.body.addEventListener('htmx:afterSwap', (evt) => {
         if (evt.detail.target.id === 'advisor-result') {
-          this.hasResults = true;
-          this.rightTab = 'results';
+          this.submitted = true;
           if (window.innerWidth < 1024) {
-            evt.detail.target.scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => evt.detail.target.scrollIntoView({ behavior: 'smooth' }), 100);
           }
         }
       });
-      
-      // 2. Initialize Leaflet Map
-      this.initMap();
-      this.updateTotals();
 
-      // 3. Apply initial charging preset coherent with profile
+      this.updateTotals();
       this.applyChargingPreset(this.chargingPreset);
     },
 
+    // ─── Wizard navigation methods ───
+    goTo(id) {
+      if (!this.canGoTo(id)) return;
+      this.step = id;
+      if (id === '2') this.ensureMapReady();
+    },
 
-    // ----- Step 3: presets de mix de carga + incentivos client-side -----
+    next() {
+      const idx = this.stepDefs.findIndex(s => s.id === this.step);
+      if (idx < this.stepDefs.length - 1) this.goTo(this.stepDefs[idx + 1].id);
+    },
+
+    prev() {
+      const idx = this.stepDefs.findIndex(s => s.id === this.step);
+      if (idx > 0) this.step = this.stepDefs[idx - 1].id;
+    },
+
+    canGoTo(id) {
+      // Permitimos saltar a cualquier step ya iniciado o el siguiente al
+      // último completado. Validaciones suaves: el submit final exige todo.
+      if (id === '1a') return true;
+      if (id === '1b') return !!this.selectedCurrent;
+      if (id === '2')  return !!this.selectedCurrent && !!this.selectedTarget;
+      if (id === '3')  return !!this.selectedCurrent && !!this.selectedTarget;
+      return false;
+    },
+
+    canAdvance() {
+      if (this.step === '1a') return !!this.selectedCurrent;
+      if (this.step === '1b') return !!this.selectedTarget;
+      if (this.step === '2')  return true;
+      return true;
+    },
+
+    stepDone(id) {
+      if (id === '1a') return !!this.selectedCurrent && this.step !== '1a';
+      if (id === '1b') return !!this.selectedTarget && this.step !== '1b';
+      if (id === '2')  return this.step === '3';
+      return false;
+    },
+
+    isFirst() { return this.step === this.stepDefs[0].id; },
+    isLast()  { return this.step === this.stepDefs[this.stepDefs.length - 1].id; },
+
+    // ─── Charging mix presets + incentives ───
     get chargingPresets() {
-      // (label, key, [home, work, ac, dc])
       if (this.profile === 'particular') {
         return [
           { key: 'home_always', label: 'Casa siempre',    mix: [100, 0, 0, 0] },
@@ -883,9 +1145,9 @@ function commutePlanner() {
         ];
       }
       return [
-        { key: 'office_always', label: 'Oficina siempre', mix: [0, 100, 0, 0] },
+        { key: 'office_always', label: 'Oficina siempre',  mix: [0, 100, 0, 0] },
         { key: 'office_public', label: 'Oficina + público', mix: [0, 70, 20, 10] },
-        { key: 'fleet_mixed',   label: 'Flota mixta',     mix: [30, 40, 20, 10] },
+        { key: 'fleet_mixed',   label: 'Flota mixta',      mix: [30, 40, 20, 10] },
       ];
     },
 
@@ -898,14 +1160,11 @@ function commutePlanner() {
     },
 
     onProfileChange() {
-      // Re-aplica el primer preset coherente con el nuevo perfil
       const presets = this.chargingPresets;
       this.applyChargingPreset(presets[0].key);
     },
 
     normalizeMix(lastEdited) {
-      // Recorta el campo editado para no pasar de 100 y reparte el residuo
-      // en el resto (manteniendo proporciones). Mantiene int 0-100.
       const clamp = v => Math.max(0, Math.min(100, Math.round(v)));
       this.homePct = clamp(this.homePct);
       this.workPct = clamp(this.workPct);
@@ -915,7 +1174,6 @@ function commutePlanner() {
       if (sum === 100) return;
       const diff = sum - 100;
       const others = ['home', 'work', 'public_ac', 'public_dc'].filter(k => k !== lastEdited);
-      // Repartir diff (positivo: restar, negativo: sumar) en los otros
       let remaining = diff;
       for (const k of others) {
         const prop = k === 'home' ? 'homePct' : k === 'work' ? 'workPct' : k === 'public_ac' ? 'publicAcPct' : 'publicDcPct';
@@ -927,8 +1185,6 @@ function commutePlanner() {
       }
     },
 
-    // Réplica client-side de incentives.compute_incentives para el preview.
-    // Backend recalcula con los mismos números — mantener sincronizado.
     get incentivesItems() {
       const out = [];
       const price = (this.selectedTarget && this.selectedTarget.price_eur) || 0;
@@ -936,7 +1192,6 @@ function commutePlanner() {
       const cp = (this.cp || '').toString();
       const prov = cp.startsWith('20') ? 'GI' : cp.startsWith('48') ? 'BI' : cp.startsWith('01') ? 'VI' : 'OTROS';
 
-      // Moves III vehículo
       if (this.profile === 'particular') {
         out.push({ name: 'Moves III vehículo' + (this.scrapping ? ' + achatarramiento' : ''),
                    eur: this.scrapping ? 7000 : 4500, recurring: false });
@@ -944,38 +1199,29 @@ function commutePlanner() {
         out.push({ name: 'Moves III vehículo' + (this.scrapping ? ' + achatarramiento' : ''),
                    eur: this.scrapping ? 4000 : 2900, recurring: false });
       }
-      // Moves III wallbox
       if (this.wallboxState === 'needs_install') {
         out.push({ name: 'Moves III instalación wallbox',
                    eur: this.profile === 'particular' ? 600 : 800, recurring: false });
       }
-      // IRPF (sólo particular)
       if (this.profile === 'particular' && price > 0) {
         const base = Math.min(price, 20000);
         out.push({ name: 'Deducción IRPF 15 % (RD-ley 5/2023)', eur: Math.round(base * 0.15), recurring: false });
       }
-      // IVTM
       const ivtmBonif = prov === 'GI' ? 0.75 : prov === 'BI' ? 0.90 : prov === 'VI' ? 0.50 : 0;
       if (ivtmBonif > 0) {
         out.push({ name: `Bonificación IVTM (${prov} ~${Math.round(ivtmBonif*100)} %)`,
                    eur: Math.round(90 * ivtmBonif), recurring: true });
       }
-      // IVA deducible
       if ((this.profile === 'autonomo' || this.profile === 'empresa') && price > 0) {
         const ivaTotal = price * (0.21 / 1.21);
         const pct = this.profile === 'empresa' ? 1.0 : 0.5;
         out.push({ name: `IVA deducible (${this.profile === 'empresa' ? '100' : '50'} %)`,
                    eur: Math.round(ivaTotal * pct), recurring: false });
       }
-      return out.map(i => ({
-        ...i,
-        equivalent: i.recurring ? i.eur * years : i.eur,
-      }));
+      return out.map(i => ({ ...i, equivalent: i.recurring ? i.eur * years : i.eur }));
     },
 
-    get incentivesTotalEur() {
-      return this.incentivesItems.reduce((acc, i) => acc + i.equivalent, 0);
-    },
+    get incentivesTotalEur() { return this.incentivesItems.reduce((acc, i) => acc + i.equivalent, 0); },
 
     get effectiveSubvencionEur() {
       return this.subvencionOverride !== null && this.subvencionOverride !== ''
@@ -984,67 +1230,75 @@ function commutePlanner() {
     },
 
     get weightedPrice() {
-      // Defaults sincronizados con price_defaults.py (home depende de nightCharging).
       const home = this.nightCharging ? 0.085 : 0.165;
       const w = (this.homePct * home + this.workPct * 0 + this.publicAcPct * 0.42 + this.publicDcPct * 0.55) / 100;
       return w > 0 ? w.toFixed(3).replace('.', ',') : null;
     },
 
-
-    initMap() {
-      // Donostia
-      const startCenter = [43.3183, -1.9812];
-      
-      this.$nextTick(() => {
-        window.commuteMap = L.map('commute-leaflet-map', {
-          zoomControl: true
-        }).setView(startCenter, 11);
-        
-        const isDark = document.documentElement.classList.contains('dark');
-        const tileUrl = isDark
-          ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-          : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-          
-        L.tileLayer(tileUrl, {
-          attribution: '© OpenStreetMap · CARTO',
-          maxZoom: 19
-        }).addTo(window.commuteMap);
-        
-        // Dynamic route layer group
-        window.routeLayerGroup = L.featureGroup().addTo(window.commuteMap);
-        window.chargerLayerGroup = L.featureGroup().addTo(window.commuteMap);
-        
-        // Setup Map click event to capture routing coordinates
-        window.commuteMap.on('click', (e) => {
-          if (!this.commuteMode) return;
-          this.handleMapClick(e.latlng.lat, e.latlng.lng);
+    // ─── Map ───
+    ensureMapReady() {
+      // Lazy init: el contenedor está oculto vía x-show en steps ≠ 2 al cargar.
+      // Inicializar Leaflet en display:none rompe la proyección; lo posponemos
+      // al primer alcance del step 2.
+      if (this.mapInited) {
+        this.$nextTick(() => {
+          setTimeout(() => {
+            if (window.commuteMap) {
+              window.commuteMap.invalidateSize();
+              if (this.routes.length) {
+                try { window.commuteMap.fitBounds(window.routeLayerGroup.getBounds().pad(0.15)); } catch(e) {}
+              }
+            }
+          }, 200);
         });
-        
-        // Redraw commutes on map
-        this.drawCommutesOnMap();
-        
-        // Dynamic initial alignment
-        if (!this.routes.length) {
-          this.updateMapToCp();
-        }
-      });
-    },
-    
-    handleMapClick(lat, lng) {
-      // 1. Euskadi Boundaries enforcement
-      if (lat < 42.4 || lat > 43.6 || lng < -3.5 || lng > -1.7) {
-        alert('Por favor, selecciona un punto dentro de Euskadi (límite de la base de datos).');
         return;
       }
-      
+      this.mapInited = true;
+      this.initMap();
+    },
+
+    initMap() {
+      const startCenter = [43.3183, -1.9812];
+      this.$nextTick(() => {
+        setTimeout(() => {
+          const mapEl = document.getElementById('commute-leaflet-map');
+          if (!mapEl) return;
+
+          window.commuteMap = L.map('commute-leaflet-map', { zoomControl: true }).setView(startCenter, 11);
+
+          const isDark = document.documentElement.classList.contains('dark');
+          const tileUrl = isDark
+            ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+            : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+
+          L.tileLayer(tileUrl, { attribution: '© OpenStreetMap · CARTO', maxZoom: 19 }).addTo(window.commuteMap);
+
+          window.routeLayerGroup = L.featureGroup().addTo(window.commuteMap);
+          window.chargerLayerGroup = L.featureGroup().addTo(window.commuteMap);
+
+          window.commuteMap.on('click', (e) => {
+            if (!this.commuteMode) return;
+            this.handleMapClick(e.latlng.lat, e.latlng.lng);
+          });
+
+          this.drawCommutesOnMap();
+          if (!this.routes.length) this.updateMapToCp();
+          setTimeout(() => window.commuteMap.invalidateSize(), 250);
+        }, 100);
+      });
+    },
+
+    handleMapClick(lat, lng) {
+      if (lat < 42.4 || lat > 43.6 || lng < -3.5 || lng > -1.7) {
+        alert('Por favor, selecciona un punto dentro de Euskadi.');
+        return;
+      }
       if (!this.startPoint) {
         this.startPoint = { lat, lng };
         this.startMarker = L.marker([lat, lng], {
           icon: L.divIcon({
             html: '<div style="background-color: #3b82f6; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.4);"></div>',
-            className: 'custom-pin',
-            iconSize: [12, 12],
-            iconAnchor: [6, 6]
+            className: 'custom-pin', iconSize: [12, 12], iconAnchor: [6, 6]
           })
         }).addTo(window.routeLayerGroup);
       } else if (!this.endPoint) {
@@ -1052,92 +1306,55 @@ function commutePlanner() {
         this.endMarker = L.marker([lat, lng], {
           icon: L.divIcon({
             html: '<div style="background-color: #ef4444; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.4);"></div>',
-            className: 'custom-pin',
-            iconSize: [12, 12],
-            iconAnchor: [6, 6]
+            className: 'custom-pin', iconSize: [12, 12], iconAnchor: [6, 6]
           })
         }).addTo(window.routeLayerGroup);
-        
-        // Calculate pgRouting pathway!
         this.calculateTemporaryRoute();
       } else {
-        // Reset points
         this.clearTempMarkers();
         this.startPoint = { lat, lng };
         this.startMarker = L.marker([lat, lng], {
           icon: L.divIcon({
             html: '<div style="background-color: #3b82f6; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.4);"></div>',
-            className: 'custom-pin',
-            iconSize: [12, 12],
-            iconAnchor: [6, 6]
+            className: 'custom-pin', iconSize: [12, 12], iconAnchor: [6, 6]
           })
         }).addTo(window.routeLayerGroup);
       }
     },
-    
+
     calculateTemporaryRoute() {
       this.loadingRoute = true;
       fetch('/mubil/api/v1/advisor/route-commute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          start_lng: this.startPoint.lng,
-          start_lat: this.startPoint.lat,
-          end_lng: this.endPoint.lng,
-          end_lat: this.endPoint.lat
+          start_lng: this.startPoint.lng, start_lat: this.startPoint.lat,
+          end_lng: this.endPoint.lng, end_lat: this.endPoint.lat
         })
       })
       .then(res => res.json())
       .then(data => {
         this.loadingRoute = false;
-        if (data.error) {
-          alert(data.error);
-          this.clearTempMarkers();
-          return;
-        }
-        
+        if (data.error) { alert(data.error); this.clearTempMarkers(); return; }
         this.tempRoute = {
-          distance_km: data.distance_km,
-          motorway_pct: data.motorway_pct,
-          nacional_pct: data.nacional_pct,
-          urban_pct: data.urban_pct,
+          distance_km: data.distance_km, motorway_pct: data.motorway_pct,
+          nacional_pct: data.nacional_pct, urban_pct: data.urban_pct,
           geojson: data.route_geojson
         };
-        
-        // Draw temporary route
-        if (window.tempPolyline) {
-          window.routeLayerGroup.removeLayer(window.tempPolyline);
-        }
-        
+        if (window.tempPolyline) window.routeLayerGroup.removeLayer(window.tempPolyline);
         window.tempPolyline = L.geoJSON(data.route_geojson, {
-          style: {
-            color: '#06b6d4',
-            weight: 5,
-            opacity: 0.8
-          }
+          style: { color: '#10B0A0', weight: 5, opacity: 0.8 }
         }).addTo(window.routeLayerGroup);
-        
         window.commuteMap.fitBounds(window.tempPolyline.getBounds().pad(0.15));
       })
-      .catch(err => {
-        this.loadingRoute = false;
-        console.error(err);
-        this.clearTempMarkers();
-      });
+      .catch(err => { this.loadingRoute = false; console.error(err); this.clearTempMarkers(); });
     },
-    
+
     saveNewRoute() {
       if (this.loadingRoute || !this.tempRoute.distance_km) {
-        alert('Por favor, espera a que se calcule la ruta antes de guardarla.');
-        return;
+        alert('Espera a que se calcule la ruta.'); return;
       }
-      let freqNames = {
-        '220': 'Diario (Trabajo - 220)',
-        '365': 'Diario (Año completo - 365)',
-        '52': 'Semanal (52)',
-        '12': 'Mensual (12)'
-      };
-      
+      const freqNames = { '220': 'Diario (220)', '365': 'Anual (365)', '52': 'Semanal', '12': 'Mensual' };
       this.routes.push({
         name: this.newRouteName,
         frequency: parseInt(this.newRouteFreq),
@@ -1149,54 +1366,37 @@ function commutePlanner() {
         geojson: this.tempRoute.geojson,
         is_roundtrip: this.newRouteType === 'roundtrip'
       });
-      
       this.clearTempMarkers();
       this.newRouteName = 'Trabajo';
       this.newRouteType = 'roundtrip';
       this.updateTotals();
       this.drawCommutesOnMap();
-      this.flashHighlight = true;
-      setTimeout(() => this.flashHighlight = false, 1200);
     },
-    
+
     deleteRoute(idx) {
       this.routes.splice(idx, 1);
       this.updateTotals();
       this.drawCommutesOnMap();
-      this.flashHighlight = true;
-      setTimeout(() => this.flashHighlight = false, 1200);
     },
-    
+
     clearTempMarkers() {
-      this.startPoint = null;
-      this.endPoint = null;
+      this.startPoint = null; this.endPoint = null;
       if (this.startMarker) window.routeLayerGroup.removeLayer(this.startMarker);
       if (this.endMarker) window.routeLayerGroup.removeLayer(this.endMarker);
       if (window.tempPolyline) window.routeLayerGroup.removeLayer(window.tempPolyline);
     },
-    
+
     drawCommutesOnMap() {
       if (!window.routeLayerGroup) return;
-      
-      // Clear commutes (but keep start/end markers if active)
       window.routeLayerGroup.clearLayers();
       if (this.startMarker) this.startMarker.addTo(window.routeLayerGroup);
       if (this.endMarker) this.endMarker.addTo(window.routeLayerGroup);
       if (window.tempPolyline) window.tempPolyline.addTo(window.routeLayerGroup);
-      
       this.routes.forEach(r => {
-        L.geoJSON(r.geojson, {
-          style: {
-            color: '#10b981',
-            weight: 4,
-            opacity: 0.6
-          }
-        })
-        .bindPopup(`<strong>${r.name}</strong><br>${r.distance_km} km · ${r.frequency_name}`)
-        .addTo(window.routeLayerGroup);
+        L.geoJSON(r.geojson, { style: { color: '#10b981', weight: 4, opacity: 0.6 } })
+          .bindPopup(`<strong>${r.name}</strong><br>${r.distance_km} km · ${r.frequency_name}`)
+          .addTo(window.routeLayerGroup);
       });
-      
-      // Adjust bounds if routes exist and commuteMode is active (preventing world map sizing bug)
       if (this.routes.length && this.commuteMode) {
         try {
           window.commuteMap.invalidateSize();
@@ -1204,98 +1404,67 @@ function commutePlanner() {
         } catch (e) {}
       }
     },
-    
+
     updateMapToCp() {
       if (!this.cp || this.cp.length !== 5) return;
       fetch(`/mubil/api/v1/advisor/cp/${this.cp}`)
-        .then(res => {
-          if (!res.ok) throw new Error('CP not found');
-          return res.json();
-        })
+        .then(res => { if (!res.ok) throw new Error('CP not found'); return res.json(); })
         .then(data => {
-          if (data.latitude && data.longitude) {
-            this.centerMap([data.latitude, data.longitude], 13);
-          }
+          if (data.latitude && data.longitude) this.centerMap([data.latitude, data.longitude], 13);
         })
-        .catch(err => {
-          console.warn('CP Centroid fetch failed, centering standard on Donostia.', err);
-          this.centerMap([43.3183, -1.9812], 12);
-        });
+        .catch(() => this.centerMap([43.3183, -1.9812], 12));
     },
-    
+
     centerMap(latlng, zoom) {
       if (window.commuteMap) {
         window.commuteMap.setView(latlng, zoom);
         setTimeout(() => window.commuteMap.invalidateSize(), 100);
       }
     },
-    
+
     geolocateUser() {
-      if (!navigator.geolocation) {
-        alert('La geolocalización no está soportada por tu navegador.');
-        return;
-      }
-      
+      if (!navigator.geolocation) { alert('Geolocalización no soportada.'); return; }
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          
-          // Euskadi Boundary Check
+        (pos) => {
+          const lat = pos.coords.latitude, lng = pos.coords.longitude;
           if (lat < 42.4 || lat > 43.6 || lng < -3.5 || lng > -1.7) {
-            alert('Tu ubicación está fuera del límite de la red de transporte de Euskadi. Centrando en Donostia.');
-            this.centerMap([43.3183, -1.9812], 12);
-            return;
+            alert('Ubicación fuera de Euskadi.'); return;
           }
-          
           this.centerMap([lat, lng], 14);
         },
-        (error) => {
-          console.warn('Geolocation failed or permission denied, centering in Donostia.', error);
-          alert('No pudimos acceder a tu ubicación. Centrando en Donostia.');
-          this.centerMap([43.3183, -1.9812], 12);
-        },
+        () => alert('No se pudo acceder a tu ubicación.'),
         { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
       );
     },
-    
+
     updateTotals() {
-      let totalKm = 0;
-      let totalMotorwayKm = 0;
-      let totalNacionalKm = 0;
-      
+      let totalKm = 0, totalMotorwayKm = 0, totalNacionalKm = 0;
       this.routes.forEach(r => {
-        let mult = r.is_roundtrip ? 2 : 1;
-        let annualKm = r.distance_km * r.frequency * mult;
+        const mult = r.is_roundtrip ? 2 : 1;
+        const annualKm = r.distance_km * r.frequency * mult;
         totalKm += annualKm;
         totalMotorwayKm += annualKm * (r.motorway_pct / 100);
         totalNacionalKm += annualKm * ((r.nacional_pct || 0) / 100);
       });
-      
-      if (totalKm > 0) {
-        // Clamp + snap-to-step para que la validación HTML5 (min=1000,
-        // max=200000, step=500) no rechace el valor calculado y dispare
-        // "invalid form control is not focusable" cuando el accordion del
-        // Step 2 está colapsado.
+      const kmInput = document.getElementById('km_year_input');
+      const motInput = document.getElementById('motorway_pct_input');
+      const nacInput = document.getElementById('nacional_pct_input');
+      if (totalKm > 0 && kmInput) {
         const snapped = Math.max(1000, Math.min(200000, Math.round(totalKm / 500) * 500));
-        document.getElementById('km_year_input').value = snapped;
-        document.getElementById('motorway_pct_input').value = Math.round((totalMotorwayKm / totalKm) * 100);
-        document.getElementById('nacional_pct_input').value = Math.round((totalNacionalKm / totalKm) * 100);
-      } else {
-        document.getElementById('km_year_input').value = 15000;
-        document.getElementById('motorway_pct_input').value = '';
-        document.getElementById('nacional_pct_input').value = '';
+        kmInput.value = snapped;
+        if (motInput) motInput.value = Math.round((totalMotorwayKm / totalKm) * 100);
+        if (nacInput) nacInput.value = Math.round((totalNacionalKm / totalKm) * 100);
+      } else if (kmInput) {
+        kmInput.value = 15000;
       }
-      
       localStorage.setItem('mubil_commutes', JSON.stringify(this.routes));
     },
-    
+
     getWeightedPct(prop) {
-      let totalKm = 0;
-      let weightedSum = 0;
+      let totalKm = 0, weightedSum = 0;
       this.routes.forEach(r => {
-        let mult = r.is_roundtrip ? 2 : 1;
-        let annualKm = r.distance_km * r.frequency * mult;
+        const mult = r.is_roundtrip ? 2 : 1;
+        const annualKm = r.distance_km * r.frequency * mult;
         totalKm += annualKm;
         let val = r[prop];
         if (prop === 'nacional_pct' && val === undefined) val = 0;
@@ -1304,74 +1473,145 @@ function commutePlanner() {
       if (totalKm === 0) return 0;
       return Math.round(weightedSum / totalKm);
     },
-    
+
     balanceSliders(changed) {
-      if (changed === 'motorway') {
-        if (this.manMotorwayPct + this.manNacionalPct > 100) {
-          this.manNacionalPct = 100 - this.manMotorwayPct;
-        }
-      } else if (changed === 'nacional') {
-        if (this.manMotorwayPct + this.manNacionalPct > 100) {
-          this.manMotorwayPct = 100 - this.manNacionalPct;
-        }
+      if (changed === 'motorway' && this.manMotorwayPct + this.manNacionalPct > 100) {
+        this.manNacionalPct = 100 - this.manMotorwayPct;
+      } else if (changed === 'nacional' && this.manMotorwayPct + this.manNacionalPct > 100) {
+        this.manMotorwayPct = 100 - this.manNacionalPct;
       }
     },
-    
-    // Suggestion fetching functions
+
+    // ─── Autocomplete fetchers ───
     fetchCurrentSuggestions(fallbackQuery) {
-      let q = this.searchCurrent || fallbackQuery || '';
+      const q = this.searchCurrent || fallbackQuery || '';
       if (q.length < 2) return;
-      
       fetch(`/mubil/api/v1/advisor/vehicles?q=${encodeURIComponent(q)}&propulsion=ICE_ALL`)
         .then(res => res.json())
         .then(data => {
           this.currentSuggestions = data;
-          if (fallbackQuery && data.length) {
-            this.selectCurrentVehicle(data[0]);
-          }
+          if (fallbackQuery && data.length) this.selectCurrentVehicle(data[0]);
         });
     },
-    
+
     fetchTargetSuggestions(fallbackQuery) {
-      let q = this.searchTarget || fallbackQuery || '';
+      const q = this.searchTarget || fallbackQuery || '';
       if (q.length < 2) return;
-      
       fetch(`/mubil/api/v1/advisor/vehicles?q=${encodeURIComponent(q)}&propulsion=EV_ALL`)
         .then(res => res.json())
         .then(data => {
           this.targetSuggestions = data;
-          if (fallbackQuery && data.length) {
-            this.selectTargetVehicle(data[0]);
-          }
+          if (fallbackQuery && data.length) this.selectTargetVehicle(data[0]);
         });
     },
-    
+
     selectCurrentVehicle(v) {
       this.selectedCurrent = v;
       this.searchCurrent = v.make + ' ' + v.model;
-      document.getElementById('current_vehicle_id_input').value = v.id;
-      this.showCurrentSuggestions = false;
-      this.currentPriceOverride = null;  // reset al cambiar de coche
+      const el = document.getElementById('current_vehicle_id_input');
+      if (el) el.value = v.id;
+      this.currentPriceOverride = null;
       localStorage.setItem('mubil_selected_current', JSON.stringify(v));
     },
 
     selectTargetVehicle(v) {
       this.selectedTarget = v;
       this.searchTarget = v.make + ' ' + v.model;
-      document.getElementById('target_vehicle_id_input').value = v.id;
-      this.showTargetSuggestions = false;
+      const el = document.getElementById('target_vehicle_id_input');
+      if (el) el.value = v.id;
       this.targetPriceOverride = null;
       localStorage.setItem('mubil_selected_target', JSON.stringify(v));
+      this.fetchAlternatives(v.id);
+    },
+
+    // ─── Path C (Recomiéndame) ───
+    fetchRecommendations() {
+      this.candidatesLoading = true;
+      const params = new URLSearchParams({
+        size: this.criteriaSize, range_bucket: this.criteriaRange,
+        price_min: this.criteriaPriceMin, price_max: this.criteriaPriceMax, limit: 6,
+      });
+      fetch(`/mubil/api/v1/advisor/recommend?${params.toString()}`)
+        .then(res => res.json())
+        .then(data => {
+          this.candidatesLoading = false;
+          this.candidates = data.candidates || [];
+          this.iceGenericId = data.ice_generic_id || null;
+        })
+        .catch(() => { this.candidatesLoading = false; });
+    },
+
+    selectCandidate(v) { this.selectTargetVehicle(v); },
+
+    useIceGeneric() {
+      // Aplica el seed `Genérico · Coche ICE medio` (migración 0012) como
+      // vehículo actual. Si todavía no hemos cargado el id (la precarga
+      // /recommend lo trae), disparamos una y reintentamos.
+      if (!this.iceGenericId) {
+        this.fetchRecommendations();
+        setTimeout(() => this.useIceGeneric(), 400);
+        return;
+      }
+      this.currentMode = 'generic';
+      const v = {
+        id: this.iceGenericId,
+        make: 'Genérico', model: 'Coche ICE medio', year: 2020,
+        propulsion: 'ICE', price_eur: 22000, price_source: 'manual',
+        dgt_label: 'C', consumption_l_100km: 6.5,
+      };
+      this.selectCurrentVehicle(v);
+    },
+
+    // ─── Sidebar comparator (alternatives) ───
+    alternatives: [],
+    alternativesLoading: false,
+
+    fetchAlternatives(vehicleId) {
+      if (!vehicleId) { this.alternatives = []; return; }
+      this.alternativesLoading = true;
+      fetch(`/mubil/api/v1/advisor/vehicles/alternatives?vehicle_id=${vehicleId}&limit=3`)
+        .then(res => res.json())
+        .then(data => {
+          this.alternativesLoading = false;
+          this.alternatives = Array.isArray(data) ? data : [];
+        })
+        .catch(() => { this.alternativesLoading = false; });
+    },
+
+    // Delta firmado para chips de comparativa: "+47 km", "−2.500 €".
+    formatDelta(diff, suffix) {
+      if (diff === null || diff === undefined || isNaN(diff)) return '—';
+      const n = Math.round(diff);
+      if (n === 0) return '=' + suffix;
+      const sign = n > 0 ? '+' : '−';
+      return sign + Math.abs(n).toLocaleString('es-ES') + suffix;
+    },
+
+    // Devuelve "7.3-8.0 L/100" si el grupo tiene rango, "7.3 L/100" si singleton.
+    // unit: "L" o "kWh".
+    formatConsumptionRange(v, unit) {
+      const isKwh = unit === 'kWh';
+      const single = isKwh ? v.consumption_kwh_100km : v.consumption_l_100km;
+      const lo = v.consumption_min, hi = v.consumption_max;
+      const suffix = isKwh ? ' kWh/100' : ' L/100';
+      // Rango sólo si grupo > 1 variante Y los extremos difieren razonablemente.
+      if (v.variant_count > 1 && lo && hi && Number(lo) !== Number(hi)) {
+        const a = (+lo).toFixed(1).replace('.', ',');
+        const b = (+hi).toFixed(1).replace('.', ',');
+        return `${a}–${b}${suffix}`;
+      }
+      if (!single) return '';
+      return (+single).toFixed(1).replace('.', ',') + suffix;
     },
 
     priceSourceLabel(source) {
       return {
-        'manual':    {label: 'PVP verificado',    cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'},
-        'gemini':    {label: 'Estimado IA',       cls: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300'},
-        'heuristic': {label: 'Estimado ±20 %',    cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'},
-        'mock':      {label: 'Demo (placeholder)', cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'},
-        'unknown':   {label: 'Sin precio',        cls: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300'},
-      }[source] || {label: source || '—', cls: 'bg-slate-100 text-slate-600'};
+        'manual':    { label: 'Verificado',     cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
+        'gemini':    { label: 'Estimado IA',    cls: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' },
+        'heuristic': { label: 'Estimado ±20 %', cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
+        'mock':      { label: 'Demo',           cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' },
+        'unknown':   { label: 'Sin precio',     cls: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' },
+      }[source] || { label: source || '—', cls: 'bg-slate-100 text-slate-600' };
     }
   };
 }
@@ -1423,46 +1663,35 @@ window.evDictamen = function(cfg) {
                : 'Sin precio de compra → payback no calculable' },
       ];
 
-      // Calculate payback years data dynamically
       const annualOpSavings = this.savings / this.yrs;
       const investmentDiff = this.payback !== null ? this.payback * annualOpSavings : 0;
-      
+
       this.yearsData = [];
       for (let yr = 1; yr <= this.yrs; yr++) {
         const balance = (yr * annualOpSavings) - investmentDiff;
         const isAmortized = this.payback !== null ? (yr >= this.payback) : true;
-        
         let desc = '';
         if (this.payback === null) {
           desc = `Ahorro neto acumulado de ${Math.round(balance).toLocaleString('es-ES')} €`;
         } else {
-          if (balance >= 0) {
-            desc = `Ahorro neto acumulado: +${Math.round(balance).toLocaleString('es-ES')} €`;
-          } else {
-            desc = `Por amortizar: ${Math.round(Math.abs(balance)).toLocaleString('es-ES')} €`;
-          }
+          desc = balance >= 0
+            ? `Ahorro neto acumulado: +${Math.round(balance).toLocaleString('es-ES')} €`
+            : `Por amortizar: ${Math.round(Math.abs(balance)).toLocaleString('es-ES')} €`;
         }
-
         this.yearsData.push({
-          yr,
-          balance: Math.round(balance),
-          isAmortized,
-          pct: 0,
+          yr, balance: Math.round(balance), isAmortized, pct: 0,
           label: (balance >= 0 ? '+' : '') + Math.round(balance).toLocaleString('es-ES') + ' €',
-          status: this.payback !== null 
+          status: this.payback !== null
             ? (yr < this.payback ? 'Amortizando inversión...' : '¡Ahorro neto positivo!')
             : 'Ahorro operativo puro',
           desc
         });
       }
-      
-      // Normalized height percentage calculation
+
       const maxVal = Math.max(...this.yearsData.map(y => Math.abs(y.balance)));
       this.yearsData.forEach(y => {
         y.pct = maxVal > 0 ? Math.round((Math.abs(y.balance) / maxVal) * 100) : 100;
       });
-      
-      // Default to the last year of the horizon
       this.selectedYear = this.yearsData[this.yearsData.length - 1];
     }
   };
@@ -1471,7 +1700,6 @@ window.evDictamen = function(cfg) {
 
 // Global TCO renderer bridge for HTMX updates
 window.mubilAdvisorRender = function (q) {
-  // 1. ECharts breakdown
   const chartEl = document.getElementById('advisor-chart');
   if (chartEl && window.echarts) {
     if (chartEl._chart) { try { chartEl._chart.dispose(); } catch (e) {} }
@@ -1486,8 +1714,8 @@ window.mubilAdvisorRender = function (q) {
       xAxis: { type: 'value', axisLabel: { formatter: '{value} €' } },
       yAxis: { type: 'category', data: ['Actual', 'Eléctrico'] },
       series: [
-        { name: 'Energía',       type: 'bar', stack: 'tco', data: [+cur.energy, +tgt.energy],         itemStyle: { color: '#06b6d4' } },
-        { name: 'Mantenimiento', type: 'bar', stack: 'tco', data: [+cur.maintenance, +tgt.maintenance], itemStyle: { color: '#0ea5e9' } },
+        { name: 'Energía',       type: 'bar', stack: 'tco', data: [+cur.energy, +tgt.energy],         itemStyle: { color: '#10B0A0' } },
+        { name: 'Mantenimiento', type: 'bar', stack: 'tco', data: [+cur.maintenance, +tgt.maintenance], itemStyle: { color: '#0A8278' } },
         { name: 'Seguro',        type: 'bar', stack: 'tco', data: [+cur.insurance, +tgt.insurance],    itemStyle: { color: '#6366f1' } },
         { name: 'Impuestos',     type: 'bar', stack: 'tco', data: [+cur.taxes, +tgt.taxes],            itemStyle: { color: '#a855f7' } },
       ],
@@ -1495,27 +1723,16 @@ window.mubilAdvisorRender = function (q) {
     window.addEventListener('resize', () => chart.resize());
   }
 
-  // 2. Add chargers on the commute Map. Only mutate the map when its container
-  //    is actually visible; calling fitBounds on a display:none Leaflet map
-  //    projects markers against a 0×0 viewport and the absolute panes can
-  //    escape their containing block.
   if (window.chargerLayerGroup && q.nearby_chargers && q.nearby_chargers.length) {
     window.chargerLayerGroup.clearLayers();
-
     q.nearby_chargers.forEach(c => {
       const color = c.power_kw >= 150 ? '#10b981' : (c.power_kw >= 50 ? '#06b6d4' : '#f59e0b');
       L.circleMarker([c.latitude, c.longitude], {
-        radius: 8,
-        fillColor: color,
-        color: '#0f172a',
-        weight: 1.5,
-        opacity: 1,
-        fillOpacity: 0.9
+        radius: 8, fillColor: color, color: '#0f172a', weight: 1.5, opacity: 1, fillOpacity: 0.9
       })
       .bindPopup(`<strong>${c.operator}</strong><br>${c.power_kw} kW<br><span style="color:#64748b">${c.address}</span><br><small>${(+c.distance_km).toFixed(2)} km</small>`)
       .addTo(window.chargerLayerGroup);
     });
-
     const mapEl = document.getElementById('commute-leaflet-map');
     if (mapEl && mapEl.offsetParent !== null) {
       try {
@@ -1526,32 +1743,22 @@ window.mubilAdvisorRender = function (q) {
   }
 };
 
-// "What if?" sensitivity sliders. Scales energy linearly in km and fuel price
-// (matches services.py's first-order model: km_year and €/L feed energy cost
-// proportionally; non-energy costs hold constant in this client-side what-if).
 window.advisorSensitivity = function (cfg) {
   const baseTotalGap = cfg.baseTotalIce - cfg.baseTotalEv;
   const baseAnnualSavings = baseTotalGap / cfg.yrs;
-  // Recover delta_purchase from the backend's payback so client-side numbers
-  // stay consistent with the original result without exposing prices.
   const deltaPurchase = cfg.basePayback !== null ? cfg.basePayback * baseAnnualSavings : null;
   const fuelLabel = cfg.fuelKind === 'DIESEL' ? 'diésel' : 'gasolina';
-
   return {
     km: cfg.kmBase, priceFuel: cfg.basePriceFuel,
     basePriceFuel: cfg.basePriceFuel, fuelLabel,
     baseSavings: baseTotalGap, basePayback: cfg.basePayback,
-
     reset() { this.km = cfg.kmBase; this.priceFuel = cfg.basePriceFuel; },
-
     get newEnergyIce() {
       const kmFactor = this.km / cfg.kmBase;
       const priceFactor = this.priceFuel / cfg.basePriceFuel;
       return cfg.baseEnergyIce * kmFactor * priceFactor;
     },
-    get newEnergyEv() {
-      return cfg.baseEnergyEv * (this.km / cfg.kmBase);
-    },
+    get newEnergyEv() { return cfg.baseEnergyEv * (this.km / cfg.kmBase); },
     get newTotalIce() { return this.newEnergyIce + (cfg.baseTotalIce - cfg.baseEnergyIce); },
     get newTotalEv()  { return this.newEnergyEv  + (cfg.baseTotalEv  - cfg.baseEnergyEv);  },
     get savings() { return this.newTotalIce - this.newTotalEv; },
@@ -1569,42 +1776,28 @@ window.advisorSensitivity = function (cfg) {
   };
 };
 
-// Alpine data for the mini stat inside the Dictamen card
 window.chargersMini = function (q) {
   const chargers = q.nearby_chargers || [];
-  return {
-    fastCount: chargers.filter(c => (+c.power_kw) >= 150).length,
-  };
+  return { fastCount: chargers.filter(c => (+c.power_kw) >= 150).length };
 };
 
-// Mini Leaflet map under the result, replaces the long charger list.
-// Idempotent: tears down a previous instance bound to the same node so HTMX
-// swaps don't leak Leaflet handles or duplicate listeners.
 window.mubilChargersMap = function (q) {
   const el = document.getElementById('chargers-mini-map');
   if (!el || !window.L) return;
   const chargers = (q.nearby_chargers || []).filter(c => c.latitude && c.longitude);
   if (!chargers.length) return;
-
-  // If the container is still detached / hidden (Alpine x-show + transitions
-  // can lag a frame), defer until it has real dimensions. Initialising Leaflet
-  // on a 0×0 element leaves its absolute panes orphaned against <body>.
   if (el.offsetParent === null || el.clientWidth === 0 || el.clientHeight === 0) {
     setTimeout(() => window.mubilChargersMap(q), 100);
     return;
   }
-
   if (el._mubilMap) { try { el._mubilMap.remove(); } catch (e) {} }
-
   const isDark = document.documentElement.classList.contains('dark');
   const tileUrl = isDark
     ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
     : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-
   const map = L.map(el, { zoomControl: true, scrollWheelZoom: false }).setView([chargers[0].latitude, chargers[0].longitude], 12);
   el._mubilMap = map;
   L.tileLayer(tileUrl, { attribution: '© OpenStreetMap · CARTO', maxZoom: 19 }).addTo(map);
-
   const markers = [];
   chargers.forEach(c => {
     const kw = +c.power_kw || 0;
@@ -1626,12 +1819,7 @@ window.mubilChargersMap = function (q) {
     m.addTo(map);
     markers.push(m);
   });
-
-  try {
-    const group = L.featureGroup(markers);
-    map.fitBounds(group.getBounds().pad(0.2));
-  } catch (e) {}
-
+  try { map.fitBounds(L.featureGroup(markers).getBounds().pad(0.2)); } catch (e) {}
   setTimeout(() => map.invalidateSize(), 200);
 };
 </script>

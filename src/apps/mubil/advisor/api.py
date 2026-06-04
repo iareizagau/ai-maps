@@ -19,15 +19,47 @@ from apps.mubil.data import cp_centroids
 from apps.mubil.models import Vehicle
 
 from . import services
+from .grouping import extract_model_base, group_by_model_base
 from .schemas import (
     AdvisorQuoteIn,
     AdvisorQuoteOut,
     ChargerOut,
     CostBreakdownOut,
+    RecommendOut,
     VehicleSummary,
     RouteCommuteIn,
     RouteCommuteOut,
 )
+
+# Sentinel para el seed `ICE genérico medio` (migración 0012). Path C lo usa
+# como `vehicle_current_id` cuando el usuario elige el modo "recomiéndame".
+ICE_GENERIC_LOOKUP = dict(
+    idae_id__isnull=True,
+    make="Genérico",
+    model="Coche ICE medio",
+    variant="",
+    year=2020,
+)
+
+# Buckets de tamaño calibrados con el catálogo IDAE 2026-06 (ver
+# CLAUDE memory + dist mtma_kg p25/50/75 = 2158/2480/2750 en BEV M1).
+# Solo tenemos `category` (M1/N1) y `mtma_kg` — no hay `segment` poblado,
+# así que `SUV` vs `berlina` queda fuera del MVP.
+SIZE_FILTERS = {
+    "small": dict(category="M1", mtma_kg__lte=2000),
+    "mid":   dict(category="M1", mtma_kg__gt=2000, mtma_kg__lte=2400),
+    "large": dict(category="M1", mtma_kg__gt=2400),
+    "van":   dict(category="N1"),
+}
+
+# Cubos de autonomía pedidos por el usuario en sesión de diseño:
+# baja <350 / media 350-450 / alta >=450. La distribución actual del
+# catálogo es 64 % / 14 % / 22 % — suficiente densidad en los 3 buckets.
+RANGE_FILTERS = {
+    "low":  dict(range_wltp_km__lt=350),
+    "mid":  dict(range_wltp_km__gte=350, range_wltp_km__lt=450),
+    "high": dict(range_wltp_km__gte=450),
+}
 
 router = Router()
 
@@ -48,7 +80,26 @@ def _vehicle_to_summary(v: Vehicle) -> dict:
         "range_wltp_km": v.range_wltp_km,
         "consumption_kwh_100km": v.consumption_kwh_100km,
         "consumption_l_100km": v.consumption_l_100km,
+        "variant_count": 1,
+        "consumption_min": None,
+        "consumption_max": None,
     }
+
+
+def _grouped_summary(group: dict) -> dict:
+    """Convierte la salida de `group_by_model_base` en el shape de
+    VehicleSummary. El `id` y los specs son los del representante mediano;
+    el `make` se muestra normalizado ("Tesla" en vez de "TESLA") y el
+    `model` se muestra como base ("Vito") en vez de la variante larga.
+    El frontend usa `variant_count > 1` para mostrar el badge "N variantes".
+    """
+    out = _vehicle_to_summary(group["representative"])
+    out["make"] = group["make_display"] or out["make"]
+    out["model"] = group["model_base"] or out["model"]
+    out["variant_count"] = group["variant_count"]
+    out["consumption_min"] = group["consumption_min"]
+    out["consumption_max"] = group["consumption_max"]
+    return out
 
 
 def _breakdown_to_out(b) -> dict:
@@ -155,7 +206,104 @@ def list_vehicles(
         ).filter(sim__gt=0.08).order_by("-prefix_boost", "-sim", "make", "model")
     else:
         qs = qs.order_by("make", "model")
-    return [_vehicle_to_summary(v) for v in qs[:limit]]
+
+    # Cast wide net (limit×8) y agrupamos por (make, model_base) para
+    # que el autocomplete devuelva un card por modelo, no por variante
+    # IDAE. Sin esto, una búsqueda "vito" devuelve 8 Mercedes-Benz Vito
+    # casi idénticos (decisión fatiga). Ver `advisor/grouping.py`.
+    raw = list(qs[: limit * 8])
+    grouped = group_by_model_base(raw, propulsion_hint=propulsion)
+    return [_grouped_summary(g) for g in grouped[:limit]]
+
+
+@router.get("/recommend", response={200: RecommendOut, 404: dict})
+def recommend_vehicles(
+    request,
+    size: Optional[str] = Query(None, description="small | mid | large | van"),
+    range_bucket: Optional[str] = Query(None, description="low | mid | high"),
+    price_min: Optional[int] = Query(None, ge=0),
+    price_max: Optional[int] = Query(None, ge=0),
+    limit: int = Query(6, ge=1, le=20),
+):
+    """Path C del Step 1 del advisor: el usuario filtra por tamaño / autonomía
+    / presupuesto y devolvemos los `limit` BEVs que mejor encajan, junto al id
+    del seed `ICE genérico medio` para usar como `vehicle_current_id` en el
+    quote posterior.
+
+    Orden: más autonomía primero, precio ascendente como desempate. Es lo que
+    el usuario espera al pedir "recomiéndame un eléctrico": a igualdad de
+    range, el más barato gana.
+    """
+    try:
+        ice_generic_id = Vehicle.objects.get(**ICE_GENERIC_LOOKUP).id
+    except Vehicle.DoesNotExist:
+        return 404, {"message": "Seed 'ICE genérico medio' no existe. Aplica migración mubil 0012."}
+
+    qs = Vehicle.objects.filter(propulsion="BEV")
+    if size:
+        flt = SIZE_FILTERS.get(size.lower())
+        if flt is None:
+            raise HttpError(400, f"size inválido: {size}. Opciones: {list(SIZE_FILTERS)}")
+        qs = qs.filter(**flt)
+    if range_bucket:
+        flt = RANGE_FILTERS.get(range_bucket.lower())
+        if flt is None:
+            raise HttpError(400, f"range_bucket inválido: {range_bucket}. Opciones: {list(RANGE_FILTERS)}")
+        qs = qs.filter(**flt)
+    if price_min is not None:
+        qs = qs.filter(price_eur__gte=price_min)
+    if price_max is not None:
+        qs = qs.filter(price_eur__lte=price_max)
+
+    # Más range gana; a igualdad, precio asc.
+    qs = qs.exclude(range_wltp_km__isnull=True).order_by("-range_wltp_km", "price_eur", "make", "model")
+    raw = list(qs[: limit * 8])
+    grouped = group_by_model_base(raw, propulsion_hint="BEV")
+    candidates = [_grouped_summary(g) for g in grouped[:limit]]
+    return 200, {"ice_generic_id": ice_generic_id, "candidates": candidates}
+
+
+@router.get("/vehicles/alternatives", response=List[VehicleSummary])
+def list_alternatives(
+    request,
+    vehicle_id: int = Query(..., description="ID del Vehicle de referencia"),
+    limit: int = Query(3, ge=1, le=10),
+):
+    """Alternativas al EV que el usuario acaba de elegir, para el sidebar
+    comparador del wizard. Mismo bucket de tamaño + autonomía, precio
+    en ±20 %, excluyendo el propio modelo base. Agrupado para evitar
+    devolver 3 variantes del mismo modelo.
+    """
+    try:
+        ref = Vehicle.objects.get(id=vehicle_id)
+    except Vehicle.DoesNotExist:
+        raise HttpError(404, f"Vehicle {vehicle_id} no existe")
+
+    if ref.propulsion != "BEV":
+        # Sólo damos alternativas a BEVs (el comparador está pensado para
+        # ayudar al usuario a explorar EVs; comparar ICE entre sí no aporta).
+        return []
+
+    ref_base = extract_model_base(ref.model)
+    qs = Vehicle.objects.filter(propulsion="BEV").exclude(id=ref.id)
+
+    if ref.category:
+        qs = qs.filter(category=ref.category)
+    if ref.range_wltp_km:
+        qs = qs.filter(
+            range_wltp_km__gte=int(ref.range_wltp_km * 0.85),
+            range_wltp_km__lte=int(ref.range_wltp_km * 1.15),
+        )
+    if ref.price_eur:
+        qs = qs.filter(
+            price_eur__gte=int(ref.price_eur * 0.8),
+            price_eur__lte=int(ref.price_eur * 1.2),
+        )
+
+    qs = qs.order_by("-range_wltp_km", "price_eur", "make", "model")
+    raw = [v for v in qs[: limit * 10] if extract_model_base(v.model) != ref_base]
+    grouped = group_by_model_base(raw, propulsion_hint="BEV")
+    return [_grouped_summary(g) for g in grouped[:limit]]
 
 
 @router.get("/cp/{cp}")

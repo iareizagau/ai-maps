@@ -42,6 +42,16 @@ class VehicleSummary(Schema):
     range_wltp_km: Optional[int] = None
     consumption_kwh_100km: Optional[Decimal] = None
     consumption_l_100km: Optional[Decimal] = None
+    # Metadatos de agrupación por (make, model_base). Si el grupo es
+    # singleton, variant_count=1 y los rangos coinciden con el valor único.
+    variant_count: int = 1
+    consumption_min: Optional[Decimal] = None
+    consumption_max: Optional[Decimal] = None
+
+
+class RecommendOut(Schema):
+    ice_generic_id: int
+    candidates: List[VehicleSummary]
 
 
 class RouteCommuteIn(Schema):

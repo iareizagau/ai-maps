@@ -196,6 +196,13 @@ def advisor_quote(request):
         return HttpResponseBadRequest(str(e))
 
     out = _quote_to_out(quote)
+    # Phase 2 bridge: stash the chosen EV + CP for the route planner so the
+    # user lands in /mubil/route/ with the same vehicle and origin already
+    # selected. Set-and-forget — overwritten on each new quote, never popped.
+    request.session['mubil_route_prefill'] = {
+        'vehicle_target_id': payload['vehicle_target_id'],
+        'cp': payload['cp'],
+    }
     context = {
         'q': out,
         'q_json': json.dumps(out, default=str),
@@ -310,19 +317,48 @@ def ask_query(request):
 
 
 def route_page(request):
-    """EV-aware route planner (MOCK). PROPUESTA.md §3.3."""
+    """EV-aware route planner (MOCK). PROPUESTA.md §3.3.
+
+    Reads ``request.session['mubil_route_prefill']`` (written by the advisor)
+    so a user that just got a TCO quote lands here with their chosen EV and
+    home postal-code already selected — the advisor↔route bridge described
+    in [PLAN.md Phase 2](route/PLAN.md).
+    """
+    from apps.mubil.data import cp_centroids
+
     ev_vehicles = list(Vehicle.objects.filter(
         propulsion__in=(Vehicle.Propulsion.BEV, Vehicle.Propulsion.PHEV),
     ).order_by('make', 'model'))
-    default_vehicle = next(
-        (v for v in ev_vehicles if 'Niro' in v.model),
-        ev_vehicles[0] if ev_vehicles else None,
-    )
+
+    prefill = request.session.get('mubil_route_prefill') or {}
+    prefill_vehicle_id = prefill.get('vehicle_target_id')
+    prefill_cp = prefill.get('cp')
+
+    # Only honour the prefill vehicle if it's still in the EV catalog —
+    # protects against deleted rows pointing the UI at a missing select option.
+    ev_vehicle_ids = {v.id for v in ev_vehicles}
+    if prefill_vehicle_id in ev_vehicle_ids:
+        default_vehicle_id = prefill_vehicle_id
+    else:
+        fallback = next(
+            (v for v in ev_vehicles if 'Niro' in v.model),
+            ev_vehicles[0] if ev_vehicles else None,
+        )
+        default_vehicle_id = fallback.id if fallback else None
+
+    default_origin = None
+    if prefill_cp:
+        hit = cp_centroids.lookup(prefill_cp)
+        if hit is not None:
+            lat, lon, name = hit
+            default_origin = {'cp': prefill_cp, 'lat': lat, 'lon': lon, 'name': name}
+
     return render(request, 'mubil/route.html', {
         'demos': route_services.list_demos(),
         'default_slug': route_services.ROUTE_DEMOS[0]['slug'],
         'ev_vehicles': ev_vehicles,
-        'default_vehicle_id': default_vehicle.id if default_vehicle else None,
+        'default_vehicle_id': default_vehicle_id,
+        'default_origin': default_origin,
     })
 
 

@@ -232,6 +232,35 @@ class ChargingStationQuerySet(models.QuerySet):
     def fast(self):
         return self.filter(power_kw__gte=50)
 
+    def along_route(self, polyline_lonlat, radius_km=5):
+        """Chargers within ``radius_km`` of a route's LineString.
+
+        Args:
+            polyline_lonlat: iterable of ``(lon, lat)`` pairs (GeoJSON order).
+            radius_km: corridor half-width around the route.
+
+        Returns the queryset annotated with ``distance`` (m from the line,
+        spheroidal), ordered by proximity. Uses GIST-indexed ``ST_DWithin``
+        with a degrees radius — PostGIS requires numeric degrees, not
+        ``Distance``, for ``dwithin`` on geographic (4326) geometry columns.
+        """
+        from django.contrib.gis.geos import LineString
+        from django.contrib.gis.db.models.functions import Distance
+
+        coords = [(float(lon), float(lat)) for lon, lat in polyline_lonlat]
+        if len(coords) < 2:
+            return self.none()
+        line = LineString(coords, srid=4326)
+        # 1° ≈ 111 km at the equator. Slightly conservative at our latitudes
+        # (~43°N, where 1° lon ≈ 81 km), so the corridor is a bit wider in
+        # E-W direction — acceptable for a fast-charger pre-filter.
+        radius_deg = float(radius_km) / 111.0
+        return self.filter(
+            geom__dwithin=(line, radius_deg)
+        ).annotate(
+            distance=Distance('geom', line, spheroid=True)
+        ).order_by('distance')
+
 
 class ChargingStation(models.Model):
     """Puntos de recarga EV.

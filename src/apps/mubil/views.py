@@ -324,6 +324,9 @@ def route_page(request):
     home postal-code already selected — the advisor↔route bridge described
     in [PLAN.md Phase 2](route/PLAN.md).
     """
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
     from apps.mubil.data import cp_centroids
 
     ev_vehicles = list(Vehicle.objects.filter(
@@ -353,12 +356,41 @@ def route_page(request):
             lat, lon, name = hit
             default_origin = {'cp': prefill_cp, 'lat': lat, 'lon': lon, 'name': name}
 
+    # Demos serialised for the Alpine "ruta rápida" chips above the map.
+    demos_payload = [
+        {
+            'slug': d['slug'],
+            'label': d['label'],
+            'origin': list(d['origin']),   # [lat, lon]
+            'dest': list(d['dest']),
+            'distance_km': float(d['distance_km']),
+        }
+        for d in route_services.ROUTE_DEMOS
+    ]
+
+    # Default departure hour = current Madrid-local hour. Pre-selects the
+    # right slot on the 24h cost-by-hour chart in the result partial.
+    default_departure_hour = datetime.now(tz=ZoneInfo('Europe/Madrid')).hour
+
+    # Single JSON blob consumed by Alpine via ``x-data``. Inlined with
+    # ``|escape`` in the template so embedded ``"`` survive the HTML attribute
+    # parser — same trick the advisor uses for its q_json payload.
+    init_payload = {
+        'demos': demos_payload,
+        'defaultOrigin': default_origin,
+        'defaultSlug': route_services.ROUTE_DEMOS[0]['slug'],
+        'defaultVehicleId': default_vehicle_id or '',
+        'defaultDepartureHour': default_departure_hour,
+    }
+
     return render(request, 'mubil/route.html', {
         'demos': route_services.list_demos(),
+        'init_json': json.dumps(init_payload),
         'default_slug': route_services.ROUTE_DEMOS[0]['slug'],
         'ev_vehicles': ev_vehicles,
         'default_vehicle_id': default_vehicle_id,
         'default_origin': default_origin,
+        'default_departure_hour': default_departure_hour,
     })
 
 
@@ -366,24 +398,65 @@ def route_page(request):
 def route_plan(request):
     """HTMX endpoint — returns the route plan partial.
 
-    Accepts both GET (used for the page's initial preload via
-    ``hx-trigger="load"``) and POST (used by form submission / change).
+    Two modes (Phase 1 backend):
+
+    * Demo: ``slug`` ∈ :data:`ROUTE_DEMOS` — instant precomputed polyline.
+    * Free: ``origin_lng/origin_lat/dest_lng/dest_lat`` (all four) → calls
+      ``advisor.get_commute_route`` for a real-roads polyline.
+
+    On initial preload (``hx-trigger="load"`` with no inputs filled), falls
+    back to the first demo so the right pane never renders empty.
     """
     src = request.POST if request.method == "POST" else request.GET
+
+    def _opt_float(key):
+        raw = src.get(key)
+        if raw is None or not str(raw).strip():
+            return None
+        try:
+            return float(str(raw).replace(',', '.'))
+        except ValueError:
+            return None
+
     slug = (src.get('slug') or '').strip()
-    if not slug:
-        slug = route_services.ROUTE_DEMOS[0]['slug']
+    origin_lng = _opt_float('origin_lng')
+    origin_lat = _opt_float('origin_lat')
+    dest_lng = _opt_float('dest_lng')
+    dest_lat = _opt_float('dest_lat')
+    free_coords = (origin_lng, origin_lat, dest_lng, dest_lat)
+    has_free_od = all(c is not None for c in free_coords)
+
     try:
         vehicle_id_raw = src.get('vehicle_id') or ''
         vehicle_id = int(vehicle_id_raw) if vehicle_id_raw else None
         soc_start = float(src.get('soc_start', 80))
+        dep_raw = src.get('departure_hour')
+        departure_hour = int(dep_raw) if dep_raw not in (None, '') else None
     except ValueError as e:
         return HttpResponseBadRequest(f"Datos del formulario inválidos: {e}")
 
+    postal_code = (src.get('cp') or '').strip() or None
+
+    plan_kwargs = dict(
+        vehicle_id=vehicle_id,
+        soc_start_pct=soc_start,
+        departure_hour=departure_hour,
+        postal_code=postal_code,
+    )
+
     try:
-        result = route_services.plan(
-            slug=slug, vehicle_id=vehicle_id, soc_start_pct=soc_start,
-        )
+        if slug:
+            result = route_services.plan(slug=slug, **plan_kwargs)
+        elif has_free_od:
+            result = route_services.plan(
+                origin_lng=origin_lng, origin_lat=origin_lat,
+                dest_lng=dest_lng, dest_lat=dest_lat, **plan_kwargs,
+            )
+        else:
+            # Initial preload — show the first demo by default
+            result = route_services.plan(
+                slug=route_services.ROUTE_DEMOS[0]['slug'], **plan_kwargs,
+            )
     except ValueError as e:
         return HttpResponseBadRequest(str(e))
 

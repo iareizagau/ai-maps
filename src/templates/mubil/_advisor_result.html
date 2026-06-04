@@ -1,64 +1,425 @@
 {% load i18n l10n %}
 {% with current=q.vehicle_current target=q.vehicle_target bd_c=q.breakdown_current bd_t=q.breakdown_target %}
 
-<div class="space-y-4" x-data x-init="$nextTick(() => window.mubilAdvisorRender({{ q_json|escape }}))">
+<div class="space-y-5"
+     x-data="{ shareCopied: false }"
+     x-init="$nextTick(() => window.mubilAdvisorRender({{ q_json|escape }}))">
 
-  <div class="rounded-2xl overflow-hidden shadow-lg border border-emerald-200 dark:border-emerald-700">
-    <div class="bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        <span class="text-[10px] font-extrabold uppercase tracking-widest text-white/90">Veredicto TCO · {{ q.years_horizon }} años</span>
+
+  <header class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 sm:p-8 shadow-sm">
+    <p class="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+      Ahorro neto real · {{ q.years_horizon }} años · {{ q.km_year|floatformat:0 }} km/año
+    </p>
+
+    <div class="mt-2 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+      <div class="min-w-0">
+        {% localize off %}
+        <h2 class="text-5xl sm:text-6xl font-black tracking-tight text-estrata-navy dark:text-white tabular-nums leading-none"
+            x-data x-init="$el.textContent = Math.round({{ q.total_net_savings_eur|default:0 }}).toLocaleString('es-ES') + ' €'">
+        </h2>
+        {% endlocalize %}
+        <p class="mt-3 text-base text-slate-600 dark:text-slate-300 leading-snug max-w-2xl">
+          ahorras cambiando tu <strong class="text-slate-900 dark:text-white">{{ current.make }} {{ current.model }}</strong>
+          por un <strong class="text-estrata-teal_dark dark:text-estrata-teal_light">{{ target.make }} {{ target.model }}</strong>.
+        </p>
+        {% localize off %}
+        <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400"
+           x-data x-init="$el.textContent = 'Operativo ' + Math.round({{ q.operational_savings_eur|default:0 }}).toLocaleString('es-ES') + ' € · ' + ({{ q.purchase_savings_eur|default:0 }} >= 0 ? 'Compra/incentivos +' : 'Inversión neta ') + Math.round(Math.abs({{ q.purchase_savings_eur|default:0 }})).toLocaleString('es-ES') + ' €'">
+        </p>
+        {% endlocalize %}
       </div>
-      <span class="text-[10px] text-emerald-100 font-semibold">{{ q.km_year|floatformat:0 }} km/año · {{ current.make }} → {{ target.make }}</span>
-    </div>
 
-    <div class="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 px-5 pt-4 pb-5">
-      <div class="flex flex-col sm:flex-row sm:items-end gap-4">
-
-        <div class="flex-1">
-          <p class="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-1">Ahorro neto total</p>
-          <div class="flex items-baseline gap-2">
-            <span class="text-5xl font-black text-emerald-700 dark:text-emerald-300 tabular-nums leading-none"
-                  x-data x-init="$el.textContent = ({{ bd_c.total|floatformat:0 }} - {{ bd_t.total|floatformat:0 }}).toLocaleString('es-ES') + ' €'"></span>
-          </div>
-          <p class="mt-1.5 text-sm text-emerald-600 dark:text-emerald-400 font-semibold"
-             x-data x-init="$el.textContent = '≈ ' + Math.round(({{ bd_c.total|floatformat:0 }} - {{ bd_t.total|floatformat:0 }}) / ({{ q.years_horizon }} * 12)).toLocaleString('es-ES') + ' € / mes de ahorro operativo'"></p>
-        </div>
-
-        <div class="flex flex-col gap-3 sm:items-end min-w-[210px]">
-          {% if q.payback_years is not None %}
-          <div class="w-full sm:w-52"
-               x-data="{ pct: Math.min(Math.round(({{ q.payback_years }} / {{ q.years_horizon }}) * 100), 100) }">
-            <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 mb-1">
-              <span>Punto de equilibrio</span>
-              <span class="text-emerald-800 dark:text-emerald-300 font-extrabold">{{ q.payback_years }} años</span>
-            </div>
-            <div class="h-2 w-full rounded-full bg-emerald-200 dark:bg-emerald-800/60 overflow-hidden">
-              <div class="h-full rounded-full bg-emerald-500 transition-all duration-700"
-                   :style="'width: ' + pct + '%'"></div>
-            </div>
-            <p class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5">A partir del año {{ q.payback_years }} ya ganas dinero neto</p>
-          </div>
-          {% else %}
-          <p class="text-xs text-emerald-600 dark:text-emerald-400 italic">Sin dato de precio de compra para calcular payback</p>
-          {% endif %}
-
-          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-100 dark:bg-teal-900/50 border border-teal-200 dark:border-teal-700">
-            <span class="text-lg">🌿</span>
-            <div>
-              <span class="text-xs font-extrabold text-teal-700 dark:text-teal-300">{{ q.co2_saved_kg_year|floatformat:0 }} kg CO₂</span>
-              <span class="text-[10px] text-teal-600 dark:text-teal-400"> menos / año</span>
-            </div>
-          </div>
-        </div>
+      <div class="shrink-0 flex flex-wrap gap-2">
+        <button type="button"
+                @click="window.copyAdvisorShareLink && window.copyAdvisorShareLink(); shareCopied = true; setTimeout(() => shareCopied = false, 2000)"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-estrata-teal hover:bg-estrata-teal_dark text-white text-xs font-bold uppercase tracking-widest shadow transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+          </svg>
+          <span x-text="shareCopied ? '¡Enlace copiado!' : 'Compartir'"></span>
+        </button>
+        <a href="{% url 'mubil:advisor_pdf' %}?cp={{ q.cp }}&km_year={{ q.km_year }}&vehicle_current_id={{ current.id }}&vehicle_target_id={{ target.id }}&years_horizon={{ q.years_horizon }}&night_charging={% if night_charging %}1{% else %}0{% endif %}&subvencion_eur={{ q.subvencion_eur|floatformat:0 }}{% if q.motorway_pct is not None %}&motorway_pct={{ q.motorway_pct|unlocalize }}{% endif %}"
+           target="_blank" rel="noopener"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold uppercase tracking-widest shadow-sm transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"/>
+          </svg>
+          PDF
+        </a>
       </div>
     </div>
-  </div>
+
+    <div class="mt-6 grid grid-cols-3 gap-3 sm:gap-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+      <div>
+        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Por mes operativo</p>
+        {% localize off %}
+        <p class="mt-0.5 text-lg sm:text-2xl font-extrabold text-slate-900 dark:text-white tabular-nums"
+           x-data x-init="$el.textContent = Math.round({{ q.operational_savings_eur|default:0 }} / ({{ q.years_horizon }} * 12)).toLocaleString('es-ES') + ' €'"></p>
+        {% endlocalize %}
+      </div>
+      <div>
+        {% if q.payback_years is None %}
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Punto de equilibrio</p>
+          <p class="mt-0.5 text-base font-bold text-slate-400">— sin precio</p>
+        {% elif q.payback_years == 0 %}
+          <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">EV más barato</p>
+          <p class="mt-0.5 text-sm sm:text-base font-bold text-emerald-700 dark:text-emerald-300 leading-tight">
+            Sin inversión<br>que amortizar
+          </p>
+        {% else %}
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Amortizado en</p>
+          <p class="mt-0.5 text-lg sm:text-2xl font-extrabold text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums">
+            {{ q.payback_years }} <span class="text-sm font-bold text-slate-500">años</span>
+          </p>
+        {% endif %}
+      </div>
+      <div>
+        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">CO₂ menos</p>
+        <p class="mt-0.5 text-lg sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums">
+          {{ q.co2_saved_kg_year|floatformat:0 }} <span class="text-sm font-bold text-slate-500">kg/año</span>
+        </p>
+      </div>
+    </div>
+  </header>
 
 
-  <div class="rounded-2xl border border-violet-200 dark:border-violet-800 bg-white dark:bg-slate-800 shadow-sm overflow-hidden"
+  {% if q.purchase_mode == 'switch' and q.current_residual_value_eur and target.price_eur %}
+  <aside class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-4 py-3 flex items-start gap-3">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500 dark:text-slate-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <div class="text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed min-w-0">
+      <strong class="font-bold text-slate-800 dark:text-slate-100">Coste neto del cambio:</strong>
+      vendes tu <strong>{{ current.make }} {{ current.model }}</strong> por un valor estimado de <strong class="text-slate-800 dark:text-slate-100 tabular-nums">{{ q.current_residual_value_eur|floatformat:0 }} €</strong>
+      ({{ q.current_age_years|default:5 }} años de depreciación 15 %/año desde {{ current.price_eur|floatformat:0 }} € PVP)
+      y compras el <strong>{{ target.make }} {{ target.model }}</strong> por <strong class="text-slate-800 dark:text-slate-100 tabular-nums">{{ target.price_eur|floatformat:0 }} €</strong>{% if q.subvencion_eur %} — incentivos: <strong class="text-emerald-600 dark:text-emerald-400 tabular-nums">{{ q.subvencion_eur|floatformat:0 }} €</strong>{% endif %}.
+      {% if q.payback_years == 0 %}
+        <span class="block mt-1 text-emerald-700 dark:text-emerald-300 font-bold">Tu coche actual vale más que el EV nuevo (con incentivos): no hay inversión que amortizar.</span>
+      {% elif q.payback_years is not None and q.payback_years <= q.years_horizon %}
+        <span class="block mt-1 text-emerald-700 dark:text-emerald-300 font-bold">Inversión neta amortizable con el ahorro operativo en <strong>{{ q.payback_years }} años</strong> (dentro del horizonte de {{ q.years_horizon }} años).</span>
+      {% elif q.payback_years is not None %}
+        <span class="block mt-1 text-amber-700 dark:text-amber-300 font-bold">⚠ La inversión NO se amortiza con el ahorro operativo en {{ q.years_horizon }} años — necesitaría <strong>{{ q.payback_years }} años</strong>. A 10 años pierdes dinero neto.</span>
+      {% endif %}
+    </div>
+  </aside>
+  {% elif q.purchase_mode == 'new_vs_new' and q.payback_years == 0 and current.price_eur and target.price_eur %}
+  <aside class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 flex items-start gap-3">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <div class="text-[12px] text-emerald-700 dark:text-emerald-300 leading-relaxed min-w-0">
+      <strong class="font-bold">Comparando ambos a PVP nuevo:</strong> el {{ target.make }} ({{ target.price_eur|floatformat:0 }} €) ya es más barato que el {{ current.make }} ({{ current.price_eur|floatformat:0 }} €) antes de aplicar incentivos. No hay inversión que amortizar — el ahorro empieza en la compra.
+    </div>
+  </aside>
+  {% endif %}
+
+  {% if current.category and target.category and current.category != target.category %}
+  <aside class="rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 flex items-start gap-3">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+    </svg>
+    <div class="text-[12px] text-amber-700 dark:text-amber-300 leading-relaxed min-w-0">
+      <strong class="font-bold">Estás comparando categorías distintas:</strong>
+      tu coche actual es <strong>{% if current.category == 'N1' %}furgoneta{% elif current.category == 'M1' %}turismo{% else %}{{ current.category }}{% endif %}</strong>
+      ({{ current.category }}) y el eléctrico elegido es <strong>{% if target.category == 'N1' %}furgoneta{% elif target.category == 'M1' %}turismo{% else %}{{ target.category }}{% endif %}</strong>
+      ({{ target.category }}). La comparación funciona, pero no son productos equivalentes en uso real — usa "Editar simulación" arriba para ajustar.
+    </div>
+  </aside>
+  {% endif %}
+
+  {% widthratio bd_t.total bd_c.total 100 as ev_bar_pct %}
+  {% widthratio bd_c.energy bd_c.total 100 as ice_energy_pct %}
+  {% widthratio bd_c.maintenance bd_c.total 100 as ice_maint_pct %}
+  {% widthratio bd_c.insurance bd_c.total 100 as ice_ins_pct %}
+  {% widthratio bd_t.energy bd_t.total 100 as ev_energy_pct %}
+  {% widthratio bd_t.maintenance bd_t.total 100 as ev_maint_pct %}
+  {% widthratio bd_t.insurance bd_t.total 100 as ev_ins_pct %}
+
+  <section class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 sm:p-6 shadow-sm">
+    <div class="flex items-baseline justify-between mb-5">
+      <h3 class="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">Coste total · {{ q.years_horizon }} años</h3>
+      <span class="text-[11px] text-slate-500 dark:text-slate-400">Barras a escala real</span>
+    </div>
+
+    <div class="space-y-2">
+      <div class="flex items-baseline justify-between gap-3">
+        <div class="min-w-0">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tu coche actual</p>
+          <p class="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{{ current.make }} {{ current.model }}</p>
+        </div>
+        <p class="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-200 tabular-nums shrink-0">{{ bd_c.total|floatformat:0 }} €</p>
+      </div>
+      <div class="h-9 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-900/40 flex" title="ICE breakdown">
+        <div class="h-full bg-rose-400 dark:bg-rose-500/80" style="width: {{ ice_energy_pct }}%" title="Energía {{ bd_c.energy|floatformat:0 }} €"></div>
+        <div class="h-full bg-amber-400 dark:bg-amber-500/80" style="width: {{ ice_maint_pct }}%" title="Mantenimiento {{ bd_c.maintenance|floatformat:0 }} €"></div>
+        <div class="h-full bg-indigo-400 dark:bg-indigo-500/80" style="width: {{ ice_ins_pct }}%" title="Seguro {{ bd_c.insurance|floatformat:0 }} €"></div>
+        <div class="h-full bg-slate-400 dark:bg-slate-500/80 flex-1" title="Impuestos {{ bd_c.taxes|floatformat:0 }} €"></div>
+      </div>
+    </div>
+
+    <div class="mt-4 space-y-2">
+      <div class="flex items-baseline justify-between gap-3">
+        <div class="min-w-0">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light">Eléctrico</p>
+          <p class="text-sm font-bold text-estrata-navy dark:text-white truncate">{{ target.make }} {{ target.model }}</p>
+        </div>
+        <p class="text-xl sm:text-2xl font-black text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums shrink-0">{{ bd_t.total|floatformat:0 }} €</p>
+      </div>
+      <div class="h-9 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-900/40" title="EV breakdown">
+        <div class="h-full flex" style="width: {{ ev_bar_pct }}%">
+          <div class="h-full bg-rose-400 dark:bg-rose-500/80" style="width: {{ ev_energy_pct }}%" title="Energía {{ bd_t.energy|floatformat:0 }} €"></div>
+          <div class="h-full bg-amber-400 dark:bg-amber-500/80" style="width: {{ ev_maint_pct }}%" title="Mantenimiento {{ bd_t.maintenance|floatformat:0 }} €"></div>
+          <div class="h-full bg-indigo-400 dark:bg-indigo-500/80" style="width: {{ ev_ins_pct }}%" title="Seguro {{ bd_t.insurance|floatformat:0 }} €"></div>
+          <div class="h-full bg-slate-400 dark:bg-slate-500/80 flex-1" title="Impuestos {{ bd_t.taxes|floatformat:0 }} €"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+      <span class="flex items-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Energía
+      </span>
+      <span class="flex items-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Mantenimiento
+      </span>
+      <span class="flex items-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        Seguro
+      </span>
+      <span class="flex items-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Impuestos
+      </span>
+    </div>
+
+    <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 grid grid-cols-2 gap-3 text-[11px]">
+      <div>
+        <p class="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[10px]">ICE desglose</p>
+        <div class="mt-1.5 grid grid-cols-[auto_1fr_auto] gap-x-2 gap-y-1 items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span class="text-slate-500">Energía</span>
+          <span class="text-right font-semibold tabular-nums">{{ bd_c.energy|floatformat:0 }} €</span>
+
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="text-slate-500">Mant.</span>
+          <span class="text-right font-semibold tabular-nums">{{ bd_c.maintenance|floatformat:0 }} €</span>
+
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <span class="text-slate-500">Seguro</span>
+          <span class="text-right font-semibold tabular-nums">{{ bd_c.insurance|floatformat:0 }} €</span>
+
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span class="text-slate-500">Imp.</span>
+          <span class="text-right font-semibold tabular-nums">{{ bd_c.taxes|floatformat:0 }} €</span>
+        </div>
+      </div>
+      <div>
+        <p class="text-estrata-teal_dark dark:text-estrata-teal_light font-bold uppercase tracking-wider text-[10px]">EV desglose</p>
+        <div class="mt-1.5 grid grid-cols-[auto_1fr_auto] gap-x-2 gap-y-1 items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span class="text-slate-500">Energía</span>
+          <span class="text-right font-semibold tabular-nums">{{ bd_t.energy|floatformat:0 }} €</span>
+
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="text-slate-500">Mant.</span>
+          <span class="text-right font-semibold tabular-nums">{{ bd_t.maintenance|floatformat:0 }} €</span>
+
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <span class="text-slate-500">Seguro</span>
+          <span class="text-right font-semibold tabular-nums">{{ bd_t.insurance|floatformat:0 }} €</span>
+
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span class="text-slate-500">Imp.</span>
+          <span class="text-right font-semibold tabular-nums">{{ bd_t.taxes|floatformat:0 }} €</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  {% localize off %}
+  <section class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm p-5 sm:p-6"
+           x-data="{
+             dEnergy: {{ bd_c.energy|floatformat:0 }} - {{ bd_t.energy|floatformat:0 }},
+             dMaint:  {{ bd_c.maintenance|floatformat:0 }} - {{ bd_t.maintenance|floatformat:0 }},
+             dIns:    {{ bd_c.insurance|floatformat:0 }} - {{ bd_t.insurance|floatformat:0 }},
+             dTax:    {{ bd_c.taxes|floatformat:0 }} - {{ bd_t.taxes|floatformat:0 }},
+             opSavings: {{ q.operational_savings_eur|default:0 }},
+             purSavings: {{ q.purchase_savings_eur|default:0 }},
+             totalNet: {{ q.total_net_savings_eur|default:0 }},
+             residual: {{ q.current_residual_value_eur|default:0 }},
+             pvpCurrent: {{ current.price_eur|default:0 }},
+             pvpTarget: {{ target.price_eur|default:0 }},
+             subv: {{ q.subvencion_eur|default:0 }},
+             wallboxCapex: {{ q.wallbox_capex_eur|default:0 }},
+             mode: '{{ q.purchase_mode|default:"switch" }}',
+             get maxAbsDelta() {
+               return Math.max(Math.abs(this.dEnergy), Math.abs(this.dMaint), Math.abs(this.dIns), Math.abs(this.dTax), 1);
+             },
+             pct(v) { return Math.round(Math.abs(v) / this.maxAbsDelta * 100); },
+             fmt(v) { return Math.round(v).toLocaleString('es-ES'); },
+           }">
+  {% endlocalize %}
+
+    <div class="flex items-baseline justify-between mb-4">
+      <h3 class="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">¿De dónde sale el ahorro?</h3>
+      <span class="text-[11px] text-slate-500 dark:text-slate-400">Deltas a {{ q.years_horizon }} años</span>
+    </div>
+
+    <div class="space-y-3">
+      <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Operativo · ahorro recurrente</div>
+
+      <template x-for="row in [
+        { key:'energy',  label:'Energía',       icon:'⚡', delta: dEnergy, color:'rose'  },
+        { key:'maint',   label:'Mantenimiento', icon:'⚙', delta: dMaint,  color:'amber' },
+        { key:'ins',     label:'Seguro',        icon:'🛡', delta: dIns,    color:'indigo'},
+        { key:'tax',     label:'Impuestos',     icon:'📋', delta: dTax,    color:'slate' },
+      ]" :key="row.key">
+        <div class="flex items-center gap-3">
+          <div class="w-28 sm:w-36 shrink-0 flex items-center gap-1.5 text-[12px] font-bold text-slate-700 dark:text-slate-200">
+            <span class="text-base" x-text="row.icon"></span>
+            <span x-text="row.label"></span>
+          </div>
+          <div class="flex-1 h-5 bg-slate-50 dark:bg-slate-900/40 rounded relative overflow-hidden">
+            <div class="absolute inset-y-0 left-0 h-full rounded transition-all duration-500"
+                 :class="row.delta >= 0 ? 'bg-emerald-400 dark:bg-emerald-500/70' : 'bg-rose-400 dark:bg-rose-500/70'"
+                 :style="'width: ' + pct(row.delta) + '%'"></div>
+          </div>
+          <div class="w-32 shrink-0 text-right">
+            <span class="text-[13px] font-bold tabular-nums"
+                  :class="row.delta >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'"
+                  x-text="(row.delta >= 0 ? '−' : '+') + fmt(Math.abs(row.delta)) + ' €'"></span>
+            <span class="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider" x-text="row.delta >= 0 ? 'ahorras' : 'pagas más'"></span>
+          </div>
+        </div>
+      </template>
+
+      <div class="flex items-baseline justify-between pt-3 mt-2 border-t border-slate-200 dark:border-slate-700">
+        <span class="text-[11px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Subtotal operativo</span>
+        <span class="text-base font-extrabold tabular-nums"
+              :class="opSavings >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'"
+              x-text="(opSavings >= 0 ? '−' : '+') + fmt(Math.abs(opSavings)) + ' €'"></span>
+      </div>
+    </div>
+
+    <div x-show="pvpCurrent > 0 && pvpTarget > 0" class="mt-6 space-y-3">
+      <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+        <span x-text="mode === 'switch' ? 'Cambio del vehículo · puntual' : 'Diferencia de compra · puntual'"></span>
+      </div>
+
+      <div x-show="mode === 'switch'" class="flex items-center justify-between text-[12px] gap-3">
+        <span class="text-slate-700 dark:text-slate-300">Vendes tu <span x-text="'{{ current.make }}'"></span> (residual <span x-text="{{ q.current_age_years|default:5 }} + ' años'"></span>)</span>
+        <span class="font-bold tabular-nums text-emerald-600 dark:text-emerald-400" x-text="'+' + fmt(residual) + ' €'"></span>
+      </div>
+      <div x-show="mode === 'new_vs_new'" class="flex items-center justify-between text-[12px] gap-3">
+        <span class="text-slate-700 dark:text-slate-300">PVP nuevo de tu coche actual evitado</span>
+        <span class="font-bold tabular-nums text-emerald-600 dark:text-emerald-400" x-text="'+' + fmt(pvpCurrent) + ' €'"></span>
+      </div>
+
+      <div x-show="subv > 0" class="flex items-center justify-between text-[12px] gap-3">
+        <span class="text-slate-700 dark:text-slate-300">Incentivos (MOVES III + IRPF + IVTM)</span>
+        <span class="font-bold tabular-nums text-emerald-600 dark:text-emerald-400" x-text="'+' + fmt(subv) + ' €'"></span>
+      </div>
+
+      <div class="flex items-center justify-between text-[12px] gap-3">
+        <span class="text-slate-700 dark:text-slate-300">Compras <span x-text="'{{ target.make }} {{ target.model }}'"></span> nuevo</span>
+        <span class="font-bold tabular-nums text-rose-600 dark:text-rose-400" x-text="'−' + fmt(pvpTarget) + ' €'"></span>
+      </div>
+
+      <div x-show="wallboxCapex > 0" class="flex items-center justify-between text-[12px] gap-3">
+        <span class="text-slate-700 dark:text-slate-300">Instalación wallbox</span>
+        <span class="font-bold tabular-nums text-rose-600 dark:text-rose-400" x-text="'−' + fmt(wallboxCapex) + ' €'"></span>
+      </div>
+
+      <div class="flex items-baseline justify-between pt-3 mt-2 border-t border-slate-200 dark:border-slate-700">
+        <span class="text-[11px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Subtotal cambio</span>
+        <span class="text-base font-extrabold tabular-nums"
+              :class="purSavings >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'"
+              x-text="(purSavings >= 0 ? '+' : '−') + fmt(Math.abs(purSavings)) + ' €'"></span>
+      </div>
+    </div>
+
+    <div class="mt-6 pt-4 border-t-2 border-estrata-teal/30 flex items-baseline justify-between gap-3">
+      <span class="text-xs font-black uppercase tracking-widest text-estrata-navy dark:text-white">Ahorro neto a {{ q.years_horizon }} años</span>
+      <span class="text-2xl sm:text-3xl font-black tabular-nums"
+            :class="totalNet >= 0 ? 'text-estrata-teal_dark dark:text-estrata-teal_light' : 'text-rose-600 dark:text-rose-400'"
+            x-text="(totalNet >= 0 ? '' : '−') + fmt(Math.abs(totalNet)) + ' €'"></span>
+    </div>
+  </section>
+
+
+  {% if q.payback_years and q.payback_years > 0 %}
+  {% localize off %}
+  <section class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm p-5 sm:p-6"
+           x-data="{
+             yrs: {{ q.years_horizon }},
+             annualOp: {{ q.operational_savings_eur|default:0 }} / {{ q.years_horizon }},
+             upfront: -({{ q.purchase_savings_eur|default:0 }}),
+             paybackY: {{ q.payback_years|default:0 }},
+             years: [],
+             selected: null,
+             init() {
+               for (let i = 1; i <= this.yrs; i++) {
+                 const balance = i * this.annualOp - this.upfront;
+                 this.years.push({
+                   yr: i,
+                   balance: Math.round(balance),
+                   positive: balance >= 0,
+                 });
+               }
+               const maxAbs = Math.max(...this.years.map(y => Math.abs(y.balance)));
+               this.years.forEach(y => { y.pct = maxAbs > 0 ? Math.round(Math.abs(y.balance) / maxAbs * 100) : 0; });
+               this.selected = this.years[this.years.length - 1];
+             },
+             fmt(v) { return Math.round(v).toLocaleString('es-ES'); },
+           }">
+  {% endlocalize %}
+
+    <div class="flex items-baseline justify-between mb-4">
+      <div>
+        <h3 class="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">Línea de amortización</h3>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Balance acumulado año a año.</p>
+      </div>
+      <span class="text-[11px] font-bold text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums">
+        Punto de equilibrio: año {{ q.payback_years|floatformat:'-1' }}
+      </span>
+    </div>
+
+    <div class="flex items-end gap-1.5 h-20 sm:h-24">
+      <template x-for="y in years" :key="y.yr">
+        <div class="flex-1 flex flex-col items-center gap-1 cursor-pointer group"
+             @mouseenter="selected = y"
+             @click="selected = y">
+          <div class="w-full rounded-t transition-all duration-300 min-h-[6px]"
+               :class="y.yr === selected?.yr
+                       ? (y.positive ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-rose-500 ring-2 ring-rose-300')
+                       : (y.positive ? 'bg-emerald-400/80 hover:bg-emerald-500' : 'bg-rose-400/80 hover:bg-rose-500')"
+               :style="'height: ' + Math.max(6, y.pct) + '%'"></div>
+          <span class="text-[9px] font-bold text-slate-400" x-text="y.yr"></span>
+        </div>
+      </template>
+    </div>
+
+    <div class="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-700 flex items-baseline justify-between gap-3">
+      <div class="min-w-0">
+        <div class="text-[10px] font-bold uppercase tracking-widest"
+             :class="selected?.positive ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'"
+             x-text="'Año ' + (selected?.yr || '—')"></div>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5"
+           x-text="selected?.positive ? 'Ahorro neto acumulado' : 'Inversión por amortizar'"></p>
+      </div>
+      <span class="text-lg font-black tabular-nums"
+            :class="selected?.positive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'"
+            x-text="((selected?.balance || 0) >= 0 ? '+' : '−') + fmt(Math.abs(selected?.balance || 0)) + ' €'"></span>
+    </div>
+  </section>
+  {% endif %}
+
+
+  {% localize off %}
+  <section class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm p-5 sm:p-6"
        x-data="evDictamen({
          km: {{ q.km_year }},
          yrs: {{ q.years_horizon }},
@@ -66,202 +427,74 @@
          eEv: {{ bd_t.energy|floatformat:0 }},
          chargers: {{ q.nearby_chargers|length }},
          urban: {{ q.urban_pct|default:30|floatformat:0 }},
-         payback: {% if q.payback_years is not None %}{{ q.payback_years|floatformat:"-1" }}{% else %}null{% endif %},
+         payback: {% if q.payback_years is not None %}{{ q.payback_years|floatformat:'-1u' }}{% else %}null{% endif %},
          wltp: {{ target.range_wltp_km|default:300 }},
          co2: {{ q.co2_saved_kg_year|floatformat:0 }},
          savings: {{ bd_c.total|floatformat:0 }} - {{ bd_t.total|floatformat:0 }}
        })">
+  {% endlocalize %}
 
-    <div class="bg-gradient-to-r from-violet-600 to-purple-600 px-5 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-        </svg>
-        <span class="text-[10px] font-extrabold uppercase tracking-widest text-white/90">Dictamen de Idoneidad EV</span>
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <div>
+        <h3 class="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">Idoneidad del EV</h3>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Cuánto encaja un eléctrico con tu uso real.</p>
       </div>
-      <span class="text-[10px] text-violet-200 font-semibold">{{ target.make }} {{ target.model }}</span>
-    </div>
-
-    <div class="p-5">
-      <div class="flex flex-col sm:flex-row gap-6">
-
-        <div class="flex flex-col items-center justify-center shrink-0">
-          <div class="relative w-32 h-32">
-            <svg viewBox="0 0 100 100" class="w-full h-full -rotate-[135deg]">
-              <circle cx="50" cy="50" r="42" fill="none" stroke="#e2e8f0" stroke-width="8"
-                      stroke-dasharray="197.9 263.9" stroke-linecap="round" class="dark:stroke-slate-700"/>
-              <circle cx="50" cy="50" r="42" fill="none" stroke-width="8"
-                      :stroke="scoreColor" :stroke-dasharray="gaugeDash"
-                      stroke-linecap="round" style="transition: stroke-dasharray 1.2s ease"/>
-            </svg>
-            <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <span class="text-3xl font-black tabular-nums leading-none" :style="'color:'+scoreColor" x-text="score"></span>
-              <span class="text-[10px] font-bold text-slate-400">/100</span>
-            </div>
-          </div>
-          <div class="mt-2 px-4 py-1 rounded-full text-xs font-extrabold text-white shadow"
-               :style="'background-color:'+scoreColor" x-text="scoreLabel"></div>
-        </div>
-
-        <div class="flex-1 space-y-3">
-          <template x-for="d in dims" :key="d.label">
-            <div>
-              <div class="flex items-center justify-between mb-0.5">
-                <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                  <span x-text="d.icon"></span>
-                  <span x-text="d.label"></span>
-                </span>
-                <span class="text-[10px] font-extrabold tabular-nums" :style="'color:'+scoreColor" x-text="d.pts+'/'+d.max+' pts'"></span>
-              </div>
-              <div class="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
-                <div class="h-full rounded-full transition-all duration-700" :style="'width:'+d.pct+'%;background-color:'+scoreColor"></div>
-              </div>
-              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 italic" x-text="d.arg"></p>
-            </div>
-          </template>
-        </div>
-
-      </div>
-
-      <div class="mt-5 pt-4 border-t border-slate-100 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-        <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800 p-3.5">
-          <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-2">🌿 Impacto Ambiental / año</p>
-          <div class="flex items-center gap-4 flex-wrap">
-            <div>
-              <span class="text-2xl font-black text-emerald-700 dark:text-emerald-300" x-text="co2.toLocaleString('es-ES')"></span>
-              <span class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold"> kg CO₂</span>
-            </div>
-            <div class="text-[11px] text-emerald-600 dark:text-emerald-400 space-y-0.5">
-              <div>≈ <strong x-text="co2Trees"></strong> árboles / año</div>
-              <div>≈ <strong x-text="co2Flights"></strong> vuelos BCN–NYC</div>
-            </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <div class="relative w-16 h-16">
+          <svg viewBox="0 0 100 100" class="w-full h-full -rotate-[135deg]">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#e2e8f0" stroke-width="8"
+                    stroke-dasharray="197.9 263.9" stroke-linecap="round" class="dark:stroke-slate-700"/>
+            <circle cx="50" cy="50" r="42" fill="none" stroke-width="8"
+                    :stroke="scoreColor" :stroke-dasharray="gaugeDash"
+                    stroke-linecap="round" style="transition: stroke-dasharray 1.2s ease"/>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span class="text-lg font-black tabular-nums leading-none" :style="'color:'+scoreColor" x-text="score"></span>
           </div>
         </div>
-
-        <div class="rounded-xl bg-violet-50 dark:bg-violet-950/40 border border-violet-100 dark:border-violet-800 p-3.5 flex flex-col justify-between">
-          <div>
-            <p class="text-[10px] font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400 mb-2 flex items-center justify-between">
-              <span>📈 Línea de Amortización</span>
-              <span class="text-xs font-black text-violet-700 dark:text-violet-300"
-                    x-text="payback !== null ? 'Equilibrio: año ' + payback : 'Ahorro desde Año 1'"></span>
-            </p>
-
-            <!-- Interactive Bar Chart / Timeline -->
-            <div class="flex items-end gap-1 h-14 mt-2.5 relative">
-              <template x-for="y in yearsData" :key="y.yr">
-                <div class="flex-1 flex flex-col items-center group cursor-pointer"
-                     @mouseenter="selectedYear = y"
-                     @click="selectedYear = y">
-                  <!-- The visual bar -->
-                  <div class="w-full rounded-t transition-all duration-300 min-h-[4px]"
-                       :class="y.yr === selectedYear.yr
-                               ? (y.isAmortized ? 'bg-emerald-500 shadow-sm ring-2 ring-emerald-300' : 'bg-red-500 shadow-sm ring-2 ring-red-300')
-                               : (y.isAmortized ? 'bg-emerald-400/80 hover:bg-emerald-500' : 'bg-red-400/80 hover:bg-red-500')"
-                       :style="'height: ' + Math.max(10, y.pct) + '%'"></div>
-
-                  <!-- Dot indicating the year -->
-                  <div class="w-1.5 h-1.5 rounded-full mt-1.5"
-                       :class="y.yr === selectedYear.yr ? 'bg-violet-600' : 'bg-violet-300 dark:bg-violet-700'"></div>
-                </div>
-              </template>
-            </div>
-
-            <!-- X-Axis Labels -->
-            <div class="flex justify-between text-[9px] text-slate-400 dark:text-slate-500 mt-1 px-1">
-              <span>Año 1</span>
-              <span x-show="payback !== null" class="font-semibold text-violet-600 dark:text-violet-400" x-text="'Amortizado en Año ' + Math.ceil(payback)"></span>
-              <span x-text="'Año ' + yrs"></span>
-            </div>
-          </div>
-
-          <!-- Interactive Selected Year Detail Box -->
-          <div class="mt-3 p-2 rounded-lg bg-white dark:bg-slate-900/60 border border-violet-100/50 dark:border-violet-900/30 flex items-center justify-between transition-all duration-300">
-            <div class="min-w-0 flex-1 pr-2">
-              <div class="flex items-center gap-1.5">
-                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded leading-none"
-                      :class="selectedYear.isAmortized ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300'"
-                      x-text="'Año ' + selectedYear.yr"></span>
-                <span class="text-[9px] text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-wide" x-text="selectedYear.status"></span>
-              </div>
-              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1 italic truncate" x-text="selectedYear.desc"></p>
-            </div>
-            <div class="text-right shrink-0">
-              <span class="text-xs font-black tabular-nums"
-                    :class="selectedYear.isAmortized ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'"
-                    x-text="selectedYear.label"></span>
-            </div>
-          </div>
+        <div class="text-right">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Veredicto</p>
+          <p class="text-base font-black" :style="'color:'+scoreColor" x-text="scoreLabel"></p>
         </div>
-
-        <div class="rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 p-3.5"
-             x-data="chargersMini({{ q_json|escape }})">
-          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">🔌 Red de Carga Cercana</p>
-          {% if q.nearby_chargers %}
-          <div class="flex items-center gap-4 flex-wrap">
-            <div class="text-center">
-              <div class="text-2xl font-black text-slate-700 dark:text-slate-200">{{ q.nearby_chargers|length }}</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">cargadores 5km</div>
-            </div>
-            <div class="space-y-0.5 text-[11px]">
-              <div class="flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                <span class="text-slate-600 dark:text-slate-300">
-                  <strong x-text="fastCount"></strong> ultra-rápidos (≥150 kW)
-                </span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-cyan-500 shrink-0"></span>
-                <span class="text-slate-600 dark:text-slate-300">El más cercano: <strong>{{ q.nearby_chargers.0.distance_km|floatformat:1 }} km</strong> · {{ q.nearby_chargers.0.operator }}</span>
-              </div>
-            </div>
-          </div>
-          {% else %}
-          <p class="text-[11px] text-amber-600 dark:text-amber-400">⚠️ Sin cargadores registrados en 5 km del CP {{ q.cp }}</p>
-          {% endif %}
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-
-  <div class="grid grid-cols-2 gap-3">
-
-
-    <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm">
-      <div class="flex items-center justify-between mb-2">
-        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Coste actual · {{ q.years_horizon }} años</p>
-        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">{{ current.dgt_label }}</span>
-      </div>
-      <p class="text-2xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{{ bd_c.total|floatformat:0 }}€</p>
-      <p class="text-[11px] text-slate-400 mt-0.5 truncate">{{ current.make }} {{ current.model }}</p>
-      <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-700 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px] text-slate-500 dark:text-slate-400">
-        <span>⛽ Energía</span><span class="font-semibold text-right">{{ bd_c.energy|floatformat:0 }}€</span>
-        <span>🔧 Mant.</span><span class="font-semibold text-right">{{ bd_c.maintenance|floatformat:0 }}€</span>
-        <span>🛡 Seguro</span><span class="font-semibold text-right">{{ bd_c.insurance|floatformat:0 }}€</span>
-        <span>📋 Imp.</span><span class="font-semibold text-right">{{ bd_c.taxes|floatformat:0 }}€</span>
       </div>
     </div>
 
-    <div class="rounded-xl border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-900/20 p-4 shadow-sm">
-      <div class="flex items-center justify-between mb-2">
-        <p class="text-[10px] font-bold uppercase tracking-widest text-cyan-700 dark:text-cyan-300">Eléctrico · {{ q.years_horizon }} años</p>
-        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-100 dark:bg-cyan-800 text-cyan-800 dark:text-cyan-100">0</span>
-      </div>
-      <p class="text-2xl font-black text-cyan-700 dark:text-cyan-300 tabular-nums">{{ bd_t.total|floatformat:0 }}€</p>
-      <p class="text-[11px] text-cyan-500 dark:text-cyan-400 mt-0.5 truncate">{{ target.make }} {{ target.model }}</p>
-      <div class="mt-2.5 pt-2 border-t border-cyan-100 dark:border-cyan-800 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px] text-cyan-700 dark:text-cyan-400">
-        <span>⚡ Energía</span><span class="font-semibold text-right">{{ bd_t.energy|floatformat:0 }}€</span>
-        <span>🔧 Mant.</span><span class="font-semibold text-right">{{ bd_t.maintenance|floatformat:0 }}€</span>
-        <span>🛡 Seguro</span><span class="font-semibold text-right">{{ bd_t.insurance|floatformat:0 }}€</span>
-        <span>📋 Imp.</span><span class="font-semibold text-right">{{ bd_t.taxes|floatformat:0 }}€</span>
-      </div>
+    <div class="grid grid-cols-1 sm:grid-cols-5 gap-2 mb-4">
+      <template x-for="d in dims" :key="d.label">
+        <div class="rounded-lg border border-slate-100 dark:border-slate-700 px-2.5 py-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1 min-w-0">
+              <span x-text="d.icon" class="shrink-0"></span>
+              <span class="truncate" x-text="d.label"></span>
+            </span>
+            <span class="text-[10px] font-extrabold tabular-nums shrink-0" :style="'color:'+scoreColor" x-text="d.pts+'/'+d.max"></span>
+          </div>
+          <div class="mt-1.5 h-1 w-full rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-700" :style="'width:'+d.pct+'%;background-color:'+scoreColor"></div>
+          </div>
+        </div>
+      </template>
     </div>
 
-  </div>
+    <details class="text-[12px]">
+      <summary class="cursor-pointer text-estrata-teal_dark dark:text-estrata-teal_light font-bold hover:underline list-none flex items-center gap-1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+        Ver argumentación por dimensión
+      </summary>
+      <ul class="mt-3 space-y-1.5 pl-1">
+        <template x-for="d in dims" :key="'arg-'+d.label">
+          <li class="text-slate-500 dark:text-slate-400 leading-snug">
+            <strong class="text-slate-700 dark:text-slate-200" x-text="d.icon + ' ' + d.label + ': '"></strong>
+            <span x-text="d.arg"></span>
+          </li>
+        </template>
+      </ul>
+    </details>
+  </section>
 
-  <div class="rounded-2xl border border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 shadow-sm overflow-hidden"
+
+  {% localize off %}
+  <section class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-5 sm:p-6"
        x-data="advisorSensitivity({
          kmBase: {{ q.km_year }},
          yrs: {{ q.years_horizon }},
@@ -269,79 +502,78 @@
          baseEnergyEv: {{ bd_t.energy|floatformat:0 }},
          baseTotalIce: {{ bd_c.total|floatformat:0 }},
          baseTotalEv: {{ bd_t.total|floatformat:0 }},
-         basePayback: {% if q.payback_years is not None %}{{ q.payback_years|floatformat:'-2' }}{% else %}null{% endif %},
+         basePayback: {% if q.payback_years is not None %}{{ q.payback_years|floatformat:'-2u' }}{% else %}null{% endif %},
          fuelKind: '{{ current.propulsion }}',
          basePriceFuel: {% if current.propulsion == 'DIESEL' %}1.495{% else %}1.585{% endif %}
        })">
+  {% endlocalize %}
 
-    <div class="bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M5 6h14M5 18h14"/>
-        </svg>
-        <span class="text-[10px] font-extrabold uppercase tracking-widest text-white/95">¿Y si…? · Análisis de sensibilidad</span>
+    <div class="flex items-baseline justify-between mb-4">
+      <div>
+        <h3 class="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">¿Y si…?</h3>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Mueve los inputs y mira cómo cambia el ahorro.</p>
       </div>
-      <span class="text-[10px] text-orange-50 font-semibold">Mueve los deslizadores</span>
+      <button @click="reset()" class="text-[11px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-700 dark:text-slate-400 transition">
+        ↺ Restablecer
+      </button>
     </div>
 
-    <div class="p-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
       <div class="space-y-4">
-
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <label class="text-[11px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">🛣 Km / año</label>
-            <span class="text-sm font-extrabold tabular-nums text-amber-900 dark:text-amber-100" x-text="km.toLocaleString('es-ES') + ' km'"></span>
+            <label class="text-[11px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Km / año</label>
+            <span class="text-sm font-extrabold tabular-nums text-slate-900 dark:text-white" x-text="km.toLocaleString('es-ES') + ' km'"></span>
           </div>
           <input type="range" min="5000" max="50000" step="500" x-model.number="km"
-                 class="w-full accent-amber-500 cursor-pointer">
-          <div class="flex justify-between text-[9px] text-amber-600/70 dark:text-amber-400/70 mt-0.5">
-            <span>5 000</span><span>27 500</span><span>50 000</span>
+                 class="w-full accent-estrata-teal cursor-pointer">
+          <div class="flex justify-between text-[9px] text-slate-400 mt-0.5 tabular-nums">
+            <span>5.000</span><span>27.500</span><span>50.000</span>
           </div>
         </div>
 
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <label class="text-[11px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">
-              ⛽ Precio <span x-text="fuelLabel"></span>
+            <label class="text-[11px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">
+              Precio <span x-text="fuelLabel"></span>
             </label>
-            <span class="text-sm font-extrabold tabular-nums text-amber-900 dark:text-amber-100" x-text="priceFuel.toFixed(3).replace('.', ',') + ' €/L'"></span>
+            <span class="text-sm font-extrabold tabular-nums text-slate-900 dark:text-white" x-text="priceFuel.toFixed(3).replace('.', ',') + ' €/L'"></span>
           </div>
           <input type="range" min="1.000" max="2.500" step="0.005" x-model.number="priceFuel"
-                 class="w-full accent-amber-500 cursor-pointer">
-          <div class="flex justify-between text-[9px] text-amber-600/70 dark:text-amber-400/70 mt-0.5">
+                 class="w-full accent-estrata-teal cursor-pointer">
+          <div class="flex justify-between text-[9px] text-slate-400 mt-0.5 tabular-nums">
             <span>1,00 €</span><span>1,75 €</span><span>2,50 €</span>
           </div>
-          <p class="text-[10px] text-amber-600 dark:text-amber-400 mt-1 italic">
+          <p class="text-[10px] text-slate-400 mt-1 italic">
             Referencia <span x-text="basePriceFuel.toFixed(3).replace('.', ',')"></span> €/L (MINCOTUR)
           </p>
         </div>
-
-        <button @click="reset()" class="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 transition">
-          ↺ Restablecer
-        </button>
       </div>
 
       <div class="space-y-3">
-        <div class="rounded-xl bg-white/70 dark:bg-slate-800/60 border border-amber-200 dark:border-amber-700/50 p-4">
-          <p class="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300 mb-1">Ahorro neto · {{ q.years_horizon }} años</p>
+        <div class="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">Ahorro neto · {{ q.years_horizon }} años</p>
           <div class="flex items-baseline gap-2 flex-wrap">
-            <span class="text-3xl font-black tabular-nums" :class="savings >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'"
+            <span class="text-2xl sm:text-3xl font-black tabular-nums"
+                  :class="savings >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'"
                   x-text="(savings >= 0 ? '+' : '') + Math.round(savings).toLocaleString('es-ES') + ' €'"></span>
-            <span class="text-[11px] font-semibold" :class="savingsDelta >= 0 ? 'text-emerald-600' : 'text-red-500'"
+            <span class="text-[11px] font-semibold"
+                  :class="savingsDelta >= 0 ? 'text-emerald-600' : 'text-rose-500'"
                   x-text="(savingsDelta >= 0 ? '▲ ' : '▼ ') + Math.abs(Math.round(savingsDelta)).toLocaleString('es-ES') + ' € vs base'"></span>
           </div>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1"
+          <p class="text-[11px] text-slate-500 mt-1"
              x-text="'≈ ' + Math.round(savings / {{ q.years_horizon }} / 12).toLocaleString('es-ES') + ' € / mes operativo'"></p>
         </div>
 
-        <div class="rounded-xl bg-white/70 dark:bg-slate-800/60 border border-amber-200 dark:border-amber-700/50 p-4">
-          <p class="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300 mb-1">Punto de equilibrio</p>
+        <div class="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">Punto de equilibrio</p>
           <template x-if="payback !== null">
             <div class="flex items-baseline gap-2 flex-wrap">
-              <span class="text-3xl font-black tabular-nums text-amber-900 dark:text-amber-100"
+              <span class="text-2xl sm:text-3xl font-black tabular-nums text-slate-900 dark:text-white"
                     x-text="payback.toFixed(1).replace('.', ',') + ' años'"></span>
-              <span class="text-[11px] font-semibold" :class="paybackDelta <= 0 ? 'text-emerald-600' : 'text-red-500'"
+              <span class="text-[11px] font-semibold"
+                    :class="paybackDelta <= 0 ? 'text-emerald-600' : 'text-rose-500'"
                     x-text="(paybackDelta <= 0 ? '▼ ' : '▲ ') + Math.abs(paybackDelta).toFixed(1).replace('.', ',') + ' años'"></span>
             </div>
           </template>
@@ -350,130 +582,143 @@
           </template>
         </div>
       </div>
-
     </div>
-  </div>
+  </section>
+
 
   {% if q.motorway_pct is not None %}
-  <div class="rounded-xl border border-cyan-100 dark:border-cyan-800 bg-slate-50 dark:bg-slate-900/50 p-4 shadow-sm flex items-start gap-3">
-    <div class="text-cyan-500 mt-0.5 shrink-0">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+  <section class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm flex items-start gap-3">
+    <div class="text-estrata-teal_dark dark:text-estrata-teal_light mt-0.5 shrink-0">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
     </div>
-    <div class="text-xs space-y-1.5">
-      <h4 class="font-bold text-slate-800 dark:text-slate-200">Auditoría de Perfil de Conducción</h4>
-      <div class="flex gap-2 flex-wrap">
-        <span class="px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 font-semibold">🛣 {{ q.motorway_pct|floatformat:0 }}% Autovía</span>
-        {% if q.nacional_pct %}<span class="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-semibold">🛤 {{ q.nacional_pct|floatformat:0 }}% Nacional</span>{% endif %}
-        <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-semibold">🏠 {{ q.urban_pct|floatformat:0 }}% Urbano</span>
-      </div>
+    <div class="text-xs space-y-1 min-w-0">
+      <p class="font-bold text-slate-700 dark:text-slate-200">
+        Perfil: {{ q.motorway_pct|floatformat:0 }} % autovía · {% if q.nacional_pct %}{{ q.nacional_pct|floatformat:0 }} % nacional · {% endif %}{{ q.urban_pct|floatformat:0 }} % urbano
+      </p>
       <p class="text-slate-500 dark:text-slate-400 leading-relaxed">
         {% if q.vehicle_target.propulsion == 'BEV' %}
-          EV aplica <strong class="text-cyan-600">+15% de consumo en autovía</strong> (resistencia aerodinámica) con recuperación regenerativa en tramos urbanos.
+          EV aplica <strong class="text-estrata-teal_dark dark:text-estrata-teal_light">+15 % de consumo en autovía</strong> (resistencia aerodinámica) y <strong class="text-emerald-600 dark:text-emerald-400">recupera energía</strong> en ciudad por frenado regenerativo.
         {% else %}
-          ICE aplica <strong class="text-emerald-600">+25% de consumo en ciudad</strong> (stop &amp; go) compensado en velocidad de crucero de autopista.
+          ICE aplica <strong class="text-amber-600 dark:text-amber-400">+25 % de consumo en ciudad</strong> (stop &amp; go) compensado en velocidad de crucero.
         {% endif %}
       </p>
     </div>
-  </div>
+  </section>
   {% endif %}
 
-  {% if q.incentives %}
-  <div class="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-950/20 shadow-sm overflow-hidden">
-    <div class="px-5 pt-4 pb-3 flex items-center justify-between border-b border-emerald-200/60 dark:border-emerald-800/60">
-      <div>
-        <h3 class="text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">💰 Desglose de incentivos · {{ q.incentives.profile|capfirst }}</h3>
-        <p class="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">
-          Provincia <strong>{{ q.incentives.province }}</strong> · Horizonte <strong>{{ q.years_horizon }} años</strong> · Total equivalente al año 0
-        </p>
+
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+
+    {% if q.incentives %}
+    <section class="lg:col-span-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm overflow-hidden">
+      <div class="px-5 pt-4 pb-3 flex items-center justify-between border-b border-slate-100 dark:border-slate-700">
+        <div>
+          <h3 class="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">Incentivos</h3>
+          <p class="text-[11px] text-slate-500 mt-0.5">
+            {{ q.incentives.profile|capfirst }} · Provincia <strong>{{ q.incentives.province }}</strong> · Total equivalente al año 0
+          </p>
+        </div>
+        <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">{{ q.incentives.total_eur|floatformat:0 }} €</span>
       </div>
-      <span class="text-xl font-black text-emerald-700 dark:text-emerald-300 tabular-nums">{{ q.incentives.total_eur|floatformat:0 }} €</span>
-    </div>
-    <ul class="divide-y divide-emerald-200/60 dark:divide-emerald-800/60 text-sm">
-      {% for i in q.incentives.items %}
-      <li class="flex items-baseline justify-between gap-3 px-5 py-2.5">
-        <span class="text-slate-700 dark:text-slate-200 flex items-baseline gap-2">
-          <span class="text-emerald-500">✓</span>
-          <span>{{ i.name }}</span>
-          {% if i.recurring %}
-          <span class="text-[10px] text-slate-400 italic">({{ i.amount_eur|floatformat:0 }} €/año × {{ q.years_horizon }})</span>
-          {% endif %}
-        </span>
-        <span class="font-bold text-emerald-700 dark:text-emerald-400 tabular-nums whitespace-nowrap">{{ i.equivalent_eur|floatformat:0 }} €</span>
-      </li>
-      {% endfor %}
-      {% if q.wallbox_capex_eur and q.wallbox_capex_eur > 0 %}
-      <li class="flex items-baseline justify-between gap-3 px-5 py-2.5 bg-amber-50/50 dark:bg-amber-950/20">
-        <span class="text-slate-700 dark:text-slate-200 flex items-baseline gap-2">
-          <span class="text-amber-500">−</span>
-          <span>CAPEX instalación wallbox</span>
-        </span>
-        <span class="font-bold text-amber-700 dark:text-amber-400 tabular-nums whitespace-nowrap">−{{ q.wallbox_capex_eur|floatformat:0 }} €</span>
-      </li>
-      {% endif %}
-    </ul>
+      <ul class="divide-y divide-slate-100 dark:divide-slate-700 text-sm">
+        {% for i in q.incentives.items %}
+        <li class="flex items-baseline justify-between gap-3 px-5 py-2.5">
+          <span class="text-slate-700 dark:text-slate-200 flex items-baseline gap-2 min-w-0">
+            <span class="text-emerald-500 shrink-0">✓</span>
+            <span class="truncate">{{ i.name }}</span>
+            {% if i.recurring %}
+            <span class="text-[10px] text-slate-400 italic shrink-0">({{ i.amount_eur|floatformat:0 }} €/año × {{ q.years_horizon }})</span>
+            {% endif %}
+          </span>
+          <span class="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums whitespace-nowrap shrink-0">{{ i.equivalent_eur|floatformat:0 }} €</span>
+        </li>
+        {% endfor %}
+        {% if q.wallbox_capex_eur and q.wallbox_capex_eur > 0 %}
+        <li class="flex items-baseline justify-between gap-3 px-5 py-2.5 bg-amber-50/50 dark:bg-amber-950/20">
+          <span class="text-slate-700 dark:text-slate-200 flex items-baseline gap-2">
+            <span class="text-amber-500">−</span>
+            <span>CAPEX instalación wallbox</span>
+          </span>
+          <span class="font-bold text-amber-700 dark:text-amber-400 tabular-nums whitespace-nowrap">−{{ q.wallbox_capex_eur|floatformat:0 }} €</span>
+        </li>
+        {% endif %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {% if q.nearby_chargers %}
+    <section class="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm overflow-hidden flex flex-col"
+             x-data="chargersMini({{ q_json|escape }})">
+      <div class="px-4 pt-4 pb-2">
+        <div class="flex items-baseline justify-between gap-2">
+          <h3 class="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">Carga cercana</h3>
+          <span class="text-[10px] text-slate-400">CP {{ q.cp }} · 5 km</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-3">
+          <span class="text-2xl font-black text-slate-800 dark:text-slate-200 tabular-nums">{{ q.nearby_chargers|length }}</span>
+          <span class="text-[11px] text-slate-500"><strong x-text="fastCount"></strong> ultra-rápidos (≥150 kW)</span>
+        </div>
+      </div>
+      <div class="relative flex-1" style="min-height:200px;">
+        <div id="chargers-mini-map" style="position:absolute; inset:0; z-index:5;"
+             x-data x-init="setTimeout(() => window.mubilChargersMap({{ q_json|escape }}), 50)"></div>
+      </div>
+      <div class="px-4 py-2 border-t border-slate-100 dark:border-slate-700 flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400">
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>≥150 kW</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-cyan-500"></span>50-149</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span>&lt;50</span>
+      </div>
+    </section>
+    {% endif %}
   </div>
-  {% endif %}
+
 
   {% if q.charging_mix %}
-  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-sm">
+  <section class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm">
     <div class="flex items-center justify-between mb-3">
-      <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">⚡ Mix de carga ponderado</h3>
+      <h3 class="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Mix de carga ponderado</h3>
       {% if q.weighted_charging_eur_kwh %}
-      <span class="text-sm font-extrabold text-cyan-600 dark:text-cyan-400 tabular-nums">{{ q.weighted_charging_eur_kwh|floatformat:3 }} €/kWh</span>
+      <span class="text-sm font-extrabold text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums">{{ q.weighted_charging_eur_kwh|floatformat:3 }} €/kWh</span>
       {% endif %}
     </div>
-    <div class="h-2.5 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex">
-      <div class="h-full bg-emerald-500 transition-all" style="width: {{ q.charging_mix.home_pct }}%" title="Casa"></div>
-      <div class="h-full bg-sky-500 transition-all" style="width: {{ q.charging_mix.work_pct }}%" title="Trabajo"></div>
-      <div class="h-full bg-amber-500 transition-all" style="width: {{ q.charging_mix.public_ac_pct }}%" title="Pública AC"></div>
-      <div class="h-full bg-rose-500 transition-all" style="width: {{ q.charging_mix.public_dc_pct }}%" title="Pública DC"></div>
+    <div class="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex">
+      <div class="h-full bg-emerald-500" style="width: {{ q.charging_mix.home_pct }}%"></div>
+      <div class="h-full bg-sky-500" style="width: {{ q.charging_mix.work_pct }}%"></div>
+      <div class="h-full bg-amber-500" style="width: {{ q.charging_mix.public_ac_pct }}%"></div>
+      <div class="h-full bg-rose-500" style="width: {{ q.charging_mix.public_dc_pct }}%"></div>
     </div>
-    <div class="grid grid-cols-4 gap-2 text-center text-[10px] font-semibold mt-2">
-      <div><span class="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs">{{ q.charging_mix.home_pct }}%</span><span class="block text-[9px] uppercase tracking-wider text-slate-400">🏠 Casa</span></div>
-      <div><span class="text-sky-600 dark:text-sky-400 font-extrabold text-xs">{{ q.charging_mix.work_pct }}%</span><span class="block text-[9px] uppercase tracking-wider text-slate-400">🏢 Trabajo</span></div>
-      <div><span class="text-amber-600 dark:text-amber-400 font-extrabold text-xs">{{ q.charging_mix.public_ac_pct }}%</span><span class="block text-[9px] uppercase tracking-wider text-slate-400">⚡ AC</span></div>
-      <div><span class="text-rose-600 dark:text-rose-400 font-extrabold text-xs">{{ q.charging_mix.public_dc_pct }}%</span><span class="block text-[9px] uppercase tracking-wider text-slate-400">🔥 DC</span></div>
+    <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>{{ q.charging_mix.home_pct }}% Casa</span>
+      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-500"></span>{{ q.charging_mix.work_pct }}% Trabajo</span>
+      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span>{{ q.charging_mix.public_ac_pct }}% AC</span>
+      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span>{{ q.charging_mix.public_dc_pct }}% DC</span>
     </div>
-  </div>
+  </section>
   {% endif %}
 
-  {% if q.nearby_chargers %}
-  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm overflow-hidden">
-    <div class="px-5 pt-4 pb-2 flex items-center justify-between">
-      <div>
-        <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">🗺 Mapa de cargadores · CP {{ q.cp }}</h3>
-        <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Radio 5 km · {{ q.nearby_chargers|length }} estaciones · más cercana {{ q.nearby_chargers.0.distance_km|floatformat:1 }} km</p>
-      </div>
-      <div class="hidden sm:flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400">
-        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> ≥150 kW</span>
-        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-cyan-500"></span> 50-149 kW</span>
-        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> &lt;50 kW</span>
-      </div>
-    </div>
-    <div class="relative overflow-hidden" style="height:260px;">
-      <div id="chargers-mini-map" style="position:absolute; inset:0; z-index:5;"
-           x-data x-init="setTimeout(() => window.mubilChargersMap({{ q_json|escape }}), 50)"></div>
-    </div>
-  </div>
-  {% else %}
-  <div class="rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 shadow-sm flex items-start gap-3">
-    <span class="text-amber-500 shrink-0">⚠️</span>
-    <p class="text-xs text-amber-700 dark:text-amber-300">No hay cargadores registrados cerca del CP <code class="px-1 py-0.5 bg-amber-100 dark:bg-amber-900/60 rounded">{{ q.cp }}</code> en la base de datos.</p>
-  </div>
-  {% endif %}
 
-  <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-    <p class="text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed">
-      Cálculos con precios a 2026-05-31: PVPC nocturno 0,085 €/kWh · diurno 0,165 €/kWh ·
-      Gasolina 1,585 €/L · Diésel 1,495 €/L (MINCOTUR).
+  <section class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-950/20 p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div>
+      <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">Impacto ambiental</p>
+      <p class="mt-1 text-2xl font-black text-emerald-700 dark:text-emerald-300 tabular-nums">{{ q.co2_saved_kg_year|floatformat:0 }} <span class="text-sm">kg CO₂/año</span></p>
+    </div>
+    <div class="text-[11px] text-emerald-700 dark:text-emerald-300 space-y-1 self-center">
+      {% localize off %}
+      <p>≈ <strong x-data x-init="$el.textContent = Math.round({{ q.co2_saved_kg_year|floatformat:0 }} / 21)"></strong> árboles plantados / año</p>
+      <p>≈ <strong x-data x-init="$el.textContent = ({{ q.co2_saved_kg_year|floatformat:0 }} / 255).toFixed(1)"></strong> vuelos BCN–NYC evitados</p>
+      {% endlocalize %}
+    </div>
+    <p class="text-[11px] text-emerald-700/70 dark:text-emerald-300/70 italic self-end leading-snug">
+      Cálculo: {{ q.km_year|floatformat:0 }} km × diferencia consumo · factor emisión EU ETS 2025.
     </p>
-    <a href="{% url 'mubil:advisor_pdf' %}?cp={{ q.cp }}&km_year={{ q.km_year }}&vehicle_current_id={{ current.id }}&vehicle_target_id={{ target.id }}&years_horizon={{ q.years_horizon }}&night_charging={% if night_charging %}1{% else %}0{% endif %}&subvencion_eur={{ q.subvencion_eur|floatformat:0 }}{% if q.motorway_pct is not None %}&motorway_pct={{ q.motorway_pct|unlocalize }}{% endif %}"
-       target="_blank" rel="noopener"
-       class="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold uppercase tracking-widest shadow transition">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"/></svg>
-      Descargar PDF
-    </a>
-  </div>
+  </section>
+
+
+  <p class="text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed pt-2">
+    Precios a 2026-05-31 — PVPC nocturno 0,085 €/kWh · diurno 0,165 €/kWh · Gasolina 1,585 €/L · Diésel 1,495 €/L (MINCOTUR).
+  </p>
 
 </div>
 

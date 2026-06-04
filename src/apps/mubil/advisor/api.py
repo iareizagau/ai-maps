@@ -74,6 +74,7 @@ def _vehicle_to_summary(v: Vehicle) -> dict:
         "model": v.model,
         "year": v.year,
         "propulsion": v.propulsion,
+        "category": v.category or None,
         "price_eur": v.price_eur,
         "price_source": v.price_source,
         "dgt_label": v.dgt_label or "C",
@@ -154,6 +155,12 @@ def _quote_to_out(quote: services.TCOQuote) -> dict:
         "weighted_charging_eur_kwh": quote.weighted_charging_eur_kwh,
         "incentives": quote.incentives.to_out() if quote.incentives else None,
         "wallbox_capex_eur": quote.wallbox_capex_eur,
+        "purchase_mode": getattr(quote, "purchase_mode", "switch"),
+        "current_age_years": getattr(quote, "current_age_years", None),
+        "current_residual_value_eur": getattr(quote, "current_residual_value_eur", None),
+        "operational_savings_eur": getattr(quote, "operational_savings_eur", None),
+        "purchase_savings_eur": getattr(quote, "purchase_savings_eur", None),
+        "total_net_savings_eur": getattr(quote, "total_net_savings_eur", None),
     }
 
 
@@ -339,6 +346,8 @@ def post_quote(request, payload: AdvisorQuoteIn):
             public_dc_pct=payload.public_dc_pct,
             subvencion_override_eur=payload.subvencion_override_eur,
             vehicle_current_price_override_eur=payload.vehicle_current_price_override_eur,
+            purchase_mode=payload.purchase_mode or "switch",
+            current_age_years=payload.current_age_years,
             vehicle_target_price_override_eur=payload.vehicle_target_price_override_eur,
         )
     except Vehicle.DoesNotExist:

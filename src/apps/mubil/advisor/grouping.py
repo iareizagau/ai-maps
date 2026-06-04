@@ -174,18 +174,23 @@ def group_by_model_base(
       - variant_count, model_base (display), make (display canonical),
         consumption_min/max.
 
+    La clave incluye `category` para que productos del mismo make+modelo
+    pero en categorías EU distintas (p. ej. KG Mobility TORRES ADVENTURE M1
+    SUV vs TORRES EVX VAN PRO N1 furgoneta) NO se mezclen.
+
     Orden: respeta el orden de aparición del primer miembro de cada grupo,
     para no romper el ranking trigram del caller.
     """
-    groups: dict[Tuple[str, str], List] = defaultdict(list)
-    canonical_make_for: dict[Tuple[str, str], str] = {}
-    base_for: dict[Tuple[str, str], str] = {}
-    order: List[Tuple[str, str]] = []
+    groups: dict[Tuple[str, str, str], List] = defaultdict(list)
+    canonical_make_for: dict[Tuple[str, str, str], str] = {}
+    base_for: dict[Tuple[str, str, str], str] = {}
+    order: List[Tuple[str, str, str]] = []
 
     for v in vehicles:
         canonical_make = normalize_make(v.make)
         base = extract_model_base(v.model)
-        key = (canonical_make.lower(), base.lower())
+        category = (v.category or "").upper()
+        key = (canonical_make.lower(), base.lower(), category)
         if key not in groups:
             order.append(key)
             canonical_make_for[key] = canonical_make

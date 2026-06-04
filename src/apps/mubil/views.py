@@ -246,6 +246,8 @@ def _parse_advisor_payload(src):
         'subvencion_override_eur': _opt_int('subvencion_override_eur'),
         'vehicle_current_price_override_eur': _opt_int('vehicle_current_price_override_eur'),
         'vehicle_target_price_override_eur': _opt_int('vehicle_target_price_override_eur'),
+        'purchase_mode': (src.get('purchase_mode') or 'switch').strip(),
+        'current_age_years': _opt_int('current_age_years'),
     }
 
 

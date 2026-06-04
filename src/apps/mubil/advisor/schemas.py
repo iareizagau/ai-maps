@@ -27,6 +27,15 @@ class AdvisorQuoteIn(Schema):
     subvencion_override_eur: Optional[int] = None
     vehicle_current_price_override_eur: Optional[int] = None
     vehicle_target_price_override_eur: Optional[int] = None
+    # Modo de comparación para clarificar el framing del payback.
+    # 'switch'    (default) = ya tienes el coche actual; el "precio current"
+    #                         es valor residual aproximado por depreciación.
+    # 'new_vs_new'           = aún no compraste — comparas PVPs nuevos.
+    # El cálculo en sí usa `vehicle_current_price_override_eur` cuando viene;
+    # este flag se mantiene sólo para que el resultado pueda renderizar el
+    # mensaje correcto.
+    purchase_mode: Optional[str] = "switch"
+    current_age_years: Optional[int] = None
 
 
 
@@ -36,14 +45,18 @@ class VehicleSummary(Schema):
     model: str
     year: int
     propulsion: str
+    # Category EU (M1=turismo, N1=furgoneta…). Lo expone el API para que el
+    # frontend pueda avisar al usuario si está comparando categorías mixtas
+    # (p.ej. Vito N1 vs Torres ADVENTURE M1).
+    category: Optional[str] = None
     price_eur: Optional[int] = None
     price_source: Optional[str] = None
     dgt_label: Optional[str] = None
     range_wltp_km: Optional[int] = None
     consumption_kwh_100km: Optional[Decimal] = None
     consumption_l_100km: Optional[Decimal] = None
-    # Metadatos de agrupación por (make, model_base). Si el grupo es
-    # singleton, variant_count=1 y los rangos coinciden con el valor único.
+    # Metadatos de agrupación por (make, model_base, category). Si el grupo
+    # es singleton, variant_count=1 y los rangos coinciden con el único.
     variant_count: int = 1
     consumption_min: Optional[Decimal] = None
     consumption_max: Optional[Decimal] = None
@@ -135,3 +148,12 @@ class AdvisorQuoteOut(Schema):
     weighted_charging_eur_kwh: Optional[Decimal] = None
     incentives: Optional[IncentivesBreakdownOut] = None
     wallbox_capex_eur: Decimal = Decimal("0")
+    # Eco del input para que el resultado pueda renderizar el framing
+    # apropiado ("vendes tu Vito por X" vs "compras Vito nuevo por Y").
+    purchase_mode: Optional[str] = "switch"
+    current_age_years: Optional[int] = None
+    current_residual_value_eur: Optional[int] = None
+    # Composición del ahorro a horizon, ver TCOQuote para fórmula completa.
+    operational_savings_eur: Optional[Decimal] = None
+    purchase_savings_eur: Optional[Decimal] = None
+    total_net_savings_eur: Optional[Decimal] = None

@@ -206,15 +206,44 @@
                         x-text="currentPriceOverride && currentPriceOverride > 0 ? 'Editado' : priceSourceLabel(selectedCurrent?.price_source).label"></span>
                 </div>
               </div>
-              {# Editar precio inline #}
-              <div class="flex items-center gap-2 pt-2 border-t border-emerald-200/60 dark:border-emerald-800/40">
-                <button type="button" @click="currentPriceOverride = (currentPriceOverride === null ? (selectedCurrent?.price_eur || 0) : null)"
-                        class="text-[11px] font-bold text-estrata-teal_dark dark:text-estrata-teal_light hover:underline"
-                        x-text="currentPriceOverride === null ? '✏️ Editar PVP' : '↺ Volver al valor de BBDD'"></button>
-                <input type="number" x-show="currentPriceOverride !== null" x-cloak
-                       name="vehicle_current_price_override_eur" x-model.number="currentPriceOverride"
-                       min="1000" max="500000" step="100"
-                       class="flex-1 rounded-lg border border-estrata-teal/40 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal font-bold tabular-nums" />
+              <div class="pt-3 border-t border-emerald-200/60 dark:border-emerald-800/40 space-y-2.5">
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">¿Cuál es tu situación?</label>
+                <div class="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <button type="button" @click="purchaseMode = 'switch'; recomputeCurrentResidual()"
+                          :class="purchaseMode === 'switch' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                          class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition">
+                    Ya lo tengo
+                  </button>
+                  <button type="button" @click="purchaseMode = 'new_vs_new'; currentPriceOverride = null"
+                          :class="purchaseMode === 'new_vs_new' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                          class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition">
+                    Voy a comprar nuevo
+                  </button>
+                </div>
+                <input type="hidden" name="purchase_mode" :value="purchaseMode" />
+
+                <div x-show="purchaseMode === 'switch'" x-cloak class="space-y-2">
+                  <div class="flex items-center justify-between text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                    <label>Antigüedad de tu coche</label>
+                    <span class="tabular-nums text-slate-900 dark:text-white font-bold"><span x-text="currentAgeYears"></span> años</span>
+                  </div>
+                  <input type="range" min="0" max="15" step="1" x-model.number="currentAgeYears"
+                         @input="recomputeCurrentResidual()"
+                         class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-estrata-teal" />
+                  <input type="hidden" name="current_age_years" :value="currentAgeYears" />
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                    Valor residual estimado: <strong class="text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="(currentPriceOverride || 0).toLocaleString('es-ES') + ' €'"></strong>
+                    · depreciación 15 %/año desde PVP nuevo de <span class="tabular-nums" x-text="(selectedCurrent?.price_eur || 0).toLocaleString('es-ES') + ' €'"></span>.
+                    <button type="button" @click="$el.nextElementSibling.focus()" class="text-estrata-teal_dark hover:underline ml-1">Ajustar</button>
+                  </p>
+                  <input type="number" name="vehicle_current_price_override_eur" x-model.number="currentPriceOverride"
+                         min="0" max="500000" step="100"
+                         class="w-full rounded-lg border border-estrata-teal/40 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal font-bold tabular-nums" />
+                </div>
+
+                <p x-show="purchaseMode === 'new_vs_new'" x-cloak class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                  Comparamos los dos coches a precio nuevo de catálogo (PVP). La amortización dirá cuánto tardas en recuperar la diferencia de compra con el ahorro operativo.
+                </p>
               </div>
             </div>
           </div>
@@ -835,6 +864,11 @@
               <span x-text="selectedTarget?.range_wltp_km + ' km'" class="font-bold tabular-nums"></span> ·
               <span x-text="(selectedTarget?.price_eur || 0).toLocaleString('es-ES') + ' €'" class="font-bold tabular-nums"></span>
             </div>
+            <div x-show="selectedCurrent && selectedTarget && selectedCurrent.category && selectedTarget.category && selectedCurrent.category !== selectedTarget.category"
+                 class="mt-1.5 text-[10px] text-amber-700 dark:text-amber-300 leading-snug flex items-start gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <span>Comparas categorías distintas (<span x-text="selectedCurrent?.category"></span> vs <span x-text="selectedTarget?.category"></span>)</span>
+            </div>
           </button>
 
           {# 2: Movilidad #}
@@ -1040,6 +1074,12 @@ function commutePlanner() {
     selectedCurrent: null, selectedTarget: null,
     currentPriceOverride: null, targetPriceOverride: null,
 
+    // Step 1a — modo de compra. 'switch' = ya tengo el coche y comparo el
+    // EV nuevo contra el valor residual del actual; 'new_vs_new' = comparo
+    // ambos a PVP nuevo. Drive de la depreciación: 15%/año desde el PVP.
+    purchaseMode: 'switch',
+    currentAgeYears: 5,
+
     // Map state
     startPoint: null, endPoint: null,
     loadingRoute: false,
@@ -1057,12 +1097,24 @@ function commutePlanner() {
       this.selectedCurrent = JSON.parse(localStorage.getItem('mubil_selected_current') || 'null');
       this.selectedTarget = JSON.parse(localStorage.getItem('mubil_selected_target') || 'null');
 
+      // Restaurar inputs primitivos desde la URL si el usuario llegó vía
+      // enlace compartido. Los vehicle ids requieren un fetch para repintar
+      // las cards (no los guardamos en localStorage del que comparte).
+      this.restoreFromUrlParams();
+
       if (this.selectedCurrent) {
         this.searchCurrent = this.selectedCurrent.make + ' ' + this.selectedCurrent.model;
         this.$nextTick(() => {
           const el = document.getElementById('current_vehicle_id_input');
           if (el) el.value = this.selectedCurrent.id;
         });
+        // Si arrancamos con un coche actual en cache y modo "ya lo tengo"
+        // (default), aplicamos depreciación. Sin esto el override queda null
+        // → backend usa el PVP nuevo → la banner del resultado dice
+        // "valor estimado 22.000 € = PVP" en vez del residual real.
+        if (this.purchaseMode === 'switch') {
+          this.recomputeCurrentResidual();
+        }
       }
       if (this.selectedTarget) {
         this.searchTarget = this.selectedTarget.make + ' ' + this.selectedTarget.model;
@@ -1512,6 +1564,29 @@ function commutePlanner() {
       if (el) el.value = v.id;
       this.currentPriceOverride = null;
       localStorage.setItem('mubil_selected_current', JSON.stringify(v));
+      // Si el usuario aún no ha tocado el size en Path C, alineamos con la
+      // categoría del coche actual para evitar comparativas absurdas (Vito
+      // N1 vs Torres ADVENTURE M1). Solo si recommend aún no devolvió nada.
+      if (v && v.category === 'N1' && this.criteriaSize !== 'van' && !this.candidates.length) {
+        this.criteriaSize = 'van';
+      }
+      // Si está en modo "ya lo tengo" (default), calcula automáticamente
+      // el valor residual estimado y lo aplica como override de precio.
+      if (this.purchaseMode === 'switch') {
+        this.recomputeCurrentResidual();
+      }
+    },
+
+    recomputeCurrentResidual() {
+      // Depreciación 15%/año compuesta desde PVP nuevo. Aproximación honesta
+      // pero burda — el usuario puede ajustarla manualmente con el input.
+      // Snap a múltiplo de 100 para casar con `step="100"` del input — si no,
+      // HTML5 form-validation rechaza el envío con "not focusable" cuando el
+      // step actual del wizard tiene Step 1a oculto vía x-show.
+      const pvp = this.selectedCurrent?.price_eur || 0;
+      const age = Math.max(0, Math.min(15, this.currentAgeYears || 0));
+      const residual = Math.round(pvp * Math.pow(0.85, age) / 100) * 100;
+      this.currentPriceOverride = residual;
     },
 
     selectTargetVehicle(v) {
@@ -1602,6 +1677,107 @@ function commutePlanner() {
       }
       if (!single) return '';
       return (+single).toFixed(1).replace('.', ',') + suffix;
+    },
+
+    // ─── URL params restore (Compartir simulación) ───
+    restoreFromUrlParams() {
+      const url = new URL(window.location.href);
+      const p = url.searchParams;
+      if (![...p.keys()].length) return;
+
+      // Strings y enteros primitivos: aplicamos directamente.
+      if (p.get('cp')) this.cp = p.get('cp');
+      if (p.get('profile')) this.profile = p.get('profile');
+      if (p.get('wallbox_state')) this.wallboxState = p.get('wallbox_state');
+      if (p.get('scrapping') === '1') this.scrapping = true;
+      if (p.get('night_charging') === '1') this.nightCharging = true;
+      const intFields = {
+        years_horizon: 'years_horizon',  // se setea via input directo abajo
+        motorway_pct: 'manMotorwayPct',
+        nacional_pct: 'manNacionalPct',
+        home_pct: 'homePct', work_pct: 'workPct',
+        public_ac_pct: 'publicAcPct', public_dc_pct: 'publicDcPct',
+      };
+      for (const [k, prop] of Object.entries(intFields)) {
+        const v = p.get(k);
+        if (v !== null && v !== '' && prop !== 'years_horizon') this[prop] = parseInt(v, 10);
+      }
+      if (p.get('subvencion_override_eur')) {
+        this.subvencionOverride = parseInt(p.get('subvencion_override_eur'), 10);
+      }
+
+      // Inputs DOM que no van por Alpine (km_year, years_horizon).
+      this.$nextTick(() => {
+        if (p.get('km_year')) {
+          const el = document.getElementById('km_year_input');
+          if (el) el.value = p.get('km_year');
+        }
+        if (p.get('years_horizon')) {
+          const el = document.querySelector('[name=years_horizon]');
+          if (el) el.value = p.get('years_horizon');
+        }
+      });
+
+      // Vehículos por id: si llegan, los cargamos del catálogo para que la
+      // UI pinte la card correctamente (no asumimos que el caller envía el
+      // resto de specs).
+      const fetchAndSelect = async (id, selector) => {
+        try {
+          const r = await fetch(`/mubil/api/v1/advisor/vehicles?q=&limit=1000&id=${id}`);
+          // /vehicles no acepta id, así que mejor un GET directo del recurso.
+        } catch (e) {}
+      };
+      const curId = p.get('vehicle_current_id'), tgtId = p.get('vehicle_target_id');
+      if (curId || tgtId) {
+        // Forzamos selección "placeholder" hasta que el usuario rebusque o
+        // edite. Mostramos un nombre genérico para no dejar la card vacía.
+        // (Mejora futura: endpoint GET /vehicles/{id} para hidratar con specs)
+        this.$nextTick(() => {
+          if (curId) {
+            const el = document.getElementById('current_vehicle_id_input');
+            if (el) el.value = curId;
+            if (!this.selectedCurrent || String(this.selectedCurrent.id) !== curId) {
+              this.selectedCurrent = { id: parseInt(curId, 10), make: 'Vehículo', model: 'cargando…', propulsion: 'ICE', price_eur: 0, price_source: 'unknown', dgt_label: 'C' };
+            }
+          }
+          if (tgtId) {
+            const el = document.getElementById('target_vehicle_id_input');
+            if (el) el.value = tgtId;
+            if (!this.selectedTarget || String(this.selectedTarget.id) !== tgtId) {
+              this.selectedTarget = { id: parseInt(tgtId, 10), make: 'Vehículo', model: 'cargando…', propulsion: 'BEV', price_eur: 0, price_source: 'unknown', range_wltp_km: 0 };
+              this.fetchAlternatives(parseInt(tgtId, 10));
+            }
+          }
+        });
+      }
+
+      // Si el enlace compartido trae `purchase_mode` y `current_age_years`
+      // pero el destinatario aún no ha visto el catálogo, recomputamos el
+      // residual aproximado en cuanto tengamos el `selectedCurrent` hidratado.
+      if (p.get('purchase_mode')) {
+        this.purchaseMode = p.get('purchase_mode');
+      }
+      if (p.get('current_age_years')) {
+        this.currentAgeYears = parseInt(p.get('current_age_years'), 10);
+      }
+      this.$nextTick(() => {
+        setTimeout(() => {
+          if (this.purchaseMode === 'switch' && this.selectedCurrent && this.selectedCurrent.price_eur) {
+            this.recomputeCurrentResidual();
+          }
+        }, 150);
+      });
+
+      // Autosubmit (?autosubmit=1) — útil cuando el destinatario abre el link
+      // y queremos enseñarle el mismo resultado sin más clicks.
+      if (p.get('autosubmit') === '1' && curId && tgtId) {
+        this.$nextTick(() => {
+          setTimeout(() => {
+            const form = document.getElementById('advisor-form');
+            if (form && window.htmx) window.htmx.trigger(form, 'submit');
+          }, 400);
+        });
+      }
     },
 
     priceSourceLabel(source) {
@@ -1695,6 +1871,34 @@ window.evDictamen = function(cfg) {
       this.selectedYear = this.yearsData[this.yearsData.length - 1];
     }
   };
+};
+
+
+// Build + copy a sharable URL with all current form params. Receiver opens
+// it, Alpine restores the state via restoreFromUrlParams() and (with
+// ?autosubmit=1) sees the same result without extra clicks.
+window.copyAdvisorShareLink = function () {
+  const form = document.getElementById('advisor-form');
+  if (!form) return;
+  const fd = new FormData(form);
+  const params = new URLSearchParams();
+  for (const [k, v] of fd.entries()) {
+    if (k === 'csrfmiddlewaretoken') continue;
+    if (v === '' || v === null || v === undefined) continue;
+    params.set(k, v);
+  }
+  params.set('autosubmit', '1');
+  const base = window.location.origin + window.location.pathname;
+  const url = `${base}?${params.toString()}`;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).catch(() => {});
+  } else {
+    // Fallback antiguo (algunos http://localhost no soportan clipboard API).
+    const ta = document.createElement('textarea');
+    ta.value = url; document.body.appendChild(ta);
+    ta.select(); try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
 };
 
 

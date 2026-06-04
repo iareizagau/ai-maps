@@ -73,6 +73,19 @@ class TCOQuote:
     # vehicle.price_eur si el usuario aplicó un override en el formulario).
     vehicle_current_price_used_eur: Optional[int] = None
     vehicle_target_price_used_eur: Optional[int] = None
+    # Eco de la decisión "tengo el coche / lo voy a comprar" del Step 1a,
+    # para que el resultado pueda renderizar el framing correcto.
+    purchase_mode: Optional[str] = "switch"
+    current_age_years: Optional[int] = None
+    current_residual_value_eur: Optional[int] = None
+    # Composición del ahorro a 10 años. El hero del result usa
+    # `total_net_savings_eur` (el número honesto: operativo + delta compra +
+    # incentivos − wallbox capex). El operativo solo es el delta de cost-of-
+    # operation 10 años (lo que mostraba antes como "ahorro neto", que estaba
+    # incompleto). El purchase delta = current_price_used − target_price.
+    operational_savings_eur: Optional[Decimal] = None
+    purchase_savings_eur: Optional[Decimal] = None
+    total_net_savings_eur: Optional[Decimal] = None
 
 
 # ------------------------------------------------------------------ helpers
@@ -267,6 +280,8 @@ def calculate_tco_quote(
     subvencion_override_eur: Optional[int] = None,
     vehicle_current_price_override_eur: Optional[int] = None,
     vehicle_target_price_override_eur: Optional[int] = None,
+    purchase_mode: Optional[str] = "switch",
+    current_age_years: Optional[int] = None,
 ) -> TCOQuote:
     """Calcula la comparativa TCO para el `advisor`.
 
@@ -365,6 +380,22 @@ def calculate_tco_quote(
         else None
     )
 
+    # Composición del ahorro a 10 años — los 3 vectores que sumados al neto:
+    # 1. operativo: delta de coste de operación (energía + mant + ins + tax).
+    # 2. purchase:  delta de "lo que cuesta poner el coche en el garaje" =
+    #               (current_price_used + wallbox_capex - subvencion) − target_price_used
+    #               En switch mode, current_price_used es residual del actual; en
+    #               new_vs_new es PVP nuevo. La fórmula es la misma.
+    # total = operativo + purchase. Este es el número honesto del hero.
+    operational_savings = bd_current.total - bd_target.total
+    purchase_savings = (
+        Decimal(current_price_used or 0)
+        - Decimal(target_price_used or 0)
+        + total_subv
+        - wallbox_capex
+    )
+    total_net_savings = operational_savings + purchase_savings
+
     return TCOQuote(
         cp=cp,
         cp_name=cp_name,
@@ -392,6 +423,16 @@ def calculate_tco_quote(
         wallbox_capex_eur=wallbox_capex,
         vehicle_current_price_used_eur=current_price_used,
         vehicle_target_price_used_eur=target_price_used,
+        purchase_mode=purchase_mode,
+        current_age_years=current_age_years,
+        current_residual_value_eur=(
+            current_price_used
+            if purchase_mode == "switch" and current_price_used is not None
+            else None
+        ),
+        operational_savings_eur=operational_savings.quantize(Decimal("0.01")),
+        purchase_savings_eur=purchase_savings.quantize(Decimal("0.01")),
+        total_net_savings_eur=total_net_savings.quantize(Decimal("0.01")),
     )
 
 

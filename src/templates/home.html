@@ -214,6 +214,35 @@
     </section>
     {% endif %}
 
+    {# ─── ABOUT TEASER ─── #}
+    <section id="about" class="px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12">
+        <div class="max-w-3xl mx-auto">
+            <a href="{% url 'about' %}"
+               class="group relative block overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-white/5 glass p-5 sm:p-6 hover:-translate-y-0.5 active:scale-[0.99] transition-all">
+                <div aria-hidden="true"
+                     class="pointer-events-none absolute inset-0 -z-0 opacity-20 dark:opacity-15"
+                     style="background-image: radial-gradient(40% 80% at 100% 50%, color-mix(in srgb, var(--color-primary, #6366f1) 40%, transparent), transparent 70%);"></div>
+                <div class="relative z-10 flex items-center gap-4">
+                    <span class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 bg-primary/15 text-primary">
+                        <i data-lucide="hammer" class="w-5 h-5"></i>
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-[10px] sm:text-xs font-black uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
+                            {% trans "Sobre la plataforma" %}
+                        </p>
+                        <p class="mt-1 text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 leading-snug">
+                            {% trans "GIS, IA y desarrollo en abierto." %}
+                        </p>
+                        <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                            {% trans "Las decisiones técnicas detrás de cada app." %}
+                        </p>
+                    </div>
+                    <i data-lucide="arrow-right" class="w-5 h-5 text-slate-400 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0"></i>
+                </div>
+            </a>
+        </div>
+    </section>
+
     {# ─── CLOSING STRIP ─── #}
     <section class="px-4 sm:px-6 lg:px-8 pb-10 sm:pb-14">
         <div class="max-w-5xl mx-auto">

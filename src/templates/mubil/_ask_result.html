@@ -38,10 +38,17 @@
             <ol class="space-y-2 text-sm">
               {% for s in answer.sources %}
                 <li class="flex items-start gap-2">
-                  <span class="shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full bg-cyan-100 dark:bg-cyan-900 text-cyan-700 dark:text-cyan-200 text-xs font-bold">
+                  <span class="shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full {% if s.kind == 'news' %}bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-200{% else %}bg-cyan-100 dark:bg-cyan-900 text-cyan-700 dark:text-cyan-200{% endif %} text-xs font-bold">
                     {{ forloop.counter }}
                   </span>
                   <div class="min-w-0">
+                    <div class="flex items-center flex-wrap gap-1.5">
+                      {% if s.kind == 'news' %}
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
+                          📰 Noticia{% if s.date %} · {{ s.date }}{% endif %}
+                        </span>
+                      {% endif %}
+                    </div>
                     {% if s.url %}
                       <a href="{{ s.url }}" target="_blank" rel="noopener"
                          class="text-cyan-700 dark:text-cyan-300 hover:underline break-words">

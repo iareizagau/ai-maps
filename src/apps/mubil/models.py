@@ -484,3 +484,53 @@ class EVRoutePlan(models.Model):
 
     def __str__(self):
         return f"EV route → {self.distance_km}km / {self.duration_min}min"
+
+
+# ============ NEWS — agregador EV (advisor signal + blog público) ============
+
+
+class NewsArticle(BaseModel):
+    """Artículos EV agregados de NewsAPI + RSS, resumidos/traducidos/clasificados
+    por Gemini. Dedupe por `source_url` (UNIQUE). El índice HNSW sobre
+    `embedding` se crea en una RunSQL aparte (mandato pgvector, ver
+    migración 0008).
+    """
+
+    class Relevance(models.TextChoices):
+        EUSKADI = 'EUSKADI', _('Euskadi')
+        ESPANA = 'ESPANA', _('España')
+        GLOBAL = 'GLOBAL', _('Global')
+
+    class Source(models.TextChoices):
+        NEWSAPI = 'newsapi', 'NewsAPI'
+        FORO_EV = 'forocoches_ev', 'Forococheselectricos'
+        HIBRIDOS = 'hibridos_electricos', 'Híbridos y Eléctricos'
+        MOVILIDAD_EV = 'movilidad_electrica', 'Movilidad Eléctrica'
+        MOTORPASION = 'motorpasion_ev', 'Motorpasión Eléctrico'
+
+    source = models.CharField(max_length=32, choices=Source.choices, db_index=True)
+    source_url = models.URLField(max_length=500, unique=True)
+    title_orig = models.CharField(max_length=300)
+    title_es = models.CharField(max_length=300, blank=True)
+    title_eu = models.CharField(max_length=300, blank=True)
+    summary_es = models.TextField(blank=True)
+    summary_eu = models.TextField(blank=True)
+    image_url = models.URLField(max_length=500, blank=True)
+
+    published_at = models.DateTimeField(db_index=True)
+    relevance = models.CharField(
+        max_length=8, choices=Relevance.choices, default=Relevance.GLOBAL, db_index=True,
+    )
+    tags = models.JSONField(default=list, blank=True)
+    affects_user_plan = models.BooleanField(default=False, db_index=True)
+
+    embedding = VectorField(dimensions=768, null=True, blank=True)
+
+    class Meta:
+        ordering = ['-published_at']
+        indexes = [
+            models.Index(fields=['-published_at', 'relevance']),
+        ]
+
+    def __str__(self):
+        return f"[{self.source}] {self.title_orig[:60]}"

@@ -40,8 +40,10 @@ class ComposePromptTests(TestCase):
         ]
         prompt = services.compose_prompt("¿ayudas EV?", docs)
 
-        self.assertIn("[1] Título: MOVES III", prompt)
-        self.assertIn("[2] Título: PVPC ESIOS", prompt)
+        self.assertIn("[1] Tipo: DATASET", prompt)
+        self.assertIn("Título: MOVES III", prompt)
+        self.assertIn("[2] Tipo: DATASET", prompt)
+        self.assertIn("Título: PVPC ESIOS", prompt)
         self.assertIn("¿ayudas EV?", prompt)
         self.assertIn(services.SYSTEM_PROMPT, prompt)
 
@@ -185,7 +187,7 @@ class CorpusStatsEndpointTests(TestCase):
         _make_doc(1, embedding=[0.2] * 768)
         _make_doc(2)  # pending
 
-        response = self.client.get("/mubil/api/v1/ask/corpus/stats")
+        response = self.client.get("/estrata/api/v1/ask/corpus/stats")
 
         self.assertEqual(response.status_code, 200)
         data = response.json()

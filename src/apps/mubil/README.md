@@ -1,7 +1,7 @@
 # mubil — Inteligencia movilidad sostenible EH
 
 App Django del monorepo Maps.eus para los **MUBIL Mobility Awards 2026**.
-Plataforma abierta de datos y decisiones de movilidad sostenible vasca con 4 módulos integrados sobre la misma base GIS + IA.
+Plataforma abierta de datos y decisiones de movilidad sostenible vasca con 5 módulos integrados sobre la misma base GIS + IA.
 
 **Documento maestro de producto:** [.claude/knowledge/mubil/PROPUESTA.md](../../../.claude/knowledge/mubil/PROPUESTA.md)
 
@@ -20,9 +20,10 @@ src/apps/mubil/
 ├── schemas.py · services.py        # cross-cutting
 ├── tasks.py                        # hooks Celery para n8n
 ├── advisor/   (MUST · demo en vivo)
-├── ask/       (MUST · demo en vivo)
+├── ask/       (MUST · demo en vivo · RAG mixto datasets + noticias)
 ├── route/     (MOCK · datos precomputados)
 ├── plan/      (MOCK · score heurístico)
+├── news/      (Blog público + señal contextual para advisor/ask)
 ├── tests/
 ├── management/commands/compute_demand_scores.py
 └── migrations/
@@ -37,10 +38,11 @@ Todos los modelos viven en el `models.py` raíz (decisión §17 de PROPUESTA.md 
 
 | Slug | Scope | Endpoint base | Estado MVP | Esfuerzo |
 |---|---|---|---|---|
-| `advisor` | TCO eléctrico vs combustión (calculadora con datos vivos PVPC + carburantes) | `/mubil/api/v1/advisor/` | **MUST** | 9-11 d |
-| `ask`     | Q&A movilidad EH con Gemini + RAG pgvector | `/mubil/api/v1/ask/` | **MUST** | 7-9 d |
-| `route`   | Planificador EV-aware multimodal | `/mubil/api/v1/route/` | MOCK | 4-5 d |
-| `plan`    | Heatmap demanda infraestructura carga (H3) | `/mubil/api/v1/plan/` | MOCK | 5-6 d |
+| `advisor` | TCO eléctrico vs combustión (calculadora con datos vivos PVPC + carburantes) + alertas contextuales de noticias | `/estrata/api/v1/advisor/` | **MUST** | 9-11 d |
+| `ask`     | Q&A movilidad EH con Gemini + RAG pgvector (datasets oficiales **+ noticias EV**) | `/estrata/api/v1/ask/` | **MUST** | 7-9 d |
+| `route`   | Planificador EV-aware multimodal | `/estrata/api/v1/route/` | MOCK | 4-5 d |
+| `plan`    | Heatmap demanda infraestructura carga (H3) | `/estrata/api/v1/plan/` | MOCK | 5-6 d |
+| `news`    | Blog público EV (NewsAPI + RSS castellanos) resumido por Gemini en eu/es; clasifica `affects_user_plan` para advisor; embeddings alimentan el RAG de ask | `/estrata/api/v1/news/` | ✅ | 2 d |
 
 Detalle por módulo (entrada/salida, datos, demo flow): PROPUESTA.md §3.
 
@@ -59,6 +61,7 @@ Detalle por módulo (entrada/salida, datos, demo flow): PROPUESTA.md §3.
 | `MobilityDocument` | Corpus RAG con embeddings 768d (pgvector) | datos.gob.es CKAN + blogs + normativa |
 | `DemandHex` | Score precomputado por hex H3 | Composición heurística (registrations × 0.4 + OD × 0.4 − chargers × 0.2) |
 | `EVRoutePlan` | Cache de las 5 rutas precomputadas demo | Manual / management command |
+| `NewsArticle` | Noticias EV traducidas a eu/es + clasificación + embedding 768d (HNSW) | NewsAPI + RSS castellanos especializados |
 
 Detalle de campos y QuerySets: `models.py`.
 
@@ -66,19 +69,21 @@ Detalle de campos y QuerySets: `models.py`.
 
 ## Endpoints API
 
-Documentación OpenAPI auto-generada: `GET /mubil/api/v1/docs`
+Documentación OpenAPI auto-generada: `GET /estrata/api/v1/docs`
 
 | Verbo | Path | Estado |
 |---|---|---|
-| GET | `/mubil/api/v1/health` | ✅ implementado |
-| GET | `/mubil/api/v1/{advisor,ask,route,plan}/health` | ✅ implementado |
-| POST | `/mubil/api/v1/advisor/quote` | ✅ implementado |
-| GET  | `/mubil/api/v1/advisor/vehicles?q=` | ✅ implementado (trigram, tolerante a typos) |
-| POST | `/mubil/api/v1/ask/query` | ⏳ F2 |
-| GET  | `/mubil/api/v1/ask/suggested` | ⏳ F2 |
-| POST | `/mubil/api/v1/route/ev-plan` | ⏳ F3a (mock) |
-| GET  | `/mubil/api/v1/plan/heatmap` | ⏳ F3b (mock) |
-| GET  | `/mubil/api/v1/plan/top-locations` | ⏳ F3b (mock) |
+| GET | `/estrata/api/v1/health` | ✅ implementado |
+| GET | `/estrata/api/v1/{advisor,ask,route,plan,news}/health` | ✅ implementado |
+| POST | `/estrata/api/v1/advisor/quote` | ✅ implementado |
+| GET  | `/estrata/api/v1/advisor/vehicles?q=` | ✅ implementado (trigram, tolerante a typos) |
+| POST | `/estrata/api/v1/ask/query` | ✅ implementado (RAG mixto datasets + noticias) |
+| GET  | `/estrata/api/v1/ask/suggested` | ✅ implementado |
+| GET  | `/estrata/api/v1/news/` | ✅ implementado (filtros `relevance`, `tag`, `limit`) |
+| POST | `/estrata/api/v1/news/refresh` | ✅ implementado (dispatch on-demand a Celery si caché stale) |
+| POST | `/estrata/api/v1/route/ev-plan` | ⏳ F3a (mock) |
+| GET  | `/estrata/api/v1/plan/heatmap` | ⏳ F3b (mock) |
+| GET  | `/estrata/api/v1/plan/top-locations` | ⏳ F3b (mock) |
 
 ### Búsqueda de vehículos (`/advisor/vehicles?q=`)
 
@@ -93,6 +98,26 @@ Tolerante a typos vía trigram. Ranking en dos capas:
    matches válidos en autocomplete.
 
 Implementación: [`advisor/api.py`](advisor/api.py) `list_vehicles`.
+
+### Pipeline `news` (on-demand, sin beat)
+
+Fuentes: NewsAPI (`/v2/everything` con query `"coche eléctrico" OR "vehículo eléctrico" OR "movilidad eléctrica"`, `language=es`) + 4 RSS castellanos especializados (Forococheselectricos, Híbridos y Eléctricos, Movilidad Eléctrica, Motorpasión Eléctrico). Configurados en [`news/sources.py`](news/sources.py).
+
+Cada visita a `/estrata/news/` renderiza al instante lo que haya en BD; si la noticia más reciente es de hace > `NEWS_CACHE_HOURS` (default 6), la view dispara `mubil.news.refresh` en Celery. Sin schedule en beat — coste Gemini controlado.
+
+Por cada artículo nuevo (dedupe por `source_url`), Gemini Flash:
+
+1. Traduce título + resumen a castellano y euskera.
+2. Etiqueta con tags cerrados (`subvencion`, `precio_luz`, `modelo_nuevo`, `normativa`, `infraestructura`, `industria`, `opinion`, `otro`).
+3. Asigna `relevance` (`EUSKADI` | `ESPANA` | `GLOBAL`).
+4. Marca `affects_user_plan` solo si la noticia cambia el TCO (subvención, fiscalidad, PVPC, normativa).
+
+El JSON estructurado se parsea con tolerancia a fences ```json (gemini-3.1-flash-lite los añade a veces aunque se le pida lo contrario). Reusa el fallback ladder de [`ask/services.py`](ask/services.py) para resistencia a quota.
+
+Tras clasificar, el artículo se embebe con `gemini-embedding-001` (768d, mismo modelo y task type que `MobilityDocument`). El índice HNSW `mubil_newsarticle_emb_hnsw` (migración `0013`) sirve dos consumidores:
+
+- **`advisor`** ([`views.advisor_quote`](views.py)): construye una query a partir del vehículo objetivo + código postal + km/año del usuario y rankea hasta 3 noticias `affects_user_plan` de los últimos 30 días por similaridad coseno. Fallback cronológico si el embed call falla.
+- **`ask`** ([`ask/services.py`](ask/services.py) `answer`): retrieval mixto `retrieve_topk` (6 datasets) + `retrieve_news_topk` (2 noticias) → merge por score → top-8 final con `MIN_SCORE=0.40`. El prompt distingue `DATASET` vs `NOTICIA` y obliga a citar fecha de publicación.
 
 ---
 
@@ -166,8 +191,10 @@ python manage.py test apps.mubil
 ```
 
 Tests stub en `tests/test_models.py`. Cobertura objetivo:
+
 - TCO advisor: precisión ±5% vs valor real (PROPUESTA §13).
 - ask RAG: latencia <3 s en 5 prompts gold.
+- news pipeline: dedupe, parsing JSON con fences, fallback chronological en ranking; views renderizan con caché vacía y disparan refresh.
 
 ### n8n / Celery
 
@@ -179,6 +206,7 @@ Workflows planificados en `tasks.py`:
 - `ingest_datos_gob_catalog` — semanal, CKAN datos.gob.es para el corpus `ask`.
 - `ingest_mitma_od` — mensual, `pyspainmobility`.
 - `compute_demand_scores` — mensual, también como management command.
+- `mubil.news.refresh` ([`news/tasks.py`](news/tasks.py)) — **on-demand** (NO beat). Disparada desde `views.news_page` cuando la caché supera `NEWS_CACHE_HOURS`.
 
 ---
 
@@ -227,6 +255,7 @@ OCM es nuestro **fallback global** para puntos de recarga (OpenData Euskadi es l
 | F3a — `route` MOCK | 6 | 5 rutas precomputadas |
 | F3b — `plan` MOCK | 6-7 | Heatmap H3 + scoring heurístico |
 | F3c — Landing + vídeo + memoria | 7 | Envío MUBIL |
+| F4 — `news` | post-F2 | Fase 1 blog público + Gemini eu/es · Fase 2 alertas contextuales en advisor · Fase 3 RAG mixto datasets + noticias en ask |
 
 Detalle, riesgos y estimaciones honestas: PROPUESTA.md §6, §7, §14.
 
@@ -234,8 +263,10 @@ Detalle, riesgos y estimaciones honestas: PROPUESTA.md §6, §7, §14.
 
 ## Decisiones clave
 
-- **Una sola app `mubil`** con sub-routers Ninja, no 4 apps planas.
+- **Una sola app `mubil`** con sub-routers Ninja, no 5 apps planas.
 - **2 módulos MUST** (`advisor`, `ask`) con demo en vivo · **2 módulos MOCK** (`route`, `plan`) — las bases MUBIL admiten *"MVP **o** mock-up"*.
+- **`news` como capa transversal**, no como módulo aislado: alimenta señal contextual al `advisor` (Fase 2) y RAG mixto al `ask` (Fase 3). Diferencial vs un agregador genérico.
+- **Ingesta on-demand** (no beat) para `news`: la página dispara refresh si la caché tiene > `NEWS_CACHE_HOURS`. Coste Gemini controlado y honesto con el flujo real de uso del jurado.
 - **HVDS-compliant** como diferenciador (Reglamento UE 2023/138).
 - **Solopreneur 33-40 días** = 1 sem over budget vs 45 naturales del BOG. Sin holgura.
 - **Sin dependencia de `apps.bidaiak`** (es sólo un stub de URL, no app real — verificado 2026-05-26).

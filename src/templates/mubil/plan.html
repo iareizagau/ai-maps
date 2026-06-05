@@ -145,7 +145,7 @@ window.mubilPlanRender = function (horizon) {
     return `rgb(${stops[stops.length - 1].c.join(',')})`;
   };
 
-  fetch(`/mubil/api/v1/plan/heatmap?horizon=${horizon}&min_score=0.05`)
+  fetch(`/estrata/api/v1/plan/heatmap?horizon=${horizon}&min_score=0.05`)
     .then(r => r.json())
     .then(fc => {
       if (!fc.features || !fc.features.length) {

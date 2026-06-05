@@ -18,8 +18,11 @@ from .models import (
     EVRoutePlan,
     FuelStation,
     MobilityDocument,
+    NewsArticle,
     Vehicle,
 )
+from .news import services as news_services
+from .news.tasks import refresh_news
 from .plan import services as plan_services
 from .route import services as route_services
 
@@ -173,6 +176,7 @@ def advisor_page(request):
         'ev_vehicles': ev_vehicles,
         'default_current_id': default_current.id if default_current else None,
         'default_target_id': default_target.id if default_target else None,
+        'recent_alerts': news_services.recent_affecting_plan(),
     })
 
 
@@ -203,10 +207,19 @@ def advisor_quote(request):
         'vehicle_target_id': payload['vehicle_target_id'],
         'cp': payload['cp'],
     }
+
+    target = out['vehicle_target']
+    news_query = (
+        f"Subvenciones, fiscalidad y PVPC para {target['make']} {target['model']} "
+        f"en código postal {payload['cp']}, {payload['km_year']} km/año."
+    )
+    news_alerts = news_services.ranked_for_user(query_text=news_query)
+
     context = {
         'q': out,
         'q_json': json.dumps(out, default=str),
         'night_charging': payload['night_charging'],
+        'news_alerts': news_alerts,
     }
     return render(request, 'mubil/_advisor_result.html', context)
 
@@ -313,6 +326,40 @@ def ask_query(request):
     return render(request, 'mubil/_ask_result.html', {
         'query': query,
         'answer': result.to_out(),
+    })
+
+
+def news_page(request):
+    """Public EV-news blog. Renders the DB instantly; when the cache is
+    stale (>NEWS_CACHE_HOURS or empty) dispatches a Celery refresh in the
+    background so the next visit shows fresh items.
+
+    Optional GET filters: ?relevance=EUSKADI|ESPANA|GLOBAL  ?tag=subvencion
+    """
+    relevance = (request.GET.get('relevance') or '').strip().upper() or None
+    if relevance and relevance not in dict(NewsArticle.Relevance.choices):
+        relevance = None
+    tag = (request.GET.get('tag') or '').strip().lower() or None
+
+    articles = news_services.list_articles(limit=60, relevance=relevance, tag=tag)
+
+    stale, age_hours = news_services.is_cache_stale()
+    if stale:
+        try:
+            refresh_news.delay()
+            refresh_dispatched = True
+        except Exception:  # noqa: BLE001 — broker down must not 500 the page
+            refresh_dispatched = False
+    else:
+        refresh_dispatched = False
+
+    return render(request, 'mubil/news.html', {
+        'articles': articles,
+        'active_relevance': relevance,
+        'active_tag': tag,
+        'cache_age_hours': age_hours,
+        'refresh_dispatched': refresh_dispatched,
+        'relevances': NewsArticle.Relevance.choices,
     })
 
 

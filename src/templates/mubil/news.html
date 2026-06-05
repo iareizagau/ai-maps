@@ -1,0 +1,113 @@
+{% extends "mubil/base.html" %}
+{% load i18n humanize %}
+
+{% block title %}Noticias EV · eStrata{% endblock %}
+{% block meta_description %}Noticias de coches eléctricos resumidas en castellano y euskera. Subvenciones, modelos nuevos, normativa y precios de la luz que afectan a tu plan EV.{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pt-10 sm:pt-14 lg:pt-20 pb-6">
+
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="text-xs sm:text-sm font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light">
+        eStrata · News
+      </p>
+      <h1 class="mt-2 text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-estrata-navy dark:text-white leading-[1.05]">
+        Noticias del coche eléctrico
+      </h1>
+      <p class="mt-3 text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl">
+        Resúmenes neutrales en castellano y euskera. Etiquetamos cada noticia
+        que cambia el coste real de tu plan EV — subvenciones, fiscalidad,
+        precio de la luz.
+      </p>
+    </div>
+
+    <div class="text-xs text-slate-500 dark:text-slate-400">
+      {% if cache_age_hours is None %}
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 font-semibold">
+          ⏳ Cargando el primer lote en segundo plano…
+        </span>
+      {% elif refresh_dispatched %}
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-estrata-teal/10 text-estrata-teal_dark dark:text-estrata-teal_light font-semibold">
+          🔄 Refrescando · última hace {{ cache_age_hours|floatformat:1 }} h
+        </span>
+      {% else %}
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-estrata-navy_deep text-slate-600 dark:text-slate-300 font-semibold">
+          ✓ Actualizado hace {{ cache_age_hours|floatformat:1 }} h
+        </span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="mt-6 flex flex-wrap items-center gap-2">
+    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mr-1">Filtrar:</span>
+    <a href="{% url 'mubil:news' %}"
+       class="px-3 py-1.5 rounded-full text-xs font-semibold transition
+              {% if not active_relevance and not active_tag %}bg-estrata-teal text-white{% else %}bg-slate-100 dark:bg-estrata-navy_deep text-slate-700 dark:text-slate-300 hover:bg-estrata-teal/10{% endif %}">
+      Todas
+    </a>
+    {% for code, label in relevances %}
+      <a href="?relevance={{ code }}"
+         class="px-3 py-1.5 rounded-full text-xs font-semibold transition
+                {% if active_relevance == code %}bg-estrata-teal text-white{% else %}bg-slate-100 dark:bg-estrata-navy_deep text-slate-700 dark:text-slate-300 hover:bg-estrata-teal/10{% endif %}">
+        {{ label }}
+      </a>
+    {% endfor %}
+    {% if active_tag %}
+      <a href="{% url 'mubil:news' %}"
+         class="px-3 py-1.5 rounded-full text-xs font-semibold bg-estrata-teal text-white inline-flex items-center gap-1">
+        #{{ active_tag }} <span class="opacity-70">✕</span>
+      </a>
+    {% endif %}
+  </div>
+</section>
+
+<section class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pb-16 sm:pb-20">
+  {% if articles %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+      {% for a in articles %}
+        {% if LANGUAGE_CODE == 'eu' and a.title_eu %}
+          {% with title=a.title_eu summary=a.summary_eu %}
+            <c-molecules.news_card
+              :title="title"
+              :summary="summary"
+              :source_url="a.source_url"
+              :source_label="a.get_source_display"
+              :published_at="a.published_at"
+              :relevance="a.relevance"
+              :tags="a.tags"
+              :image_url="a.image_url"
+              :affects_user_plan="a.affects_user_plan"
+            />
+          {% endwith %}
+        {% else %}
+          {% with title=a.title_es summary=a.summary_es %}
+            <c-molecules.news_card
+              :title="title"
+              :summary="summary"
+              :source_url="a.source_url"
+              :source_label="a.get_source_display"
+              :published_at="a.published_at"
+              :relevance="a.relevance"
+              :tags="a.tags"
+              :image_url="a.image_url"
+              :affects_user_plan="a.affects_user_plan"
+            />
+          {% endwith %}
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy/40 p-10 sm:p-14 text-center">
+      <p class="text-4xl mb-4">📰</p>
+      <h2 class="text-xl sm:text-2xl font-black text-estrata-navy dark:text-white">
+        Sin noticias todavía
+      </h2>
+      <p class="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-md mx-auto">
+        Estamos descargando y resumiendo el primer lote. Recarga la página en
+        un par de minutos para verlas.
+      </p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

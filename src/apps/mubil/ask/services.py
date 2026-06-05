@@ -22,12 +22,13 @@ from django.conf import settings
 from pgvector.django import CosineDistance
 
 from apps.mubil.ask import embeddings
-from apps.mubil.models import MobilityDocument
+from apps.mubil.models import MobilityDocument, NewsArticle
 
 log = logging.getLogger(__name__)
 
 
 DEFAULT_TOP_K = 8
+DEFAULT_TOP_K_NEWS = 2
 MIN_SCORE = 0.40  # cosine similarity floor; below this we treat as no match
 ANSWER_MAX_TOKENS = 1024
 
@@ -43,6 +44,8 @@ class RetrievedDoc:
     source_type: str
     score: float          # cosine similarity in [0, 1] (1 = identical)
     content: str
+    kind: str = "dataset"  # "dataset" | "news"
+    date: Optional[str] = None  # ISO date, only set for news
 
     def to_source(self) -> dict:
         return {
@@ -50,6 +53,8 @@ class RetrievedDoc:
             "url": self.source_url,
             "score": round(self.score, 4),
             "source_type": self.source_type,
+            "kind": self.kind,
+            "date": self.date,
         }
 
 
@@ -106,6 +111,37 @@ def retrieve_topk(
     ]
 
 
+def retrieve_news_topk(
+    query_vec: List[float],
+    *,
+    k: int = DEFAULT_TOP_K_NEWS,
+) -> List[RetrievedDoc]:
+    """pgvector cosine similarity search over NewsArticle embeddings.
+
+    Returns `RetrievedDoc` with `kind='news'` and `date=published_at.date()`
+    so the generator can cite the publication date alongside the URL.
+    """
+    rows = (
+        NewsArticle.objects.exclude(embedding__isnull=True)
+        .annotate(distance=CosineDistance("embedding", query_vec))
+        .order_by("distance")[:k]
+    )
+
+    return [
+        RetrievedDoc(
+            id=n.id,
+            title=n.title_es or n.title_orig,
+            source_url=n.source_url,
+            source_type=n.source,
+            score=max(0.0, 1.0 - float(n.distance)),
+            content=n.summary_es or n.title_orig,
+            kind="news",
+            date=n.published_at.date().isoformat() if n.published_at else None,
+        )
+        for n in rows
+    ]
+
+
 # ---------------------------------------------------------------- prompt
 
 
@@ -113,9 +149,14 @@ SYSTEM_PROMPT = (
     "Eres un asistente especializado en movilidad sostenible en Euskal "
     "Herria y España. Respondes en el idioma de la pregunta del usuario "
     "(castellano por defecto, euskara si te preguntan en euskara). "
-    "Usa SOLO la información de los documentos proporcionados. Si no "
+    "Usa SOLO la información de las fuentes proporcionadas. Si no "
     "puedes responder con lo dado, dilo explícitamente. Cita las fuentes "
-    "como [n] referenciando los documentos. No inventes URLs ni cifras."
+    "como [n]. No inventes URLs ni cifras. "
+    "Algunas fuentes son DATASET (datos oficiales) y otras son NOTICIA "
+    "(prensa especializada). Cuando cites una NOTICIA, incluye la fecha "
+    "de publicación entre paréntesis (ej. 'según [3] (2026-06-04)'). "
+    "Prioriza DATASET para cifras y normativa; usa NOTICIA para "
+    "contextualizar actualidad y cambios recientes."
 )
 
 
@@ -133,10 +174,14 @@ def compose_prompt(query: str, docs: List[RetrievedDoc]) -> str:
     chunks = []
     for i, d in enumerate(docs, start=1):
         snippet = d.content[:1200].strip()
+        if d.kind == "news":
+            header = f"[{i}] Tipo: NOTICIA (publicada {d.date or 'sin fecha'})"
+        else:
+            header = f"[{i}] Tipo: DATASET ({d.source_type})"
         chunks.append(
-            f"[{i}] Título: {d.title}\n"
+            f"{header}\n"
+            f"    Título: {d.title}\n"
             f"    URL: {d.source_url}\n"
-            f"    Tipo: {d.source_type}\n"
             f"    Contenido: {snippet}"
         )
     docs_block = "\n\n".join(chunks)
@@ -289,12 +334,18 @@ def answer(
             error="embed_unavailable",
         )
 
-    docs = retrieve_topk(query_vec, k=k, municipality_naia=municipality_naia)
+    k_docs = max(1, k - DEFAULT_TOP_K_NEWS)
+    docs = retrieve_topk(query_vec, k=k_docs, municipality_naia=municipality_naia)
+    news = retrieve_news_topk(query_vec, k=DEFAULT_TOP_K_NEWS)
 
-    # Filter very low scores so we don't ground on noise.
-    docs = [d for d in docs if d.score >= MIN_SCORE]
+    # Merge by similarity score (higher first) then cut noise. News and
+    # datasets compete on the same scale because both embeddings come from
+    # gemini-embedding-001 with the same task type and dimensionality.
+    merged = sorted(docs + news, key=lambda d: d.score, reverse=True)
+    merged = [d for d in merged if d.score >= MIN_SCORE][:k]
 
-    prompt = compose_prompt(query, docs)
+    prompt = compose_prompt(query, merged)
+    docs = merged
     try:
         answer_md = _call_gemini_generate(prompt)
         gen_error: Optional[str] = None

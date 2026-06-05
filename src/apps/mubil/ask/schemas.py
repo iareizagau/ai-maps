@@ -16,6 +16,8 @@ class AskSource(Schema):
     url: str
     score: float
     source_type: str
+    kind: str = "dataset"
+    date: Optional[str] = None
 
 
 class AskAnswerOut(Schema):

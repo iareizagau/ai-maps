@@ -101,9 +101,9 @@ class Command(BaseCommand):
             {
                 # Naming display provisional — decisión final pendiente (§1, §17 PROPUESTA.md)
                 'slug': 'mubil',
-                'name': 'Mubil Maps',
+                'name': 'eStrata',
                 'tagline': 'Inteligencia abierta de movilidad sostenible vasca.',
-                'domain': 'https://ai.maps.eus/mubil/',
+                'domain': 'https://ai.maps.eus/estrata/',
                 'icon': 'route',
                 'primary_color': '#06b6d4', # Cyan
                 'hero_title': 'Movilidad inteligente para Euskal Herria',

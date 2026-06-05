@@ -48,8 +48,8 @@ urlpatterns += [
     path('oceania/', include('apps.oceania.urls')),
     # The mubil API is mounted at the top level so its NinjaAPI namespace
     # (`mubil_api`) stays un-nested — see comment in apps/mubil/urls.py.
-    path('mubil/api/', mubil_api.urls),
-    path('mubil/', include('apps.mubil.urls')),
+    path('estrata/api/', mubil_api.urls),
+    path('estrata/', include('apps.mubil.urls')),
 ]
 if settings.DEBUG:
     from django.conf.urls.static import static

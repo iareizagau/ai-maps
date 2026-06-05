@@ -95,7 +95,8 @@
       "Bash(echo \"--- check if .bg-white\\\\\\\\/5 specifically exists ---\")",
       "Bash(curl -s -i \"http://127.0.0.1:9000/mubil/api/v1/advisor/vehicles?q=mer&limit=2\")",
       "Bash(curl -s \"http://127.0.0.1:9000/mubil/api/v1/advisor/vehicles?q=gol&limit=3\")",
-      "Bash(python -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(f'  {v[\\\\\"make\\\\\"]} | {v[\\\\\"model\\\\\"][:50]}'\\) for v in data]\")"
+      "Bash(python -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(f'  {v[\\\\\"make\\\\\"]} | {v[\\\\\"model\\\\\"][:50]}'\\) for v in data]\")",
+      "PowerShell($path = 'c:\\\\Users\\\\imanol\\\\projects\\\\imanol\\\\saas\\\\maps\\\\src\\\\templates\\\\home.html'; $lines = Get-Content -Path $path -Encoding utf8; $kept = $lines[0..244] + $lines[526..\\($lines.Length - 1\\)]; $kept | Out-File -FilePath $path -Encoding utf8)"
     ],
     "read": [
       "*"

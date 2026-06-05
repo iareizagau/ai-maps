@@ -39,6 +39,8 @@
            class="px-3 py-1.5 rounded-lg transition {% if active == 'route' %}bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light{% else %}text-slate-700 dark:text-slate-300 hover:text-estrata-teal_dark dark:hover:text-estrata-teal_light hover:bg-estrata-teal/5{% endif %}">Route</a>
         <a href="{% url 'mubil:plan' %}"
            class="px-3 py-1.5 rounded-lg transition {% if active == 'plan' %}bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light{% else %}text-slate-700 dark:text-slate-300 hover:text-estrata-teal_dark dark:hover:text-estrata-teal_light hover:bg-estrata-teal/5{% endif %}">Plan</a>
+        <a href="{% url 'mubil:news' %}"
+           class="px-3 py-1.5 rounded-lg transition {% if active == 'news' %}bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light{% else %}text-slate-700 dark:text-slate-300 hover:text-estrata-teal_dark dark:hover:text-estrata-teal_light hover:bg-estrata-teal/5{% endif %}">News</a>
       </nav>
       {% endwith %}
 

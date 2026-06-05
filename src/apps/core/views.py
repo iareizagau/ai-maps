@@ -68,6 +68,10 @@ def home(request):
     })
 
 
+def about(request):
+    return render(request, 'about.html')
+
+
 def login_view(request):
     """User login"""
     if request.user.is_authenticated:

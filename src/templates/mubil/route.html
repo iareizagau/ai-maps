@@ -265,8 +265,11 @@ function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
         radius: 8, fillColor: '#ef4444', color: '#0f172a', weight: 2, fillOpacity: 1,
       }).bindPopup('<strong>Destino</strong>').addTo(this._map);
       this._refreshLine();
-      // Auto-trigger HTMX once both endpoints are set
-      htmx.trigger('#route-form', 'submit');
+      // Auto-trigger once both endpoints are set. $nextTick lets Alpine flush
+      // the lat/lng x-model bindings before htmx reads the form.
+      this.$nextTick(() => {
+        document.getElementById('route-form').requestSubmit();
+      });
     },
 
     _refreshLine() {
@@ -290,15 +293,15 @@ function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
     },
 
     pickDemo(d) {
-      this.form.slug = d.slug;
-      this.form.origin_lat = d.origin[0].toFixed(6);
-      this.form.origin_lng = d.origin[1].toFixed(6);
-      this.form.dest_lat   = d.dest[0].toFixed(6);
-      this.form.dest_lng   = d.dest[1].toFixed(6);
-      // Drop free-mode markers — the result map paints the precomputed polyline
+      // Drop free-mode markers FIRST — resetMarkers wipes slug + lat/lng, so
+      // doing it after the assignments would clobber them.
       this.resetMarkers();
-      this.form.slug = d.slug;  // resetMarkers cleared it; restore
-      htmx.trigger('#route-form', 'submit');
+      this.form.slug = d.slug;
+      // Wait one Alpine tick so x-model finishes writing the new slug into
+      // the hidden <input>, otherwise htmx serialises the stale value.
+      this.$nextTick(() => {
+        document.getElementById('route-form').requestSubmit();
+      });
     },
   };
 }
@@ -316,29 +319,35 @@ function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
 //      instance: capture the map locally and verify it still matches
 //      window._mubilResultMap before touching it.
 window.mubilRouteRender = function (r) {
-  const mapEl = document.getElementById('route-map');
-  if (!mapEl || !window.L) return;
-
+  // Tear down the previous instance up front so the next render can't race
+  // with stale tile-load callbacks from this one.
   if (window._mubilResultMap) {
     try { window._mubilResultMap.remove(); } catch (e) {}
     window._mubilResultMap = null;
   }
 
-  // Defer to next frame so the container has its computed width/height. If
-  // we init immediately, Leaflet's first `getSize()` returns 0×0 and the
-  // tile layer's load logic short-circuits — the map "loses" its tiles.
+  // Defer creation to the next frame. mubilRouteRender is invoked from Alpine
+  // x-init the moment HTMX inserts the swapped DOM — the right flex column
+  // (`#route-result.lg:w-3/5`) has NOT yet been measured, so the map container
+  // reports 0 width. Leaflet bails on the first tile-load with an empty
+  // bounding box and never recovers on the next innerHTML swap. Waiting one
+  // frame lets the browser run layout so the container has its real size when
+  // we call L.map().
   requestAnimationFrame(() => {
-    // The user may have triggered another render in the meantime; check we
-    // still own the DOM.
     const el = document.getElementById('route-map');
-    if (!el || el !== mapEl) return;
+    if (!el || !window.L) return;
+    if (el._leaflet_id) { try { delete el._leaflet_id; } catch (e) {} el.innerHTML = ''; }
 
     const isDark = document.documentElement.classList.contains('dark');
     const tileUrl = isDark
       ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
       : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 
-    const map = L.map(el, { zoomControl: true });
+    // setView BEFORE the tile layer. Leaflet only requests tiles after the
+    // map has a centre+zoom; if the layer is added on an un-viewed map, the
+    // first _update() runs with an undefined bounds and no tiles get fetched.
+    const initialCenter = (r.origin && r.origin.length === 2) ? r.origin : [43.18, -2.4];
+    const map = L.map(el, { zoomControl: true }).setView(initialCenter, 9);
     window._mubilResultMap = map;
 
     L.tileLayer(tileUrl, { subdomains: 'abcd', maxZoom: 19,
@@ -362,14 +371,12 @@ window.mubilRouteRender = function (r) {
         .bindPopup(`<strong>Parada de carga</strong><br>${sc.operator || ''} · ${sc.power_kw} kW`).addTo(map);
     }
 
-    // Settle in stages — first paint, then again after the right column
-    // finishes its grid pass, then once more for slow phones.
     const settle = () => {
       if (window._mubilResultMap !== map) return;
       try {
         map.invalidateSize();
         map.fitBounds(line.getBounds().pad(0.15));
-      } catch (e) { map.setView(r.origin, 9); }
+      } catch (e) { /* keep initialCenter view */ }
     };
     settle();
     setTimeout(settle, 250);

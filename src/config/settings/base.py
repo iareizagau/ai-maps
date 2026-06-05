@@ -261,6 +261,14 @@ ESIOS_TOKEN = env('ESIOS_TOKEN', default='')
 # so a missing key never crashes the demo.
 OPENCHARGEMAP_API_KEY = env('OPENCHARGEMAP_API_KEY', default='')
 
+# Mubil — NewsAPI for the `news` aggregator (dev tier, free, 100 req/day).
+# Empty → only RSS sources are pulled; the page still renders.
+NEWS_API_KEY = env('NEWS_API_KEY', default='')
+
+# Mubil — `news` cache TTL. Opening /estrata/news/ when the most recent
+# article is older than this dispatches a Celery refresh; no beat schedule.
+NEWS_CACHE_HOURS = env.int('NEWS_CACHE_HOURS', default=6)
+
 # Celery
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://redis:6379/0')
 CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://redis:6379/1')

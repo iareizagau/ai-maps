@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 SaaS Maps — Django 6 monorepo for Euskal Herria GIS apps. Multiple Django apps share one DB and one project (`config/`); subdomains are wired through `django-hosts` but currently fall through to path-based routing (`/mubil/`, `/bidaiak/`, `/pintxos/`, …). All source lives under `src/`; nothing app-level belongs at the repo root.
 
-**Active focus**: `apps.mubil` — MUBIL Mobility Awards 2026 submission, deadline **2026-06-19**. See [`src/apps/mubil/README.md`](../src/apps/mubil/README.md) for the four submodules (`advisor`, `ask`, `route`, `plan`).
+**Active focus**: `apps.mubil` — MUBIL Mobility Awards 2026 submission, deadline **2026-06-19**. See [`src/apps/mubil/README.md`](../src/apps/mubil/README.md) for the five submodules (`advisor`, `ask`, `route`, `plan`, `news`). `news` is a transversal layer: public blog at `/estrata/news/`, contextual alerts inside the advisor, and a mixed-corpus RAG source (datasets + noticias) in `ask`.
 
 ## Common commands
 
@@ -51,7 +51,7 @@ src/
 │   └── settings/        # base.py + local.py (DEBUG) + prod.py
 ├── apps/
 │   ├── core/            # Shared kernel: custom User, app_config context proc, base templates
-│   ├── mubil/           # MUBIL Awards app (active). Submodules: advisor/ ask/ route/ plan/
+│   ├── mubil/           # MUBIL Awards app (active). Submodules: advisor/ ask/ route/ plan/ news/
 │   ├── pintxos/ bidaiak/ sbk/ kultur/ inguru/ gailur/ zbe/ adventure/ solar/ oceania/
 ├── templates/
 │   ├── cotton/          # Atomic-Design components (atoms/ molecules/ organisms/) for django-cotton
@@ -77,6 +77,7 @@ src/
 - **Gemini fallback ladder**: `GEMINI_GENERATION_FALLBACK_MODELS` in `config/settings/base.py` is ordered by expected wall-clock to a usable answer, not RPD. Don't reorder without re-testing on demo prompts — `gemini-3.1-flash-lite` leads, Gemma variants are last-resort overflow due to safety filters on Spanish gov-policy prompts.
 - **User vehicle identification**: uses **photo of permiso de circulación + Gemini Vision + cascade fallback** — NOT DGT NAP. See `apps/mubil/services.py`.
 - **External APIs**: ESIOS (PVPC prices, `x-api-key` header), OpenChargeMap (`X-API-Key`), MINCOTUR fuel stations (**requires a custom HTTPAdapter for TLS** to ingest from inside the container). Ingest commands live under `apps/mubil/management/commands/ingest_*.py`.
+- **News pipeline**: NewsAPI (`NEWS_API_KEY`, dev tier 100 req/day) + RSS castellanos (`feedparser`) ingested **on-demand** from `views.news_page` when caché > `NEWS_CACHE_HOURS` (default 6). No beat schedule. Each new article (dedupe by `source_url`) is translated/classified by Gemini Flash into eu+es with closed tag set, then embedded (768d, HNSW). Drives `/estrata/news/`, advisor alert strip + ranked alerts on quote results, and the mixed `ask` RAG (`retrieve_topk` + `retrieve_news_topk`).
 - **Don't probe Gemini live to diagnose quota** — check the AI Studio dashboard. The fallback ladder distinguishes 503 (transient, advance) vs 429 (depleted, advance).
 
 ## Gotchas (must read)

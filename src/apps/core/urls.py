@@ -3,6 +3,7 @@ from . import views, account_views
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path('about/', views.about, name='about'),
 
     # Legacy /profile/ — kept working during the /account/ migration.
     path('profile/', views.profile, name='profile'),

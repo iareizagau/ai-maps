@@ -1,0 +1,49 @@
+{% load i18n humanize %}
+
+<article class="group flex flex-col h-full overflow-hidden rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy/40 hover:border-estrata-teal/50 transition shadow-sm hover:shadow-lg">
+
+  {% if image_url %}
+    <a href="{{ source_url }}" target="_blank" rel="noopener" class="block aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-estrata-navy_deep">
+      <img src="{{ image_url }}" alt="" loading="lazy"
+           class="h-full w-full object-cover group-hover:scale-105 transition duration-500" />
+    </a>
+  {% endif %}
+
+  {% if affects_user_plan %}
+    <div class="px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest bg-estrata-teal/10 text-estrata-teal_dark dark:bg-estrata-teal/15 dark:text-estrata-teal_light border-b border-estrata-teal/20">
+      ⚡ {% trans "Afecta a tu plan" %}
+    </div>
+  {% endif %}
+
+  <div class="flex-1 flex flex-col p-5 sm:p-6 gap-3">
+
+    <div class="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wider">
+      <span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-estrata-navy_deep text-slate-600 dark:text-slate-300">
+        {% if relevance == 'EUSKADI' %}🇪🇺 Euskadi
+        {% elif relevance == 'ESPANA' %}🇪🇸 España
+        {% else %}🌍 Global{% endif %}
+      </span>
+      {% for tag in tags|slice:":3" %}
+        <a href="?tag={{ tag }}" class="px-2 py-0.5 rounded-full bg-estrata-teal/8 text-estrata-teal_dark dark:text-estrata-teal_light hover:bg-estrata-teal/15 transition">
+          #{{ tag }}
+        </a>
+      {% endfor %}
+    </div>
+
+    <h3 class="text-lg sm:text-xl font-black leading-tight text-estrata-navy dark:text-white">
+      <a href="{{ source_url }}" target="_blank" rel="noopener"
+         class="hover:text-estrata-teal_dark dark:hover:text-estrata-teal_light transition">
+        {{ title }}
+      </a>
+    </h3>
+
+    <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-4">
+      {{ summary }}
+    </p>
+
+    <div class="mt-auto pt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-estrata-teal/10">
+      <span class="font-semibold">{{ source_label }}</span>
+      <time datetime="{{ published_at|date:'c' }}">{{ published_at|naturaltime }}</time>
+    </div>
+  </div>
+</article>

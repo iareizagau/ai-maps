@@ -97,24 +97,18 @@ class IncentivesBreakdown:
 # ---------------------------------------------------------------- rules
 
 
-def _moves3_vehicle(profile: Profile, scrapping: bool) -> Optional[Incentive]:
+def _auto_plus_vehicle(profile: Profile, scrapping: bool) -> Optional[Incentive]:
     if profile == "particular":
         amount = MOVES3_BEV_PARTICULAR_SCRAP_EUR if scrapping else MOVES3_BEV_PARTICULAR_EUR
     else:
         amount = MOVES3_BEV_EMPRESA_SCRAP_EUR if scrapping else MOVES3_BEV_EMPRESA_EUR
-    label = "Moves III vehículo" + (" + achatarramiento" if scrapping else "")
-    return Incentive(code="moves3_vehicle", name=label, amount_eur=amount)
+    label = "Programa Auto+ vehículo" + (" + achatarramiento" if scrapping else "")
+    return Incentive(code="auto_plus_vehicle", name=label, amount_eur=amount)
 
 
-def _moves3_wallbox(profile: Profile, needs_wallbox: bool) -> Optional[Incentive]:
-    if not needs_wallbox:
-        return None
-    amount = (
-        MOVES3_WALLBOX_PARTICULAR_EUR
-        if profile == "particular"
-        else MOVES3_WALLBOX_EMPRESA_EUR
-    )
-    return Incentive(code="moves3_wallbox", name="Moves III instalación wallbox", amount_eur=amount)
+def _auto_plus_concessionaire(profile: Profile) -> Optional[Incentive]:
+    # Descuento obligatorio concesionario (1.000 €)
+    return Incentive(code="auto_plus_concessionaire", name="Programa Auto+ descuento concesionario", amount_eur=Decimal("1000"))
 
 
 def _irpf_deduction(profile: Profile, vehicle_price_eur: Optional[int]) -> Optional[Incentive]:
@@ -162,8 +156,8 @@ def compute_incentives(
 ) -> IncentivesBreakdown:
     """Devuelve el desglose completo de incentivos aplicables."""
     rules = [
-        _moves3_vehicle(profile, scrapping),
-        _moves3_wallbox(profile, needs_wallbox),
+        _auto_plus_vehicle(profile, scrapping),
+        _auto_plus_concessionaire(profile),
         _irpf_deduction(profile, vehicle_price_eur),
         _ivtm_exemption(cp),
         _iva_deducible(profile, vehicle_price_eur),

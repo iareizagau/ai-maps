@@ -1,21 +1,23 @@
-"""Tests for the charging-station ingest pipeline (MITECO CSV + OCM).
+"""Tests for the charging-station ingest pipeline (MITECO CSV + OCM + DGT NAP).
 
-HTTP (OCM) is mocked. The MITECO branch reads a tiny CSV written into a tmp
-path so the bundled snapshot is not touched. To exercise either branch live:
+HTTP (OCM, DGT NAP) is mocked. The MITECO branch reads a tiny CSV written
+into a tmp path so the bundled snapshot is not touched. To exercise live:
 
-    python manage.py ingest_charging_stations --source miteco --dry-run
-    python manage.py ingest_charging_stations --source ocm    --dry-run
+    python manage.py ingest_charging_stations --source miteco  --dry-run
+    python manage.py ingest_charging_stations --source ocm     --dry-run
+    python manage.py ingest_charging_stations --source dgt_nap --dry-run
 """
 
 from __future__ import annotations
 
+import io
 from decimal import Decimal
 from pathlib import Path
 from unittest import mock
 
 from django.test import TestCase, override_settings
 
-from apps.mubil.data import charging_ingest, openchargemap_client
+from apps.mubil.data import charging_ingest, dgt_nap_client, openchargemap_client
 from apps.mubil.models import ChargingStation
 
 
@@ -266,3 +268,235 @@ class IngestOpenChargeMapTests(TestCase):
         # The header must carry the key from settings, not None.
         _args, kwargs = get_mock.call_args
         self.assertEqual(kwargs["headers"]["X-API-Key"], "from-settings")
+
+
+# ─────────────────────────────────────────────── DGT NAP DATEX II fixture
+
+
+# Minimal synthetic EnergyInfrastructureTablePublication with three sites:
+#   - SITE-EH-1  Bizkaia, two connectors (22 kW + 50 kW) → max power = 50 kW
+#   - SITE-EH-2  Gipuzkoa, one connector, missing lastUpdated
+#   - SITE-OUT   Barcelona, must be filtered out when eh_only=True
+#   - SITE-NOCOORD  Bizkaia but no lat/lon → must be skipped
+DGT_NAP_FIXTURE_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<d2:payload xmlns:d2="http://datex2.eu/schema/3/d2Payload"
+            xmlns:com="http://datex2.eu/schema/3/common"
+            xmlns:loc="http://datex2.eu/schema/3/locationReferencing"
+            xmlns:locx="http://datex2.eu/schema/3/locationExtension"
+            xmlns:fac="http://datex2.eu/schema/3/facilities"
+            xmlns:egi="http://datex2.eu/schema/3/energyInfrastructure">
+  <egi:energyInfrastructureTable id="ELECTROLINERAS" version="1">
+
+    <egi:energyInfrastructureSite id="SITE-EH-1" version="">
+      <fac:lastUpdated>2026-06-09T10:57:18.000+02:00</fac:lastUpdated>
+      <fac:locationReference>
+        <loc:_locationReferenceExtension>
+          <loc:facilityLocation>
+            <locx:address>
+              <locx:addressLine order="1">
+                <locx:type>generalTextLine</locx:type>
+                <locx:text><com:values><com:value lang="es">Dirección: Gran Vía 1</com:value></com:values></locx:text>
+              </locx:addressLine>
+              <locx:addressLine order="3">
+                <locx:type>generalTextLine</locx:type>
+                <locx:text><com:values><com:value lang="es">Provincia: Bizkaia</com:value></com:values></locx:text>
+              </locx:addressLine>
+            </locx:address>
+          </loc:facilityLocation>
+        </loc:_locationReferenceExtension>
+        <loc:coordinatesForDisplay>
+          <loc:latitude>43.262</loc:latitude>
+          <loc:longitude>-2.935</loc:longitude>
+        </loc:coordinatesForDisplay>
+      </fac:locationReference>
+      <fac:operator><fac:name><com:values><com:value lang="es">IBERDROLA</com:value></com:values></fac:name></fac:operator>
+      <egi:energyInfrastructureStation id="SITE-EH-1_1" version="">
+        <egi:refillPoint xsi:type="egi:ElectricChargingPoint" id="r1" version=""
+                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <egi:connector>
+            <egi:connectorType>iec62196T2</egi:connectorType>
+            <egi:chargingMode>mode3AC3p</egi:chargingMode>
+            <egi:connectorFormat>socket</egi:connectorFormat>
+            <egi:maxPowerAtSocket>22000.0</egi:maxPowerAtSocket>
+          </egi:connector>
+          <egi:connector>
+            <egi:connectorType>iec62196T2COMBO</egi:connectorType>
+            <egi:chargingMode>mode4</egi:chargingMode>
+            <egi:connectorFormat>cable</egi:connectorFormat>
+            <egi:maxPowerAtSocket>50000.0</egi:maxPowerAtSocket>
+          </egi:connector>
+        </egi:refillPoint>
+      </egi:energyInfrastructureStation>
+    </egi:energyInfrastructureSite>
+
+    <egi:energyInfrastructureSite id="SITE-EH-2" version="">
+      <fac:locationReference>
+        <loc:_locationReferenceExtension>
+          <loc:facilityLocation>
+            <locx:address>
+              <locx:addressLine order="3">
+                <locx:type>generalTextLine</locx:type>
+                <locx:text><com:values><com:value lang="es">Provincia: Gipuzkoa</com:value></com:values></locx:text>
+              </locx:addressLine>
+            </locx:address>
+          </loc:facilityLocation>
+        </loc:_locationReferenceExtension>
+        <loc:coordinatesForDisplay>
+          <loc:latitude>43.319</loc:latitude>
+          <loc:longitude>-1.986</loc:longitude>
+        </loc:coordinatesForDisplay>
+      </fac:locationReference>
+      <egi:energyInfrastructureStation id="SITE-EH-2_1" version="">
+        <egi:refillPoint xsi:type="egi:ElectricChargingPoint" id="r2" version=""
+                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <egi:connector>
+            <egi:connectorType>chademo</egi:connectorType>
+            <egi:maxPowerAtSocket>11000.0</egi:maxPowerAtSocket>
+          </egi:connector>
+        </egi:refillPoint>
+      </egi:energyInfrastructureStation>
+    </egi:energyInfrastructureSite>
+
+    <egi:energyInfrastructureSite id="SITE-OUT" version="">
+      <fac:locationReference>
+        <loc:_locationReferenceExtension>
+          <loc:facilityLocation>
+            <locx:address>
+              <locx:addressLine order="3">
+                <locx:type>generalTextLine</locx:type>
+                <locx:text><com:values><com:value lang="es">Provincia: Barcelona</com:value></com:values></locx:text>
+              </locx:addressLine>
+            </locx:address>
+          </loc:facilityLocation>
+        </loc:_locationReferenceExtension>
+        <loc:coordinatesForDisplay>
+          <loc:latitude>41.385</loc:latitude>
+          <loc:longitude>2.173</loc:longitude>
+        </loc:coordinatesForDisplay>
+      </fac:locationReference>
+    </egi:energyInfrastructureSite>
+
+    <egi:energyInfrastructureSite id="SITE-NOCOORD" version="">
+      <fac:locationReference>
+        <loc:_locationReferenceExtension>
+          <loc:facilityLocation>
+            <locx:address>
+              <locx:addressLine order="3">
+                <locx:type>generalTextLine</locx:type>
+                <locx:text><com:values><com:value lang="es">Provincia: Bizkaia</com:value></com:values></locx:text>
+              </locx:addressLine>
+            </locx:address>
+          </loc:facilityLocation>
+        </loc:_locationReferenceExtension>
+      </fac:locationReference>
+    </egi:energyInfrastructureSite>
+
+  </egi:energyInfrastructureTable>
+</d2:payload>
+"""
+
+
+def _fixture_stream() -> io.BytesIO:
+    return io.BytesIO(DGT_NAP_FIXTURE_XML.encode("utf-8"))
+
+
+# ─────────────────────────────────────────────── DGT NAP parser
+
+
+class DGTNAPParseTests(TestCase):
+    def test_filters_to_eh_provinces(self):
+        recs = dgt_nap_client.parse_stream(_fixture_stream(), eh_only=True)
+        # SITE-OUT (Barcelona) dropped, SITE-NOCOORD dropped (no lat/lon).
+        self.assertEqual({r.external_id for r in recs},
+                         {"dgt_nap-SITE-EH-1", "dgt_nap-SITE-EH-2"})
+
+    def test_araba_alava_hyphenated_form_matches(self):
+        """DGT publishes Araba as "Araba/Álava" — the only EH province with
+        a non-bare label. Regression guard."""
+        xml = DGT_NAP_FIXTURE_XML.replace(
+            "Provincia: Bizkaia", "Provincia: Araba/Álava"
+        )
+        recs = dgt_nap_client.parse_stream(io.BytesIO(xml.encode("utf-8")),
+                                           eh_only=True)
+        self.assertIn("dgt_nap-SITE-EH-1", {r.external_id for r in recs})
+
+    def test_eh_only_false_keeps_non_eh(self):
+        recs = dgt_nap_client.parse_stream(_fixture_stream(), eh_only=False)
+        # 3 sites have coords (SITE-NOCOORD still dropped regardless of filter).
+        self.assertEqual(len(recs), 3)
+        self.assertIn("dgt_nap-SITE-OUT", {r.external_id for r in recs})
+
+    def test_watts_converted_to_kw_and_max_taken(self):
+        recs = dgt_nap_client.parse_stream(_fixture_stream(), eh_only=True)
+        eh1 = next(r for r in recs if r.external_id == "dgt_nap-SITE-EH-1")
+        # 22000 W + 50000 W → max 50.00 kW.
+        self.assertEqual(eh1.power_kw, Decimal("50.00"))
+        self.assertEqual(len(eh1.connectors), 2)
+        self.assertEqual(eh1.connectors[0]["kw"], "22.00")
+        self.assertEqual(eh1.connectors[1]["kw"], "50.00")
+        self.assertEqual(eh1.connectors[1]["type"], "iec62196T2COMBO")
+
+    def test_geom_lonlat_and_operator(self):
+        recs = dgt_nap_client.parse_stream(_fixture_stream(), eh_only=True)
+        eh1 = next(r for r in recs if r.external_id == "dgt_nap-SITE-EH-1")
+        self.assertAlmostEqual(eh1.latitude, 43.262, places=3)
+        self.assertAlmostEqual(eh1.longitude, -2.935, places=3)
+        self.assertEqual(eh1.operator, "IBERDROLA")
+        # Address concatenates the addressLine values in document order.
+        self.assertIn("Gran Vía 1", eh1.address)
+        self.assertIn("Bizkaia", eh1.address)
+
+    def test_last_updated_parsed_or_none(self):
+        recs = dgt_nap_client.parse_stream(_fixture_stream(), eh_only=True)
+        eh1 = next(r for r in recs if r.external_id == "dgt_nap-SITE-EH-1")
+        eh2 = next(r for r in recs if r.external_id == "dgt_nap-SITE-EH-2")
+        self.assertIsNotNone(eh1.last_verified_at)
+        self.assertEqual(eh1.last_verified_at.year, 2026)
+        # SITE-EH-2 has no fac:lastUpdated → must be None.
+        self.assertIsNone(eh2.last_verified_at)
+
+
+# ─────────────────────────────────────────────── DGT NAP ingest
+
+
+class IngestDGTNAPTests(TestCase):
+    def setUp(self):
+        # Force fetch_and_parse to return our fixture-parsed records — keeps
+        # the test fully offline.
+        self.records = dgt_nap_client.parse_stream(_fixture_stream(), eh_only=True)
+        patcher = mock.patch(
+            "apps.mubil.data.dgt_nap_client.fetch_and_parse",
+            return_value=self.records,
+        )
+        self.fetch_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_creates_stations(self):
+        stats = charging_ingest.ingest_dgt_nap()
+        self.assertEqual(stats.fetched, 2)
+        self.assertEqual(stats.created, 2)
+        self.assertEqual(stats.errors, 0)
+        self.assertEqual(ChargingStation.objects.filter(source="dgt_nap").count(), 2)
+        s = ChargingStation.objects.get(external_id="dgt_nap-SITE-EH-1")
+        self.assertEqual(s.power_kw, Decimal("50.00"))
+        self.assertEqual(s.operator, "IBERDROLA")
+        self.assertIsNotNone(s.last_seen_at)
+
+    def test_idempotent_rerun(self):
+        charging_ingest.ingest_dgt_nap()
+        stats = charging_ingest.ingest_dgt_nap()
+        self.assertEqual(stats.created, 0)
+        self.assertEqual(stats.updated, 2)
+        self.assertEqual(ChargingStation.objects.filter(source="dgt_nap").count(), 2)
+
+    def test_dry_run_makes_no_writes(self):
+        stats = charging_ingest.ingest_dgt_nap(dry_run=True)
+        self.assertEqual(stats.fetched, 2)
+        self.assertEqual(ChargingStation.objects.count(), 0)
+
+    def test_fetch_error_increments_errors_counter(self):
+        self.fetch_mock.side_effect = dgt_nap_client.DGTNAPError("boom")
+        stats = charging_ingest.ingest_dgt_nap()
+        self.assertEqual(stats.errors, 1)
+        self.assertEqual(stats.fetched, 0)
+        self.assertEqual(ChargingStation.objects.count(), 0)

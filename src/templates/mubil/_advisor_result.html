@@ -73,6 +73,7 @@
           </p>
         {% endif %}
       </div>
+
       <div>
         <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">CO₂ menos</p>
         <p class="mt-0.5 text-lg sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums">
@@ -89,10 +90,11 @@
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
     </svg>
     <div class="text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed min-w-0">
-      <strong class="font-bold text-slate-800 dark:text-slate-100">Coste neto del cambio:</strong>
-      vendes tu <strong>{{ current.make }} {{ current.model }}</strong> por un valor estimado de <strong class="text-slate-800 dark:text-slate-100 tabular-nums">{{ q.current_residual_value_eur|floatformat:0 }} €</strong>
+      <strong class="font-bold text-slate-800 dark:text-slate-100">Cambio de coche actual ("Switch"):</strong>
+      Vendes tu <strong>{{ current.make }} {{ current.model }}</strong> por un valor estimado de <strong class="text-slate-800 dark:text-slate-100 tabular-nums">{{ q.current_residual_value_eur|floatformat:0 }} €</strong>
       ({{ q.current_age_years|default:5 }} años de depreciación 15 %/año desde {{ current.price_eur|floatformat:0 }} € PVP)
       y compras el <strong>{{ target.make }} {{ target.model }}</strong> por <strong class="text-slate-800 dark:text-slate-100 tabular-nums">{{ target.price_eur|floatformat:0 }} €</strong>{% if q.subvencion_eur %} — incentivos: <strong class="text-emerald-600 dark:text-emerald-400 tabular-nums">{{ q.subvencion_eur|floatformat:0 }} €</strong>{% endif %}.
+      <span class="block mt-1 text-slate-500 dark:text-slate-400">Dado que ya tienes tu coche actual pagado, el cambio te obliga a realizar un desembolso inicial importante que debes amortizar únicamente con el ahorro de combustible y mantenimiento de la electricidad.</span>
       {% if q.payback_years == 0 %}
         <span class="block mt-1 text-emerald-700 dark:text-emerald-300 font-bold">Tu coche actual vale más que el EV nuevo (con incentivos): no hay inversión que amortizar.</span>
       {% elif q.payback_years is not None and q.payback_years <= q.years_horizon %}
@@ -102,13 +104,42 @@
       {% endif %}
     </div>
   </aside>
-  {% elif q.purchase_mode == 'new_vs_new' and q.payback_years == 0 and current.price_eur and target.price_eur %}
-  <aside class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 flex items-start gap-3">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+  {% elif q.purchase_mode == 'new_vs_new' and current.price_eur and target.price_eur %}
+  <aside class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-4 py-3 flex items-start gap-3">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500 dark:text-slate-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
     </svg>
-    <div class="text-[12px] text-emerald-700 dark:text-emerald-300 leading-relaxed min-w-0">
-      <strong class="font-bold">Comparando ambos a PVP nuevo:</strong> el {{ target.make }} ({{ target.price_eur|floatformat:0 }} €) ya es más barato que el {{ current.make }} ({{ current.price_eur|floatformat:0 }} €) antes de aplicar incentivos. No hay inversión que amortizar — el ahorro empieza en la compra.
+    <div class="text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed min-w-0">
+      <strong class="font-bold text-slate-800 dark:text-slate-100">Compra de vehículo nuevo ("New vs New"):</strong>
+      Comparas comprar el <strong>{{ target.make }} {{ target.model }}</strong> nuevo (<span class="tabular-nums font-bold">{{ target.price_eur|floatformat:0 }} €</span>)
+      frente a comprar el <strong>{{ current.make }} {{ current.model }}</strong> nuevo (<span class="tabular-nums font-bold">{{ current.price_eur|floatformat:0 }} €</span>).
+      <span class="block mt-1 text-slate-500 dark:text-slate-400">Como ibas a adquirir un coche nuevo de cualquier forma, la inversión diferencial es muy pequeña (solo pagas la diferencia de precio ajustada con incentivos). Por eso, amortizar esta diferencia suele ser mucho más rápido.</span>
+      {% if q.payback_years == 0 %}
+        <span class="block mt-1 text-emerald-700 dark:text-emerald-300 font-bold">El {{ target.make }} ya es más barato (o igual) que el {{ current.make }} tras aplicar incentivos. No hay inversión que amortizar — el ahorro empieza en el momento de la compra.</span>
+      {% elif q.payback_years is not None and q.payback_years <= q.years_horizon %}
+        <span class="block mt-1 text-emerald-700 dark:text-emerald-300 font-bold">Diferencia de compra amortizada con el ahorro operativo en <strong>{{ q.payback_years }} años</strong> (dentro del horizonte de {{ q.years_horizon }} años).</span>
+      {% elif q.payback_years is not None %}
+        <span class="block mt-1 text-amber-700 dark:text-amber-300 font-bold">⚠ La diferencia de compra NO se amortiza en {{ q.years_horizon }} años — necesitaría <strong>{{ q.payback_years }} años</strong>.</span>
+      {% endif %}
+    </div>
+  </aside>
+  {% elif q.purchase_mode == 'replace' and q.current_residual_value_eur and target.price_eur %}
+  <aside class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-4 py-3 flex items-start gap-3">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500 dark:text-slate-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <div class="text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed min-w-0">
+      <strong class="font-bold text-slate-800 dark:text-slate-100">Reemplazo con Venta ("Vender Usado + Comprar Nuevo"):</strong>
+      Vendes tu <strong>{{ current.make }} {{ current.model }}</strong> viejo por su valor estimado de de reventa de <strong class="text-slate-800 dark:text-slate-100 tabular-nums">{{ q.current_residual_value_eur|floatformat:0 }} €</strong>
+      y compras el <strong>{{ target.make }} {{ target.model }}</strong> nuevo por <strong class="text-slate-800 dark:text-slate-100 tabular-nums">{{ target.price_eur|floatformat:0 }} €</strong> (o un combustión nuevo equivalente por <strong class="text-slate-800 dark:text-slate-100 tabular-nums">{{ current.price_eur|floatformat:0 }} €</strong>).
+      <span class="block mt-1 text-slate-500 dark:text-slate-400">En ambas opciones obtienes el beneficio de la venta de tu coche viejo, por lo que el desembolso inicial de caja se reduce. Al comparar la diferencia neta de ambos, la amortización mide en cuántos años recuperas el coste extra del eléctrico frente al de combustión con el ahorro operativo.</span>
+      {% if q.payback_years == 0 %}
+        <span class="block mt-1 text-emerald-700 dark:text-emerald-300 font-bold">El eléctrico nuevo ya es más barato (o igual) que el de combustión nuevo tras aplicar los incentivos. No hay inversión extra que amortizar — el ahorro empieza desde el primer día.</span>
+      {% elif q.payback_years is not None and q.payback_years <= q.years_horizon %}
+        <span class="block mt-1 text-emerald-700 dark:text-emerald-300 font-bold">Diferencia de compra neta amortizada con el ahorro operativo en <strong>{{ q.payback_years }} años</strong> (dentro del horizonte de {{ q.years_horizon }} años).</span>
+      {% elif q.payback_years is not None %}
+        <span class="block mt-1 text-amber-700 dark:text-amber-300 font-bold">⚠ La diferencia de compra neta NO se amortiza en {{ q.years_horizon }} años — necesitaría <strong>{{ q.payback_years }} años</strong>.</span>
+      {% endif %}
     </div>
   </aside>
   {% endif %}
@@ -306,7 +337,7 @@
 
     <div x-show="pvpCurrent > 0 && pvpTarget > 0" class="mt-6 space-y-3">
       <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-        <span x-text="mode === 'switch' ? 'Cambio del vehículo · puntual' : 'Diferencia de compra · puntual'"></span>
+        <span x-text="mode === 'switch' ? 'Cambio del vehículo · puntual' : (mode === 'replace' ? 'Reemplazo de vehículo · puntual' : 'Diferencia de compra · puntual')"></span>
       </div>
 
       <div x-show="mode === 'switch'" class="flex items-center justify-between text-[12px] gap-3">
@@ -317,9 +348,13 @@
         <span class="text-slate-700 dark:text-slate-300">PVP nuevo de tu coche actual evitado</span>
         <span class="font-bold tabular-nums text-emerald-600 dark:text-emerald-400" x-text="'+' + fmt(pvpCurrent) + ' €'"></span>
       </div>
+      <div x-show="mode === 'replace'" class="flex items-center justify-between text-[12px] gap-3">
+        <span class="text-slate-700 dark:text-slate-300">PVP de combustión nuevo evitado</span>
+        <span class="font-bold tabular-nums text-emerald-600 dark:text-emerald-400" x-text="'+' + fmt(pvpCurrent) + ' €'"></span>
+      </div>
 
       <div x-show="subv > 0" class="flex items-center justify-between text-[12px] gap-3">
-        <span class="text-slate-700 dark:text-slate-300">Incentivos (MOVES III + IRPF + IVTM)</span>
+        <span class="text-slate-700 dark:text-slate-300">Incentivos (Programa Auto+ + IRPF + IVTM)</span>
         <span class="font-bold tabular-nums text-emerald-600 dark:text-emerald-400" x-text="'+' + fmt(subv) + ' €'"></span>
       </div>
 
@@ -331,6 +366,37 @@
       <div x-show="wallboxCapex > 0" class="flex items-center justify-between text-[12px] gap-3">
         <span class="text-slate-700 dark:text-slate-300">Instalación wallbox</span>
         <span class="font-bold tabular-nums text-rose-600 dark:text-rose-400" x-text="'−' + fmt(wallboxCapex) + ' €'"></span>
+      </div>
+
+      {# Desembolso Neto Día 1 #}
+      <div x-show="mode === 'replace'" class="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+        <p class="text-[10px] font-black uppercase tracking-wider text-slate-500">💵 Desembolso Neto Inicial (Día 1)</p>
+        <div class="flex justify-between items-center text-xs">
+          <span class="text-slate-600 dark:text-slate-400">Opción Combustión nuevo:</span>
+          <span class="font-bold text-slate-800 dark:text-slate-200 tabular-nums" x-text="fmt(pvpCurrent - residual) + ' €'"></span>
+        </div>
+        <div class="flex justify-between items-center text-xs">
+          <span class="text-slate-600 dark:text-slate-400">Opción Eléctrico nuevo:</span>
+          <span class="font-bold text-slate-800 dark:text-slate-200 tabular-nums" x-text="fmt(pvpTarget - residual - subv + Number(wallboxCapex)) + ' €'"></span>
+        </div>
+        <p class="text-[9px] text-slate-400 leading-normal mt-1">
+          * Ambos importes netos ya restan los <span class="font-bold text-slate-600 dark:text-slate-300" x-text="fmt(residual) + ' €'"></span> de beneficio por la venta de tu coche actual.
+        </p>
+      </div>
+
+      <div x-show="mode === 'switch'" class="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+        <p class="text-[10px] font-black uppercase tracking-wider text-slate-500">💵 Desembolso Neto Inicial (Día 1)</p>
+        <div class="flex justify-between items-center text-xs">
+          <span class="text-slate-600 dark:text-slate-400">Mantener tu coche actual:</span>
+          <span class="font-bold text-slate-800 dark:text-slate-200 tabular-nums">0 €</span>
+        </div>
+        <div class="flex justify-between items-center text-xs">
+          <span class="text-slate-600 dark:text-slate-400">Cambiar al Eléctrico nuevo:</span>
+          <span class="font-bold text-slate-800 dark:text-slate-200 tabular-nums" x-text="fmt(pvpTarget - residual - subv + Number(wallboxCapex)) + ' €'"></span>
+        </div>
+        <p class="text-[9px] text-slate-400 leading-normal mt-1">
+          * El importe del eléctrico ya resta los <span class="font-bold text-slate-600 dark:text-slate-300" x-text="fmt(residual) + ' €'"></span> que obtienes de la venta del actual.
+        </p>
       </div>
 
       <div class="flex items-baseline justify-between pt-3 mt-2 border-t border-slate-200 dark:border-slate-700">
@@ -352,69 +418,163 @@
 
   {% if q.payback_years and q.payback_years > 0 %}
   {% localize off %}
-  <section class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm p-5 sm:p-6"
-           x-data="{
-             yrs: {{ q.years_horizon }},
-             annualOp: {{ q.operational_savings_eur|default:0 }} / {{ q.years_horizon }},
-             upfront: -({{ q.purchase_savings_eur|default:0 }}),
-             paybackY: {{ q.payback_years|default:0 }},
-             years: [],
-             selected: null,
-             init() {
-               for (let i = 1; i <= this.yrs; i++) {
-                 const balance = i * this.annualOp - this.upfront;
-                 this.years.push({
-                   yr: i,
-                   balance: Math.round(balance),
-                   positive: balance >= 0,
-                 });
-               }
-               const maxAbs = Math.max(...this.years.map(y => Math.abs(y.balance)));
-               this.years.forEach(y => { y.pct = maxAbs > 0 ? Math.round(Math.abs(y.balance) / maxAbs * 100) : 0; });
-               this.selected = this.years[this.years.length - 1];
-             },
-             fmt(v) { return Math.round(v).toLocaleString('es-ES'); },
-           }">
-  {% endlocalize %}
+  <section class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm p-5 sm:p-6">
 
-    <div class="flex items-baseline justify-between mb-4">
+    <div class="flex items-start justify-between mb-4 gap-4">
       <div>
-        <h3 class="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">Línea de amortización</h3>
-        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Balance acumulado año a año.</p>
+        <h3 class="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">Curva de amortización</h3>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Balance acumulado · la línea cruza el cero en el punto de equilibrio.</p>
       </div>
-      <span class="text-[11px] font-bold text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums">
-        Punto de equilibrio: año {{ q.payback_years|floatformat:'-1' }}
-      </span>
+      <div class="text-right shrink-0">
+        <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Punto de equilibrio</div>
+        <div class="text-lg font-black text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums">Año {{ q.payback_years|floatformat:"-1" }}</div>
+      </div>
     </div>
 
-    <div class="flex items-end gap-1.5 h-20 sm:h-24">
-      <template x-for="y in years" :key="y.yr">
-        <div class="flex-1 flex flex-col items-center gap-1 cursor-pointer group"
-             @mouseenter="selected = y"
-             @click="selected = y">
-          <div class="w-full rounded-t transition-all duration-300 min-h-[6px]"
-               :class="y.yr === selected?.yr
-                       ? (y.positive ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-rose-500 ring-2 ring-rose-300')
-                       : (y.positive ? 'bg-emerald-400/80 hover:bg-emerald-500' : 'bg-rose-400/80 hover:bg-rose-500')"
-               :style="'height: ' + Math.max(6, y.pct) + '%'"></div>
-          <span class="text-[9px] font-bold text-slate-400" x-text="y.yr"></span>
-        </div>
-      </template>
-    </div>
+    <div id="bk-chart-{{ q.cp }}" class="w-full" style="height:220px"></div>
 
-    <div class="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-700 flex items-baseline justify-between gap-3">
-      <div class="min-w-0">
-        <div class="text-[10px] font-bold uppercase tracking-widest"
-             :class="selected?.positive ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'"
-             x-text="'Año ' + (selected?.yr || '—')"></div>
-        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5"
-           x-text="selected?.positive ? 'Ahorro neto acumulado' : 'Inversión por amortizar'"></p>
+    <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+      <div class="rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 px-3 py-2">
+        <p class="text-[9px] font-bold uppercase tracking-widest text-rose-500 dark:text-rose-400">Inversión inicial</p>
+        <p class="text-base font-black text-rose-700 dark:text-rose-300 tabular-nums mt-0.5">
+          {% if q.purchase_savings_eur < 0 %}{{ q.purchase_savings_eur|floatformat:0|slice:"1:" }}{% else %}0{% endif %} €
+        </p>
       </div>
-      <span class="text-lg font-black tabular-nums"
-            :class="selected?.positive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'"
-            x-text="((selected?.balance || 0) >= 0 ? '+' : '−') + fmt(Math.abs(selected?.balance || 0)) + ' €'"></span>
+      <div class="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-3 py-2">
+        <p class="text-[9px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Ahorro / año</p>
+        <p class="text-base font-black text-amber-700 dark:text-amber-300 tabular-nums mt-0.5" id="bk-annual-{{ q.cp }}">— €</p>
+      </div>
+      <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 px-3 py-2">
+        <p class="text-[9px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Ahorro a {{ q.years_horizon }} años</p>
+        <p class="text-base font-black text-emerald-700 dark:text-emerald-300 tabular-nums mt-0.5">
+          {% if q.total_net_savings_eur > 0 %}+{{ q.total_net_savings_eur|floatformat:0 }}{% else %}{{ q.total_net_savings_eur|floatformat:0 }}{% endif %} €
+        </p>
+      </div>
     </div>
+    {% endlocalize %}
+
+    <p class="mt-3 text-[9px] text-slate-400 dark:text-slate-500">
+      <span class="inline-block w-5 border-t-2 border-dashed border-amber-400 align-middle mr-1"></span>
+      Escenario combustible +5 %/año — breakeven se adelanta si la energía sube.
+    </p>
   </section>
+
+  <script>
+  (function(){
+    {% localize off %}
+    const annualOp = {{ q.operational_savings_eur|default:0 }} / {{ q.years_horizon }};
+    const upfront  = -({{ q.purchase_savings_eur|default:0 }});
+    const paybackY = {{ q.payback_years|default:0 }};
+    {% endlocalize %}
+    const isDark  = document.documentElement.classList.contains('dark');
+    const horizon = Math.min(Math.max(Math.ceil(paybackY) + 5, 12), 20);
+
+    // Build raw series
+    const xLabels = [], baseline = [], escalate = [];
+    xLabels.push('Año 0');
+    baseline.push(Math.round(-upfront));
+    escalate.push(Math.round(-upfront));
+    let cb = -upfront, cf = -upfront;
+    const fs = annualOp * 0.65, nf = annualOp - fs;
+    for (let i = 1; i <= horizon; i++) {
+      xLabels.push('Año ' + i);
+      cb += annualOp;
+      cf += nf + fs * Math.pow(1.05, i);
+      baseline.push(Math.round(cb));
+      escalate.push(Math.round(cf));
+    }
+
+    // Stat footer
+    const annEl = document.getElementById('bk-annual-{{ q.cp }}');
+    if (annEl) annEl.textContent = '+' + Math.round(annualOp).toLocaleString('es-ES') + ' €';
+
+    // Split into negative (red) and positive (green) series for dual coloring
+    const bkIdx = baseline.findIndex(v => v >= 0);
+    const negData = baseline.map((v, i) => {
+      if (v <= 0) return v;
+      if (i > 0 && baseline[i - 1] < 0) return 0; // bridge to zero at crossover
+      return null;
+    });
+    const posData = baseline.map((v, i) => {
+      if (v >= 0) return v;
+      if (i < baseline.length - 1 && baseline[i + 1] > 0) return 0; // bridge to zero
+      return null;
+    });
+
+    const el = document.getElementById('bk-chart-{{ q.cp }}');
+    if (!el || !window.echarts) return;
+    const chart = echarts.init(el, null, { renderer: 'svg' });
+
+    const neg = '#f43f5e', pos = '#10b981', zero = isDark ? '#475569' : '#94a3b8';
+    const fmt = v => Math.abs(Math.round(v)).toLocaleString('es-ES') + ' €';
+    const sign = v => v >= 0 ? '+' : '−';
+
+    const sharedMarkLine = {
+      silent: true, symbol: 'none',
+      data: [
+        { yAxis: 0, lineStyle: { color: zero, type: 'solid', width: 1 } },
+        ...(bkIdx > 0 ? [{
+          xAxis: bkIdx,
+          lineStyle: { color: pos, type: 'dashed', width: 1.5 },
+          label: { show: true, position: 'insideStartTop', formatter: '✓ Amortizado',
+                   color: pos, fontSize: 10, fontWeight: 700,
+                   backgroundColor: isDark ? '#0f172a' : '#fff', padding: [2, 4], borderRadius: 4 }
+        }] : [])
+      ]
+    };
+
+    chart.setOption({
+      animation: true, animationDuration: 800, animationEasing: 'cubicOut',
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: isDark ? '#1e293b' : '#fff',
+        borderColor: isDark ? '#334155' : '#e2e8f0',
+        textStyle: { color: isDark ? '#e2e8f0' : '#1e293b', fontSize: 11 },
+        formatter(params) {
+          // params[0]=neg, [1]=pos, [2]=fuel
+          const yr = params[0].axisValue;
+          const base = baseline[params[0].dataIndex];
+          const fuel = escalate[params[0].dataIndex];
+          const c = v => v >= 0 ? pos : neg;
+          let h = `<b style="font-size:12px">${yr}</b><br>`;
+          h += `<span style="color:${isDark?'#94a3b8':'#64748b'}">Balance</span> <b style="color:${c(base)}">${sign(base)}${fmt(base)}</b>`;
+          h += `<br><span style="color:#f59e0b">+5%/año</span> <b style="color:${c(fuel)}">${sign(fuel)}${fmt(fuel)}</b>`;
+          h += base < 0
+            ? `<br><small style="color:${zero}">Por amortizar: ${fmt(base)}</small>`
+            : `<br><small style="color:${pos}">✓ Ahorro acumulado: ${fmt(base)}</small>`;
+          return h;
+        }
+      },
+      grid: { top: 12, right: 16, bottom: 36, left: 68 },
+      xAxis: { type: 'category', data: xLabels, axisTick: { show: false },
+               axisLine: { lineStyle: { color: zero } }, splitLine: { show: false },
+               axisLabel: { color: zero, fontSize: 10, interval: Math.floor(horizon / 6) } },
+      yAxis: { type: 'value', axisLine: { show: false }, axisTick: { show: false },
+               splitLine: { lineStyle: { color: isDark ? '#1e293b' : '#f1f5f9', type: 'dashed' } },
+               axisLabel: { color: zero, fontSize: 10,
+                            formatter: v => Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + 'k€' : v + '€' } },
+      series: [
+        // Negative zone — red
+        { name: 'Balance−', type: 'line', data: negData, smooth: 0.25,
+          symbol: 'circle', symbolSize: 4,
+          color: neg, lineStyle: { width: 2.5, color: neg },
+          areaStyle: { color: neg, opacity: 0.15 },
+          markLine: sharedMarkLine },
+        // Positive zone — green
+        { name: 'Balance+', type: 'line', data: posData, smooth: 0.25,
+          symbol: 'circle', symbolSize: 4,
+          color: pos, lineStyle: { width: 2.5, color: pos },
+          areaStyle: { color: pos, opacity: 0.15 } },
+        // Fuel escalation scenario
+        { name: 'Fuel+5%', type: 'line', data: escalate, smooth: 0.25,
+          symbol: 'none', lineStyle: { width: 1.5, type: 'dashed', color: '#f59e0b' },
+          areaStyle: { opacity: 0 } }
+      ]
+    });
+
+    window.addEventListener('resize', () => chart.resize(), { passive: true });
+  })();
+  </script>
   {% endif %}
 
 

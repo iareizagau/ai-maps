@@ -39,7 +39,7 @@ from django.contrib.gis.geos import Point
 from django.db import transaction
 from django.db.models import Count
 
-from apps.mubil.data import openchargemap_client
+from apps.mubil.data import dgt_nap_client, openchargemap_client
 from apps.mubil.models import ChargingStation
 
 log = logging.getLogger(__name__)
@@ -47,6 +47,7 @@ log = logging.getLogger(__name__)
 
 SOURCE_MITECO = "miteco"
 SOURCE_OCM = "ocm"
+SOURCE_DGT_NAP = "dgt_nap"
 
 # Provincia values used by MITECO in the CSV — uppercased, no accents.
 EH_PROVINCES = frozenset({"BIZKAIA", "GIPUZKOA", "ARABA", "ALAVA", "NAVARRA"})
@@ -218,18 +219,24 @@ def _ingest_miteco_row(
     return "created" if created else "updated"
 
 
-# ─────────────────────────────────────────────── OpenChargeMap ingest
+# ─────────────────────────────────────────────── shared upsert (OCM + DGT NAP)
 
 
-def _upsert_ocm_record(
+def _upsert_record(
     rec: openchargemap_client.ChargingPOIRecord,
+    *,
+    source: str,
     now: datetime,
     stats: ChargingIngestStats,
 ) -> None:
+    """Upsert one parsed record into ``ChargingStation``.
+
+    Shared by OCM and DGT NAP — both share the ``ChargingPOIRecord`` shape, so
+    the only source-specific bit is the ``source`` column. ``last_seen_at``
+    prefers the upstream timestamp (OCM verification date, DGT ``lastUpdated``)
+    and falls back to ``now`` so the freshness filter still works.
+    """
     geom = Point(float(rec.longitude), float(rec.latitude), srid=4326)
-    # If OCM gave us a verification date, prefer it as the freshness signal —
-    # it reflects when a human last touched the record. Fall back to "now" so
-    # the freshness filter still works for records OCM hasn't re-verified.
     last_seen = rec.last_verified_at or now
 
     defaults = {
@@ -243,14 +250,14 @@ def _upsert_ocm_record(
     try:
         with transaction.atomic():
             _obj, created = ChargingStation.objects.update_or_create(
-                source=SOURCE_OCM,
+                source=source,
                 external_id=rec.external_id,
                 defaults=defaults,
             )
     except Exception as e:  # noqa: BLE001
         log.warning(
             "ChargingStation upsert failed (source=%s external_id=%s): %s",
-            SOURCE_OCM, rec.external_id, e,
+            source, rec.external_id, e,
         )
         stats.errors += 1
         return
@@ -258,6 +265,9 @@ def _upsert_ocm_record(
         stats.created += 1
     else:
         stats.updated += 1
+
+
+# ─────────────────────────────────────────────── OpenChargeMap ingest
 
 
 def ingest_openchargemap(
@@ -308,7 +318,49 @@ def ingest_openchargemap(
 
     now = datetime.now(tz=timezone.utc)
     for rec in records:
-        _upsert_ocm_record(rec, now, stats)
+        _upsert_record(rec, source=SOURCE_OCM, now=now, stats=stats)
+    return stats
+
+
+# ─────────────────────────────────────────────── DGT NAP ingest
+
+
+def ingest_dgt_nap(
+    *,
+    url: str = dgt_nap_client.BASE_URL,
+    eh_only: bool = False,
+    dry_run: bool = False,
+) -> ChargingIngestStats:
+    """Stream the DGT NAP DATEX II feed and upsert as ``source='dgt_nap'``.
+
+    The feed is ~85 MB nationwide and ingests every site by default
+    (~12k across Spain). Pass ``eh_only=True`` to restrict to the ~800
+    sites whose Provincia: addressLine matches Bizkaia / Gipuzkoa /
+    Araba / Navarra.
+
+    Args:
+        url: override the canonical feed URL.
+        eh_only: restrict to Euskal Herria provinces (default ``False``).
+        dry_run: fetch + parse, no DB writes.
+
+    No API key — the feed is public. Unlike OCM, there's no graceful no-op
+    branch: any HTTP/XML failure bumps ``stats.errors`` and returns.
+    """
+    stats = ChargingIngestStats(source=SOURCE_DGT_NAP)
+    try:
+        records = dgt_nap_client.fetch_and_parse(url=url, eh_only=eh_only)
+    except dgt_nap_client.DGTNAPError as e:
+        log.error("DGT NAP fetch failed: %s", e)
+        stats.errors += 1
+        return stats
+
+    stats.fetched = len(records)
+    if dry_run:
+        return stats
+
+    now = datetime.now(tz=timezone.utc)
+    for rec in records:
+        _upsert_record(rec, source=SOURCE_DGT_NAP, now=now, stats=stats)
     return stats
 
 
@@ -331,7 +383,7 @@ def ingest_default(*, dry_run: bool = False) -> ChargingIngestStats:
 
 def count_by_source() -> dict:
     """Quick health check used by management commands and the admin."""
-    out = {SOURCE_MITECO: 0, SOURCE_OCM: 0, "other": 0}
+    out = {SOURCE_MITECO: 0, SOURCE_OCM: 0, SOURCE_DGT_NAP: 0, "other": 0}
     for row in ChargingStation.objects.values("source").annotate(n=Count("id")):
         src = row["source"] or "other"
         bucket = src if src in out else "other"
@@ -343,3 +395,4 @@ def iter_eh_sources() -> Iterable[str]:
     """Iterator over the source slugs we ingest. Useful for admin filters."""
     yield SOURCE_MITECO
     yield SOURCE_OCM
+    yield SOURCE_DGT_NAP

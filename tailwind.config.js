@@ -1,9 +1,15 @@
 /** @type {import('tailwindcss').Config} */
+// Cache invalidation timestamp: 1781215481384
 module.exports = {
   content: [
     './src/templates/**/*.html',
+    'src/templates/**/*.html',
+    'src/templates/mubil/**/*.html',
+    'C:/Users/imanol/projects/imanol/saas/maps/src/templates/**/*.html',
     './src/apps/**/templates/**/*.html',
+    'src/apps/**/templates/**/*.html',
     './src/apps/**/*.py',
+    'src/apps/**/*.py',
   ],
   darkMode: 'class',
   theme: {

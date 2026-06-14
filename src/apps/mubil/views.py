@@ -9,6 +9,7 @@ from django.views.decorators.http import require_http_methods
 
 from .advisor import services as advisor_services
 from .advisor.api import _quote_to_out
+from .advisor import assistant as advisor_assistant
 from .ask import services as ask_services
 from .models import (
     ChargingStation,
@@ -514,6 +515,46 @@ def route_plan(request):
     })
 
 
+def infrastructure_page(request):
+    """Infrastructure map — chargers coloured by vehicle compatibility, plus
+    a fast-charging-desert overlay over EH.
+
+    The heavy GeoJSON loads asynchronously from
+    ``/mubil/api/v1/infrastructure/chargers.geojson`` so this view stays
+    light. Session prefill (``mubil_route_prefill.vehicle_target_id``,
+    written by the advisor) makes the page land already coloured for the
+    user's chosen EV — same bridge pattern as ``route_page``.
+    """
+    prefill = request.session.get('mubil_route_prefill') or {}
+    vehicle_id = prefill.get('vehicle_target_id')
+
+    vehicle = None
+    if vehicle_id:
+        vehicle = Vehicle.objects.filter(pk=vehicle_id).only(
+            'id', 'make', 'model', 'propulsion',
+        ).first()
+
+    ev_vehicles = list(Vehicle.objects.filter(
+        propulsion__in=(Vehicle.Propulsion.BEV, Vehicle.Propulsion.PHEV),
+    ).only('id', 'make', 'model').order_by('make', 'model'))
+
+    init_payload = {
+        'vehicleId': vehicle.id if vehicle else None,
+        'vehicleLabel': f"{vehicle.make} {vehicle.model}" if vehicle else None,
+        'chargersUrl': '/estrata/api/v1/infrastructure/chargers.geojson',
+        'fuelStationsUrl': '/estrata/api/v1/infrastructure/fuel_stations.geojson',
+        'desertUrl': '/estrata/api/v1/infrastructure/desert.json',
+    }
+
+    return render(request, 'mubil/infrastructure.html', {
+        'init_json': json.dumps(init_payload),
+        'selected_vehicle': vehicle,
+        'ev_vehicles': ev_vehicles,
+        'total_chargers': ChargingStation.objects.count(),
+        'total_fuel_stations': FuelStation.objects.count(),
+    })
+
+
 def plan_page(request):
     """Demand heatmap (MOCK). PROPUESTA.md §3.4."""
     try:
@@ -527,3 +568,30 @@ def plan_page(request):
         'top_locations': plan_services.top_locations(horizon=horizon, limit=10),
         'hex_count': DemandHex.objects.count(),
     })
+
+
+@require_http_methods(["POST"])
+def advisor_assist(request):
+    """HTMX endpoint — advisor AI assistant (contextual hints + Q&A).
+
+    Receives JSON body with:
+      - context: form state snapshot (step, selected vehicles, km_year, etc.)
+      - message: optional free-form user question (empty = proactive hint mode)
+
+    Returns the assistant partial rendered via _advisor_assist.html.
+    """
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return HttpResponseBadRequest("JSON inválido.")
+
+    ctx = advisor_assistant.FormContext.from_dict(body.get("context", {}))
+    user_message = (body.get("message") or "").strip() or None
+
+    result = advisor_assistant.get_hint(ctx, user_message=user_message)
+
+    return render(request, "mubil/_advisor_assist.html", {
+        "result": result,
+        "user_message": user_message,
+    })
+

@@ -156,7 +156,14 @@ SYSTEM_PROMPT = (
     "(prensa especializada). Cuando cites una NOTICIA, incluye la fecha "
     "de publicación entre paréntesis (ej. 'según [3] (2026-06-04)'). "
     "Prioriza DATASET para cifras y normativa; usa NOTICIA para "
-    "contextualizar actualidad y cambios recientes."
+    "contextualizar actualidad y cambios recientes. "
+    "IMPORTANTE — vigencia de programas de ayudas: el programa MOVES III "
+    "ha FINALIZADO y está OBSOLETO. El programa de ayudas vigente en 2026 "
+    "para la compra de vehículos eléctricos en España es el PROGRAMA AUTO+, "
+    "gestionado por el Ministerio de Industria y Turismo (MINTUR) con una "
+    "dotación de 400 millones de euros. Si el usuario pregunta por MOVES III, "
+    "indícale explícitamente que ese programa ya no está activo y redirige "
+    "la respuesta hacia las ayudas del Programa Auto+."
 )
 
 
@@ -368,29 +375,29 @@ def answer(
 
 SUGGESTED_PROMPTS = [
     {
-        "id": "moves-iii-bilbao",
-        "label": "Ayudas MOVES III para coche eléctrico en Bilbao",
-        "query": "¿Qué ayudas MOVES III puedo solicitar para comprar un coche eléctrico empadronado en Bilbao en 2026?",
+        "id": "plan-auto-plus",
+        "label": "¿Cuánto me dan por comprar un eléctrico?",
+        "query": "¿Qué ayudas ofrece el Programa Auto+ para comprar un coche eléctrico en 2026? ¿Cuánto me pueden dar y qué requisitos hay?",
     },
     {
         "id": "pvpc-vs-flat",
-        "label": "PVPC vs tarifa plana para cargar EV de noche",
-        "query": "¿Conviene la tarifa PVPC o una tarifa plana 2.0TD para cargar un coche eléctrico de noche?",
+        "label": "¿Cuánto cuesta cargar el coche de noche?",
+        "query": "¿Qué tarifa de luz es más barata para cargar un coche eléctrico por la noche en casa?",
     },
     {
         "id": "donostia-bilbao-carga",
-        "label": "Cargadores rápidos Donostia → Bilbao",
-        "query": "¿Qué cargadores rápidos hay entre Donostia y Bilbao en la AP-8?",
+        "label": "Cargadores en la autopista Donostia–Bilbao",
+        "query": "¿Dónde puedo cargar mi coche eléctrico entre Donostia y Bilbao? ¿Hay cargadores rápidos en la AP-8?",
     },
     {
         "id": "datos-matriculaciones-eh",
-        "label": "Matriculaciones EV en Euskadi 2025",
+        "label": "¿Cuántos eléctricos hay en Euskadi?",
         "query": "¿Cuántos vehículos eléctricos se matricularon en Euskadi en 2025? ¿Hay datos por provincia?",
     },
     {
         "id": "zbe-donostia",
-        "label": "Zona Bajas Emisiones Donostia",
-        "query": "¿Qué restricciones impone la ZBE de Donostia y desde cuándo?",
+        "label": "Restricciones de circulación en Donostia",
+        "query": "¿Qué coches no pueden circular por la zona de bajas emisiones de Donostia y desde cuándo?",
     },
 ]
 

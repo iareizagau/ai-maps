@@ -1,0 +1,396 @@
+{% extends "mubil/base.html" %}
+{% load i18n %}
+
+{% block title %}Mubil Infraestructura — Cargadores compatibles + desierto de carga rápida{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+{% endblock %}
+
+{% block content %}
+<section class="w-full px-5 sm:px-8 lg:px-12 py-10">
+
+  <div class="mb-8">
+    <a href="{% url 'mubil:index' %}"
+       class="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      Volver
+    </a>
+    <h1 class="mt-3 text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">
+      Infraestructura <span class="text-cyan-500">·</span> ¿Es viable cargar aquí tu coche?
+    </h1>
+    <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+      Cargadores públicos de Euskal Herria, coloreados por compatibilidad con tu coche y agrupados por
+      <strong>cobertura de carga rápida</strong> (≥50&nbsp;kW alcanzable en 25&nbsp;km).
+      Fuentes: DGT NAP DATEX&nbsp;II · MITECO · OpenChargeMap.
+    </p>
+    <p id="vehicle-filter-label" class="mt-3 inline-flex items-center gap-2 rounded-full bg-cyan-50 dark:bg-cyan-900/30 px-3 py-1 text-xs font-bold text-cyan-700 dark:text-cyan-300" {% if not selected_vehicle %}style="display: none;"{% endif %}>
+      {% if selected_vehicle %}
+        Filtrando por: {{ selected_vehicle.make }} {{ selected_vehicle.model }} ({{ selected_vehicle.get_propulsion_display }})
+      {% endif %}
+    </p>
+    <div id="no-vehicle-warning" class="mt-3 text-xs text-slate-500 dark:text-slate-400" {% if selected_vehicle %}style="display: none;"{% endif %}>
+      Sin coche seleccionado. Elige uno en el menú lateral o <a href="{% url 'mubil:advisor' %}" class="font-bold text-cyan-600 dark:text-cyan-400 hover:underline">pide tu recomendación TCO</a> para analizar compatibilidades.
+    </div>
+  </div>
+
+  <div x-data="mubilInfraState({{ init_json|escape }})" x-init="initMap()"
+       class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    {# ---------- Map + layer toggles ---------- #}
+    <div class="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div class="flex items-center gap-2">
+          <button type="button"
+                  @click="toggleLayer('chargers')"
+                  :class="layers.chargers ? 'bg-cyan-500 text-white' : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300'"
+                  class="px-3 py-1.5 text-xs font-bold rounded-lg uppercase tracking-widest">
+            Cargadores
+          </button>
+          <button type="button"
+                  @click="toggleLayer('fuel')"
+                  :class="layers.fuel ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300'"
+                  class="px-3 py-1.5 text-xs font-bold rounded-lg uppercase tracking-widest">
+            Gasolineras
+          </button>
+          <button type="button"
+                  @click="toggleLayer('desert')"
+                  :class="layers.desert ? 'bg-cyan-500 text-white' : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300'"
+                  class="px-3 py-1.5 text-xs font-bold rounded-lg uppercase tracking-widest">
+            Desierto rápido
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2" x-show="layers.chargers">
+          <span class="text-xs uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">Min kW</span>
+          <template x-for="tier in tierFilters" :key="tier.key">
+            <button type="button"
+                    @click="setMinTier(tier.key)"
+                    :class="minTier === tier.key ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300'"
+                    class="px-2.5 py-1 text-xs font-bold rounded-md"
+                    x-text="tier.label"></button>
+          </template>
+        </div>
+      </div>
+
+      <div id="infra-map" style="width:100%; height:560px; position:relative; z-index:0; border-radius:0.75rem;"></div>
+
+      {# Legend below the map #}
+      <div class="mt-3 flex flex-wrap items-center gap-4 text-xs text-slate-600 dark:text-slate-400">
+        <div class="flex items-center gap-1.5" x-show="layers.chargers"><span class="inline-block h-3 w-3 rounded-full" style="background:#2563eb"></span>Rápido ≥50 kW</div>
+        <div class="flex items-center gap-1.5" x-show="layers.chargers"><span class="inline-block h-3 w-3 rounded-full" style="background:#16a34a"></span>Medio 22–50 kW</div>
+        <div class="flex items-center gap-1.5" x-show="layers.chargers"><span class="inline-block h-3 w-3 rounded-full" style="background:#ca8a04"></span>Lento &lt;22 kW</div>
+        <div class="flex items-center gap-1.5" x-show="layers.chargers && initial.vehicleId"><span class="inline-block h-3 w-3 rounded-full" style="background:#9ca3af"></span>Incompatible</div>
+        <div class="flex items-center gap-1.5" x-show="layers.fuel"><span class="inline-block h-3 w-3 rounded-full" style="background:#f97316"></span>Gasolinera</div>
+        <div class="flex items-center gap-1.5" x-show="layers.fuel"><span class="inline-block h-3 w-3 rounded-full" style="background:#ef4444"></span>Sólo empleados</div>
+      </div>
+    </div>
+
+    {# ---------- Side stats ---------- #}
+    <aside class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 flex flex-col gap-4">
+      <div>
+        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Resumen</h2>
+        <dl class="space-y-2 text-sm">
+          <div class="flex justify-between" x-show="layers.chargers"><dt class="text-slate-600 dark:text-slate-400">Cargadores totales (BD)</dt><dd class="font-bold text-slate-900 dark:text-white">{{ total_chargers }}</dd></div>
+          <div class="flex justify-between" x-show="layers.chargers"><dt class="text-slate-600 dark:text-slate-400">Cargadores visibles</dt><dd class="font-bold text-slate-900 dark:text-white" x-text="visibleCount"></dd></div>
+          <div class="flex justify-between" x-show="layers.chargers && initial.vehicleId"><dt class="text-slate-600 dark:text-slate-400">Compatibles con tu coche</dt><dd class="font-bold text-cyan-600 dark:text-cyan-400" x-text="compatibleCount"></dd></div>
+          <div class="flex justify-between" x-show="layers.chargers"><dt class="text-slate-600 dark:text-slate-400">Rápidos ≥50 kW</dt><dd class="font-bold text-blue-600 dark:text-blue-400" x-text="fastCount"></dd></div>
+          <div class="flex justify-between" x-show="layers.fuel"><dt class="text-slate-600 dark:text-slate-400">Gasolineras (BD)</dt><dd class="font-bold text-orange-500" >{{ total_fuel_stations }}</dd></div>
+          <div class="flex justify-between" x-show="layers.fuel"><dt class="text-slate-600 dark:text-slate-400">Gasolineras visibles</dt><dd class="font-bold text-orange-500" x-text="fuelCount"></dd></div>
+        </dl>
+      </div>
+
+      <div>
+        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Vehículo seleccionado</h2>
+        <div class="space-y-3">
+          <select id="vehicle-selector"
+                  @change="changeVehicle($event.target.value)"
+                  class="w-full text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-2.5 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-cyan-500">
+            <option value="">-- Todos los cargadores --</option>
+            {% for v in ev_vehicles %}
+              <option value="{{ v.id }}" {% if selected_vehicle and selected_vehicle.id == v.id %}selected{% endif %}>
+                {{ v.make }} {{ v.model }}
+              </option>
+            {% endfor %}
+          </select>
+
+          <!-- Toggle compatibilidad -->
+          <div class="flex items-center gap-2" x-show="initial.vehicleId">
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" x-model="hideIncompatible" @change="renderChargers()" class="sr-only peer">
+              <div class="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-500"></div>
+              <span class="ml-2 text-xs font-medium text-slate-600 dark:text-slate-400">Ocultar incompatibles</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Cómo se calcula</h2>
+        <ul class="text-xs space-y-1.5 text-slate-600 dark:text-slate-400">
+          <li><strong>Compatible</strong>: el cargador tiene al menos un conector Type 2 / CCS2 / CHAdeMO.</li>
+          <li><strong>Tier kW</strong>: máxima potencia por punto, redondeada a slow/medium/fast.</li>
+          <li><strong>Desierto rápido</strong>: rejilla 5&nbsp;km sobre EH; rojo = sin ≥50 kW en 25 km a la redonda.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function mubilInfraState(initial) {
+  return {
+    initial: initial,
+    map: null,
+    chargerLayer: null,
+    fuelLayer: null,
+    desertLayer: null,
+    layers: { chargers: true, fuel: false, desert: false },
+    minTier: 'all',
+    hideIncompatible: false,
+    tierFilters: [
+      { key: 'all',    label: 'Todos' },
+      { key: 'slow',   label: '≥0' },
+      { key: 'medium', label: '≥22' },
+      { key: 'fast',   label: '≥50' },
+    ],
+    allFeatures: [],
+    fuelFeatures: [],
+    visibleCount: 0,
+    compatibleCount: 0,
+    fastCount: 0,
+    fuelCount: 0,
+    desertCells: null,
+
+    initMap() {
+      const el = document.getElementById('infra-map');
+      if (!el || !window.L) return;
+
+      // EH center, zoom 9 fits Bilbao–Iruña–Donostia in one view.
+      this.map = L.map(el, { zoomControl: true }).setView([43.0, -2.4], 9);
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const tileUrl = isDark
+        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+      L.tileLayer(tileUrl, {
+        attribution: '© OpenStreetMap · © CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19,
+      }).addTo(this.map);
+
+      this.loadChargers();
+      requestAnimationFrame(() => this.map.invalidateSize());
+      setTimeout(() => this.map.invalidateSize(), 250);
+    },
+
+    changeVehicle(vehicleId) {
+      this.initial.vehicleId = vehicleId;
+      this.loadChargers();
+    },
+
+    loadChargers() {
+      const url = new URL(this.initial.chargersUrl, window.location.origin);
+      if (this.initial.vehicleId) {
+        url.searchParams.set('vehicle_id', this.initial.vehicleId);
+      }
+      fetch(url)
+        .then(r => r.json())
+        .then(fc => {
+          this.allFeatures = fc.features || [];
+          this.fastCount = this.allFeatures.filter(f => f.properties.tier === 'fast').length;
+          this.compatibleCount = this.allFeatures.filter(f => f.properties.compatible).length;
+
+          // Dynamically toggle top vehicle filtering labels
+          const labelEl = document.getElementById('vehicle-filter-label');
+          const warningEl = document.getElementById('no-vehicle-warning');
+          if (labelEl) {
+            if (fc.meta && fc.meta.vehicle_label) {
+              labelEl.innerHTML = 'Filtrando por: ' + fc.meta.vehicle_label;
+              labelEl.style.display = 'inline-flex';
+              if (warningEl) warningEl.style.display = 'none';
+            } else {
+              labelEl.style.display = 'none';
+              if (warningEl) warningEl.style.display = 'block';
+            }
+          }
+
+          this.renderChargers();
+        })
+        .catch(e => console.error('chargers fetch failed', e));
+    },
+
+    renderChargers() {
+      if (this.chargerLayer) { this.map.removeLayer(this.chargerLayer); this.chargerLayer = null; }
+      if (!this.layers.chargers) { this.visibleCount = 0; return; }
+
+      const minPowerKw = { all: 0, slow: 0, medium: 22, fast: 50 }[this.minTier];
+      const filtered = this.allFeatures.filter(f => {
+        const pw = f.properties.power_kw || 0;
+        if (pw < minPowerKw) return false;
+        if (this.hideIncompatible && this.initial.vehicleId && !f.properties.compatible) return false;
+        return true;
+      });
+      this.visibleCount = filtered.length;
+
+      this.chargerLayer = L.geoJSON(
+        { type: 'FeatureCollection', features: filtered },
+        {
+          pointToLayer: (feature, latlng) => {
+            const p = feature.properties;
+            const isCompat = p.compatible || !this.initial.vehicleId;
+            return L.circleMarker(latlng, {
+              radius: p.tier === 'fast' ? 6 : (p.tier === 'medium' ? 5 : 4),
+              fillColor: isCompat ? p.color : '#9ca3af',
+              color: isCompat ? '#0f172a' : '#9ca3af',
+              weight: 1,
+              opacity: isCompat ? 0.8 : 0.4,
+              fillOpacity: isCompat ? 0.85 : 0.25,
+            });
+          },
+          onEachFeature: (feature, lyr) => {
+            const p = feature.properties;
+            const seen = p.last_seen_at ? new Date(p.last_seen_at).toLocaleDateString('es-ES') : '—';
+            const ctypes = (p.connectors || []).map(c => c.type).filter(Boolean).join(', ') || '—';
+            const isCompat = p.compatible || !this.initial.vehicleId;
+            lyr.bindPopup(
+              `<strong>${p.operator || 'Operador desconocido'}</strong><br>` +
+              `<small>${p.address || ''}</small><br>` +
+              `Potencia: <b>${p.power_kw ? p.power_kw + ' kW' : '?'}</b> · ${p.tier}<br>` +
+              `Conectores: ${ctypes}<br>` +
+              `<small>Fuente: ${p.source} · visto ${seen}</small>` +
+              (isCompat ? '' : '<br><span style="color:#ef4444; font-weight:bold;">No compatible con tu coche</span>')
+            );
+          },
+        }
+      ).addTo(this.map);
+    },
+
+    toggleLayer(key) {
+      this.layers[key] = !this.layers[key];
+      if (key === 'chargers') {
+        this.renderChargers();
+      } else if (key === 'fuel') {
+        if (this.layers.fuel) this.loadFuel();
+        else if (this.fuelLayer) { this.map.removeLayer(this.fuelLayer); this.fuelLayer = null; this.fuelCount = 0; }
+      } else if (key === 'desert') {
+        if (this.layers.desert) this.loadDesert();
+        else if (this.desertLayer) { this.map.removeLayer(this.desertLayer); this.desertLayer = null; }
+      }
+    },
+
+    loadFuel() {
+      if (this.fuelFeatures.length) { this.renderFuel(); return; }
+      fetch(this.initial.fuelStationsUrl)
+        .then(r => r.json())
+        .then(fc => {
+          this.fuelFeatures = fc.features || [];
+          this.renderFuel();
+        })
+        .catch(e => console.error('fuel fetch failed', e));
+    },
+
+    renderFuel() {
+      if (this.fuelLayer) { this.map.removeLayer(this.fuelLayer); this.fuelLayer = null; }
+      if (!this.layers.fuel || !this.fuelFeatures.length) { this.fuelCount = 0; return; }
+
+      this.fuelCount = this.fuelFeatures.length;
+
+      // Known fuel keys from MINCOTUR, labels in Spanish.
+      const FUEL_LABELS = {
+        gasolina_95_e5:  'SP95',
+        gasolina_98_e5:  'SP98',
+        gasoleo_a:       'Gólder A',
+        gasoleo_premium: 'Gólder+',
+        glp:             'GLP',
+        gnc:             'GNC',
+        gnl:             'GNL',
+        hidrogeno:       'H2',
+      };
+
+      this.fuelLayer = L.geoJSON(
+        { type: 'FeatureCollection', features: this.fuelFeatures },
+        {
+          pointToLayer: (feature, latlng) => {
+            const p = feature.properties;
+            const isPublic = !p.sale_type || p.sale_type === 'P';
+            return L.circleMarker(latlng, {
+              radius: 5,
+              fillColor: isPublic ? '#f97316' : '#ef4444',
+              color: '#7c2d12',
+              weight: 1,
+              opacity: 0.8,
+              fillOpacity: 0.8,
+            });
+          },
+          onEachFeature: (feature, lyr) => {
+            const p = feature.properties;
+            const prices = p.prices || {};
+            const priceLines = Object.entries(FUEL_LABELS)
+              .filter(([k]) => prices[k])
+              .map(([k, label]) => `<b>${label}</b>: ${prices[k]} €/L`)
+              .join('<br>');
+            const isPublic = !p.sale_type || p.sale_type === 'P';
+            lyr.bindPopup(
+              `<strong>🛢 ${p.brand || 'Gasolinera'}</strong><br>` +
+              `<small>${p.address || ''} — ${p.municipality_name || ''}</small><br>` +
+              (priceLines ? `<div style="margin-top:4px;">${priceLines}</div>` : '<em>Sin precios</em>') +
+              (!isPublic ? '<br><span style="color:#ef4444;font-weight:bold">Venta restringida</span>' : '')
+            );
+          },
+        }
+      ).addTo(this.map);
+    },
+
+    setMinTier(key) {
+      this.minTier = key;
+      this.renderChargers();
+    },
+
+    loadDesert() {
+      if (this.desertCells) { this.renderDesert(); return; }
+      fetch(this.initial.desertUrl)
+        .then(r => r.json())
+        .then(payload => {
+          this.desertCells = payload.cells || [];
+          this.renderDesert();
+        })
+        .catch(e => console.error('desert fetch failed', e));
+    },
+
+    renderDesert() {
+      if (this.desertLayer) { this.map.removeLayer(this.desertLayer); this.desertLayer = null; }
+      if (!this.layers.desert || !this.desertCells) return;
+
+      const colourFor = (score) => {
+        // 0 (red — desierto) → 1 (green — bien cubierto)
+        const t = Math.max(0, Math.min(1, score));
+        const r = Math.round(220 - 100 * t);
+        const g = Math.round(60 + 130 * t);
+        const b = 70;
+        return `rgb(${r},${g},${b})`;
+      };
+
+      const halfStep = (this.initial.stepDeg || 0.05) / 2 || 0.025;
+      this.desertLayer = L.layerGroup(this.desertCells.map(c => {
+        const bounds = [[c.lat - halfStep, c.lon - halfStep], [c.lat + halfStep, c.lon + halfStep]];
+        return L.rectangle(bounds, {
+          color: '#0f172a',
+          weight: 0.3,
+          opacity: 0.4,
+          fillColor: colourFor(c.score),
+          fillOpacity: 0.35,
+        }).bindPopup(`<strong>${c.fast_count}</strong> cargador(es) ≥50 kW en 25 km<br><small>(${c.lat.toFixed(3)}, ${c.lon.toFixed(3)})</small>`);
+      })).addTo(this.map);
+    },
+  };
+}
+</script>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% load static %}
+{# Partial rendered by advisor_assist view — injected into #assist-output via fetch #}
+
+{% if user_message %}
+  {# ── User message bubble ── #}
+  <div class="assist-msg-in flex justify-end mb-4">
+    <div class="group relative max-w-[82%]">
+      <div class="assist-user-bubble relative px-4 py-3 text-sm leading-relaxed text-white rounded-2xl rounded-tr-md shadow-md">
+        {{ user_message }}
+      </div>
+      <div class="mt-1 text-right">
+        <span class="text-[10px] text-slate-400 dark:text-slate-500 tabular-nums">Tú</span>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+{# ── Assistant message bubble ── #}
+<div class="assist-msg-in flex items-start gap-3 mb-4">
+
+  {# Avatar #}
+  <div class="assist-avatar shrink-0 w-8 h-8 rounded-xl flex items-center justify-center shadow-lg mt-0.5">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+    </svg>
+  </div>
+
+  <div class="flex-1 min-w-0">
+    {# Label #}
+    <div class="mb-1.5 flex items-center gap-2">
+      <span class="text-[10px] font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light">Asistente TCO</span>
+      {% if result.hint_type == 'warning' %}
+        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+          ⚠ Atención
+        </span>
+      {% elif result.hint_type == 'tip' %}
+        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light uppercase tracking-wider">
+          💡 Sugerencia
+        </span>
+      {% endif %}
+    </div>
+
+    {% if result.error %}
+      {# Error state #}
+      <div class="assist-bubble-error rounded-2xl rounded-tl-md px-4 py-3 text-sm text-amber-700 dark:text-amber-300 leading-relaxed">
+        <div class="flex items-start gap-2">
+          <span class="text-base leading-none mt-0.5">⚠️</span>
+          <span>{{ result.message }}</span>
+        </div>
+      </div>
+    {% else %}
+      {# Message bubble #}
+      <div class="assist-bubble-ai
+                  {% if result.hint_type == 'warning' %}assist-bubble-warning
+                  {% elif result.hint_type == 'tip' %}assist-bubble-tip
+                  {% else %}assist-bubble-default{% endif %}
+                  rounded-2xl rounded-tl-md px-4 py-3.5 text-sm leading-relaxed">
+        <div class="prose prose-sm dark:prose-invert max-w-none text-slate-800 dark:text-slate-100 leading-relaxed assist-markdown-body"></div>
+        <script type="text/x-markdown">{{ result.message }}</script>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+  /* Entry animation */
+  @keyframes assistFadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .assist-msg-in {
+    animation: assistFadeUp 0.25s ease-out both;
+  }
+
+  /* User bubble — gradient */
+  .assist-user-bubble {
+    background: linear-gradient(135deg, #10B0A0 0%, #0891b2 100%);
+  }
+
+  /* AI avatar — gradient */
+  .assist-avatar {
+    background: linear-gradient(135deg, #10B0A0 0%, #06b6d4 100%);
+  }
+
+  /* AI bubble variants */
+  .assist-bubble-default {
+    background: white;
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    color: #1e293b;
+  }
+  .dark .assist-bubble-default {
+    background: rgba(30,41,59,0.9);
+    border-color: rgba(255,255,255,0.08);
+    color: #e2e8f0;
+  }
+
+  .assist-bubble-tip {
+    background: linear-gradient(135deg, rgba(16,176,160,0.07) 0%, rgba(6,182,212,0.05) 100%);
+    border: 1px solid rgba(16,176,160,0.2);
+    box-shadow: 0 0 0 1px rgba(16,176,160,0.08), 0 1px 3px rgba(16,176,160,0.1);
+    color: #0f4c4a;
+  }
+  .dark .assist-bubble-tip {
+    background: linear-gradient(135deg, rgba(16,176,160,0.12) 0%, rgba(6,182,212,0.08) 100%);
+    border-color: rgba(16,176,160,0.25);
+    color: #ccfbf1;
+  }
+
+  .assist-bubble-warning {
+    background: linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(234,179,8,0.05) 100%);
+    border: 1px solid rgba(245,158,11,0.25);
+    color: #78350f;
+  }
+  .dark .assist-bubble-warning {
+    background: linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(234,179,8,0.08) 100%);
+    border-color: rgba(245,158,11,0.3);
+    color: #fef3c7;
+  }
+
+  .assist-bubble-error {
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.2);
+  }
+  .dark .assist-bubble-error {
+    background: rgba(245,158,11,0.12);
+    border-color: rgba(245,158,11,0.25);
+  }
+
+  .assist-markdown-body p,
+  .assist-markdown-body strong,
+  .assist-markdown-body li,
+  .assist-markdown-body ul,
+  .assist-markdown-body ol,
+  .assist-markdown-body a {
+    color: inherit !important;
+  }
+</style>

@@ -159,6 +159,7 @@ class TCOServiceTests(TestCase):
             cp="20018", km_year=15000,
             vehicle_current_id=self.golf.id, vehicle_target_id=cheap_niro.id,
             subvencion_override_eur=12_000,
+            purchase_mode="new_vs_new",
         )
         self.assertEqual(q.payback_years, Decimal("0"))
 
@@ -178,7 +179,7 @@ class TCOServiceTests(TestCase):
 
     def test_default_profile_particular_computes_auto_incentives(self):
         # Sin override y perfil 'particular' por defecto, debe inyectar
-        # Moves III particular (4.500 €) como mínimo.
+        # Programa Auto+ vehículo (4.500 €) como mínimo.
         q = services.calculate_tco_quote(
             cp="20018", km_year=15000,
             vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
@@ -232,13 +233,14 @@ class IncentivesTests(TestCase):
             scrapping=False, needs_wallbox=False, years_horizon=10,
         )
         codes = {i.code for i in b.items}
-        self.assertIn("moves3_vehicle", codes)
+        self.assertIn("auto_plus_vehicle", codes)
+        self.assertIn("auto_plus_concessionaire", codes)
         self.assertIn("irpf_15", codes)
         self.assertIn("ivtm_bonif", codes)  # CP de Gipuzkoa
         self.assertNotIn("iva_deducible", codes)
         self.assertNotIn("moves3_wallbox", codes)
-        # Moves III particular sin scrap = 4.500 €
-        moves = next(i for i in b.items if i.code == "moves3_vehicle")
+        # Programa Auto+ particular sin scrap = 4.500 €
+        moves = next(i for i in b.items if i.code == "auto_plus_vehicle")
         self.assertEqual(moves.amount_eur, Decimal("4500"))
 
     def test_particular_with_scrap_jumps_to_7000(self):
@@ -247,16 +249,16 @@ class IncentivesTests(TestCase):
             profile="particular", cp="20018", vehicle_price_eur=41500,
             scrapping=True, needs_wallbox=False, years_horizon=10,
         )
-        moves = next(i for i in b.items if i.code == "moves3_vehicle")
+        moves = next(i for i in b.items if i.code == "auto_plus_vehicle")
         self.assertEqual(moves.amount_eur, Decimal("7000"))
 
-    def test_wallbox_adds_moves3_line(self):
+    def test_wallbox_no_longer_adds_moves3_line(self):
         from apps.mubil.advisor.incentives import compute_incentives
         b = compute_incentives(
             profile="particular", cp="20018", vehicle_price_eur=41500,
             scrapping=False, needs_wallbox=True, years_horizon=10,
         )
-        self.assertIn("moves3_wallbox", {i.code for i in b.items})
+        self.assertNotIn("moves3_wallbox", {i.code for i in b.items})
 
     def test_empresa_iva_deducible_100(self):
         from apps.mubil.advisor.incentives import compute_incentives
@@ -358,9 +360,9 @@ class WallboxCapexAndIntegrationTests(TestCase):
             wallbox_state="needs_install",
         )
         self.assertEqual(q.wallbox_capex_eur, Decimal("1500"))
-        # El wallbox subsidy aparece como línea de incentivo adicional
+        # Con Programa Auto+, no hay línea de incentivo adicional de wallbox
         codes = {i.code for i in q.incentives.items}
-        self.assertIn("moves3_wallbox", codes)
+        self.assertNotIn("moves3_wallbox", codes)
 
     def test_installed_no_wallbox_capex(self):
         q = services.calculate_tco_quote(
@@ -400,7 +402,7 @@ class WallboxCapexAndIntegrationTests(TestCase):
             profile="empresa",
         )
         # Empresa tiene IVA deducible (≈7k) > IRPF particular (≈3k), aunque
-        # Moves III sea menor (2.9k vs 4.5k).
+        # Programa Auto+ sea menor (2.9k vs 4.5k).
         self.assertGreater(q_emp.subvencion_eur, q_part.subvencion_eur)
 
     def test_invalid_profile_raises(self):
@@ -418,6 +420,7 @@ class WallboxCapexAndIntegrationTests(TestCase):
             cp="20018", km_year=15000,
             vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
             vehicle_target_price_override_eur=50_000,  # diferente del 41.500 real
+            purchase_mode="new_vs_new",
         )
         self.assertEqual(q.vehicle_target_price_used_eur, 50_000)
         self.assertEqual(q.vehicle_current_price_used_eur, 28_500)
@@ -438,6 +441,30 @@ class WallboxCapexAndIntegrationTests(TestCase):
             vehicle_target_price_override_eur=60_000,  # más caro → payback peor
         )
         self.assertGreater(with_higher.payback_years, base.payback_years)
+
+    def test_replace_purchase_mode_math(self):
+        # En replace, current_price_used es el PVP nuevo (28.500)
+        # pero current_residual_value_eur es el valor residual del usado (ej. depreciado a 5 años).
+        q = services.calculate_tco_quote(
+            cp="20018", km_year=15000,
+            vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+            purchase_mode="replace",
+            current_age_years=5,
+        )
+        self.assertEqual(q.purchase_mode, "replace")
+        self.assertEqual(q.vehicle_current_price_used_eur, 28_500)
+        # Valor de reventa con 5 años de depreciación: 28500 * (0.85^5) = 12645.5 → ~12646
+        self.assertEqual(q.current_residual_value_eur, 12646)
+        # La inversión diferencial (delta) en el payback es PVP target (41500) - PVP current (28500) = 13000
+        # menos la subvención por defecto (5500) = 7500.
+        # Comparamos que sea igual al payback de new_vs_new con los mismos inputs
+        q_new = services.calculate_tco_quote(
+            cp="20018", km_year=15000,
+            vehicle_current_id=self.golf.id, vehicle_target_id=self.niro.id,
+            purchase_mode="new_vs_new",
+        )
+        self.assertEqual(q.payback_years, q_new.payback_years)
+
 
 
 class PriceHeuristicTests(TestCase):

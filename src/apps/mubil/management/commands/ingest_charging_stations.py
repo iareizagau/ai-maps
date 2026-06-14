@@ -1,4 +1,4 @@
-"""Ad-hoc charging-station ingest (MITECO snapshot + OpenChargeMap).
+"""Ad-hoc charging-station ingest (MITECO snapshot + OpenChargeMap + DGT NAP).
 
 Usage:
   # One-shot import of the bundled MITECO CSV, filtered to EH provinces:
@@ -7,7 +7,10 @@ Usage:
   # Weekly refresh from OpenChargeMap (uses settings.OPENCHARGEMAP_API_KEY):
   python manage.py ingest_charging_stations --source ocm
 
-  # Both, in order — what you want on first deploy:
+  # Stream DGT NAP DATEX II feed (~85 MB, all Spain ~12k sites):
+  python manage.py ingest_charging_stations --source dgt_nap
+
+  # All three, in order — what you want on first deploy:
   python manage.py ingest_charging_stations --source all
 
   # Parse only, no DB writes:
@@ -28,7 +31,7 @@ from django.core.management.base import BaseCommand, CommandError
 from apps.mubil.data import charging_ingest
 
 
-SOURCE_CHOICES = ("miteco", "ocm", "all")
+SOURCE_CHOICES = ("miteco", "ocm", "dgt_nap", "all")
 
 
 class Command(BaseCommand):
@@ -79,6 +82,16 @@ class Command(BaseCommand):
             stats = charging_ingest.ingest_openchargemap(dry_run=dry_run)
             results["ocm"] = stats.as_dict()
             self.stdout.write(self.style.SUCCESS(json.dumps(results["ocm"], indent=2)))
+
+        if source in ("dgt_nap", "all"):
+            # DGT NAP defaults to all-Spain — the feed is the canonical
+            # nationwide source and the EH filter has no production use.
+            self.stdout.write(
+                f"Ingesting DGT NAP DATEX II (all-Spain, dry_run={dry_run})…"
+            )
+            stats = charging_ingest.ingest_dgt_nap(dry_run=dry_run)
+            results["dgt_nap"] = stats.as_dict()
+            self.stdout.write(self.style.SUCCESS(json.dumps(results["dgt_nap"], indent=2)))
 
         if not results:
             raise CommandError(f"Unknown source: {source}")

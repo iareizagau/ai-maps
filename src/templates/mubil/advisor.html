@@ -1,5 +1,5 @@
 {% extends "mubil/base.html" %}
-{% load i18n %}
+{% load static i18n %}
 
 {% block title %}Mubil Advisor — TCO EV vs Combustión{% endblock %}
 
@@ -8,14 +8,14 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script src="{% static 'js/marked.min.js' %}"></script>
 {% endblock %}
 
 {% block content %}
-<section x-data="commutePlanner()" class="min-h-screen pb-24" x-cloak>
+<section x-data="commutePlanner()" @toggle-assistant.window="handleAssistantToggle($event.detail.open)" class="min-h-screen pb-12" x-cloak>
 
   <header class="border-b border-slate-200 dark:border-estrata-teal/15 bg-white/95 dark:bg-estrata-navy_deep/95 backdrop-blur-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="w-full px-5 sm:px-8 lg:px-12 py-3 sm:py-4">
       <a href="{% url 'mubil:index' %}" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light hover:opacity-80 transition">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -23,12 +23,12 @@
         Volver
       </a>
 
-      <div class="mt-3 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+      <div class="mt-1.5 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
         <div>
-          <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-estrata-navy dark:text-white">
+          <h1 class="text-xl sm:text-2xl font-black tracking-tight text-estrata-navy dark:text-white">
             Advisor <span class="text-estrata-teal">·</span> TCO inteligente
           </h1>
-          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+          <p class="mt-0.5 text-xs text-slate-600 dark:text-slate-400 max-w-2xl">
             Calcula tu ahorro real al cambiar a un coche eléctrico en Euskadi.
           </p>
         </div>
@@ -42,13 +42,13 @@
       </div>
 
       {# ─── Stepper ─── #}
-      <nav x-show="!submitted" class="mt-6">
+      <nav x-show="!submitted" class="mt-3.5">
         <ol class="grid grid-cols-4 gap-1.5 sm:gap-3">
           <template x-for="(s, idx) in stepDefs" :key="s.id">
             <li>
               <button type="button" @click="goTo(s.id)" :disabled="!canGoTo(s.id)"
                       :class="step === s.id ? 'border-estrata-teal bg-estrata-teal/5 dark:bg-estrata-teal/10' : (canGoTo(s.id) ? 'border-slate-200 dark:border-slate-700 hover:border-estrata-teal/40' : 'border-slate-100 dark:border-slate-800 opacity-50 cursor-not-allowed')"
-                      class="w-full text-left rounded-xl border-2 px-2 py-2 sm:px-3 sm:py-2.5 transition">
+                      class="w-full text-left rounded-xl border-2 px-2 py-1.5 sm:px-2.5 sm:py-1.5 transition">
                 <div class="flex items-center gap-2 min-w-0">
                   <span :class="step === s.id ? 'bg-estrata-teal text-white' : (stepDone(s.id) ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300')"
                         class="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-extrabold transition">
@@ -76,10 +76,10 @@
   </header>
 
   {% if recent_alerts %}
-  <aside class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+  <aside class="w-full px-5 sm:px-8 lg:px-12 mt-2">
     <a href="{% url 'mubil:news' %}"
-       class="group flex items-start sm:items-center gap-3 rounded-xl border border-estrata-teal/30 bg-estrata-teal/5 dark:bg-estrata-teal/10 px-4 py-3 hover:bg-estrata-teal/10 dark:hover:bg-estrata-teal/15 transition">
-      <span class="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-full bg-estrata-teal text-white text-sm font-black">
+       class="group flex items-start sm:items-center gap-3 rounded-xl border border-estrata-teal/30 bg-estrata-teal/5 dark:bg-estrata-teal/10 px-3 py-1.5 hover:bg-estrata-teal/10 dark:hover:bg-estrata-teal/15 transition">
+      <span class="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full bg-estrata-teal text-white text-xs font-black">
         🔔
       </span>
       <div class="min-w-0 flex-1">
@@ -95,33 +95,40 @@
   </aside>
   {% endif %}
 
-  <form id="advisor-form"
-        hx-post="{% url 'mubil:advisor_quote' %}"
-        hx-target="#advisor-result"
-        hx-swap="innerHTML"
-        hx-indicator="#advisor-loading"
-        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="w-full px-5 sm:px-8 lg:px-12 pt-4 lg:pt-5 flex flex-col lg:flex-row lg:items-start lg:gap-6 transition-all duration-300">
+    
+    <!-- Columna Izquierda (Formulario y Resultados) -->
+    <div class="hidden lg:max-w-[64%] lg:max-w-full lg:relative lg:bottom-auto lg:right-auto lg:z-[10] lg:w-[35%] lg:shrink-0 lg:sticky lg:top-24 lg:self-start lg:hidden"></div>
+    <div class="min-w-0 transition-all duration-300 flex-1 w-full"
+         :class="assistantOpen ? 'lg:max-w-[64%]' : 'lg:max-w-full'">
+
+      <form id="advisor-form"
+            hx-post="{% url 'mubil:advisor_quote' %}"
+            hx-target="#advisor-result"
+            hx-swap="innerHTML"
+            hx-indicator="#advisor-loading"
+            class="w-full">
 
     {% csrf_token %}
 
-    <div x-show="!submitted" class="pt-6 lg:pt-10 grid lg:grid-cols-[minmax(0,1fr)_320px] gap-6 lg:gap-10">
+    <div x-show="!submitted" class="pt-3 lg:pt-4 grid lg:grid-cols-[minmax(0,1fr)_270px] gap-4 lg:gap-6">
 
       {# ════════════ MAIN COLUMN ════════════ #}
-      <div class="min-w-0 space-y-6">
+      <div class="min-w-0 space-y-4">
 
-        <section x-show="step === '1a'" x-transition.opacity class="space-y-6">
+        <section x-show="step === '1a'" x-transition.opacity class="space-y-4">
 
           <header>
-            <h2 class="text-xl sm:text-2xl font-black text-estrata-navy dark:text-white">
+            <h2 class="text-lg sm:text-xl font-black text-estrata-navy dark:text-white">
               ¿Cuál es tu coche actual?
             </h2>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            <p class="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
               Lo usaremos para calcular cuánto gastas hoy y compararlo con un eléctrico.
             </p>
           </header>
 
           {# Código postal #}
-          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-3">
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3.5 space-y-2">
             <div class="flex items-center justify-between">
               <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">¿Dónde vives o trabajas?</label>
               <button type="button" @click="geolocateUser()"
@@ -135,33 +142,33 @@
             </div>
             <input type="text" name="cp" x-model="cp" @input.debounce.500ms="updateMapToCp()" required pattern="[0-9]{5}" maxlength="5"
                    placeholder="Código postal (5 dígitos)"
-                   class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-base font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal tabular-nums" />
+                   class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal tabular-nums" />
             <p class="text-[11px] text-slate-400 dark:text-slate-500">
               Lo usamos para precios PVPC, estaciones cercanas y los incentivos provinciales.
             </p>
           </div>
 
           {# Selector de coche actual: 3 paths #}
-          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-4">
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3.5 space-y-3">
 
             {# Modo selector — chips de path #}
-            <div class="grid grid-cols-3 gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+            <div class="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800">
               <button type="button" @click="currentMode = 'search'"
                       :class="currentMode === 'search' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                      class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-1.5">
+                      class="py-1 rounded-md text-[11px] font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-1.5">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 Buscar
               </button>
               <button type="button" disabled
                       title="Próximamente"
-                      class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-600 cursor-not-allowed flex items-center justify-center gap-1.5">
+                      class="py-1 rounded-md text-[11px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-600 cursor-not-allowed flex items-center justify-center gap-1.5">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 Foto permiso
                 <span class="text-[8px] uppercase tracking-wider opacity-70">próx.</span>
               </button>
               <button type="button" @click="useIceGeneric()"
                       :class="currentMode === 'generic' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                      class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-1.5">
+                      class="py-1 rounded-md text-[11px] font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-1.5">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m13.586 13.586l-.707-.707"/></svg>
                 Coche medio
               </button>
@@ -172,8 +179,8 @@
               <div class="relative">
                 <input type="text" x-model="searchCurrent" @input.debounce.250ms="fetchCurrentSuggestions()" @focus="showCurrentSuggestions = true"
                        placeholder="Marca o modelo (ej. Mercedes A-Class, VW Golf TDI…)"
-                       class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 pl-11 pr-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal" />
-                <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-4 top-3.5 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                       class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-2.5 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
               </div>
 
               {# Suggestions inline (no dropdown, full-width cards) #}
@@ -228,21 +235,26 @@
               </div>
               <div class="pt-3 border-t border-emerald-200/60 dark:border-emerald-800/40 space-y-2.5">
                 <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">¿Cuál es tu situación?</label>
-                <div class="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+                <div class="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
                   <button type="button" @click="purchaseMode = 'switch'; recomputeCurrentResidual()"
                           :class="purchaseMode === 'switch' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                          class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition">
+                          class="py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition text-center px-0.5">
                     Ya lo tengo
                   </button>
                   <button type="button" @click="purchaseMode = 'new_vs_new'; currentPriceOverride = null"
                           :class="purchaseMode === 'new_vs_new' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                          class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition">
-                    Voy a comprar nuevo
+                          class="py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition text-center px-0.5">
+                    Comprar nuevo
+                  </button>
+                  <button type="button" @click="purchaseMode = 'replace'; recomputeCurrentResidual()"
+                          :class="purchaseMode === 'replace' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                          class="py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition text-center px-0.5">
+                    Vender y comprar
                   </button>
                 </div>
                 <input type="hidden" name="purchase_mode" :value="purchaseMode" />
 
-                <div x-show="purchaseMode === 'switch'" x-cloak class="space-y-2">
+                <div x-show="purchaseMode === 'switch' || purchaseMode === 'replace'" x-cloak class="space-y-2">
                   <div class="flex items-center justify-between text-[11px] font-semibold text-slate-600 dark:text-slate-300">
                     <label>Antigüedad de tu coche</label>
                     <span class="tabular-nums text-slate-900 dark:text-white font-bold"><span x-text="currentAgeYears"></span> años</span>
@@ -252,7 +264,7 @@
                          class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-estrata-teal" />
                   <input type="hidden" name="current_age_years" :value="currentAgeYears" />
                   <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                    Valor residual estimado: <strong class="text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="(currentPriceOverride || 0).toLocaleString('es-ES') + ' €'"></strong>
+                    Valor de venta estimado: <strong class="text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="(currentPriceOverride || 0).toLocaleString('es-ES') + ' €'"></strong>
                     · depreciación 15 %/año desde PVP nuevo de <span class="tabular-nums" x-text="(selectedCurrent?.price_eur || 0).toLocaleString('es-ES') + ' €'"></span>.
                     <button type="button" @click="$el.nextElementSibling.focus()" class="text-estrata-teal_dark hover:underline ml-1">Ajustar</button>
                   </p>
@@ -264,6 +276,9 @@
                 <p x-show="purchaseMode === 'new_vs_new'" x-cloak class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
                   Comparamos los dos coches a precio nuevo de catálogo (PVP). La amortización dirá cuánto tardas en recuperar la diferencia de compra con el ahorro operativo.
                 </p>
+                <p x-show="purchaseMode === 'replace'" x-cloak class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                  Comparamos comprar un de combustión nuevo (PVP) vs un eléctrico nuevo. En ambos casos vendes tu coche actual por su valor estimado de reventa, reduciendo el desembolso inicial de caja de ambas opciones.
+                </p>
               </div>
             </div>
           </div>
@@ -273,35 +288,35 @@
         </section>
 
 
-        <section x-show="step === '1b'" x-transition.opacity class="space-y-6">
+        <section x-show="step === '1b'" x-transition.opacity class="space-y-4">
 
           <header>
-            <h2 class="text-xl sm:text-2xl font-black text-estrata-navy dark:text-white">
+            <h2 class="text-lg sm:text-xl font-black text-estrata-navy dark:text-white">
               ¿Qué eléctrico quieres comparar?
             </h2>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            <p class="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
               Te recomendamos según tu uso. Si ya sabes cuál te interesa, búscalo directo.
             </p>
           </header>
 
           {# Toggle modo objetivo #}
-          <div class="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 max-w-sm">
+          <div class="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800 max-w-sm">
             <button type="button" @click="targetMode = 'recommend'; if (!candidates.length) fetchRecommendations()"
                     :class="targetMode === 'recommend' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                    class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-1.5">
+                    class="py-1 rounded-md text-[11px] font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-1.5">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
               Recomiéndame
             </button>
             <button type="button" @click="targetMode = 'search'"
                     :class="targetMode === 'search' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                    class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-1.5">
+                    class="py-1 rounded-md text-[11px] font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-1.5">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
               Buscar
             </button>
           </div>
 
           {# ─── Modo Recomiéndame ─── #}
-          <div x-show="targetMode === 'recommend'" class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-5">
+          <div x-show="targetMode === 'recommend'" class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3.5 space-y-3">
 
             {# Tamaño #}
             <div class="space-y-2">
@@ -310,9 +325,9 @@
                 <template x-for="opt in [{v:'small',l:'Pequeño',sub:'urbano'},{v:'mid',l:'Mediano',sub:'familiar'},{v:'large',l:'Grande',sub:'SUV/premium'},{v:'van',l:'Furgoneta',sub:'comercial'}]" :key="opt.v">
                   <button type="button" @click="criteriaSize = opt.v; fetchRecommendations()"
                           :class="criteriaSize === opt.v ? 'border-estrata-teal bg-estrata-teal/5 dark:bg-estrata-teal/10 text-estrata-teal_dark dark:text-estrata-teal_light ring-1 ring-estrata-teal/40' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-estrata-teal/40'"
-                          class="flex flex-col items-center justify-center gap-0.5 py-2.5 px-1 rounded-xl border-2 transition text-center">
-                    <span class="text-[12px] font-extrabold leading-tight" x-text="opt.l"></span>
-                    <span class="text-[10px] text-slate-400 dark:text-slate-500 font-semibold leading-tight" x-text="opt.sub"></span>
+                          class="flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-lg border-2 transition text-center">
+                    <span class="text-[11px] font-extrabold leading-tight" x-text="opt.l"></span>
+                    <span class="text-[9px] text-slate-400 dark:text-slate-500 font-semibold leading-tight" x-text="opt.sub"></span>
                   </button>
                 </template>
               </div>
@@ -325,9 +340,9 @@
                 <template x-for="opt in [{v:'low',l:'Baja',sub:'<350 km'},{v:'mid',l:'Media',sub:'350-450 km'},{v:'high',l:'Alta',sub:'>450 km'}]" :key="opt.v">
                   <button type="button" @click="criteriaRange = opt.v; fetchRecommendations()"
                           :class="criteriaRange === opt.v ? 'border-estrata-teal bg-estrata-teal/5 dark:bg-estrata-teal/10 text-estrata-teal_dark dark:text-estrata-teal_light ring-1 ring-estrata-teal/40' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-estrata-teal/40'"
-                          class="flex flex-col items-center justify-center gap-0.5 py-2.5 px-1 rounded-xl border-2 transition text-center">
-                    <span class="text-[12px] font-extrabold leading-tight" x-text="opt.l"></span>
-                    <span class="text-[10px] text-slate-400 dark:text-slate-500 font-semibold leading-tight" x-text="opt.sub"></span>
+                          class="flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-lg border-2 transition text-center">
+                    <span class="text-[11px] font-extrabold leading-tight" x-text="opt.l"></span>
+                    <span class="text-[9px] text-slate-400 dark:text-slate-500 font-semibold leading-tight" x-text="opt.sub"></span>
                   </button>
                 </template>
               </div>
@@ -403,12 +418,12 @@
           </div>
 
           {# ─── Modo Buscar ─── #}
-          <div x-show="targetMode === 'search'" class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-3">
+          <div x-show="targetMode === 'search'" class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3.5 space-y-2">
             <div class="relative">
               <input type="text" x-model="searchTarget" @input.debounce.250ms="fetchTargetSuggestions()" @focus="showTargetSuggestions = true"
                      placeholder="Marca o modelo (ej. Tesla Model 3, Kia Niro EV…)"
-                     class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 pl-11 pr-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal" />
-              <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-4 top-3.5 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                     class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-2.5 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </div>
 
             <div x-show="showTargetSuggestions && targetSuggestions.length" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -416,20 +431,20 @@
                 <button type="button" @click="selectTargetVehicle(v); showTargetSuggestions = false"
                         :class="selectedTarget && selectedTarget.id === v.id ? 'border-estrata-teal bg-estrata-teal/5 ring-1 ring-estrata-teal/40' : 'border-slate-200 dark:border-slate-700 hover:border-estrata-teal/40 bg-white dark:bg-slate-800/40'"
                         class="text-left rounded-xl border-2 px-3 py-2 transition">
-                  <div class="flex items-start justify-between gap-2">
-                    <div class="min-w-0">
-                      <div class="text-[13px] font-bold text-slate-900 dark:text-white truncate" x-text="v.make + ' ' + v.model"></div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                        <span x-show="v.variant_count > 1" x-text="v.variant_count + ' variantes'" class="font-semibold"></span>
-                        <span x-show="v.variant_count > 1 && v.consumption_kwh_100km"> · </span>
-                        <span x-show="v.consumption_kwh_100km" x-text="formatConsumptionRange(v, 'kWh')" class="font-semibold tabular-nums"></span>
-                      </div>
-                    </div>
-                    <span class="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold bg-estrata-teal/10 text-estrata-teal_dark dark:bg-estrata-teal/20 dark:text-estrata-teal_light tabular-nums" x-text="v.range_wltp_km + ' km'"></span>
-                  </div>
-                  <div class="mt-1 text-right">
-                    <span x-show="v.price_eur" x-text="v.price_eur.toLocaleString('es-ES') + ' €'" class="text-[11px] font-bold text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums"></span>
-                  </div>
+                   <div class="flex items-start justify-between gap-2">
+                     <div class="min-w-0">
+                       <div class="text-[13px] font-bold text-slate-900 dark:text-white truncate" x-text="v.make + ' ' + v.model"></div>
+                       <div class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                         <span x-show="v.variant_count > 1" x-text="v.variant_count + ' variantes'" class="font-semibold"></span>
+                         <span x-show="v.variant_count > 1 && v.consumption_kwh_100km"> · </span>
+                         <span x-show="v.consumption_kwh_100km" x-text="formatConsumptionRange(v, 'kWh')" class="font-semibold tabular-nums"></span>
+                       </div>
+                     </div>
+                     <span class="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold bg-estrata-teal/10 text-estrata-teal_dark dark:bg-estrata-teal/20 dark:text-estrata-teal_light tabular-nums" x-text="v.range_wltp_km + ' km'"></span>
+                   </div>
+                   <div class="mt-1 text-right">
+                     <span x-show="v.price_eur" x-text="v.price_eur.toLocaleString('es-ES') + ' €'" class="text-[11px] font-bold text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums"></span>
+                   </div>
                 </button>
               </template>
             </div>
@@ -437,7 +452,7 @@
 
           {# Selección objetivo confirmada #}
           <div x-show="selectedTarget" x-cloak
-               class="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 p-4 space-y-2">
+               class="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 p-3 space-y-1.5">
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
                 <div class="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">✓ Tu eléctrico objetivo</div>
@@ -471,27 +486,27 @@
         </section>
 
 
-        <section x-show="step === '2'" x-transition.opacity class="space-y-6">
+        <section x-show="step === '2'" x-transition.opacity class="space-y-4">
 
           <header>
-            <h2 class="text-xl sm:text-2xl font-black text-estrata-navy dark:text-white">
+            <h2 class="text-lg sm:text-xl font-black text-estrata-navy dark:text-white">
               ¿Cómo te mueves?
             </h2>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            <p class="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
               Dibuja tus rutas habituales o ajusta el perfil manualmente.
             </p>
           </header>
 
           {# Toggle mapa vs manual #}
-          <div class="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 max-w-sm">
+          <div class="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800 max-w-sm">
             <button type="button" @click="commuteMode = false"
                     :class="!commuteMode ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                    class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition">
+                    class="py-1.5 rounded-md text-[11px] font-extrabold uppercase tracking-widest transition">
               ✍️ Ajuste manual
             </button>
             <button type="button" @click="commuteMode = true; ensureMapReady()"
                     :class="commuteMode ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                    class="py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition">
+                    class="py-1.5 rounded-md text-[11px] font-extrabold uppercase tracking-widest transition">
               🗺️ Mapa interactivo
             </button>
           </div>
@@ -502,17 +517,17 @@
               <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Km / año</label>
               <input type="number" name="km_year" id="km_year_input" value="15000" min="1000" max="200000" step="500" required
                      :readonly="commuteMode" :class="commuteMode ? 'bg-slate-100 dark:bg-slate-900 opacity-75 cursor-not-allowed' : 'bg-slate-50 dark:bg-slate-900'"
-                     class="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal font-bold tabular-nums" />
+                     class="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal font-bold tabular-nums" />
             </div>
             <div class="space-y-2">
               <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Horizonte</label>
               <input type="number" name="years_horizon" value="10" min="1" max="20" required
-                     class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal font-bold tabular-nums" />
+                     class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal font-bold tabular-nums" />
             </div>
           </div>
 
           {# Perfil de vía #}
-          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-4">
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3.5 space-y-3">
             <div class="flex items-center justify-between">
               <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Perfil de vía</label>
               <span x-show="commuteMode" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-estrata-teal/10 text-estrata-teal_dark dark:bg-estrata-teal/20 dark:text-estrata-teal_light">
@@ -578,7 +593,7 @@
               </div>
 
               <div class="relative">
-                <div id="commute-leaflet-map" style="width:100%; height:380px; z-index: 10;"></div>
+                <div id="commute-leaflet-map" style="width:100%; height:260px; z-index: 10;"></div>
                 <div class="absolute bottom-3 left-3 z-[1000] bg-white/95 dark:bg-slate-800/95 px-3 py-2 rounded-lg text-xs max-w-xs border border-slate-200 dark:border-slate-700 pointer-events-none shadow-lg">
                   <div x-show="!startPoint && !endPoint" class="text-slate-600 dark:text-slate-300">📍 Click en el mapa para marcar el <strong>origen</strong>.</div>
                   <div x-show="startPoint && !endPoint" class="text-slate-600 dark:text-slate-300">🎯 Ahora marca el <strong>destino</strong>.</div>
@@ -587,7 +602,7 @@
               </div>
 
               {# Detalles ruta temporal #}
-              <div x-show="startPoint && endPoint" class="p-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-100 dark:border-slate-700 space-y-3" x-transition>
+              <div x-show="startPoint && endPoint" class="p-3 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-100 dark:border-slate-700 space-y-2" x-transition>
                 <h4 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Detalles de la ruta</h4>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <div>
@@ -632,13 +647,13 @@
               </div>
 
               {# Commutes guardados #}
-              <div class="p-4 border-t border-slate-100 dark:border-slate-700 space-y-2">
+              <div class="p-3 border-t border-slate-100 dark:border-slate-700 space-y-1">
                 <div class="flex items-center justify-between">
                   <h4 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Tus commutes guardados</h4>
                   <span class="text-[11px] text-slate-400" x-text="routes.length + ' trayectos'"></span>
                 </div>
 
-                <div class="divide-y divide-slate-100 dark:divide-slate-700 max-h-56 overflow-y-auto">
+                <div class="divide-y divide-slate-100 dark:divide-slate-700 max-h-36 overflow-y-auto">
                   <template x-for="(r, idx) in routes" :key="idx">
                     <div class="py-2.5 flex justify-between items-center gap-3">
                       <div class="min-w-0">
@@ -664,13 +679,13 @@
         </section>
 
 
-        <section x-show="step === '3'" x-transition.opacity class="space-y-6">
+        <section x-show="step === '3'" x-transition.opacity class="space-y-4">
 
           <header>
-            <h2 class="text-xl sm:text-2xl font-black text-estrata-navy dark:text-white">
+            <h2 class="text-lg sm:text-xl font-black text-estrata-navy dark:text-white">
               Tu situación
             </h2>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            <p class="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
               Perfil fiscal, dónde vas a cargar, e incentivos aplicables.
             </p>
           </header>
@@ -678,30 +693,30 @@
           <div class="grid lg:grid-cols-2 gap-4">
 
             {# Perfil fiscal #}
-            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-3">
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3.5 space-y-2">
               <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Perfil fiscal</label>
-              <div class="grid grid-cols-3 gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+              <div class="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800">
                 <template x-for="opt in [{v:'particular',l:'Particular'},{v:'autonomo',l:'Autónomo'},{v:'empresa',l:'Empresa'}]" :key="opt.v">
                   <button type="button" @click="profile = opt.v; onProfileChange()"
                           :class="profile === opt.v ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                          class="py-2.5 rounded-lg text-xs font-extrabold uppercase tracking-widest transition"
+                          class="py-1.5 rounded-md text-xs font-extrabold uppercase tracking-widest transition"
                           x-text="opt.l"></button>
                 </template>
               </div>
               <input type="hidden" name="profile" :value="profile" />
               <p class="text-[11px] text-slate-400 dark:text-slate-500">
-                Afecta a Moves III, IVA deducible, IRPF y presets de carga.
+                Afecta a Programa Auto+, IVA deducible, IRPF y presets de carga.
               </p>
             </div>
 
             {# Wallbox #}
-            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-3">
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3.5 space-y-2">
               <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Punto de carga en casa</label>
               <div class="grid grid-cols-3 gap-1.5">
                 <template x-for="opt in [{v:'installed',l:'Tengo wallbox',sub:'instalado'},{v:'needs_install',l:'A instalar',sub:'~1.500 €'},{v:'no_home',l:'Sin garaje',sub:'sólo público'}]" :key="opt.v">
                   <button type="button" @click="wallboxState = opt.v; if (opt.v === 'no_home') { applyChargingPreset(profile === 'particular' ? 'public_only' : 'office_public'); }"
                           :class="wallboxState === opt.v ? 'border-estrata-teal bg-estrata-teal/5 dark:bg-estrata-teal/10 text-estrata-teal_dark dark:text-estrata-teal_light ring-1 ring-estrata-teal/40' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-estrata-teal/40'"
-                          class="flex flex-col items-center justify-center gap-0.5 py-2.5 px-1 rounded-xl border-2 transition text-center">
+                          class="flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-lg border-2 transition text-center">
                     <span class="text-[11px] font-extrabold" x-text="opt.l"></span>
                     <span class="text-[9px] text-slate-400 dark:text-slate-500 font-semibold" x-text="opt.sub"></span>
                   </button>
@@ -712,7 +727,7 @@
           </div>
 
           {# Mix de carga #}
-          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-4">
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3.5 space-y-3">
             <div class="flex items-center justify-between">
               <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">¿Dónde vas a cargar?</label>
               <span x-show="weightedPrice" class="text-xs font-bold text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="'~' + weightedPrice + ' €/kWh'"></span>
@@ -723,7 +738,7 @@
               <template x-for="p in chargingPresets" :key="p.key">
                 <button type="button" @click="applyChargingPreset(p.key)"
                         :class="chargingPreset === p.key ? 'bg-estrata-teal text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'"
-                        class="px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition"
+                        class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition"
                         x-text="p.label"></button>
               </template>
             </div>
@@ -778,25 +793,33 @@
           </div>
 
           {# Incentivos #}
-          <div class="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 p-5 space-y-3">
+          <div class="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 p-3.5 space-y-2">
             <div class="flex items-center justify-between">
               <h4 class="text-xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-300">💰 Incentivos aplicables</h4>
               <span class="text-lg font-black text-emerald-700 dark:text-emerald-300 tabular-nums"
                     x-text="effectiveSubvencionEur.toLocaleString('es-ES') + ' €'"></span>
             </div>
 
-            <label class="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" name="scrapping" x-model="scrapping"
-                     class="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500" />
-              <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Achatarro un vehículo ≥ 7 años (Moves III +)</span>
-            </label>
+            <div :class="purchaseMode === 'replace' ? 'opacity-60' : ''">
+              <label class="flex items-start gap-3" :class="purchaseMode === 'replace' ? 'cursor-not-allowed' : 'cursor-pointer'">
+                <input type="checkbox" name="scrapping" x-model="scrapping"
+                       :disabled="purchaseMode === 'replace'"
+                       class="mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500" />
+                <div class="min-w-0">
+                  <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Achatarro un vehículo ≥ 7 años (Programa Auto+)</span>
+                  <p x-show="purchaseMode === 'replace'" class="text-[10px] text-amber-700 dark:text-amber-300 font-medium leading-normal mt-0.5">
+                    ⚠ Al vender tu coche en el mercado de ocasión, no es elegible para la ayuda por achatarramiento.
+                  </p>
+                </div>
+              </label>
+            </div>
 
             <button type="button" @click="showIncentiveDetail = !showIncentiveDetail"
                     class="w-full text-left text-[11px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 flex items-center justify-between py-1">
               <span x-text="showIncentiveDetail ? '▼ Ocultar desglose' : '▶ Ver desglose'"></span>
             </button>
 
-            <ul x-show="showIncentiveDetail" x-collapse class="space-y-1.5 text-xs border-t border-emerald-200/60 dark:border-emerald-800/60 pt-2.5">
+            <ul x-show="showIncentiveDetail" x-collapse class="space-y-1.5 text-xs border-t border-emerald-200/60 dark:border-emerald-800/60 pt-2">
               <template x-for="i in incentivesItems" :key="i.name">
                 <li class="flex justify-between items-baseline gap-2">
                   <span class="text-slate-700 dark:text-slate-300 min-w-0">
@@ -811,7 +834,7 @@
               <li x-show="!incentivesItems.length" class="text-slate-400 italic text-center py-2">Sin incentivos aplicables.</li>
             </ul>
 
-            <div class="pt-2 border-t border-emerald-200/60 dark:border-emerald-800/60 space-y-1.5">
+            <div class="pt-1.5 border-t border-emerald-200/60 dark:border-emerald-800/60 space-y-1.5">
               <label class="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                 <span>Override manual</span>
                 <button type="button" @click="subvencionOverride = null" x-show="subvencionOverride !== null && subvencionOverride !== ''"
@@ -824,23 +847,23 @@
         </section>
 
         {# ─── Footer nav ─── #}
-        <div class="flex items-center justify-between gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+        <div class="flex items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
           <button type="button" @click="prev()" :disabled="isFirst()"
                   :class="isFirst() ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-800'"
-                  class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 transition">
+                  class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             Atrás
           </button>
 
           <button type="button" @click="next()" x-show="!isLast()" :disabled="!canAdvance()"
                   :class="!canAdvance() ? 'opacity-50 cursor-not-allowed' : ''"
-                  class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-estrata-teal hover:bg-estrata-teal_dark text-white font-extrabold transition shadow-lg shadow-estrata-teal/30 text-sm uppercase tracking-widest">
+                  class="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-estrata-teal hover:bg-estrata-teal_dark text-white font-extrabold transition shadow-lg shadow-estrata-teal/30 text-xs uppercase tracking-widest">
             Siguiente
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
           </button>
 
           <button type="submit" x-show="isLast()"
-                  class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-estrata-teal hover:bg-estrata-teal_dark text-white font-extrabold transition shadow-lg shadow-estrata-teal/30 text-sm uppercase tracking-widest">
+                  class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-estrata-teal hover:bg-estrata-teal_dark text-white font-extrabold transition shadow-lg shadow-estrata-teal/30 text-xs uppercase tracking-widest">
             <svg id="advisor-loading" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-spin htmx-indicator" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4zm2 5.3A8 8 0 014 12H0c0 3 1.1 5.8 3 7.9l3-2.6z"/>
@@ -854,13 +877,13 @@
 
       {# ════════════ SIDEBAR · RESUMEN STICKY ════════════ #}
       <aside class="lg:sticky lg:top-6 h-fit">
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-3 shadow-sm">
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3.5 space-y-2 shadow-sm">
           <h3 class="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Tu simulación</h3>
 
           {# 1a: Tu coche #}
           <button type="button" @click="goTo('1a')"
                   :class="step === '1a' ? 'ring-1 ring-estrata-teal/40 bg-estrata-teal/5' : 'hover:bg-slate-50 dark:hover:bg-slate-900/40'"
-                  class="w-full text-left rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 transition">
+                  class="w-full text-left rounded-xl border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 transition">
             <div class="flex items-center justify-between gap-2">
               <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">1a · Tu coche</span>
               <span x-show="selectedCurrent" class="text-emerald-500 text-xs">✓</span>
@@ -873,7 +896,7 @@
           {# 1b: EV objetivo #}
           <button type="button" @click="goTo('1b')"
                   :class="step === '1b' ? 'ring-1 ring-estrata-teal/40 bg-estrata-teal/5' : 'hover:bg-slate-50 dark:hover:bg-slate-900/40'"
-                  class="w-full text-left rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 transition">
+                  class="w-full text-left rounded-xl border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 transition">
             <div class="flex items-center justify-between gap-2">
               <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">1b · Eléctrico</span>
               <span x-show="selectedTarget" class="text-emerald-500 text-xs">✓</span>
@@ -894,7 +917,7 @@
           {# 2: Movilidad #}
           <button type="button" @click="goTo('2')"
                   :class="step === '2' ? 'ring-1 ring-estrata-teal/40 bg-estrata-teal/5' : 'hover:bg-slate-50 dark:hover:bg-slate-900/40'"
-                  class="w-full text-left rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 transition">
+                  class="w-full text-left rounded-xl border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 transition">
             <div class="flex items-center justify-between gap-2">
               <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">2 · Movilidad</span>
             </div>
@@ -910,7 +933,7 @@
           {# 3: Carga e incentivos #}
           <button type="button" @click="goTo('3')"
                   :class="step === '3' ? 'ring-1 ring-estrata-teal/40 bg-estrata-teal/5' : 'hover:bg-slate-50 dark:hover:bg-slate-900/40'"
-                  class="w-full text-left rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 transition">
+                  class="w-full text-left rounded-xl border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 transition">
             <div class="flex items-center justify-between gap-2">
               <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">3 · Carga + incentivos</span>
             </div>
@@ -929,7 +952,7 @@
 
         {# ── Comparador: alternativas al EV elegido ── #}
         <div x-show="selectedTarget && alternatives.length" x-cloak
-             class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-3 shadow-sm">
+             class="mt-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3.5 space-y-2 shadow-sm">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Alternativas</h3>
             <span class="text-[10px] text-slate-400" x-show="alternativesLoading">cargando…</span>
@@ -940,7 +963,7 @@
           <div class="space-y-2">
             <template x-for="alt in alternatives" :key="alt.id">
               <button type="button" @click="selectTargetVehicle(alt)"
-                      class="w-full text-left rounded-xl border border-slate-200 dark:border-slate-700 hover:border-estrata-teal/40 px-3 py-2 transition">
+                      class="w-full text-left rounded-xl border border-slate-200 dark:border-slate-700 hover:border-estrata-teal/40 px-2.5 py-1.5 transition">
                 <div class="flex items-start justify-between gap-2">
                   <div class="min-w-0">
                     <div class="text-[12px] font-bold text-slate-900 dark:text-white truncate" x-text="alt.make + ' ' + alt.model"></div>
@@ -965,7 +988,7 @@
 
   </form>
 
-  <div x-show="submitted" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+  <div x-show="submitted" class="w-full pt-8 space-y-6">
 
     <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 grid grid-cols-2 lg:grid-cols-4 gap-3 shadow-sm">
       <button type="button" @click="submitted = false; goTo('1a')"
@@ -1030,16 +1053,332 @@
         Pulsa "Calcular TCO" para ver tu simulación.
       </div>
     </div>
-  </div>
+  </div> {# /submitted #}
+</div> {# /Columna Izquierda #}
 
+    {# ── FAB trigger (Ubicado fuera del contenedor para poder activarlo cuando está cerrado) ── #}
+    <button
+      type="button"
+      id="advisor-assist-fab"
+      x-show="!assistantOpen"
+      @click="handleAssistantToggle(true); $dispatch('toggle-assistant', { open: true })"
+      class="fixed bottom-6 right-6 z-[200] w-14 h-14 rounded-2xl flex items-center justify-center text-white
+             transition-all duration-300 group overflow-hidden"
+      style="background: linear-gradient(135deg, #10B0A0 0%, #0891b2 100%);
+             box-shadow: 0 8px 32px rgba(16,176,160,0.4);"
+      aria-label="Abrir asistente IA"
+    >
+      {# Shimmer on hover #}
+      <span class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            style="background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);"></span>
+
+      <span class="relative z-10 transition-all duration-200 group-hover:scale-110">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+        </svg>
+      </span>
+      {# Badge AI #}
+      <span x-cloak class="absolute -top-0.5 -right-0.5 flex h-5 w-5">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60"
+              style="background: rgba(6,182,212,0.6);"></span>
+        <span class="relative inline-flex h-5 w-5 rounded-full text-[8px] font-black items-center justify-center"
+              style="background: linear-gradient(135deg,#06b6d4,#0891b2);">AI</span>
+      </span>
+    </button>
+
+    {# ════════════ AI ASSISTANT PANEL ════════════ #}
+    <div x-data="advisorAssistant()"
+         x-show="open"
+         x-cloak
+         @keydown.escape.window="open && closePanel()"
+         @toggle-assistant.window="open = $event.detail.open"
+         class="fixed bottom-0 right-0 z-[195] w-full sm:w-[440px] lg:relative lg:bottom-auto lg:right-auto lg:z-[10] lg:w-[35%] lg:shrink-0 lg:sticky lg:top-24 lg:self-start flex flex-col"
+         style="height: clamp(400px, 82vh, 680px);">
+
+  {# ── Backdrop ── #}
+  <div
+    x-show="open"
+    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    @click="closePanel()"
+    class="fixed inset-0 z-[190] lg:hidden"
+    style="background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);"
+    x-cloak
+  ></div>
+
+  {# ── Slide-over panel ── #}
+  <aside
+    id="advisor-assist-panel"
+    class="w-full h-full flex flex-col rounded-tl-3xl lg:rounded-3xl overflow-hidden"
+    style="box-shadow: -8px 0 40px rgba(0,0,0,0.18), 0 -4px 24px rgba(0,0,0,0.1);"
+  >
+    {# Glass background #}
+    <div class="absolute inset-0 assist-panel-bg"></div>
+
+    {# ── Header ── #}
+    <div class="relative shrink-0 assist-panel-header px-4 py-3 flex items-center justify-between">
+      {# Animated shimmer line #}
+      <div class="absolute bottom-0 left-0 right-0 h-px assist-header-line"></div>
+
+      <div class="flex items-center gap-3">
+        {# Avatar with glow #}
+        <div class="relative">
+          <div class="w-8.5 h-8.5 rounded-xl flex items-center justify-center shadow-lg"
+               style="background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%);
+                      border: 1px solid rgba(255,255,255,0.15);">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+          </div>
+          {# Live dot #}
+          <span class="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex h-3 w-3 rounded-full bg-emerald-500 border-2 border-white/20"></span>
+          </span>
+        </div>
+
+        <div>
+          <div class="text-base font-black text-white tracking-tight">Asistente TCO</div>
+          <div class="text-[10px] font-bold uppercase tracking-[0.12em] mt-0.5"
+               style="color: rgba(255,255,255,0.6);">
+            Gemini Flash · Contexto activo
+          </div>
+        </div>
+      </div>
+
+      <button @click="closePanel()"
+              class="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150"
+              style="background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7);"
+              onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.color='white';"
+              onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='rgba(255,255,255,0.7)';">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    {# ── Step context pill ── #}
+    <div class="relative shrink-0 px-5 py-2.5 assist-context-bar flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2 min-w-0">
+        <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: #10B0A0;"></div>
+        <span class="text-[11px] font-bold truncate" style="color: #10B0A0;" x-text="stepLabel()"></span>
+      </div>
+      <span class="text-[10px] shrink-0" style="color: rgba(255,255,255,0.35);">Contexto listo</span>
+    </div>
+
+    {# ── Messages area ── #}
+    <div id="assist-output"
+         class="relative flex-1 overflow-y-auto px-5 py-4 space-y-1 assist-messages-area">
+      {# Welcome card #}
+      <div class="assist-welcome-card rounded-2xl p-4 mb-2">
+        <div class="flex items-start gap-3">
+          <span class="text-2xl leading-none mt-0.5">👋</span>
+          <div>
+            <p class="text-sm font-bold mb-1" style="color: rgba(255,255,255,0.95);">Hola, soy tu asistente TCO</p>
+            <p class="text-xs leading-relaxed" style="color: rgba(255,255,255,0.85);">
+              Conozco tu simulación en tiempo real — el coche que has elegido, tus km, tu perfil de carga y los incentivos aplicables.
+            </p>
+            <p class="text-xs mt-2 leading-relaxed" style="color: rgba(255,255,255,0.75);">
+              Pulsa <span class="font-bold" style="color: #10B0A0;">💡 Sugerencia</span> para un análisis de tu situación actual, o escribe tu pregunta.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Quick actions ── #}
+    <div class="relative shrink-0 px-5 py-3 assist-quick-bar">
+      <div class="flex flex-wrap gap-2">
+        <button type="button"
+                @click="sendHint()"
+                :disabled="loading"
+                class="assist-chip-primary inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all duration-150 disabled:opacity-50">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+          </svg>
+          💡 Sugerencia
+        </button>
+        <template x-for="q in quickQuestions()" :key="q">
+          <button type="button"
+                  @click="sendMessage(q)"
+                  :disabled="loading"
+                  class="assist-chip-secondary px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-150 disabled:opacity-50"
+                  x-text="q"></button>
+        </template>
+      </div>
+    </div>
+
+    {# ── Input area ── #}
+    <div class="relative shrink-0 px-4 py-3 assist-input-area">
+      <form @submit.prevent="sendMessage(inputText); inputText = ''" class="relative">
+        <input
+          type="text"
+          x-model="inputText"
+          :disabled="loading"
+          placeholder="Pregunta sobre tu simulación…"
+          class="assist-input w-full text-sm pl-4 pr-12 py-3.5 rounded-2xl outline-none transition-all duration-200"
+          :class="inputText.trim() ? 'assist-input-active' : ''"
+        />
+        <button
+          type="submit"
+          :disabled="loading || !inputText.trim()"
+          class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl flex items-center justify-center
+                 transition-all duration-200 disabled:opacity-30"
+          :style="inputText.trim() && !loading
+            ? 'background: linear-gradient(135deg, #10B0A0, #0891b2); box-shadow: 0 2px 8px rgba(16,176,160,0.4);'
+            : 'background: rgba(255,255,255,0.08);'"
+        >
+          <span x-show="!loading">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+            </svg>
+          </span>
+          <span x-show="loading">
+            <svg class="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/>
+            </svg>
+          </span>
+        </button>
+      </form>
+      <p class="text-center mt-2 text-[9px] font-medium tracking-wide" style="color: rgba(255,255,255,0.25);">
+        ASISTENTE CONTEXTUAL · FUENTES OFICIALES VERIFICADAS
+      </p>
+    </div>
+  </aside>
+
+</div>
+
+  </div> {# /Flex Wrapper #}
 </section>
 
 <style>
+  /* ── Base resets ── */
   .htmx-indicator { opacity: 0; transition: opacity .2s; }
   .htmx-request .htmx-indicator { opacity: 1; }
   .htmx-request.htmx-indicator { opacity: 1; }
   [x-cloak] { display: none !important; }
+
+  /* ── Panel slide transition ── */
+  #advisor-assist-panel {
+    transition: transform 0.3s cubic-bezier(0.32,0.72,0,1), opacity 0.25s ease;
+  }
+  #advisor-assist-panel[style*="display: none"] {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  /* ── Panel background — deep dark glassmorphism ── */
+  .assist-panel-bg {
+    background: linear-gradient(160deg, #0f1f2e 0%, #0a1628 40%, #0d1e2d 100%);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+  }
+
+  /* ── Header gradient ── */
+  .assist-panel-header {
+    background: linear-gradient(135deg, rgba(16,176,160,0.18) 0%, rgba(8,145,178,0.10) 50%, rgba(15,31,46,0) 100%);
+  }
+  .assist-header-line {
+    background: linear-gradient(90deg, transparent 0%, rgba(16,176,160,0.4) 30%, rgba(8,145,178,0.3) 70%, transparent 100%);
+    animation: assistHeaderShimmer 3s ease-in-out infinite;
+  }
+  @keyframes assistHeaderShimmer {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* ── Context bar ── */
+  .assist-context-bar {
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* ── Messages area ── */
+  .assist-messages-area {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(16,176,160,0.2) transparent;
+  }
+  .assist-messages-area::-webkit-scrollbar { width: 4px; }
+  .assist-messages-area::-webkit-scrollbar-track { background: transparent; }
+  .assist-messages-area::-webkit-scrollbar-thumb {
+    background: rgba(16,176,160,0.25);
+    border-radius: 4px;
+  }
+
+  /* ── Welcome card ── */
+  .assist-welcome-card {
+    background: linear-gradient(135deg, rgba(16,176,160,0.12) 0%, rgba(8,145,178,0.08) 100%);
+    border: 1px solid rgba(16,176,160,0.2);
+  }
+
+  /* ── Quick actions bar ── */
+  .assist-quick-bar {
+    background: rgba(255,255,255,0.025);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .assist-chip-primary {
+    background: linear-gradient(135deg, rgba(16,176,160,0.2) 0%, rgba(8,145,178,0.15) 100%);
+    border: 1px solid rgba(16,176,160,0.35);
+    color: #5EE8E0;
+  }
+  .assist-chip-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(16,176,160,0.3) 0%, rgba(8,145,178,0.22) 100%);
+    border-color: rgba(16,176,160,0.5);
+    transform: translateY(-1px);
+  }
+
+  .assist-chip-secondary {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.6);
+  }
+  .assist-chip-secondary:hover:not(:disabled) {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(16,176,160,0.3);
+    color: #5EE8E0;
+    transform: translateY(-1px);
+  }
+
+  /* ── Input ── */
+  .assist-input-area {
+    background: rgba(0,0,0,0.2);
+  }
+  .assist-input {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.9);
+    caret-color: #10B0A0;
+  }
+  .assist-input::placeholder { color: rgba(255,255,255,0.3); }
+  .assist-input:focus {
+    background: rgba(255,255,255,0.09);
+    border-color: rgba(16,176,160,0.5);
+    box-shadow: 0 0 0 3px rgba(16,176,160,0.12), inset 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .assist-input-active {
+    border-color: rgba(16,176,160,0.4) !important;
+  }
+
+  /* ── FAB hover lift ── */
+  #advisor-assist-fab:hover {
+    transform: translateY(-2px) scale(1.04);
+  }
+  #advisor-assist-fab:active {
+    transform: translateY(0) scale(0.97);
+  }
 </style>
+
+
 {% endblock %}
 
 {% block extra_js %}
@@ -1049,7 +1388,18 @@ function commutePlanner() {
     // ─── Wizard navigation ───
     step: '1a',                                  // '1a' | '1b' | '2' | '3'
     submitted: false,
+    assistantOpen: false,
     mapInited: false,
+    handleAssistantToggle(isOpen) {
+      this.assistantOpen = isOpen;
+      this.$nextTick(() => {
+        setTimeout(() => {
+          if (window.commuteMap) window.commuteMap.invalidateSize();
+          const chartEl = document.getElementById('advisor-chart');
+          if (chartEl && chartEl._chart) chartEl._chart.resize();
+        }, 320);
+      });
+    },
     stepDefs: [
       { id: '1a', short: '1', short_label: 'Tu coche',    label: 'Tu coche actual' },
       { id: '1b', short: '2', short_label: 'EV',          label: 'Coche eléctrico' },
@@ -1265,19 +1615,23 @@ function commutePlanner() {
       const prov = cp.startsWith('20') ? 'GI' : cp.startsWith('48') ? 'BI' : cp.startsWith('01') ? 'VI' : 'OTROS';
 
       if (this.profile === 'particular') {
-        out.push({ name: 'Moves III vehículo' + (this.scrapping ? ' + achatarramiento' : ''),
+        out.push({ name: 'Programa Auto+ vehículo' + (this.scrapping ? ' + achatarramiento' : ''),
                    eur: this.scrapping ? 7000 : 4500, recurring: false });
       } else {
-        out.push({ name: 'Moves III vehículo' + (this.scrapping ? ' + achatarramiento' : ''),
+        out.push({ name: 'Programa Auto+ vehículo' + (this.scrapping ? ' + achatarramiento' : ''),
                    eur: this.scrapping ? 4000 : 2900, recurring: false });
       }
-      if (this.wallboxState === 'needs_install') {
-        out.push({ name: 'Moves III instalación wallbox',
-                   eur: this.profile === 'particular' ? 600 : 800, recurring: false });
-      }
+      out.push({ name: 'Programa Auto+ descuento concesionario', eur: 1000, recurring: false });
+ 
       if (this.profile === 'particular' && price > 0) {
         const base = Math.min(price, 20000);
         out.push({ name: 'Deducción IRPF 15 % (RD-ley 5/2023)', eur: Math.round(base * 0.15), recurring: false });
+      }
+      if ((this.profile === 'autonomo' || this.profile === 'empresa') && price > 0) {
+        const ivaTotal = price * (0.21 / 1.21);
+        const pct = this.profile === 'empresa' ? 1.0 : 0.5;
+        const pctLabel = this.profile === 'empresa' ? '100 %' : '50 %';
+        out.push({ name: `IVA deducible (${pctLabel})`, eur: Math.round(ivaTotal * pct), recurring: false });
       }
       const ivtmBonif = prov === 'GI' ? 0.75 : prov === 'BI' ? 0.90 : prov === 'VI' ? 0.50 : 0;
       if (ivtmBonif > 0) {
@@ -2046,5 +2400,182 @@ window.mubilChargersMap = function (q) {
   try { map.fitBounds(L.featureGroup(markers).getBounds().pad(0.2)); } catch (e) {}
   setTimeout(() => map.invalidateSize(), 200);
 };
+</script>
+
+<script>
+// ─────────────────────────── Advisor AI Assistant Alpine component
+function advisorAssistant() {
+  return {
+    open: false,
+    loading: false,
+    inputText: '',
+
+    togglePanel() {
+      this.open = !this.open;
+      this.$dispatch('toggle-assistant', { open: this.open });
+    },
+
+    closePanel() {
+      this.open = false;
+      this.$dispatch('toggle-assistant', { open: false });
+    },
+
+    // Read current wizard context from the commutePlanner Alpine component.
+    // We walk the DOM to find the commutePlanner x-data root and extract its
+    // reactive state — no global var needed, Alpine stores state on the element.
+    _getFormContext() {
+      // The outer <section> with x-data="commutePlanner()" is the host.
+      const host = document.querySelector('[x-data="commutePlanner()"]') ||
+                   document.querySelector('section[x-data]');
+      if (!host || !host._x_dataStack) return {};
+      const planner = host._x_dataStack[0];
+      if (!planner) return {};
+
+      // Pull the km_year from the input (Alpine writes it directly as a value)
+      const kmInput = document.getElementById('km_year_input');
+      const kmYear = kmInput ? kmInput.value : '';
+
+      return {
+        step: planner.step || '1a',
+        cp: planner.cp || '',
+        current_make: planner.selectedCurrent?.make || '',
+        current_model: planner.selectedCurrent?.model || '',
+        current_propulsion: planner.selectedCurrent?.propulsion || '',
+        current_consumption: planner.selectedCurrent?.consumption_l_100km || '',
+        target_make: planner.selectedTarget?.make || '',
+        target_model: planner.selectedTarget?.model || '',
+        target_range_km: planner.selectedTarget?.range_wltp_km || '',
+        target_price_eur: planner.selectedTarget?.price_eur || '',
+        km_year: kmYear,
+        motorway_pct: planner.commuteMode
+          ? planner.getWeightedPct('motorway_pct')
+          : planner.manMotorwayPct,
+        profile: planner.profile || 'particular',
+        wallbox_state: planner.wallboxState || 'installed',
+        home_pct: planner.homePct || '',
+        scrapping: planner.scrapping || false,
+        purchase_mode: planner.purchaseMode || 'switch',
+      };
+    },
+
+    // Proactive hint (no user message — AI analyses context and suggests)
+    async sendHint() {
+      this._appendThinking();
+      await this._callAssist(null);
+    },
+
+    // Send a user typed message
+    async sendMessage(text) {
+      if (!text || !text.trim()) return;
+      this.inputText = '';
+      this._appendThinking();
+      await this._callAssist(text.trim());
+    },
+
+    async _callAssist(message) {
+      this.loading = true;
+      const ctx = this._getFormContext();
+      const csrfToken = document.cookie
+        .split(';')
+        .map(c => c.trim())
+        .find(c => c.startsWith('csrftoken='))
+        ?.split('=')?.[1] || '';
+
+      // Remove "thinking" bubble
+      this._removeThinking();
+
+      try {
+        const resp = await fetch('{% url "mubil:advisor_assist" %}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+          },
+          body: JSON.stringify({ context: ctx, message }),
+        });
+
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const html = await resp.text();
+
+        const output = document.getElementById('assist-output');
+        if (output) {
+          const wrapper = document.createElement('div');
+          wrapper.innerHTML = html;
+          
+          // Parse markdown content dynamically
+          wrapper.querySelectorAll('.assist-markdown-body').forEach(el => {
+            const tpl = el.nextElementSibling;
+            if (tpl && tpl.type === 'text/x-markdown') {
+              el.innerHTML = marked.parse(tpl.textContent);
+            }
+          });
+
+          output.appendChild(wrapper);
+          output.scrollTop = output.scrollHeight;
+        }
+      } catch (err) {
+        this._removeThinking();
+        const output = document.getElementById('assist-output');
+        if (output) {
+          const errDiv = document.createElement('div');
+          errDiv.className = 'text-xs text-red-500 dark:text-red-400 px-2 py-1';
+          errDiv.textContent = 'Error al conectar con el asistente. Inténtalo de nuevo.';
+          output.appendChild(errDiv);
+          output.scrollTop = output.scrollHeight;
+        }
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    _appendThinking() {
+      const output = document.getElementById('assist-output');
+      if (!output) return;
+      const el = document.createElement('div');
+      el.id = 'assist-thinking';
+      el.className = 'flex items-start gap-2.5 my-1';
+      el.innerHTML = `
+        <div class="shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-estrata-teal to-cyan-400 flex items-center justify-center shadow-sm mt-0.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-white animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/>
+          </svg>
+        </div>
+        <div class="rounded-2xl rounded-tl-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm text-slate-400 italic">
+          Analizando tu simulación…
+        </div>`;
+      output.appendChild(el);
+      output.scrollTop = output.scrollHeight;
+    },
+
+    _removeThinking() {
+      const el = document.getElementById('assist-thinking');
+      if (el) el.remove();
+    },
+
+    stepLabel() {
+      const host = document.querySelector('[x-data="commutePlanner()"]') ||
+                   document.querySelector('section[x-data]');
+      if (!host || !host._x_dataStack) return 'Paso 1a';
+      const step = host._x_dataStack[0]?.step || '1a';
+      const labels = { '1a': 'Paso 1a · Tu coche actual', '1b': 'Paso 1b · Eléctrico objetivo',
+                       '2': 'Paso 2 · Movilidad', '3': 'Paso 3 · Carga e incentivos' };
+      return labels[step] || ('Paso ' + step);
+    },
+
+    quickQuestions() {
+      const host = document.querySelector('[x-data="commutePlanner()"]') ||
+                   document.querySelector('section[x-data]');
+      const step = host?._x_dataStack?.[0]?.step || '1a';
+      const qs = {
+        '1a': ['¿Qué pasa si uso coche medio?', '¿Cómo afecta la antigüedad al TCO?'],
+        '1b': ['¿Cuál tiene más autonomía?', '¿Qué diferencia hay con el PHEV?'],
+        '2':  ['¿Cuántos km hago de media?', '¿Cómo afecta la autovía al consumo?'],
+        '3':  ['¿Cuánto me dan de ayuda?', '¿Merece la pena instalar wallbox?'],
+      };
+      return qs[step] || [];
+    },
+  };
+}
 </script>
 {% endblock %}

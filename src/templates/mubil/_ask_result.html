@@ -26,9 +26,10 @@
           <p class="text-sm text-slate-700 dark:text-slate-200">{{ query }}</p>
         </div>
 
-        <p class="mt-4 text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
-          {{ answer.answer_md }}
-        </p>
+        <div class="mt-4 prose prose-sm dark:prose-invert max-w-none text-slate-700 dark:text-slate-200">
+          <div class="ask-markdown-body"></div>
+          <script type="text/x-markdown">{{ answer.answer_md }}</script>
+        </div>
 
         {% if answer.error == 'generation_unavailable' and answer.sources %}
           <div class="mt-5 pt-4 border-t border-amber-200 dark:border-amber-800">
@@ -85,7 +86,8 @@
     </div>
 
     <div class="prose prose-sm dark:prose-invert max-w-none text-slate-800 dark:text-slate-100">
-      <div style="white-space: pre-wrap;">{{ answer.answer_md }}</div>
+      <div id="ask-md-body" class="ask-markdown-body"></div>
+      <script type="text/x-markdown">{{ answer.answer_md }}</script>
     </div>
 
     {% if answer.sources %}

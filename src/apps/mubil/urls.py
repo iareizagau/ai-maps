@@ -26,10 +26,12 @@ urlpatterns = [
     path('advisor/', views.advisor_page, name='advisor'),
     path('advisor/quote/', views.advisor_quote, name='advisor_quote'),
     path('advisor/pdf/', views.advisor_pdf, name='advisor_pdf'),
+    path('advisor/assist/', views.advisor_assist, name='advisor_assist'),
     path('ask/', views.ask_page, name='ask'),
     path('ask/query/', views.ask_query, name='ask_query'),
     path('route/', views.route_page, name='route'),
     path('route/plan/', views.route_plan, name='route_plan'),
     path('plan/', views.plan_page, name='plan'),
+    path('infrastructure/', views.infrastructure_page, name='infrastructure'),
     path('news/', views.news_page, name='news'),
 ]

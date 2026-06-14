@@ -346,11 +346,26 @@ def calculate_tco_quote(
     wallbox_capex = WALLBOX_CAPEX_EUR if needs_wallbox else Decimal("0")
 
     # ----- Override de precios (sin escritura en BBDD) -----
-    current_price_used = (
-        vehicle_current_price_override_eur
-        if vehicle_current_price_override_eur is not None and vehicle_current_price_override_eur > 0
-        else current.price_eur
-    )
+    residual_val = None
+    if purchase_mode in ("switch", "replace"):
+        if vehicle_current_price_override_eur is not None and vehicle_current_price_override_eur > 0:
+            residual_val = vehicle_current_price_override_eur
+        else:
+            age = current_age_years if current_age_years is not None else 5
+            if current.price_eur:
+                residual_val = int(round(float(current.price_eur) * ((1 - 0.15) ** age)))
+            else:
+                residual_val = 0
+
+    if purchase_mode == "switch":
+        current_price_used = residual_val
+    else:
+        # En new_vs_new y en replace, el baseline de compra es el PVP nuevo (current.price_eur)
+        current_price_used = (
+            vehicle_current_price_override_eur
+            if vehicle_current_price_override_eur is not None and vehicle_current_price_override_eur > 0
+            else current.price_eur
+        )
     target_price_used = (
         vehicle_target_price_override_eur
         if vehicle_target_price_override_eur is not None and vehicle_target_price_override_eur > 0
@@ -425,11 +440,7 @@ def calculate_tco_quote(
         vehicle_target_price_used_eur=target_price_used,
         purchase_mode=purchase_mode,
         current_age_years=current_age_years,
-        current_residual_value_eur=(
-            current_price_used
-            if purchase_mode == "switch" and current_price_used is not None
-            else None
-        ),
+        current_residual_value_eur=residual_val,
         operational_savings_eur=operational_savings.quantize(Decimal("0.01")),
         purchase_savings_eur=purchase_savings.quantize(Decimal("0.01")),
         total_net_savings_eur=total_net_savings.quantize(Decimal("0.01")),

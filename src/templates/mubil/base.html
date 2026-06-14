@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}eStrata · ¿Cuánto te ahorras con un coche eléctrico?{% endblock %}</title>
-  <meta name="description" content="{% block meta_description %}Calcula el ahorro real al cambiar tu coche actual por uno eléctrico en Euskadi. PVPC en vivo, MINCOTUR, ayudas MOVES III. Cero opiniones.{% endblock %}">
+  <meta name="description" content="{% block meta_description %}Calcula el ahorro real al cambiar tu coche actual por uno eléctrico en Euskadi. PVPC en vivo, MINCOTUR, ayudas Programa Auto+. Cero opiniones.{% endblock %}">
   <meta name="theme-color" content="#103040">
 
   <link rel="preload" href="{% static 'fonts/InterVariable.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="icon" type="image/png" href="{% static 'img/estrata/symbol.png' %}">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v={% now "U" %}">
 
   <script src="{% static 'js/htmx.min.js' %}"></script>
   <script defer src="{% static 'js/alpine.min.js' %}"></script>
@@ -37,6 +37,8 @@
            class="px-3 py-1.5 rounded-lg transition {% if active == 'ask' %}bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light{% else %}text-slate-700 dark:text-slate-300 hover:text-estrata-teal_dark dark:hover:text-estrata-teal_light hover:bg-estrata-teal/5{% endif %}">Ask</a>
         <a href="{% url 'mubil:route' %}"
            class="px-3 py-1.5 rounded-lg transition {% if active == 'route' %}bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light{% else %}text-slate-700 dark:text-slate-300 hover:text-estrata-teal_dark dark:hover:text-estrata-teal_light hover:bg-estrata-teal/5{% endif %}">Route</a>
+        <a href="{% url 'mubil:infrastructure' %}"
+           class="px-3 py-1.5 rounded-lg transition {% if active == 'infrastructure' %}bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light{% else %}text-slate-700 dark:text-slate-300 hover:text-estrata-teal_dark dark:hover:text-estrata-teal_light hover:bg-estrata-teal/5{% endif %}">Mapa</a>
         <a href="{% url 'mubil:plan' %}"
            class="px-3 py-1.5 rounded-lg transition {% if active == 'plan' %}bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light{% else %}text-slate-700 dark:text-slate-300 hover:text-estrata-teal_dark dark:hover:text-estrata-teal_light hover:bg-estrata-teal/5{% endif %}">Plan</a>
         <a href="{% url 'mubil:news' %}"

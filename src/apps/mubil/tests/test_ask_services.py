@@ -187,7 +187,7 @@ class CorpusStatsEndpointTests(TestCase):
         _make_doc(1, embedding=[0.2] * 768)
         _make_doc(2)  # pending
 
-        response = self.client.get("/estrata/api/v1/ask/corpus/stats")
+        response = self.client.get("/api/mubil/v1/ask/corpus/stats")
 
         self.assertEqual(response.status_code, 200)
         data = response.json()

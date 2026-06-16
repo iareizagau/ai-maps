@@ -1750,7 +1750,7 @@ function commutePlanner() {
 
     calculateTemporaryRoute() {
       this.loadingRoute = true;
-      fetch('/estrata/api/v1/advisor/route-commute', {
+      fetch('/api/mubil/v1/advisor/route-commute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1833,7 +1833,7 @@ function commutePlanner() {
 
     updateMapToCp() {
       if (!this.cp || this.cp.length !== 5) return;
-      fetch(`/estrata/api/v1/advisor/cp/${this.cp}`)
+      fetch(`/api/mubil/v1/advisor/cp/${this.cp}`)
         .then(res => { if (!res.ok) throw new Error('CP not found'); return res.json(); })
         .then(data => {
           if (data.latitude && data.longitude) this.centerMap([data.latitude, data.longitude], 13);
@@ -1912,7 +1912,7 @@ function commutePlanner() {
     fetchCurrentSuggestions(fallbackQuery) {
       const q = this.searchCurrent || fallbackQuery || '';
       if (q.length < 2) return;
-      fetch(`/estrata/api/v1/advisor/vehicles?q=${encodeURIComponent(q)}&propulsion=ICE_ALL`)
+      fetch(`/api/mubil/v1/advisor/vehicles?q=${encodeURIComponent(q)}&propulsion=ICE_ALL`)
         .then(res => res.json())
         .then(data => {
           this.currentSuggestions = data;
@@ -1923,7 +1923,7 @@ function commutePlanner() {
     fetchTargetSuggestions(fallbackQuery) {
       const q = this.searchTarget || fallbackQuery || '';
       if (q.length < 2) return;
-      fetch(`/estrata/api/v1/advisor/vehicles?q=${encodeURIComponent(q)}&propulsion=EV_ALL`)
+      fetch(`/api/mubil/v1/advisor/vehicles?q=${encodeURIComponent(q)}&propulsion=EV_ALL`)
         .then(res => res.json())
         .then(data => {
           this.targetSuggestions = data;
@@ -1980,7 +1980,7 @@ function commutePlanner() {
         size: this.criteriaSize, range_bucket: this.criteriaRange,
         price_min: this.criteriaPriceMin, price_max: this.criteriaPriceMax, limit: 6,
       });
-      fetch(`/estrata/api/v1/advisor/recommend?${params.toString()}`)
+      fetch(`/api/mubil/v1/advisor/recommend?${params.toString()}`)
         .then(res => res.json())
         .then(data => {
           this.candidatesLoading = false;
@@ -2018,7 +2018,7 @@ function commutePlanner() {
     fetchAlternatives(vehicleId) {
       if (!vehicleId) { this.alternatives = []; return; }
       this.alternativesLoading = true;
-      fetch(`/estrata/api/v1/advisor/vehicles/alternatives?vehicle_id=${vehicleId}&limit=3`)
+      fetch(`/api/mubil/v1/advisor/vehicles/alternatives?vehicle_id=${vehicleId}&limit=3`)
         .then(res => res.json())
         .then(data => {
           this.alternativesLoading = false;
@@ -2097,7 +2097,7 @@ function commutePlanner() {
       // resto de specs).
       const fetchAndSelect = async (id, selector) => {
         try {
-          const r = await fetch(`/estrata/api/v1/advisor/vehicles?q=&limit=1000&id=${id}`);
+          const r = await fetch(`/api/mubil/v1/advisor/vehicles?q=&limit=1000&id=${id}`);
           // /vehicles no acepta id, así que mejor un GET directo del recurso.
         } catch (e) {}
       };

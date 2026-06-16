@@ -1,3 +1,4 @@
+import os
 from django.contrib import admin
 from django.http import HttpResponse
 from django.urls import path, include
@@ -6,7 +7,11 @@ from apps.core.api import api
 from apps.mubil.urls import api as mubil_api
 from django.contrib.sitemaps.views import sitemap
 from apps.sbk.sitemaps import SbkCitySitemap, SbkTypeSitemap, SbkStaticSitemap, SbkPersonSitemap
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, RedirectView
+
+# Prefijo legado de Mubil (ENV=estrata). Solo se usa para el redirect de
+# compatibilidad /estrata/ → /. La app en sí vive en la raíz.
+_MUBIL_PREFIX = getattr(settings, 'ENV', os.environ.get('ENV', 'mubil'))
 
 sitemaps = {
     'sbk_cities': SbkCitySitemap,
@@ -26,7 +31,10 @@ urlpatterns = [
     path('healthz/', healthz),
     # Service Worker
     path('sw.js', TemplateView.as_view(template_name="adventure/sw.js", content_type='application/javascript'), name='service_worker'),
-    # Auth
+    # Mubil montado en la raíz — va ANTES de core.urls para que su path('')
+    # (views.index) tenga prioridad sobre el path('') de core (views.home).
+    path('', include('apps.mubil.urls')),
+    # Auth / core (about/, profile/, account/, ...)
     path('', include('apps.core.urls')),
     path('accounts/', include('allauth.urls')),
     path('admin/', admin.site.urls),
@@ -46,11 +54,12 @@ urlpatterns += [
     path('adventure/', include('apps.adventure.urls')),
     path('solar/', include('apps.solar.urls')),
     path('oceania/', include('apps.oceania.urls')),
-    # The mubil API is mounted at the top level so its NinjaAPI namespace
-    # (`mubil_api`) stays un-nested — see comment in apps/mubil/urls.py.
-    path('estrata/api/', mubil_api.urls),
-    path('estrata/', include('apps.mubil.urls')),
+    # NinjaAPI de Mubil bajo /api/mubil/ (no colisiona con la core API en /api/).
+    # Redirect de compatibilidad: /{ENV}/ (ej. /estrata/) → /.
+    path('api/mubil/', mubil_api.urls),
+    path(f'{_MUBIL_PREFIX}/', RedirectView.as_view(url='/', permanent=True)),
 ]
+
 if settings.DEBUG:
     from django.conf.urls.static import static
 

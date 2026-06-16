@@ -3,9 +3,7 @@ from pathlib import Path
 import environ
 
 # Initialize environment variables
-env = environ.Env(
-    DEBUG=(bool, False)
-)
+env = environ.Env(DEBUG=(bool, False))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 # BASE_DIR is src/
@@ -21,6 +19,7 @@ if os.path.exists(ENV_FILE):
 
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
+ENV = env('ENV', default='mubil')
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['.maps.eus', 'localhost', '127.0.0.1'])
 

@@ -541,9 +541,9 @@ def infrastructure_page(request):
     init_payload = {
         'vehicleId': vehicle.id if vehicle else None,
         'vehicleLabel': f"{vehicle.make} {vehicle.model}" if vehicle else None,
-        'chargersUrl': '/estrata/api/v1/infrastructure/chargers.geojson',
-        'fuelStationsUrl': '/estrata/api/v1/infrastructure/fuel_stations.geojson',
-        'desertUrl': '/estrata/api/v1/infrastructure/desert.json',
+        'chargersUrl': '/api/mubil/v1/infrastructure/chargers.geojson',
+        'fuelStationsUrl': '/api/mubil/v1/infrastructure/fuel_stations.geojson',
+        'desertUrl': '/api/mubil/v1/infrastructure/desert.json',
     }
 
     return render(request, 'mubil/infrastructure.html', {

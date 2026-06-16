@@ -1,6 +1,4 @@
-{# Partial HTMX devuelto cuando contact_submit rechaza por validación mínima.
-   Se inserta SOBRE el formulario (hx-target apunta al wrapper de feedback,
-   no al form) para que el usuario pueda corregir sin perder lo escrito. #}
+{# Partial HTMX devuelto por contact_submit cuando falla la validación mínima. #}
 <div class="rounded-xl border border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
   {{ msg }}
 </div>

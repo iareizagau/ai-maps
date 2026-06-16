@@ -28,6 +28,22 @@ from .plan import services as plan_services
 from .route import services as route_services
 
 
+def _eh_polygon():
+    """Reusable EH bbox polygon for counting infra inside Euskal Herria.
+
+    Built lazily so importing `views` doesn't pull GEOS at module load. Same
+    bbox the OpenChargeMap ingest uses, so on-screen counts agree with what
+    the Mapa page renders.
+    """
+    from django.contrib.gis.geos import Polygon
+    from apps.mubil.data.openchargemap_client import EH_BBOX_NE, EH_BBOX_SW
+    sw_lat, sw_lon = EH_BBOX_SW
+    ne_lat, ne_lon = EH_BBOX_NE
+    poly = Polygon.from_bbox((sw_lon, sw_lat, ne_lon, ne_lat))
+    poly.srid = 4326
+    return poly
+
+
 def index(request):
     """Public landing of the mubil sub-domain (PROPUESTA.md §6 deliverables).
 
@@ -38,6 +54,9 @@ def index(request):
     """
     from apps.mubil.data import pvpc_ingest
 
+    # Landing stats must reflect Euskal Herria coverage, not the raw national
+    # snapshots the ingest commands happen to have pulled.
+    eh = _eh_polygon()
     embedded_docs = MobilityDocument.objects.filter(embedding__isnull=False).count()
 
     # Vehicle catalog is the heaviest, most under-sold asset (~24k rows). One
@@ -67,8 +86,8 @@ def index(request):
 
     stats = {
         'vehicles': v_total,
-        'charging_stations': ChargingStation.objects.count(),
-        'fuel_stations': FuelStation.objects.count(),
+        'charging_stations': ChargingStation.objects.filter(geom__within=eh).count(),
+        'fuel_stations': FuelStation.objects.filter(geom__within=eh).count(),
         'docs_indexed': MobilityDocument.objects.count(),
         'docs_embedded': embedded_docs,
         'demand_hexes': DemandHex.objects.count(),
@@ -364,6 +383,78 @@ def news_page(request):
     })
 
 
+# Permitidos para el campo "Soy…" del formulario "Hablemos" — alineado con los
+# segmentos B2B/B2B2C de la Memoria (B.6 / B.7).
+_CONTACT_PROFILES = {
+    'concesionario': 'Concesionario o grupo de automoción',
+    'flota':         'Empresa con flota o autónomo',
+    'energetica':    'Energética, operador de recarga o renting',
+    'admin':         'Administración pública o agencia de movilidad',
+    'particular':    'Particular interesado',
+    'otro':          'Otro',
+}
+
+
+@require_http_methods(["POST"])
+def contact_submit(request):
+    """Lead capture del bloque 'Hablemos' de la landing.
+
+    HTMX-only: devuelve un partial de gracias (o de error) que reemplaza el
+    propio formulario. El email se envía via Brevo (EMAIL_BACKEND configurado
+    en settings.base). Si el envío falla — broker caído, key sin créditos —
+    el partial se renderiza igual y el error queda en logs: no queremos que
+    una integración externa rota tire la conversión.
+    """
+    from django.conf import settings
+    from django.core.mail import EmailMessage
+    from django.utils.html import strip_tags
+
+    # Normalizar inputs. Truncamos defensivamente para evitar payloads abusivos.
+    def _clean(field, max_len=500):
+        return strip_tags((request.POST.get(field) or '').strip())[:max_len]
+
+    name = _clean('name', 120)
+    entity = _clean('entity', 200)
+    email = _clean('email', 200)
+    profile_key = _clean('profile', 40).lower()
+    message = _clean('message', 2000)
+
+    profile_label = _CONTACT_PROFILES.get(profile_key, _CONTACT_PROFILES['otro'])
+
+    # Validación mínima — sin Django Form para mantener el flujo HTMX ligero.
+    # Email opcional pero si viene mal formado lo dejamos pasar al campo libre;
+    # el operador humano lo reconducirá.
+    if not name or not email or len(message) < 5:
+        return render(request, 'mubil/_contact_error.html', {
+            'msg': 'Necesitamos al menos nombre, email y un mensaje breve.',
+        }, status=400)
+
+    subject = f'[eStrata · landing] {profile_label} — {entity or name}'
+    body = (
+        f'Nombre: {name}\n'
+        f'Email: {email}\n'
+        f'Entidad: {entity or "—"}\n'
+        f'Perfil: {profile_label}\n'
+        '\n'
+        f'{message}\n'
+    )
+
+    try:
+        msg = EmailMessage(
+            subject=subject,
+            body=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=['iareizagau@gmail.com'],
+            reply_to=[email] if email else None,
+        )
+        msg.send(fail_silently=False)
+    except Exception:  # noqa: BLE001 — broker fail no debe romper la UX
+        import logging
+        logging.getLogger(__name__).exception('contact_submit: email send failed')
+
+    return render(request, 'mubil/_contact_thanks.html', {'name': name})
+
+
 def route_page(request):
     """EV-aware route planner (MOCK). PROPUESTA.md §3.3.
 
@@ -538,20 +629,35 @@ def infrastructure_page(request):
         propulsion__in=(Vehicle.Propulsion.BEV, Vehicle.Propulsion.PHEV),
     ).only('id', 'make', 'model').order_by('make', 'model'))
 
+    eh = _eh_polygon()
+    eh_chargers = ChargingStation.objects.filter(geom__within=eh).count()
+    eh_fuel = FuelStation.objects.filter(geom__within=eh).count()
+    spain_chargers = ChargingStation.objects.count()
+    spain_fuel = FuelStation.objects.count()
+
     init_payload = {
         'vehicleId': vehicle.id if vehicle else None,
         'vehicleLabel': f"{vehicle.make} {vehicle.model}" if vehicle else None,
         'chargersUrl': '/api/mubil/v1/infrastructure/chargers.geojson',
         'fuelStationsUrl': '/api/mubil/v1/infrastructure/fuel_stations.geojson',
         'desertUrl': '/api/mubil/v1/infrastructure/desert.json',
+        # Default scope = 'eh': matches the product premise. User can widen
+        # to 'spain' via the segmented control in the Resumen panel.
+        'defaultScope': 'eh',
+        'totals': {
+            'eh':    {'chargers': eh_chargers,    'fuel': eh_fuel},
+            'spain': {'chargers': spain_chargers, 'fuel': spain_fuel},
+        },
     }
 
     return render(request, 'mubil/infrastructure.html', {
         'init_json': json.dumps(init_payload),
         'selected_vehicle': vehicle,
         'ev_vehicles': ev_vehicles,
-        'total_chargers': ChargingStation.objects.count(),
-        'total_fuel_stations': FuelStation.objects.count(),
+        # Kept for backwards-compat with any template path that still reads
+        # them directly; same EH numbers as the init_payload.
+        'total_chargers': eh_chargers,
+        'total_fuel_stations': eh_fuel,
     })
 
 

@@ -40,24 +40,28 @@ def infrastructure_chargers(
     request,
     vehicle_id: Optional[int] = None,
     source: Optional[str] = None,
+    scope: str = 'eh',
 ):
-    """All EH chargers as GeoJSON, optionally coloured by compatibility.
+    """Chargers as GeoJSON, defaulting to Euskal Herria.
 
     ``vehicle_id`` toggles the compatibility flag per feature based on a
     connector-type heuristic; a non-plug-in vehicle (or missing id) is
     silently treated as "no filter". ``source`` accepts a comma-separated
-    list (``dgt_nap,ocm``) to limit which ingest sources show.
+    list (``dgt_nap,ocm``) to limit which ingest sources show. ``scope`` is
+    ``'eh'`` (default — ~1.4k features) or ``'spain'`` (~12.8k features) for
+    the explicit "ampliar a España" toggle on the Mapa page.
     """
     sources = [s.strip() for s in source.split(',')] if source else None
     return infrastructure_data.chargers_geojson(
-        vehicle_id=vehicle_id, sources=sources,
+        vehicle_id=vehicle_id, sources=sources, scope=scope,
     )
 
 
 @router.get('/infrastructure/fuel_stations.geojson', tags=['infrastructure'])
-def infrastructure_fuel_stations(request):
-    """All EH fuel stations as GeoJSON with live fuel prices."""
-    return infrastructure_data.fuel_stations_geojson()
+def infrastructure_fuel_stations(request, scope: str = 'eh'):
+    """Fuel stations as GeoJSON with live fuel prices. Defaults to EH bbox;
+    pass ``?scope=spain`` to widen to the national snapshot."""
+    return infrastructure_data.fuel_stations_geojson(scope=scope)
 
 
 @router.get('/infrastructure/desert.json', tags=['infrastructure'])

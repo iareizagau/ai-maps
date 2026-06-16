@@ -34,4 +34,5 @@ urlpatterns = [
     path('plan/', views.plan_page, name='plan'),
     path('infrastructure/', views.infrastructure_page, name='infrastructure'),
     path('news/', views.news_page, name='news'),
+    path('contact/', views.contact_submit, name='contact'),
 ]

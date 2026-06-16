@@ -26,9 +26,20 @@ from typing import Iterable, List, Optional
 from django.db import models
 from django.db.models import Func
 from django.contrib.gis.db.models.functions import AsGeoJSON
-from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import Point, Polygon
 
 from apps.mubil.models import ChargingStation, Vehicle, FuelStation
+
+
+def _eh_polygon() -> Polygon:
+    """EH bbox polygon — same one the OCM ingest uses. Built lazily so we
+    don't pay GEOS init cost when callers only need the dot-grid helpers."""
+    from apps.mubil.data.openchargemap_client import EH_BBOX_NE, EH_BBOX_SW
+    sw_lat, sw_lon = EH_BBOX_SW
+    ne_lat, ne_lon = EH_BBOX_NE
+    poly = Polygon.from_bbox((sw_lon, sw_lat, ne_lon, ne_lat))
+    poly.srid = 4326
+    return poly
 
 
 class ST_X(Func):
@@ -140,6 +151,7 @@ def chargers_geojson(
     *,
     vehicle_id: Optional[int] = None,
     sources: Optional[Iterable[str]] = None,
+    scope: str = 'eh',
 ) -> dict:
     """Return all charging stations as a GeoJSON FeatureCollection.
 
@@ -166,6 +178,9 @@ def chargers_geojson(
     apply_compat = vehicle is not None and _vehicle_takes_ev_charge(vehicle)
 
     qs = ChargingStation.objects.exclude(geom__isnull=True)
+    if scope == 'eh':
+        # Spatial filter; uses the same GIST-indexed bbox the ingest writes to.
+        qs = qs.filter(geom__within=_eh_polygon())
     if sources:
         qs = qs.filter(source__in=list(sources))
     qs = qs.annotate(
@@ -301,13 +316,20 @@ def fast_charger_grid(
     return cells
 
 
-def fuel_stations_geojson() -> dict:
-    """Return all fuel stations as a GeoJSON FeatureCollection.
+def fuel_stations_geojson(*, scope: str = 'eh') -> dict:
+    """Return fuel stations as a GeoJSON FeatureCollection.
+
+    ``scope='eh'`` (default) restricts to the Euskal Herria bbox so the Mapa
+    page stays coherent with the product premise. ``scope='spain'`` returns
+    the full national snapshot — useful for the explicit "ampliar a España"
+    toggle but ~18× bigger payload.
 
     Optimized using ST_X/ST_Y database functions and .values() lookup to bypass
     full Django model instantiation and WKB parsing.
     """
     qs = FuelStation.objects.exclude(geom__isnull=True)
+    if scope == 'eh':
+        qs = qs.filter(geom__within=_eh_polygon())
     qs = qs.annotate(
         x=ST_X("geom"),
         y=ST_Y("geom"),

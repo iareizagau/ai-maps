@@ -1,5 +1,5 @@
 {% extends "mubil/base.html" %}
-{% load i18n %}
+{% load i18n humanize %}
 
 {% block title %}Mubil Infraestructura — Cargadores compatibles + desierto de carga rápida{% endblock %}
 
@@ -95,13 +95,43 @@
     <aside class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 flex flex-col gap-4">
       <div>
         <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Resumen</h2>
+
+        {# Scope toggle — Euskal Herria es el producto, España es el modo amplio.
+           Default 'eh'. Al cambiar, refetch del GeoJSON con ?scope=... y se
+           recalculan los totales en el panel desde initial.totals[scope]. #}
+        <div class="mb-3 flex items-center justify-between gap-2">
+          <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Ámbito</span>
+          <div class="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-100 dark:bg-slate-900 text-xs font-bold">
+            <button type="button" @click="setScope('eh')"
+                    :class="scope === 'eh' ? 'bg-white dark:bg-slate-700 text-cyan-700 dark:text-cyan-300 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
+                    class="px-2.5 py-1 rounded-md transition-colors">Euskal Herria</button>
+            <button type="button" @click="setScope('spain')"
+                    :class="scope === 'spain' ? 'bg-white dark:bg-slate-700 text-cyan-700 dark:text-cyan-300 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
+                    class="px-2.5 py-1 rounded-md transition-colors">España</button>
+          </div>
+        </div>
+
         <dl class="space-y-2 text-sm">
-          <div class="flex justify-between" x-show="layers.chargers"><dt class="text-slate-600 dark:text-slate-400">Cargadores totales (BD)</dt><dd class="font-bold text-slate-900 dark:text-white">{{ total_chargers }}</dd></div>
-          <div class="flex justify-between" x-show="layers.chargers"><dt class="text-slate-600 dark:text-slate-400">Cargadores visibles</dt><dd class="font-bold text-slate-900 dark:text-white" x-text="visibleCount"></dd></div>
-          <div class="flex justify-between" x-show="layers.chargers && initial.vehicleId"><dt class="text-slate-600 dark:text-slate-400">Compatibles con tu coche</dt><dd class="font-bold text-cyan-600 dark:text-cyan-400" x-text="compatibleCount"></dd></div>
-          <div class="flex justify-between" x-show="layers.chargers"><dt class="text-slate-600 dark:text-slate-400">Rápidos ≥50 kW</dt><dd class="font-bold text-blue-600 dark:text-blue-400" x-text="fastCount"></dd></div>
-          <div class="flex justify-between" x-show="layers.fuel"><dt class="text-slate-600 dark:text-slate-400">Gasolineras (BD)</dt><dd class="font-bold text-orange-500" >{{ total_fuel_stations }}</dd></div>
-          <div class="flex justify-between" x-show="layers.fuel"><dt class="text-slate-600 dark:text-slate-400">Gasolineras visibles</dt><dd class="font-bold text-orange-500" x-text="fuelCount"></dd></div>
+          <div class="flex justify-between" x-show="layers.chargers">
+            <dt class="text-slate-600 dark:text-slate-400">
+              <span x-text="scope === 'eh' ? 'Cargadores en Euskal Herria' : 'Cargadores en España'"></span>
+            </dt>
+            <dd class="font-bold text-slate-900 dark:text-white tabular-nums" x-text="formatNum(initial.totals[scope].chargers)"></dd>
+          </div>
+          <div class="flex justify-between" x-show="layers.chargers && initial.vehicleId">
+            <dt class="text-slate-600 dark:text-slate-400">Compatibles con tu coche</dt>
+            <dd class="font-bold text-cyan-600 dark:text-cyan-400 tabular-nums" x-text="formatNum(compatibleCount)"></dd>
+          </div>
+          <div class="flex justify-between" x-show="layers.chargers">
+            <dt class="text-slate-600 dark:text-slate-400">Rápidos ≥50 kW</dt>
+            <dd class="font-bold text-blue-600 dark:text-blue-400 tabular-nums" x-text="formatNum(fastCount)"></dd>
+          </div>
+          <div class="flex justify-between" x-show="layers.fuel">
+            <dt class="text-slate-600 dark:text-slate-400">
+              <span x-text="scope === 'eh' ? 'Gasolineras en Euskal Herria' : 'Gasolineras en España'"></span>
+            </dt>
+            <dd class="font-bold text-orange-500 tabular-nums" x-text="formatNum(initial.totals[scope].fuel)"></dd>
+          </div>
         </dl>
       </div>
 
@@ -153,6 +183,10 @@ function mubilInfraState(initial) {
     fuelLayer: null,
     desertLayer: null,
     layers: { chargers: true, fuel: false, desert: false },
+    // Ámbito geográfico — 'eh' por defecto (~1,4k cargadores) o 'spain'
+    // (~12,8k). Lo conmuta el toggle del panel y se anexa como ?scope=...
+    // a las dos URLs de GeoJSON.
+    scope: (initial && initial.defaultScope) || 'eh',
     minTier: 'all',
     hideIncompatible: false,
     tierFilters: [
@@ -168,6 +202,18 @@ function mubilInfraState(initial) {
     fastCount: 0,
     fuelCount: 0,
     desertCells: null,
+
+    // Formato es-ES para coincidir con el resto de la landing.
+    formatNum(n) { return (n || 0).toLocaleString('es-ES'); },
+
+    setScope(s) {
+      if (this.scope === s) return;
+      this.scope = s;
+      // Cache de gasolineras es scope-dependiente — invalidar.
+      this.fuelFeatures = [];
+      this.loadChargers();
+      if (this.layers.fuel) this.loadFuel();
+    },
 
     initMap() {
       const el = document.getElementById('infra-map');
@@ -201,6 +247,7 @@ function mubilInfraState(initial) {
       if (this.initial.vehicleId) {
         url.searchParams.set('vehicle_id', this.initial.vehicleId);
       }
+      url.searchParams.set('scope', this.scope);
       fetch(url)
         .then(r => r.json())
         .then(fc => {
@@ -288,7 +335,9 @@ function mubilInfraState(initial) {
 
     loadFuel() {
       if (this.fuelFeatures.length) { this.renderFuel(); return; }
-      fetch(this.initial.fuelStationsUrl)
+      const url = new URL(this.initial.fuelStationsUrl, window.location.origin);
+      url.searchParams.set('scope', this.scope);
+      fetch(url)
         .then(r => r.json())
         .then(fc => {
           this.fuelFeatures = fc.features || [];

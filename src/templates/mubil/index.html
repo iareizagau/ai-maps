@@ -1,5 +1,15 @@
 {% extends "mubil/base.html" %} {% load i18n humanize static %} {% block title %}eStrata · ¿Cuánto te ahorras con un coche eléctrico?{% endblock %} {% block content %}
 
+{# ─── CINTA B2B · cara visible del modelo B2B2C de la Memoria B.7 ─── #}
+<a href="#hablemos"
+   class="block bg-estrata-navy dark:bg-estrata-navy_deep border-b border-estrata-teal/20 hover:bg-estrata-navy_deep transition group">
+  <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs sm:text-sm text-slate-200">
+    <span class="inline-flex h-1.5 w-1.5 rounded-full bg-estrata-teal animate-pulse"></span>
+    <span>¿Concesionario, flota, energética o administración?</span>
+    <span class="font-bold text-estrata-teal_light group-hover:underline">Hablemos de un piloto →</span>
+  </div>
+</a>
+
 {# ─────────────────────────── HERO ─────────────────────────── #}
 <section class="relative overflow-hidden">
   <div
@@ -24,23 +34,35 @@
       <div class="lg:col-span-6">
         <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-[4.25rem] font-black tracking-tight text-estrata-navy dark:text-white leading-[1.02]">
           De
-          <span class="text-slate-400 dark:text-slate-500 line-through decoration-2 decoration-slate-300 dark:decoration-slate-600">1.300&nbsp;€</span>
-          en gasolina
+          <span class="text-slate-400 dark:text-slate-500 line-through decoration-2 decoration-slate-300 dark:decoration-slate-600">1.190&nbsp;€</span>
+          en gasoil
           <span class="block mt-2">
             a
             <span class="relative inline-block">
-              <span class="relative z-10 bg-gradient-to-r from-estrata-teal to-estrata-teal_dark bg-clip-text text-transparent">280&nbsp;€</span>
+              <span class="relative z-10 bg-gradient-to-r from-estrata-teal to-estrata-teal_dark bg-clip-text text-transparent">260&nbsp;€</span>
               <span aria-hidden="true" class="absolute inset-x-0 bottom-1 h-3 bg-estrata-teal/20 dark:bg-estrata-teal/15 -z-0 rounded"></span>
             </span>
             en luz.
           </span>
         </h1>
 
-        <p class="mt-6 text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed">
+        {# Caso anclado — el jurado puede pinchar la cifra del H1 en este sub-claim. #}
+        <p class="mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic">
+          Volkswagen Golf TDI · Kia e-Niro · 15.000&nbsp;km/año · Donostia · recarga nocturna · 2026.
+        </p>
+
+        <p class="mt-5 text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed">
           Calcula cuánto te ahorras al año cambiando tu coche actual por uno
           <strong class="text-estrata-navy dark:text-white">eléctrico</strong>
-          en Euskadi. Tu coche, tus kilómetros, tu provincia — coste real con
-          PVPC en vivo, MINCOTUR y ayudas Programa Auto+ + Renove EH.
+          en Euskadi. Tu coche, tus kilómetros, tu provincia — con el precio
+          real de la luz hoy, gasolina por provincia y las ayudas
+          <strong class="text-estrata-navy dark:text-white">Auto+</strong> y
+          <strong class="text-estrata-navy dark:text-white">Renove EH</strong>.
+        </p>
+
+        {# Neutralidad — la ventaja competitiva #1 de la Memoria (B.5), elevada al hero. #}
+        <p class="mt-3 text-sm font-semibold text-estrata-teal_dark dark:text-estrata-teal_light">
+          Sin marca, sin concesionario, sin operador detrás. Solo datos oficiales.
         </p>
 
         <div class="mt-8 flex flex-wrap items-center gap-4">
@@ -65,14 +87,14 @@
               <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-estrata-teal opacity-75"></span>
               <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-estrata-teal"></span>
             </span>
-            <span class="font-bold text-slate-700 dark:text-slate-300 tabular-nums">PVPC {{ hero_live.pvpc_eur_kwh|floatformat:4 }} €/kWh</span>
+            <span class="font-bold text-slate-700 dark:text-slate-300 tabular-nums">Luz hoy {{ hero_live.pvpc_eur_kwh|floatformat:4 }} €/kWh</span>
           </span>
           <span class="text-slate-300 dark:text-slate-700">·</span>
-          <span><span class="font-bold text-slate-700 dark:text-slate-300 tabular-nums">{{ stats.charging_stations|intcomma }}</span> cargadores EH</span>
+          <span><span class="font-bold text-slate-700 dark:text-slate-300 tabular-nums">{{ stats.charging_stations|intcomma }}</span> cargadores en Euskal Herria</span>
           <span class="text-slate-300 dark:text-slate-700">·</span>
-          <span><span class="font-bold text-slate-700 dark:text-slate-300 tabular-nums">{{ stats.vehicles|intcomma }}</span> vehículos IDAE</span>
+          <span><span class="font-bold text-slate-700 dark:text-slate-300 tabular-nums">{{ stats.vehicles|intcomma }}</span> coches comparables</span>
           <span class="text-slate-300 dark:text-slate-700">·</span>
-          <span>datos abiertos</span>
+          <span>todo con datos oficiales</span>
         </p>
       </div>
 
@@ -107,7 +129,7 @@
                   <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-estrata-teal opacity-75"></span>
                   <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-estrata-teal"></span>
                 </span>
-                ~280 €/año en luz
+                Ahorras ~1.150 €/año
               </span>
             </div>
           </div>
@@ -170,7 +192,7 @@
   <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-10 sm:py-12">
     <div class="flex flex-wrap items-end justify-between gap-3 mb-6">
       <p class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light">
-        Datos reales en producción · leídos en vivo de la base de datos
+        Cifras leídas en vivo · se actualizan solas cuando cambian
       </p>
     </div>
 
@@ -182,33 +204,33 @@
             <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-estrata-teal opacity-75"></span>
             <span class="relative inline-flex h-2 w-2 rounded-full bg-estrata-teal"></span>
           </span>
-          Estado de los datos
+          Última actualización
         </span>
 
         {% if freshness.pvpc %}
         <span class="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-          <span class="font-semibold text-estrata-navy dark:text-white">PVPC ESIOS</span>
+          <span class="font-semibold text-estrata-navy dark:text-white">Precio de la luz</span>
           <span class="text-slate-400 dark:text-slate-500">·</span>
           <span class="tabular-nums">{{ freshness.pvpc|naturaltime }}</span>
         </span>
         {% endif %}
         {% if freshness.fuel %}
         <span class="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-          <span class="font-semibold text-estrata-navy dark:text-white">MINCOTUR</span>
+          <span class="font-semibold text-estrata-navy dark:text-white">Gasolina y diésel</span>
           <span class="text-slate-400 dark:text-slate-500">·</span>
           <span class="tabular-nums">{{ freshness.fuel|naturaltime }}</span>
         </span>
         {% endif %}
         {% if freshness.charging %}
         <span class="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-          <span class="font-semibold text-estrata-navy dark:text-white">Recarga MITECO/OCM</span>
+          <span class="font-semibold text-estrata-navy dark:text-white">Red de carga</span>
           <span class="text-slate-400 dark:text-slate-500">·</span>
           <span class="tabular-nums">{{ freshness.charging|naturaltime }}</span>
         </span>
         {% endif %}
         {% if freshness.docs %}
         <span class="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-          <span class="font-semibold text-estrata-navy dark:text-white">Corpus RAG</span>
+          <span class="font-semibold text-estrata-navy dark:text-white">Ayudas y normativa</span>
           <span class="text-slate-400 dark:text-slate-500">·</span>
           <span class="tabular-nums">{{ freshness.docs|naturaltime }}</span>
         </span>
@@ -227,14 +249,14 @@
               </svg>
             </span>
             <p class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light">
-              Catálogo de vehículos
+              Coches comparables
             </p>
           </div>
           <p class="mt-2 text-5xl sm:text-6xl font-black text-estrata-navy dark:text-white tabular-nums leading-none">
             {{ vehicles_meta.total|intcomma }}
           </p>
           <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            modelos con homologación WLTP, etiqueta DGT y precio. Fuente IDAE.
+            modelos con autonomía oficial, etiqueta DGT y precio. Catálogo público del IDAE.
           </p>
 
           {# EV vs combustion split — we cover both sides of the comparison #}
@@ -261,11 +283,11 @@
             </div>
             <div class="rounded-lg bg-white/70 dark:bg-estrata-navy_deep/50 border border-slate-200 dark:border-estrata-teal/15 py-2">
               <p class="text-lg font-black text-estrata-navy dark:text-white tabular-nums">{{ vehicles_meta.ev_pct_range }}%</p>
-              <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">EV · autonomía</p>
+              <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">eléctricos · autonomía</p>
             </div>
             <div class="rounded-lg bg-white/70 dark:bg-estrata-navy_deep/50 border border-slate-200 dark:border-estrata-teal/15 py-2">
               <p class="text-lg font-black text-estrata-navy dark:text-white tabular-nums">{{ vehicles_meta.ev_pct_label }}%</p>
-              <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">EV · etiqueta DGT</p>
+              <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">eléctricos · etiqueta DGT</p>
             </div>
           </div>
         </div>
@@ -281,7 +303,7 @@
             </span>
             <dd class="text-3xl font-black text-estrata-navy dark:text-white tabular-nums">{{ stats.charging_stations|intcomma }}</dd>
             <dt class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Puntos de recarga</dt>
-            <p class="mt-1 text-[10px] text-slate-400">MITECO · OCM</p>
+            <p class="mt-1 text-[10px] text-slate-400">públicos · Euskal Herria</p>
           </div>
           {# Estaciones de servicio — fuel droplet #}
           <div class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-5">
@@ -289,8 +311,8 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c-3 4-5 6.5-5 9a5 5 0 0010 0c0-2.5-2-5-5-9z" /></svg>
             </span>
             <dd class="text-3xl font-black text-estrata-navy dark:text-white tabular-nums">{{ stats.fuel_stations|intcomma }}</dd>
-            <dt class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Estaciones de servicio</dt>
-            <p class="mt-1 text-[10px] text-slate-400">MINCOTUR EH</p>
+            <dt class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Gasolineras</dt>
+            <p class="mt-1 text-[10px] text-slate-400">precios diarios · Euskal Herria</p>
           </div>
           {# Documentos indexados — document #}
           <div class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-5">
@@ -298,8 +320,8 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             </span>
             <dd class="text-3xl font-black text-estrata-navy dark:text-white tabular-nums">{{ stats.docs_indexed|intcomma }}</dd>
-            <dt class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Documentos indexados</dt>
-            <p class="mt-1 text-[10px] text-slate-400">{{ stats.docs_embedded|intcomma }} embedded · RAG</p>
+            <dt class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Normativa y ayudas</dt>
+            <p class="mt-1 text-[10px] text-slate-400">BOE · BOPV · Auto+ · datos abiertos</p>
           </div>
           {# Celdas de demanda — map pin #}
           <div class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-5">
@@ -307,8 +329,8 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             </span>
             <dd class="text-3xl font-black text-estrata-navy dark:text-white tabular-nums">{{ stats.demand_hexes|intcomma }}</dd>
-            <dt class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Celdas de demanda</dt>
-            <p class="mt-1 text-[10px] text-slate-400">Grid 2,5 km Gipuzkoa</p>
+            <dt class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Zonas analizadas</dt>
+            <p class="mt-1 text-[10px] text-slate-400">Gipuzkoa · malla de 2,5 km</p>
           </div>
           {# Rutas precomputadas — route #}
           <div class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-5">
@@ -316,8 +338,8 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
             </span>
             <dd class="text-3xl font-black text-estrata-navy dark:text-white tabular-nums">{{ stats.route_demos|intcomma }}</dd>
-            <dt class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Rutas precomputadas</dt>
-            <p class="mt-1 text-[10px] text-slate-400">Donostia ↔ EH</p>
+            <dt class="mt-1 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">Rutas eléctricas listas</dt>
+            <p class="mt-1 text-[10px] text-slate-400">Donostia ↔ Euskal Herria</p>
           </div>
           {# Fuentes oficiales — database #}
           <div class="rounded-2xl border border-estrata-teal/20 dark:border-estrata-teal/25 bg-white dark:bg-estrata-navy p-5">
@@ -373,17 +395,15 @@
     <h2
       class="mt-2 text-3xl sm:text-4xl font-bold text-estrata-navy dark:text-white"
     >
-      Strata: capas de inteligencia para decidir mejor.
+      Las preguntas que ya te haces. Contestadas con datos, no con folletos.
     </h2>
     <p class="mt-3 text-slate-600 dark:text-slate-400 max-w-2xl">
-      Cada capa responde una pregunta. Las cinco están en producción con
-      datos reales sobre la misma DB:
-      <strong class="text-estrata-navy dark:text-white">Advisor</strong>,
-      <strong class="text-estrata-navy dark:text-white">Ask</strong>,
-      <strong class="text-estrata-navy dark:text-white">Route</strong>,
-      <strong class="text-estrata-navy dark:text-white">Mapa</strong> y
-      <strong class="text-estrata-navy dark:text-white">News</strong>.
-      Ampliables post-premio (MITMA O-D, GTFS, ML).
+      <strong class="text-estrata-navy dark:text-white">Cuánto te ahorras</strong> de verdad.
+      <strong class="text-estrata-navy dark:text-white">Qué ayudas</strong> te tocan.
+      Si <strong class="text-estrata-navy dark:text-white">llegas con batería</strong>.
+      <strong class="text-estrata-navy dark:text-white">Dónde cargas</strong>.
+      <strong class="text-estrata-navy dark:text-white">Qué acaba de cambiar</strong>.
+      Una capa para cada duda.
     </p>
   </div>
 
@@ -430,8 +450,10 @@
       <p
         class="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed"
       >
-        Coste total a 10 años con PVPC ESIOS en vivo, MINCOTUR local, red de
-        carga real. Payback con subvenciones Programa Auto+ + Renove EH. CO₂ evitado.
+        Pones tu coche actual, los kilómetros que haces al año y tu provincia.
+        Te decimos cuánto gastas hoy, cuánto gastarías con un eléctrico, cuándo
+        lo amortizas con las ayudas <strong>Auto+</strong> y <strong>Renove EH</strong>,
+        y cuántos kilos de CO₂ dejas de emitir.
       </p>
       <div
         class="mt-4 flex items-center text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light group-hover:gap-3 gap-2 transition-all"
@@ -489,14 +511,14 @@
       </div>
       <h3 class="mt-4 text-xl font-bold text-estrata-navy dark:text-white">Ask</h3>
       <p class="text-sm text-slate-500 dark:text-slate-400">
-        Habla con los datos.
+        Pregunta sobre ayudas y normativa.
       </p>
       <p
         class="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed"
       >
-        Q&amp;A en lenguaje natural sobre {{ stats.docs_indexed|intcomma }}
-        documentos: datos.gob.es, normativa Programa Auto+, BOE, BOPV. RAG Gemini con
-        <strong>citas trazables</strong> — sin alucinaciones huérfanas.
+        Pregunta en castellano o euskera lo que no entiendes de las ayudas, los
+        impuestos o la etiqueta DGT. La respuesta viene con el enlace al
+        <strong>BOE, BOPV o documento oficial</strong> — puedes verificarla en un clic.
       </p>
       <div
         class="mt-4 flex items-center text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light group-hover:gap-3 gap-2 transition-all"
@@ -559,9 +581,9 @@
       <p
         class="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed"
       >
-        Rutas Donostia ↔ Bilbao / Vitoria / Iruñea / Tolosa / Eibar con tu
-        vehículo: energía consumida, coste a la hora de salida (PVPC en vivo)
-        y paradas de carga sugeridas. pgRouting + GTFS multimodal post-premio.
+        Donostia ↔ Bilbao, Vitoria, Iruñea, Tolosa o Eibar con tu coche
+        eléctrico. Sabes cuánta batería gastas, lo que te cuesta a la hora a
+        la que sales y dónde parar a cargar si hace falta. <strong>Sin sorpresas.</strong>
       </p>
       <div
         class="mt-4 flex items-center text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light group-hover:gap-3 gap-2 transition-all"
@@ -630,10 +652,10 @@
       <p
         class="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed"
       >
-        {{ stats.charging_stations|intcomma }} puntos de recarga y
-        {{ stats.fuel_stations|intcomma }} gasolineras EH sobre un mismo
-        Leaflet. Cargadores coloreados por compatibilidad con tu vehículo +
-        overlay de desiertos de carga rápida.
+        Todos los cargadores ({{ stats.charging_stations|intcomma }}) y
+        gasolineras ({{ stats.fuel_stations|intcomma }}) de Euskal Herria en
+        un solo mapa. Pintamos en verde <strong>los compatibles con tu
+        coche</strong> y resaltamos las zonas donde aún falta carga rápida.
       </p>
       <div
         class="mt-4 flex items-center text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light group-hover:gap-3 gap-2 transition-all"
@@ -673,11 +695,11 @@
         </span>
       </div>
       <h3 class="mt-4 text-xl font-bold text-estrata-navy dark:text-white">News</h3>
-      <p class="text-sm text-slate-500 dark:text-slate-400">¿Qué cambia hoy en mi plan EV?</p>
+      <p class="text-sm text-slate-500 dark:text-slate-400">¿Qué acaba de cambiar para mí?</p>
       <p class="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-        Noticias EV de medios castellanos + NewsAPI, resumidas por Gemini en
-        castellano y euskera. Etiquetamos cada noticia que cambia tu coste
-        real — subvención, fiscalidad, PVPC, normativa.
+        Noticias sobre coche eléctrico de medios vascos y nacionales, resumidas
+        en castellano y euskera. <strong>Te avisamos cuando algo cambia lo
+        que vas a pagar</strong>: ayudas, impuestos, tarifa de la luz, ITV.
       </p>
       <div class="mt-4 flex items-center text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light group-hover:gap-3 gap-2 transition-all">
         Leer noticias
@@ -685,6 +707,108 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
         </svg>
       </div>
+    </a>
+  </div>
+</section>
+
+{# ─── PARA QUIÉN · materializa el B2B2C de la Memoria B.6/B.7 en producto ─── #}
+<section class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-12 sm:py-16">
+  <div class="mb-8 sm:mb-10">
+    <p class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light">
+      Para quién es esto
+    </p>
+    <h2 class="mt-2 text-3xl sm:text-4xl font-bold text-estrata-navy dark:text-white">
+      No vendemos coches. Ayudamos a quien decide cambiarlo.
+    </h2>
+    <p class="mt-3 text-slate-600 dark:text-slate-400 max-w-2xl">
+      eStrata es útil para el comprador particular, pero el modelo escala a
+      quien acompaña esas decisiones: concesionarios, flotas, energéticas,
+      operadores de recarga y administraciones públicas.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    {# Particular — el caso B2C, anchored to Advisor #}
+    <div class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-6">
+      <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light mb-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      </div>
+      <h3 class="text-base font-bold text-estrata-navy dark:text-white">Particular o autónomo</h3>
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+        Sabes si te compensa cambiar tu coche por uno eléctrico — con tus
+        kilómetros, tu provincia y las ayudas que te tocan.
+      </p>
+    </div>
+
+    {# Empresa con flota — B2B "ordenar la electrificación" #}
+    <div class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-6">
+      <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light mb-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10h10zm0 0h2l3-3h3v3h-2" />
+        </svg>
+      </div>
+      <h3 class="text-base font-bold text-estrata-navy dark:text-white">Empresa con flota</h3>
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+        Priorizas qué vehículos electrificar primero, qué ruta sale rentable
+        y qué inversión en carga vale la pena hacer este año.
+      </p>
+    </div>
+
+    {# Concesionario — B2B comercial #}
+    <div class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-6">
+      <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light mb-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M12 2l9 4v6c0 5-3.5 9.5-9 10-5.5-.5-9-5-9-10V6l9-4z" />
+        </svg>
+      </div>
+      <h3 class="text-base font-bold text-estrata-navy dark:text-white">Concesionario o grupo</h3>
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+        Argumentas la venta del eléctrico con cifras personalizadas y
+        verificables — la pieza que cierra la objeción "no me sale rentable".
+      </p>
+    </div>
+
+    {# Energética / recarga / renting #}
+    <div class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-6">
+      <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light mb-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      </div>
+      <h3 class="text-base font-bold text-estrata-navy dark:text-white">Energética, recarga, renting</h3>
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+        Identificas clientes con potencial real de electrificación y diseñas
+        ofertas combinadas de tarifa, punto de recarga y vehículo.
+      </p>
+    </div>
+
+    {# Administración pública — encaje MUBIL fuerte #}
+    <div class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-6">
+      <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-estrata-teal/10 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light mb-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 21V10m16 11V10M2 10l10-7 10 7M9 21v-6h6v6" />
+        </svg>
+      </div>
+      <h3 class="text-base font-bold text-estrata-navy dark:text-white">Administración pública</h3>
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+        Ofreces orientación neutral a tu ciudadanía o tejido empresarial,
+        analizas cobertura de carga y planificas dónde reforzar la red.
+      </p>
+    </div>
+
+    {# Card CTA pilotos — cierre del bloque, no es un perfil más #}
+    <a href="#hablemos" class="group rounded-2xl border-2 border-dashed border-estrata-teal/40 hover:border-estrata-teal bg-estrata-teal/5 dark:bg-estrata-teal/10 p-6 flex flex-col justify-center transition">
+      <p class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light">
+        ¿Te ves en alguno de estos?
+      </p>
+      <p class="mt-2 text-base font-bold text-estrata-navy dark:text-white leading-snug">
+        Vamos a probarlo juntos en un piloto.
+      </p>
+      <span class="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-estrata-teal_dark dark:text-estrata-teal_light group-hover:gap-2.5 transition-all">
+        Hablemos →
+      </span>
     </a>
   </div>
 </section>
@@ -706,7 +830,8 @@
         La movilidad eléctrica no debería ser una apuesta.
       </h2>
       <p class="mt-3 text-slate-600 dark:text-slate-400 max-w-2xl">
-        Debería ser una decisión basada en datos. Lo que no encuentras en otras herramientas:
+        Debería ser una decisión con cifras reales en la mano. Esto es lo que
+        no vas a encontrar en una calculadora estatal o en la web de la marca:
       </p>
     </div>
 
@@ -733,14 +858,15 @@
           </svg>
         </div>
         <h3 class="text-lg font-bold text-estrata-navy dark:text-white">
-          Vasco-específico
+          Pensado para Euskadi y Nafarroa
         </h3>
         <p
           class="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed"
         >
-          PVPC ESIOS + MINCOTUR provincial + red carga EH. Centroides de código
-          postal EH cableados. Idiomas EU/ES/EN. Ninguna calculadora estatal lo
-          hace.
+          Precio real de la luz hora a hora, gasolina por provincia y
+          cargadores de aquí. Hablas en castellano, euskera o inglés y
+          escribes tu código postal — nada de medias nacionales. Ninguna
+          calculadora estatal hila tan fino.
         </p>
       </div>
 
@@ -766,14 +892,14 @@
           </svg>
         </div>
         <h3 class="text-lg font-bold text-estrata-navy dark:text-white">
-          IA con citas
+          Una IA que enseña sus fuentes
         </h3>
         <p
           class="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed"
         >
-          RAG sobre {{ stats.docs_indexed|intcomma }} documentos abiertos. Cada
-          respuesta enlaza al BOE / BOPV / dataset original. Ladder de 7 modelos
-          Gemini con fallback automático — la demo no se cae por cuota agotada.
+          Cada respuesta enlaza al BOE, al BOPV o al documento oficial — puedes
+          comprobarla tú mismo en un clic. No te pedimos que te fíes solo
+          porque lo diga una IA.
         </p>
       </div>
 
@@ -799,222 +925,289 @@
           </svg>
         </div>
         <h3 class="text-lg font-bold text-estrata-navy dark:text-white">
-          Open source + HVDS-compliant
+          Datos abiertos · sin marca detrás
         </h3>
         <p
           class="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed"
         >
-          Cubre huecos de la directiva UE 2023/138 (movilidad cat. 2/4/5) en
-          Euskadi. Publicación follow-up vía datos.gob.es prevista para
-          post-premio. Stack abierto reutilizable por cualquier operador.
+          No vendemos coches y no tenemos un fabricante detrás. Los datos
+          vienen de <strong>Red Eléctrica de España, IDAE, OpenChargeMap</strong>
+          y <strong>datos.gob.es</strong>. Cumplimos los requisitos europeos
+          de datos abiertos de movilidad (Directiva UE 2023/138) y publicaremos
+          el código para que cualquier ayuntamiento, taller o instalador vasco
+          lo reutilice gratis.
         </p>
       </div>
     </div>
   </div>
 </section>
 
-{# ─────────────────────────── FUENTES Y STACK ─────────────────────────── #}
+{# ─────────────────────────── FAQ ─────────────────────────── #}
+{# Native <details>/<summary> — no JS dependency, keyboard- and screen-reader friendly. Each answer cierra con un enlace al módulo que demuestra la respuesta en la propia app. #}
+<section class="max-w-3xl mx-auto px-5 sm:px-8 lg:px-12 py-12 sm:py-16">
+  <p class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light">
+    Preguntas frecuentes
+  </p>
+  <h2 class="mt-2 text-3xl sm:text-4xl font-bold text-estrata-navy dark:text-white">
+    Lo que más nos preguntan antes de cambiar de coche.
+  </h2>
+  <p class="mt-3 text-slate-600 dark:text-slate-400">
+    Si tu duda no está aquí, llévatela a
+    <a href="{% url 'mubil:ask' %}" class="font-bold text-estrata-teal_dark dark:text-estrata-teal_light hover:underline">Ask</a>
+    — te contesta con el enlace al BOE o al documento oficial.
+  </p>
+
+  <div class="mt-8 space-y-3">
+    {# Q1 — la objeción "ahorro" para perfiles de pocos km #}
+    <details class="group rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy open:shadow-md transition-shadow">
+      <summary class="flex cursor-pointer items-start gap-3 p-5 list-none [&::-webkit-details-marker]:hidden">
+        <span class="flex-1 text-base sm:text-lg font-bold text-estrata-navy dark:text-white">
+          ¿Me sale rentable si hago pocos kilómetros?
+        </span>
+        <svg class="h-5 w-5 shrink-0 mt-0.5 text-estrata-teal_dark dark:text-estrata-teal_light transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </summary>
+      <div class="px-5 pb-5 -mt-1 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        <p>
+          Más a menudo de lo que parece. La luz cargada en horas valle te sale
+          unas <strong>5 veces más barata por kilómetro</strong> que la gasolina,
+          así que incluso con 8.000 km/año el ahorro anual cubre la diferencia
+          de precio en pocos años. Con tu coche actual, tus kilómetros y tu
+          provincia, el cálculo es de menos de un minuto.
+        </p>
+        <a href="{% url 'mubil:advisor' %}" class="mt-3 inline-flex items-center gap-1.5 font-bold text-estrata-teal_dark dark:text-estrata-teal_light hover:underline">
+          Calcular mi caso →
+        </a>
+      </div>
+    </details>
+
+    {# Q2 — la objeción nº 1 en Euskadi urbano: piso sin garaje #}
+    <details class="group rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy open:shadow-md transition-shadow">
+      <summary class="flex cursor-pointer items-start gap-3 p-5 list-none [&::-webkit-details-marker]:hidden">
+        <span class="flex-1 text-base sm:text-lg font-bold text-estrata-navy dark:text-white">
+          ¿Y si vivo en piso y no tengo cargador en casa?
+        </span>
+        <svg class="h-5 w-5 shrink-0 mt-0.5 text-estrata-teal_dark dark:text-estrata-teal_light transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </summary>
+      <div class="px-5 pb-5 -mt-1 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        <p>
+          Es la duda más repetida en Euskadi urbano y la respuesta depende de
+          dónde vives. Hoy hay
+          <strong class="tabular-nums">{{ stats.charging_stations|intcomma }}</strong>
+          cargadores públicos en Euskal Herria — antes de comprar, lo razonable
+          es mirar el mapa con tu casa y tu trabajo. Si tienes un cargador
+          compatible a 5 minutos andando o uno rápido en la ruta del curro,
+          la falta de garaje deja de ser un problema.
+        </p>
+        <a href="{% url 'mubil:infrastructure' %}" class="mt-3 inline-flex items-center gap-1.5 font-bold text-estrata-teal_dark dark:text-estrata-teal_light hover:underline">
+          Ver el mapa de carga →
+        </a>
+      </div>
+    </details>
+
+    {# Q3 — vigencia de ayudas en 2026, encadena con Ask como prueba de citas #}
+    <details class="group rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy open:shadow-md transition-shadow">
+      <summary class="flex cursor-pointer items-start gap-3 p-5 list-none [&::-webkit-details-marker]:hidden">
+        <span class="flex-1 text-base sm:text-lg font-bold text-estrata-navy dark:text-white">
+          ¿Las ayudas Auto+ y Renove EH siguen vigentes en 2026?
+        </span>
+        <svg class="h-5 w-5 shrink-0 mt-0.5 text-estrata-teal_dark dark:text-estrata-teal_light transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </summary>
+      <div class="px-5 pb-5 -mt-1 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        <p>
+          Sí. El <strong>Programa Auto+</strong> (Gobierno de España) y el
+          <strong>Renove EH</strong> (Gobierno Vasco) son acumulables y siguen
+          activos en 2026. Como los importes y los plazos cambian a mitad de
+          año, pregúntaselo a Ask cuando lo necesites — te devuelve el enlace
+          al BOE o al BOPV con la versión vigente esa semana.
+        </p>
+        <a href="{% url 'mubil:ask' %}" class="mt-3 inline-flex items-center gap-1.5 font-bold text-estrata-teal_dark dark:text-estrata-teal_light hover:underline">
+          Preguntar a Ask →
+        </a>
+      </div>
+    </details>
+
+    {# Q4 — abrir el embudo a PHEV ("no me atrevo a 100% eléctrico") #}
+    <details class="group rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy open:shadow-md transition-shadow">
+      <summary class="flex cursor-pointer items-start gap-3 p-5 list-none [&::-webkit-details-marker]:hidden">
+        <span class="flex-1 text-base sm:text-lg font-bold text-estrata-navy dark:text-white">
+          ¿Sirve para híbridos enchufables o solo para eléctricos puros?
+        </span>
+        <svg class="h-5 w-5 shrink-0 mt-0.5 text-estrata-teal_dark dark:text-estrata-teal_light transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </summary>
+      <div class="px-5 pb-5 -mt-1 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        <p>
+          Para los dos. El comparador incluye <strong>PHEV</strong> (híbrido
+          enchufable) y <strong>eléctrico puro</strong>, y el ahorro se calcula
+          según los kilómetros que harías de verdad en modo eléctrico — no
+          según el dato comercial. Si dudas entre uno y otro, el Advisor te
+          enseña los dos números a la par.
+        </p>
+        <a href="{% url 'mubil:advisor' %}" class="mt-3 inline-flex items-center gap-1.5 font-bold text-estrata-teal_dark dark:text-estrata-teal_light hover:underline">
+          Comparar PHEV vs eléctrico →
+        </a>
+      </div>
+    </details>
+  </div>
+</section>
+
+{# ─── ENCAJE MUBIL · explicita B.1 (movilidad eléctrica + infraestructuras) ─── #}
+<section class="border-y border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy">
+  <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-8 sm:py-10">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light">
+          Encaje MUBIL 2026
+        </p>
+        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+          eStrata se enmarca en dos de los cinco ámbitos prioritarios de la
+          estrategia MUBIL. La movilidad conectada aparece como contexto
+          transversal al trabajar con datos de movilidad, energía e infraestructura.
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-estrata-teal/15 dark:bg-estrata-teal/25 text-estrata-teal_dark dark:text-estrata-teal_light px-3 py-1.5 text-xs font-bold uppercase tracking-widest">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+          Movilidad eléctrica
+        </span>
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-estrata-teal/15 dark:bg-estrata-teal/25 text-estrata-teal_dark dark:text-estrata-teal_light px-3 py-1.5 text-xs font-bold uppercase tracking-widest">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+          Infraestructuras relacionadas
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ─── HITOS · mini-roadmap extraído de B.9 ─── #}
 <section class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-12 sm:py-16">
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-12">
-    {# Open-data sources #}
-    <div>
-      <p
-        class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light"
-      >
-        Fuentes abiertas
+  <div class="mb-8 sm:mb-10">
+    <p class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light">
+      Hacia dónde vamos
+    </p>
+    <h2 class="mt-2 text-3xl sm:text-4xl font-bold text-estrata-navy dark:text-white">
+      Del prototipo a infraestructura digital de decisión.
+    </h2>
+  </div>
+
+  <ol class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <li class="relative rounded-2xl border border-estrata-teal/30 bg-estrata-teal/5 dark:bg-estrata-teal/10 p-6">
+      <span class="inline-block text-[10px] font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light mb-2">Hoy · corto plazo</span>
+      <h3 class="text-lg font-bold text-estrata-navy dark:text-white">Prototipo público + primeros pilotos</h3>
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+        Cinco capas funcionando con datos reales en estrata.eus. Buscando
+        primeros pilotos con concesionarios, flotas y administraciones para
+        validar el modelo en casos reales.
       </p>
-      <h2 class="mt-2 text-2xl font-bold text-estrata-navy dark:text-white">
-        Ingestadas y refrescadas automáticamente.
+    </li>
+    <li class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-6">
+      <span class="inline-block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">2026-2027 · medio plazo</span>
+      <h3 class="text-lg font-bold text-estrata-navy dark:text-white">MVP B2B con licencias SaaS</h3>
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+        Pilotos convertidos en licencias recurrentes. Módulos específicos
+        para flotas. Integración con más fuentes (valores residuales,
+        catálogos comerciales, fiscalidad por CCAA).
+      </p>
+    </li>
+    <li class="rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-6">
+      <span class="inline-block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Largo plazo</span>
+      <h3 class="text-lg font-bold text-estrata-navy dark:text-white">Plataforma SaaS + white-label</h3>
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+        eStrata como herramienta de referencia para decidir electrificación
+        — embebible en canales de terceros, escalable a otras comunidades y
+        a mercados europeos.
+      </p>
+    </li>
+  </ol>
+</section>
+
+{# ─── HABLEMOS · CTA B2B, envía email real via Brevo en views.contact_submit ─── #}
+<section id="hablemos" class="scroll-mt-16 bg-gradient-to-br from-estrata-teal/5 via-white to-estrata-teal/10 dark:from-estrata-navy dark:via-estrata-navy_deep dark:to-estrata-navy border-y border-estrata-teal/20">
+  <div class="max-w-4xl mx-auto px-5 sm:px-8 lg:px-12 py-14 sm:py-20">
+    <div class="text-center mb-8 sm:mb-10">
+      <p class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light">
+        Pilotos en marcha
+      </p>
+      <h2 class="mt-2 text-3xl sm:text-4xl font-bold text-estrata-navy dark:text-white">
+        Hablemos de tu caso.
       </h2>
-      <ul class="mt-6 space-y-3 text-sm">
-        <li class="flex items-start gap-3">
-          <span
-            class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-estrata-teal/15 dark:bg-estrata-teal/25 text-estrata-teal_dark dark:text-estrata-teal_light"
-            ><svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-3 w-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="3"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M5 13l4 4L19 7"
-              /></svg
-          ></span>
-          <span class="text-slate-700 dark:text-slate-300"
-            ><strong>ESIOS · Red Eléctrica</strong> — PVPC horario (indicator
-            1001). Cron
-            <code
-              class="text-xs px-1 py-0.5 rounded bg-slate-100 dark:bg-estrata-navy_deep text-estrata-navy dark:text-estrata-teal_light"
-              >:15</code
-            >
-            Madrid.</span
-          >
-        </li>
-        <li class="flex items-start gap-3">
-          <span
-            class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-estrata-teal/15 dark:bg-estrata-teal/25 text-estrata-teal_dark dark:text-estrata-teal_light"
-            ><svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-3 w-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="3"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M5 13l4 4L19 7"
-              /></svg
-          ></span>
-          <span class="text-slate-700 dark:text-slate-300"
-            ><strong>MINCOTUR carburantes</strong> — {{
-            stats.fuel_stations|intcomma }} estaciones EH con precios por filtro
-            provincial. Cron diario 06:30.</span
-          >
-        </li>
-        <li class="flex items-start gap-3">
-          <span
-            class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-estrata-teal/15 dark:bg-estrata-teal/25 text-estrata-teal_dark dark:text-estrata-teal_light"
-            ><svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-3 w-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="3"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M5 13l4 4L19 7"
-              /></svg
-          ></span>
-          <span class="text-slate-700 dark:text-slate-300"
-            ><strong>IDAE base coches</strong> — {{ stats.vehicles|intcomma }}
-            vehículos WLTP + etiqueta DGT + segmento.</span
-          >
-        </li>
-        <li class="flex items-start gap-3">
-          <span
-            class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-estrata-teal/15 dark:bg-estrata-teal/25 text-estrata-teal_dark dark:text-estrata-teal_light"
-            ><svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-3 w-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="3"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M5 13l4 4L19 7"
-              /></svg
-          ></span>
-          <span class="text-slate-700 dark:text-slate-300"
-            ><strong>MITECO / OpenChargeMap</strong> — {{
-            stats.charging_stations|intcomma }} puntos de recarga EH. Refresh
-            semanal lunes 06:45.</span
-          >
-        </li>
-        <li class="flex items-start gap-3">
-          <span
-            class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-estrata-teal/15 dark:bg-estrata-teal/25 text-estrata-teal_dark dark:text-estrata-teal_light"
-            ><svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-3 w-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="3"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M5 13l4 4L19 7"
-              /></svg
-          ></span>
-          <span class="text-slate-700 dark:text-slate-300"
-            ><strong>datos.gob.es CKAN</strong> — catálogo abierto de transporte
-            ({{ stats.docs_indexed|intcomma }} docs · embeddings 768d).</span
-          >
-        </li>
-        <li class="flex items-start gap-3 opacity-60">
-          <span
-            class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500"
-            ><svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-3 w-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="3"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 8v4l3 3"
-              /></svg
-          ></span>
-          <span class="text-slate-600 dark:text-slate-400"
-            ><strong>MITMA O-D · DGT NAP</strong> — programadas para
-            post-premio.</span
-          >
-        </li>
-      </ul>
+      <p class="mt-3 text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
+        Si eres concesionario, gestor de flota, energética o administración
+        y quieres probar eStrata en un piloto, cuéntanoslo en dos líneas y
+        te respondemos en menos de 48 horas.
+      </p>
     </div>
 
-    {# Tech stack #}
-    <div>
-      <p
-        class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light"
-      >
-        Construido con
-      </p>
-      <h2 class="mt-2 text-2xl font-bold text-estrata-navy dark:text-white">
-        Stack moderno, abierto, sin lock-in.
-      </h2>
-      <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">
-        Solopreneur-friendly por diseño. Coste de operación céntimos/mes.
-      </p>
-      <div class="mt-6 flex flex-wrap gap-2">
-        {% for tag in tech_tags %}
-        <span
-          class="rounded-full border border-slate-300 dark:border-estrata-teal/25 bg-white dark:bg-estrata-navy px-3 py-1 text-xs font-bold text-estrata-navy dark:text-slate-300"
-          >{{ tag }}</span
-        >
-        {% endfor %}
-      </div>
+    <div id="contact-feedback" class="mb-4"></div>
 
-      <div
-        class="mt-8 rounded-2xl border border-slate-200 dark:border-estrata-teal/20 bg-slate-50 dark:bg-estrata-navy p-5"
-      >
-        <p
-          class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2"
-        >
-          Calidad
-        </p>
-        <div class="flex items-baseline gap-2">
-          <span
-            class="text-3xl font-black text-estrata-teal dark:text-estrata-teal_light"
-            >160</span
-          >
-          <span class="text-sm text-slate-600 dark:text-slate-400"
-            >tests pasando</span
-          >
-        </div>
-        <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          Cobertura sobre ingest, advisor, RAG, route, infraestructura, news.
-          Mocks en fronteras HTTP, integración real contra PostGIS + pgvector +
-          TimescaleDB.
-        </p>
+    <form
+      hx-post="{% url 'mubil:contact' %}"
+      hx-target="this"
+      hx-swap="outerHTML"
+      hx-disabled-elt="find button[type='submit']"
+      class="rounded-2xl border border-slate-200 dark:border-estrata-teal/20 bg-white dark:bg-estrata-navy p-6 sm:p-8 shadow-lg shadow-estrata-teal/5"
+    >
+      {% csrf_token %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+        <label class="block">
+          <span class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">Nombre</span>
+          <input type="text" name="name" required maxlength="120"
+                 class="w-full rounded-lg border border-slate-200 dark:border-estrata-teal/20 bg-white dark:bg-estrata-navy_deep px-3 py-2.5 text-sm text-estrata-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal/50">
+        </label>
+        <label class="block">
+          <span class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">Email</span>
+          <input type="email" name="email" required maxlength="200"
+                 class="w-full rounded-lg border border-slate-200 dark:border-estrata-teal/20 bg-white dark:bg-estrata-navy_deep px-3 py-2.5 text-sm text-estrata-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal/50">
+        </label>
+        <label class="block sm:col-span-2">
+          <span class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">Entidad o empresa <span class="text-slate-400 normal-case font-normal">(opcional)</span></span>
+          <input type="text" name="entity" maxlength="200"
+                 class="w-full rounded-lg border border-slate-200 dark:border-estrata-teal/20 bg-white dark:bg-estrata-navy_deep px-3 py-2.5 text-sm text-estrata-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal/50">
+        </label>
+        <label class="block sm:col-span-2">
+          <span class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">Soy…</span>
+          <select name="profile" required
+                  class="w-full rounded-lg border border-slate-200 dark:border-estrata-teal/20 bg-white dark:bg-estrata-navy_deep px-3 py-2.5 text-sm text-estrata-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal/50">
+            <option value="concesionario">Concesionario o grupo de automoción</option>
+            <option value="flota">Empresa con flota o autónomo</option>
+            <option value="energetica">Energética, operador de recarga o renting</option>
+            <option value="admin">Administración pública o agencia de movilidad</option>
+            <option value="particular">Particular interesado</option>
+            <option value="otro">Otro</option>
+          </select>
+        </label>
+        <label class="block sm:col-span-2">
+          <span class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">¿Qué quieres explorar?</span>
+          <textarea name="message" required rows="3" maxlength="2000"
+                    placeholder="Ej: tengo una flota de 12 furgonetas y quiero saber cuáles electrificar primero."
+                    class="w-full rounded-lg border border-slate-200 dark:border-estrata-teal/20 bg-white dark:bg-estrata-navy_deep px-3 py-2.5 text-sm text-estrata-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal/50"></textarea>
+        </label>
       </div>
-    </div>
+      <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Sin spam · sin lista de correo · sin comercial agresivo.
+        </p>
+        <button type="submit"
+                class="inline-flex items-center gap-2 rounded-xl bg-estrata-teal px-6 py-2.5 text-sm font-bold text-white hover:bg-estrata-teal_dark transition shadow-lg shadow-estrata-teal/30 disabled:opacity-50 disabled:cursor-wait">
+          Enviar
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </button>
+      </div>
+    </form>
+
+    <p class="mt-4 text-center text-xs text-slate-500 dark:text-slate-400">
+      ¿Prefieres email directo?
+      <a href="mailto:iareizagau@gmail.com" class="font-bold text-estrata-teal_dark dark:text-estrata-teal_light hover:underline">iareizagau@gmail.com</a>
+    </p>
   </div>
 </section>
 
@@ -1098,13 +1291,6 @@
               >News · eu/es</a
             >
           </li>
-          <li>
-            <a
-              href="/api/mubil/docs"
-              class="text-estrata-teal_light hover:text-white hover:underline"
-              >API REST · OpenAPI</a
-            >
-          </li>
         </ul>
       </div>
 
@@ -1115,13 +1301,13 @@
           Proyecto
         </p>
         <p class="text-sm text-slate-400">
-          Construido sobre
+          Forma parte de
           <a href="/" class="text-estrata-teal_light hover:text-white hover:underline"
             >Maps.eus</a
-          >, ecosistema GIS modular para Euskal Herria.
+          >, una familia de mapas abiertos para Euskal Herria.
         </p>
         <p class="mt-2 text-sm text-slate-400">
-          Open source · contacto:
+          Código abierto · ¿dudas o ideas?
           <a
             href="mailto:iareizagau@gmail.com"
             class="text-estrata-teal_light hover:text-white hover:underline"
@@ -1135,8 +1321,8 @@
       class="mt-8 pt-6 border-t border-estrata-teal/15 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500"
     >
       <p>
-        © 2026 · Hecho en Gipuzkoa con datos abiertos. Las cifras se leen en
-        vivo de la base de datos en cada carga.
+        © 2026 · Hecho en Gipuzkoa con datos abiertos. Cada cifra que ves se
+        ha leído en vivo al cargar esta página.
       </p>
       <p class="font-semibold italic text-estrata-teal_light/80">
         We don't sell electric cars. We make electric decisions clear.

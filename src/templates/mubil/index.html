@@ -86,24 +86,19 @@
             style="background-image: radial-gradient(circle at 60% 50%, #10B0A0 0, transparent 65%);"
           ></div>
 
-          {# Hero image — Basque countryside EV charging (97% smaller than original PNG via WebP) #}
+          {# Hero video — Donosti EV ambiance, jurado-friendly local anchor. Poster keeps zero CLS and serves data-saver clients. #}
           <div class="relative aspect-[3/2] rounded-3xl overflow-hidden border border-slate-200 dark:border-estrata-teal/20 shadow-2xl bg-slate-100 dark:bg-estrata-navy_deep">
-            <picture>
-              <source
-                type="image/webp"
-                srcset="{% static 'img/estrata/hero_vasco.webp' %} 1x, {% static 'img/estrata/hero_vasco@2x.webp' %} 2x"
-              />
-              <img
-                src="{% static 'img/estrata/hero_vasco.jpg' %}"
-                alt="Coche eléctrico cargando en un caserío vasco al amanecer"
-                width="1600"
-                height="1073"
-                loading="eager"
-                fetchpriority="high"
-                decoding="async"
-                class="absolute inset-0 w-full h-full object-cover"
-              />
-            </picture>
+            <video
+              src="{% static 'movie/estrata_video_donosti.mp4' %}"
+              poster="{% static 'img/estrata/hero_vasco.jpg' %}"
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="metadata"
+              aria-label="Donostia · ambiente movilidad eléctrica"
+              class="absolute inset-0 w-full h-full object-cover"
+            ></video>
 
             {# Single overlay chip — anchors the savings claim from H1 onto the image #}
             <div class="absolute bottom-4 right-4">
@@ -341,21 +336,17 @@
 
 {# ─────────────────────────── VISUAL BREAK · urbano EV ─────────────────────────── #}
 <section aria-hidden="true" class="relative h-48 sm:h-64 lg:h-72 overflow-hidden">
-  <picture>
-    <source
-      type="image/webp"
-      srcset="{% static 'img/estrata/hero_urbano.webp' %} 1x, {% static 'img/estrata/hero_urbano@2x.webp' %} 2x"
-    />
-    <img
-      src="{% static 'img/estrata/hero_urbano.jpg' %}"
-      alt=""
-      width="1600"
-      height="1073"
-      loading="lazy"
-      decoding="async"
-      class="absolute inset-0 w-full h-full object-cover"
-    />
-  </picture>
+  {# Background video — same role as the old urbano still, just alive. Poster avoids any flash before metadata loads. #}
+  <video
+    src="{% static 'movie/estrata_video1.mp4' %}"
+    poster="{% static 'img/estrata/hero_urbano.jpg' %}"
+    autoplay
+    muted
+    loop
+    playsinline
+    preload="metadata"
+    class="absolute inset-0 w-full h-full object-cover"
+  ></video>
   {# Gradient overlay — softens top/bottom edges, ensures next-section text contrast #}
   <div class="absolute inset-0 bg-gradient-to-b from-white via-transparent to-white dark:from-estrata-navy_deep dark:via-transparent dark:to-estrata-navy_deep"></div>
   <div class="absolute inset-0 bg-estrata-navy/10 dark:bg-estrata-navy_deep/30"></div>

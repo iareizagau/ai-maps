@@ -40,7 +40,7 @@
           Calcula cuánto te ahorras al año cambiando tu coche actual por uno
           <strong class="text-estrata-navy dark:text-white">eléctrico</strong>
           en Euskadi. Tu coche, tus kilómetros, tu provincia — coste real con
-          PVPC en vivo, MINCOTUR y ayudas MOVES&nbsp;III.
+          PVPC en vivo, MINCOTUR y ayudas Programa Auto+ + Renove EH.
         </p>
 
         <div class="mt-8 flex flex-wrap items-center gap-4">
@@ -364,7 +364,7 @@
   <div class="absolute inset-0 flex items-center">
     <div class="max-w-7xl mx-auto w-full px-5 sm:px-8 lg:px-12">
       <p class="max-w-md text-lg sm:text-xl lg:text-2xl font-black text-white leading-tight drop-shadow-lg">
-        Cuatro capas de inteligencia
+        Cinco capas de inteligencia
         <span class="block text-estrata-teal_light">para que la decisión sea fácil.</span>
       </p>
     </div>
@@ -377,7 +377,7 @@
     <p
       class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light"
     >
-      Cuatro capas · una decisión
+      Cinco capas · una decisión
     </p>
     <h2
       class="mt-2 text-3xl sm:text-4xl font-bold text-estrata-navy dark:text-white"
@@ -385,13 +385,14 @@
       Strata: capas de inteligencia para decidir mejor.
     </h2>
     <p class="mt-3 text-slate-600 dark:text-slate-400 max-w-2xl">
-      Cada capa responde una pregunta. Dos están en producción con datos
-      reales (<strong class="text-estrata-navy dark:text-white">Advisor</strong>,
-      <strong class="text-estrata-navy dark:text-white">Ask</strong>). Dos son
-      mock-up visual sobre la misma DB
-      (<strong class="text-estrata-navy dark:text-white">Route</strong>,
-      <strong class="text-estrata-navy dark:text-white">Plan</strong>) —
-      ampliables post-premio.
+      Cada capa responde una pregunta. Las cinco están en producción con
+      datos reales sobre la misma DB:
+      <strong class="text-estrata-navy dark:text-white">Advisor</strong>,
+      <strong class="text-estrata-navy dark:text-white">Ask</strong>,
+      <strong class="text-estrata-navy dark:text-white">Route</strong>,
+      <strong class="text-estrata-navy dark:text-white">Mapa</strong> y
+      <strong class="text-estrata-navy dark:text-white">News</strong>.
+      Ampliables post-premio (MITMA O-D, GTFS, ML).
     </p>
   </div>
 
@@ -527,7 +528,7 @@
       </div>
     </a>
 
-    {# Route — MOCK #}
+    {# Route — funcional #}
     <a
       href="{% url 'mubil:route' %}"
       class="group relative rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-7 sm:p-8 hover:border-estrata-teal hover:shadow-xl transition"
@@ -552,9 +553,10 @@
           </svg>
         </div>
         <span
-          class="inline-flex items-center gap-1 rounded-full border border-estrata-navy/20 dark:border-estrata-teal/30 text-estrata-navy dark:text-slate-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
+          class="inline-flex items-center gap-1 rounded-full bg-estrata-teal/15 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
         >
-          Mock-up visual
+          <span class="h-1.5 w-1.5 rounded-full bg-estrata-teal animate-pulse"></span>
+          Demo en vivo
         </span>
       </div>
       <h3 class="mt-4 text-xl font-bold text-estrata-navy dark:text-white">
@@ -566,9 +568,9 @@
       <p
         class="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed"
       >
-        {{ stats.route_demos }} rutas precomputadas Donostia ↔ Bilbao / Vitoria
-        / Iruñea / Tolosa / Eibar. Energía, coste y paradas de carga calculadas
-        con tu vehículo. pgRouting + GTFS multimodal post-premio.
+        Rutas Donostia ↔ Bilbao / Vitoria / Iruñea / Tolosa / Eibar con tu
+        vehículo: energía consumida, coste a la hora de salida (PVPC en vivo)
+        y paradas de carga sugeridas. pgRouting + GTFS multimodal post-premio.
       </p>
       <div
         class="mt-4 flex items-center text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light group-hover:gap-3 gap-2 transition-all"
@@ -591,9 +593,9 @@
       </div>
     </a>
 
-    {# Plan — MOCK #}
+    {# Mapa — funcional #}
     <a
-      href="{% url 'mubil:plan' %}"
+      href="{% url 'mubil:infrastructure' %}"
       class="group relative rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-7 sm:p-8 hover:border-estrata-teal hover:shadow-xl transition"
     >
       <div class="flex items-start justify-between">
@@ -622,28 +624,30 @@
           </svg>
         </div>
         <span
-          class="inline-flex items-center gap-1 rounded-full border border-estrata-navy/20 dark:border-estrata-teal/30 text-estrata-navy dark:text-slate-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
+          class="inline-flex items-center gap-1 rounded-full bg-estrata-teal/15 dark:bg-estrata-teal/20 text-estrata-teal_dark dark:text-estrata-teal_light px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
         >
-          Mock-up visual
+          <span class="h-1.5 w-1.5 rounded-full bg-estrata-teal animate-pulse"></span>
+          Demo en vivo
         </span>
       </div>
       <h3 class="mt-4 text-xl font-bold text-estrata-navy dark:text-white">
-        Plan
+        Mapa
       </h3>
       <p class="text-sm text-slate-500 dark:text-slate-400">
-        ¿Dónde va el próximo cargador?
+        ¿Dónde puedo cargar hoy?
       </p>
       <p
         class="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed"
       >
-        Heatmap de {{ stats.demand_hexes }} celdas sobre Gipuzkoa con scoring
-        heurístico determinista: población × corredores − oferta actual.
-        Horizonte 1/3/5 años. MITMA O-D + ML post-premio.
+        {{ stats.charging_stations|intcomma }} puntos de recarga y
+        {{ stats.fuel_stations|intcomma }} gasolineras EH sobre un mismo
+        Leaflet. Cargadores coloreados por compatibilidad con tu vehículo +
+        overlay de desiertos de carga rápida.
       </p>
       <div
         class="mt-4 flex items-center text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light group-hover:gap-3 gap-2 transition-all"
       >
-        Ver heatmap
+        Ver mapa
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="h-4 w-4"
@@ -1014,8 +1018,8 @@
           >
         </div>
         <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          Cobertura sobre ingest, advisor, RAG, route, plan, scoring. Mocks en
-          fronteras HTTP, integración real contra PostGIS + pgvector +
+          Cobertura sobre ingest, advisor, RAG, route, infraestructura, news.
+          Mocks en fronteras HTTP, integración real contra PostGIS + pgvector +
           TimescaleDB.
         </p>
       </div>
@@ -1091,9 +1095,16 @@
           </li>
           <li>
             <a
-              href="{% url 'mubil:plan' %}"
+              href="{% url 'mubil:infrastructure' %}"
               class="text-estrata-teal_light hover:text-white hover:underline"
-              >Plan · Heatmap</a
+              >Mapa · infraestructura</a
+            >
+          </li>
+          <li>
+            <a
+              href="{% url 'mubil:news' %}"
+              class="text-estrata-teal_light hover:text-white hover:underline"
+              >News · eu/es</a
             >
           </li>
           <li>

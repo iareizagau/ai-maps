@@ -25,8 +25,7 @@
         Route <span class="text-estrata-teal">·</span> Planificador EV
       </h1>
       <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl">
-        Pulsa el mapa para fijar origen y destino — o elige una ruta rápida.
-        Calculamos energía, paradas de carga y el ahorro frente a gasolina.
+        Clica el mapa para fijar origen y destino — o elige una ruta rápida. Calculamos energía, paradas de carga y el ahorro frente a gasolina.
       </p>
     </div>
   </div>
@@ -36,120 +35,130 @@
          x-data="routePlannerApp({{ init_json|escape }})"
          x-init="init()">
 
-  <div class="flex flex-col lg:flex-row gap-6">
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
-    {# ---------- LEFT: input column ---------- #}
-    <form id="route-form"
-          hx-post="{% url 'mubil:route_plan' %}"
-          hx-target="#route-result"
-          hx-swap="innerHTML"
-          hx-indicator="#route-loading"
-          hx-trigger="submit, change from:select[name='vehicle_id'], change from:input[name='soc_start'], change from:input[name='departure_hour']"
-          class="w-full lg:w-2/5 space-y-4">
-
-      {% csrf_token %}
-
-      {# Hidden inputs filled by Alpine #}
-      <input type="hidden" name="slug" x-model="form.slug" />
-      <input type="hidden" name="origin_lng" x-model="form.origin_lng" />
-      <input type="hidden" name="origin_lat" x-model="form.origin_lat" />
-      <input type="hidden" name="dest_lng" x-model="form.dest_lng" />
-      <input type="hidden" name="dest_lat" x-model="form.dest_lat" />
-
-      {# ---------- Chips: rutas rápidas ---------- #}
-      <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Rutas rápidas</p>
-        <div class="flex flex-wrap gap-2">
-          <template x-for="d in demos" :key="d.slug">
-            <button type="button" @click="pickDemo(d)"
-                    :class="form.slug === d.slug ? 'border-estrata-teal bg-estrata-teal/10 text-estrata-teal_dark dark:text-estrata-teal_light ring-1 ring-estrata-teal/40' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-estrata-teal/40'"
-                    class="rounded-full border px-3 py-1 text-[11px] font-bold transition tabular-nums">
-              <span x-text="d.label"></span>
-              <span class="text-slate-400 dark:text-slate-500"> · </span>
-              <span x-text="d.distance_km.toFixed(0) + ' km'"></span>
-            </button>
-          </template>
-        </div>
-      </div>
-
-      {# ---------- Map (origin/dest click) ---------- #}
-      <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 space-y-2">
-        <div class="flex items-baseline justify-between">
-          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Origen y destino</p>
-          <button type="button" @click="resetMarkers()" x-show="form.origin_lat || form.dest_lat" x-cloak
-                  class="text-[10px] font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light hover:opacity-80">
-            Reiniciar marcadores
+    {# ─────────── MAP HERO (left on desktop, top on mobile) ─────────── #}
+    <div class="lg:col-span-3">
+      <div class="lg:sticky lg:top-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Mapa</span>
+            <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                  x-show="!form.origin_lat" x-cloak>
+              1 · Clica origen
+            </span>
+            <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300"
+                  x-show="form.origin_lat && !form.dest_lat" x-cloak>
+              2 · Clica destino
+            </span>
+            <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-estrata-teal/10 text-estrata-teal_dark dark:text-estrata-teal_light"
+                  x-show="form.origin_lat && form.dest_lat" x-cloak>
+              Ruta lista
+            </span>
+          </div>
+          <button type="button" @click="resetMarkers()"
+                  x-show="form.origin_lat || form.dest_lat" x-cloak
+                  class="text-[10px] font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light hover:opacity-80 shrink-0">
+            Reiniciar
           </button>
         </div>
-        <div id="picker-map" class="w-full rounded-xl overflow-hidden h-60 lg:h-[380px]"></div>
-        <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-          <span x-show="!form.origin_lat" x-cloak><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 align-middle mr-1"></span>1º click → origen.</span>
-          <span x-show="form.origin_lat && !form.dest_lat" x-cloak><span class="inline-block w-2 h-2 rounded-full bg-rose-500 align-middle mr-1"></span>2º click → destino.</span>
-          <span x-show="form.origin_lat && form.dest_lat" x-cloak class="text-estrata-teal_dark dark:text-estrata-teal_light font-bold">Ruta lista. Pulsa "Planificar ruta".</span>
+        <div id="main-map"
+             class="w-full rounded-xl overflow-hidden"
+             style="height: 70vh; min-height: 420px; max-height: 820px; position: relative; z-index: 0;"></div>
+      </div>
+    </div>
+
+    {# ─────────── RIGHT PANEL: controls + result ─────────── #}
+    <div class="lg:col-span-2 space-y-4">
+
+      <form id="route-form"
+            hx-post="{% url 'mubil:route_plan' %}"
+            hx-target="#route-result"
+            hx-swap="innerHTML"
+            hx-indicator="#route-loading"
+            hx-trigger="submit, change from:select[name='vehicle_id'], change from:input[name='soc_start'], change from:input[name='departure_hour']"
+            class="space-y-3">
+
+        {% csrf_token %}
+
+        <input type="hidden" name="slug" x-model="form.slug" />
+        <input type="hidden" name="origin_lng" x-model="form.origin_lng" />
+        <input type="hidden" name="origin_lat" x-model="form.origin_lat" />
+        <input type="hidden" name="dest_lng" x-model="form.dest_lng" />
+        <input type="hidden" name="dest_lat" x-model="form.dest_lat" />
+
+        {# Rutas rápidas #}
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Rutas rápidas</p>
+            <svg id="route-loading" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-spin htmx-indicator text-estrata-teal" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4zm2 5.3A8 8 0 014 12H0c0 3 1.1 5.8 3 7.9l3-2.6z"/>
+            </svg>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <template x-for="d in demos" :key="d.slug">
+              <button type="button" @click="pickDemo(d)"
+                      :class="form.slug === d.slug ? 'border-estrata-teal bg-estrata-teal/10 text-estrata-teal_dark dark:text-estrata-teal_light ring-1 ring-estrata-teal/40' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-estrata-teal/40'"
+                      class="rounded-full border px-3 py-1 text-[11px] font-bold transition tabular-nums">
+                <span x-text="d.label"></span>
+                <span class="text-slate-400 dark:text-slate-500"> · </span>
+                <span x-text="d.distance_km.toFixed(0) + ' km'"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        {# Controls grouped: vehicle / SOC / hora #}
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 space-y-4">
+          <div>
+            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">Vehículo eléctrico</label>
+            <select name="vehicle_id"
+                    class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal">
+              <option value="">Genérico (18 kWh/100km)</option>
+              {% for v in ev_vehicles %}
+                <option value="{{ v.id }}" {% if v.id == default_vehicle_id %}selected{% endif %}>
+                  {{ v.make }} {{ v.model }}{% if v.range_wltp_km %} · {{ v.range_wltp_km }} km{% endif %}{% if v.battery_kwh %} · {{ v.battery_kwh }} kWh{% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+              <span>SOC inicial</span>
+              <span class="text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="form.soc_start + '%'"></span>
+            </div>
+            <input type="range" name="soc_start" min="10" max="100" step="5" x-model="form.soc_start"
+                   class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-estrata-teal mt-1.5" />
+          </div>
+
+          <div>
+            <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+              <span>Hora de salida</span>
+              <span class="text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="String(form.departure_hour).padStart(2,'0') + ':00'"></span>
+            </div>
+            <input type="range" name="departure_hour" min="0" max="23" step="1" x-model.number="form.departure_hour"
+                   class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-estrata-teal mt-1.5" />
+          </div>
+        </div>
+
+        <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed px-1">
+          Coste: PVPC nocturna en origen + carga rápida 0,45 €/kWh si necesaria. Margen reserva 10% SOC.
         </p>
-      </div>
+      </form>
 
-      {# ---------- Vehicle selector ---------- #}
-      <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 space-y-2">
-        <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Vehículo eléctrico</label>
-        <select name="vehicle_id"
-                class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal">
-          <option value="">Genérico (18 kWh/100km)</option>
-          {% for v in ev_vehicles %}
-            <option value="{{ v.id }}" {% if v.id == default_vehicle_id %}selected{% endif %}>
-              {{ v.make }} {{ v.model }}{% if v.range_wltp_km %} · {{ v.range_wltp_km }} km{% endif %}{% if v.battery_kwh %} · {{ v.battery_kwh }} kWh{% endif %}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
-
-      {# ---------- SOC slider ---------- #}
-      <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 space-y-2">
-        <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-          <span>SOC inicial</span>
-          <span class="text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="form.soc_start + '%'"></span>
+      {# Result panel: KPIs, charts, lists, segments (HTMX target) #}
+      <div id="route-result" class="space-y-4"
+           hx-get="{% url 'mubil:route_plan' %}"
+           hx-trigger="load"
+           hx-include="#route-form"
+           hx-swap="innerHTML">
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 text-center text-slate-500 dark:text-slate-400">
+          <p class="text-sm">Cargando ruta…</p>
         </div>
-        <input type="range" name="soc_start" min="10" max="100" step="5" x-model="form.soc_start"
-               class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-estrata-teal" />
       </div>
 
-      {# ---------- Departure hour slider ---------- #}
-      <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 space-y-2">
-        <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-          <span>Hora de salida</span>
-          <span class="text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="String(form.departure_hour).padStart(2,'0') + ':00'"></span>
-        </div>
-        <input type="range" name="departure_hour" min="0" max="23" step="1" x-model.number="form.departure_hour"
-               class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-estrata-teal" />
-      </div>
-
-      {# ---------- Submit ---------- #}
-      <button type="submit"
-              :disabled="!form.slug && !(form.origin_lat && form.dest_lat)"
-              :class="(!form.slug && !(form.origin_lat && form.dest_lat)) ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-estrata-teal hover:bg-estrata-teal_dark text-white'"
-              class="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-bold transition">
-        <svg id="route-loading" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 animate-spin htmx-indicator" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4zm2 5.3A8 8 0 014 12H0c0 3 1.1 5.8 3 7.9l3-2.6z"/>
-        </svg>
-        Planificar ruta
-      </button>
-
-      <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-        Coste: PVPC nocturna en origen + carga rápida 0,45 €/kWh si es necesaria.
-        Margen de reserva 10% SOC. Sin pgRouting en demos; con pgRouting + fallback OSRM en modo libre.
-      </p>
-    </form>
-
-    {# ---------- RIGHT: result panel ---------- #}
-    <div id="route-result" class="w-full lg:w-3/5 space-y-6"
-         hx-get="{% url 'mubil:route_plan' %}"
-         hx-trigger="load"
-         hx-include="#route-form"
-         hx-swap="innerHTML">
-      <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-10 text-center text-slate-500 dark:text-slate-400">
-        <p class="text-sm">Cargando ruta…</p>
-      </div>
     </div>
   </div>
 </section>
@@ -164,23 +173,73 @@
 
 {% block extra_js %}
 <script>
-// ─────────────────────────── Global resize: re-fit map + charts after layout
-// changes. One handler covers picker map, result map, and both ECharts.
-// Bound once at script load; instances live on window globals so this stays
-// idempotent across HTMX swaps.
-if (!window._mubilResizeBound) {
-  window.addEventListener('resize', () => {
-    if (window._mubilResultMap) try { window._mubilResultMap.invalidateSize(); } catch (e) {}
-    if (window._mubilSocChart)  try { window._mubilSocChart.resize();         } catch (e) {}
-    if (window._mubilHourChart) try { window._mubilHourChart.resize();        } catch (e) {}
-    document.querySelectorAll('#picker-map').forEach(el => {
-      if (el._mubilMap) try { el._mubilMap.invalidateSize(); } catch (e) {}
+// ─────────────────────────── Container readiness helper
+// Resolves once `el` has a non-zero box. Leaflet's L.map() captures the
+// container size synchronously; if we run before the flex/grid column has
+// been measured, the tile layer fetches 0 tiles and never recovers cleanly.
+function _waitForBox(el) {
+  return new Promise(resolve => {
+    if (!el) return resolve();
+    if (el.clientWidth > 0 && el.clientHeight > 0) return resolve();
+    const ro = new ResizeObserver(() => {
+      if (el.clientWidth > 0 && el.clientHeight > 0) {
+        ro.disconnect();
+        resolve();
+      }
     });
+    ro.observe(el);
+  });
+}
+
+// ─────────────────────────── Layout-shift handlers
+function _mubilInvalidateAll() {
+  if (window._mubilMap)       try { window._mubilMap.invalidateSize(); } catch (e) {}
+  if (window._mubilSocChart)  try { window._mubilSocChart.resize();    } catch (e) {}
+  if (window._mubilHourChart) try { window._mubilHourChart.resize();   } catch (e) {}
+}
+if (!window._mubilResizeBound) {
+  window.addEventListener('resize', _mubilInvalidateAll);
+  // HTMX swap of #route-result changes the right panel height. On desktop
+  // that may add/remove a vertical scrollbar (~15 px), shifting the map
+  // column's actual width. Leaflet does NOT receive a window resize event
+  // for that — we have to invalidateSize() manually.
+  document.body.addEventListener('htmx:afterSwap', (ev) => {
+    if (ev.target && ev.target.id === 'route-result') {
+      requestAnimationFrame(_mubilInvalidateAll);
+    }
   });
   window._mubilResizeBound = true;
 }
 
-// ─────────────────────────── Alpine: picker + form state
+// ─────────────────────────── Single shared map
+// One Leaflet map handles both picker (click O/D) and result (route +
+// chargers). Two layer groups keep the two roles separate so we can clear
+// one without touching the other.
+let _mubilPickerLayer = null;
+let _mubilResultLayer = null;
+
+function _initMainMap() {
+  if (window._mubilMap) return Promise.resolve(window._mubilMap);
+  const el = document.getElementById('main-map');
+  if (!el || !window.L) return Promise.resolve(null);
+  return _waitForBox(el).then(() => {
+    if (window._mubilMap) return window._mubilMap;
+    const isDark = document.documentElement.classList.contains('dark');
+    const tileUrl = isDark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+    const map = L.map(el, { zoomControl: true }).setView([43.18, -2.4], 9);
+    L.tileLayer(tileUrl, {
+      subdomains: 'abcd', maxZoom: 19, attribution: '© OSM · CARTO',
+    }).addTo(map);
+    _mubilPickerLayer = L.layerGroup().addTo(map);
+    _mubilResultLayer = L.layerGroup().addTo(map);
+    window._mubilMap = map;
+    return map;
+  });
+}
+
+// ─────────────────────────── Alpine: form + map clicks
 function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
   return {
     demos,
@@ -192,43 +251,16 @@ function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
       origin_lng: '', origin_lat: '',
       dest_lng: '',   dest_lat: '',
     },
-    _map: null, _originMarker: null, _destMarker: null, _line: null,
 
     init() {
-      this._initMap();
-      if (defaultOrigin) {
-        // Pre-fill the origin from advisor CP — user can move it by clicking.
-        this._setOrigin(defaultOrigin.lat, defaultOrigin.lon, defaultOrigin.name);
-      }
-    },
-
-    _initMap() {
-      const el = document.getElementById('picker-map');
-      if (!el || !window.L) return;
-      // Alpine's init() can fire more than once (HTMX swaps that touch the
-      // section, dev hot-reloads, etc.). Tear down the previous instance
-      // before creating a new one — Leaflet otherwise throws "Map container
-      // is already initialized".
-      if (el._leaflet_id && el._mubilMap) {
-        try { el._mubilMap.remove(); } catch (e) {}
-        el.innerHTML = '';
-      }
-      const isDark = document.documentElement.classList.contains('dark');
-      const tileUrl = isDark
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-      this._map = L.map(el, { zoomControl: true }).setView([43.18, -2.4], 9);
-      el._mubilMap = this._map;
-      L.tileLayer(tileUrl, {
-        attribution: '© OSM · CARTO', subdomains: 'abcd', maxZoom: 19,
-      }).addTo(this._map);
-      this._map.on('click', (ev) => this._onMapClick(ev));
-      // The map sits inside a flex column whose width settles after the
-      // right pane finishes its first HTMX render. invalidateSize() forces
-      // Leaflet to recompute the container box once the layout stabilises.
-      requestAnimationFrame(() => this._map.invalidateSize());
-      setTimeout(() => this._map.invalidateSize(), 250);
-      setTimeout(() => this._map.invalidateSize(), 800);
+      _initMainMap().then(map => {
+        if (!map) return;
+        map.on('click', (ev) => this._onMapClick(ev));
+        if (defaultOrigin) {
+          // Pre-fill origin from advisor CP. User can move it by clicking.
+          this._setOrigin(defaultOrigin.lat, defaultOrigin.lon, defaultOrigin.name);
+        }
+      });
     },
 
     _onMapClick(ev) {
@@ -238,7 +270,7 @@ function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
       } else if (!this.form.dest_lat) {
         this._setDest(lat, lng);
       } else {
-        // Third click → reset and start over
+        // Third click after a result is showing → reset and start over.
         this.resetMarkers();
         this._setOrigin(lat, lng);
       }
@@ -247,58 +279,50 @@ function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
     _setOrigin(lat, lng, label = 'Origen') {
       this.form.origin_lat = lat.toFixed(6);
       this.form.origin_lng = lng.toFixed(6);
-      // Clear demo slug — we're in free mode now
       this.form.slug = '';
-      if (this._originMarker) this._map.removeLayer(this._originMarker);
-      this._originMarker = L.circleMarker([lat, lng], {
-        radius: 8, fillColor: '#10b981', color: '#0f172a', weight: 2, fillOpacity: 1,
-      }).bindPopup(`<strong>${label}</strong>`).addTo(this._map);
-      this._refreshLine();
+      if (_mubilPickerLayer) {
+        _mubilPickerLayer.clearLayers();
+        L.circleMarker([lat, lng], {
+          radius: 8, fillColor: '#10b981', color: '#0f172a', weight: 2, fillOpacity: 1,
+        }).bindPopup(`<strong>${label}</strong>`).addTo(_mubilPickerLayer);
+      }
+      if (_mubilResultLayer) _mubilResultLayer.clearLayers();
     },
 
     _setDest(lat, lng) {
       this.form.dest_lat = lat.toFixed(6);
       this.form.dest_lng = lng.toFixed(6);
       this.form.slug = '';
-      if (this._destMarker) this._map.removeLayer(this._destMarker);
-      this._destMarker = L.circleMarker([lat, lng], {
-        radius: 8, fillColor: '#ef4444', color: '#0f172a', weight: 2, fillOpacity: 1,
-      }).bindPopup('<strong>Destino</strong>').addTo(this._map);
-      this._refreshLine();
-      // Auto-trigger once both endpoints are set. $nextTick lets Alpine flush
-      // the lat/lng x-model bindings before htmx reads the form.
+      if (_mubilPickerLayer) {
+        L.circleMarker([lat, lng], {
+          radius: 8, fillColor: '#ef4444', color: '#0f172a', weight: 2, fillOpacity: 1,
+        }).bindPopup('<strong>Destino</strong>').addTo(_mubilPickerLayer);
+        const dashed = L.polyline([
+          [parseFloat(this.form.origin_lat), parseFloat(this.form.origin_lng)],
+          [lat, lng],
+        ], { color: '#10B0A0', weight: 3, dashArray: '6,6', opacity: 0.7 }).addTo(_mubilPickerLayer);
+        try { window._mubilMap.fitBounds(dashed.getBounds().pad(0.2)); } catch (e) {}
+      }
+      // $nextTick lets Alpine flush the lat/lng x-model bindings before htmx
+      // reads the form.
       this.$nextTick(() => {
         document.getElementById('route-form').requestSubmit();
       });
-    },
-
-    _refreshLine() {
-      if (this._line) { this._map.removeLayer(this._line); this._line = null; }
-      if (this.form.origin_lat && this.form.dest_lat) {
-        this._line = L.polyline([
-          [parseFloat(this.form.origin_lat), parseFloat(this.form.origin_lng)],
-          [parseFloat(this.form.dest_lat), parseFloat(this.form.dest_lng)],
-        ], { color: '#10B0A0', weight: 3, dashArray: '6,6', opacity: 0.7 }).addTo(this._map);
-        this._map.fitBounds(this._line.getBounds().pad(0.2));
-      }
     },
 
     resetMarkers() {
       this.form.origin_lat = ''; this.form.origin_lng = '';
       this.form.dest_lat = '';   this.form.dest_lng = '';
       this.form.slug = '';
-      if (this._originMarker) { this._map.removeLayer(this._originMarker); this._originMarker = null; }
-      if (this._destMarker)   { this._map.removeLayer(this._destMarker);   this._destMarker = null; }
-      if (this._line)         { this._map.removeLayer(this._line);         this._line = null; }
+      if (_mubilPickerLayer) _mubilPickerLayer.clearLayers();
+      if (_mubilResultLayer) _mubilResultLayer.clearLayers();
     },
 
     pickDemo(d) {
-      // Drop free-mode markers FIRST — resetMarkers wipes slug + lat/lng, so
-      // doing it after the assignments would clobber them.
+      // Drop free-mode state FIRST — resetMarkers wipes slug + lat/lng, so
+      // doing it after would clobber the new slug.
       this.resetMarkers();
       this.form.slug = d.slug;
-      // Wait one Alpine tick so x-model finishes writing the new slug into
-      // the hidden <input>, otherwise htmx serialises the stale value.
       this.$nextTick(() => {
         document.getElementById('route-form').requestSubmit();
       });
@@ -306,93 +330,55 @@ function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
   };
 }
 
-// ─────────────────────────── Result map renderer (called from the partial)
-//
-// HTMX swaps `#route-result.innerHTML` wholesale on every render, so the
-// previous `<div id="route-map">` and its Leaflet handle are detached. The
-// strategy:
-//   1. Tear down any prior instance on window before touching the new node.
-//   2. Defer L.map() to the next animation frame so the freshly-inserted
-//      container has had time to settle its computed size — otherwise
-//      Leaflet snapshots a 0×0 box and the tile layer never paints.
-//   3. Guard every deferred call against a newer render replacing the
-//      instance: capture the map locally and verify it still matches
-//      window._mubilResultMap before touching it.
+// ─────────────────────────── Result renderer (called from the partial)
+// Replaces picker overlays with the computed route. The single shared map
+// stays in place; only the layer groups swap content.
 window.mubilRouteRender = function (r) {
-  // Tear down the previous instance up front so the next render can't race
-  // with stale tile-load callbacks from this one.
-  if (window._mubilResultMap) {
-    try { window._mubilResultMap.remove(); } catch (e) {}
-    window._mubilResultMap = null;
-  }
+  _initMainMap().then(map => {
+    if (!map) return;
+    if (_mubilPickerLayer) _mubilPickerLayer.clearLayers();
+    if (_mubilResultLayer) _mubilResultLayer.clearLayers();
 
-  // Defer creation to the next frame. mubilRouteRender is invoked from Alpine
-  // x-init the moment HTMX inserts the swapped DOM — the right flex column
-  // (`#route-result.lg:w-3/5`) has NOT yet been measured, so the map container
-  // reports 0 width. Leaflet bails on the first tile-load with an empty
-  // bounding box and never recovers on the next innerHTML swap. Waiting one
-  // frame lets the browser run layout so the container has its real size when
-  // we call L.map().
-  requestAnimationFrame(() => {
-    const el = document.getElementById('route-map');
-    if (!el || !window.L) return;
-    if (el._leaflet_id) { try { delete el._leaflet_id; } catch (e) {} el.innerHTML = ''; }
+    const line = L.polyline(r.polyline, {
+      color: '#10B0A0', weight: 5, opacity: 0.9,
+    }).addTo(_mubilResultLayer);
 
-    const isDark = document.documentElement.classList.contains('dark');
-    const tileUrl = isDark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+    L.circleMarker(r.origin, {
+      radius: 8, fillColor: '#10b981', color: '#0f172a', weight: 2, fillOpacity: 1,
+    }).bindPopup(`<strong>${r.origin_name}</strong>`).addTo(_mubilResultLayer);
 
-    // setView BEFORE the tile layer. Leaflet only requests tiles after the
-    // map has a centre+zoom; if the layer is added on an un-viewed map, the
-    // first _update() runs with an undefined bounds and no tiles get fetched.
-    const initialCenter = (r.origin && r.origin.length === 2) ? r.origin : [43.18, -2.4];
-    const map = L.map(el, { zoomControl: true }).setView(initialCenter, 9);
-    window._mubilResultMap = map;
-
-    L.tileLayer(tileUrl, { subdomains: 'abcd', maxZoom: 19,
-      attribution: '© OSM · CARTO' }).addTo(map);
-
-    const line = L.polyline(r.polyline, { color: '#10B0A0', weight: 5, opacity: 0.9 }).addTo(map);
-    L.circleMarker(r.origin, { radius: 8, fillColor: '#10b981', color: '#0f172a', weight: 2, fillOpacity: 1 })
-      .bindPopup(`<strong>${r.origin_name}</strong>`).addTo(map);
-    L.circleMarker(r.dest, { radius: 8, fillColor: '#ef4444', color: '#0f172a', weight: 2, fillOpacity: 1 })
-      .bindPopup(`<strong>${r.dest_name}</strong>`).addTo(map);
+    L.circleMarker(r.dest, {
+      radius: 8, fillColor: '#ef4444', color: '#0f172a', weight: 2, fillOpacity: 1,
+    }).bindPopup(`<strong>${r.dest_name}</strong>`).addTo(_mubilResultLayer);
 
     (r.nearby_chargers || []).forEach(c => {
       L.circleMarker([c.lat, c.lon], {
         radius: 5, fillColor: '#5EE8E0', color: '#0A8278', weight: 1, fillOpacity: 0.7,
-      }).bindPopup(`<strong>${c.operator || 'Cargador'}</strong><br>${c.power_kw} kW · ${c.distance_km} km de la ruta`).addTo(map);
+      }).bindPopup(`<strong>${c.operator || 'Cargador'}</strong><br>${c.power_kw} kW · ${c.distance_km} km de la ruta`)
+        .addTo(_mubilResultLayer);
     });
 
     if (r.selected_charger) {
       const sc = r.selected_charger;
       L.marker([sc.lat, sc.lon])
-        .bindPopup(`<strong>Parada de carga</strong><br>${sc.operator || ''} · ${sc.power_kw} kW`).addTo(map);
+        .bindPopup(`<strong>Parada de carga</strong><br>${sc.operator || ''} · ${sc.power_kw} kW`)
+        .addTo(_mubilResultLayer);
     }
 
-    const settle = () => {
-      if (window._mubilResultMap !== map) return;
-      try {
-        map.invalidateSize();
-        map.fitBounds(line.getBounds().pad(0.15));
-      } catch (e) { /* keep initialCenter view */ }
-    };
-    settle();
-    setTimeout(settle, 250);
-    setTimeout(settle, 800);
+    try {
+      map.fitBounds(line.getBounds().pad(0.15));
+    } catch (e) { /* keep current view */ }
   });
 };
 
 // ─────────────────────────── ECharts renderers (called from the partial)
 window.mubilRouteRenderCharts = function (r) {
-  // Tear down previous instances — same reason as the map: HTMX wipes the
-  // DOM but the chart objects on window persist with stale references.
+  // Tear down previous instances — HTMX wipes the DOM but chart objects on
+  // window persist with stale element references.
   ['_mubilSocChart', '_mubilHourChart'].forEach(k => {
     if (window[k]) { try { window[k].dispose(); } catch (e) {} window[k] = null; }
   });
 
-  // SOC vs km
   const socEl = document.getElementById('chart-soc');
   if (socEl && r.soc_curve && r.soc_curve.length) {
     const c = window.echarts.init(socEl, document.documentElement.classList.contains('dark') ? 'dark' : null);
@@ -417,7 +403,6 @@ window.mubilRouteRenderCharts = function (r) {
     });
   }
 
-  // Cost by hour
   const hourEl = document.getElementById('chart-hour');
   if (hourEl && r.cost_by_hour && r.cost_by_hour.length) {
     const c = window.echarts.init(hourEl, document.documentElement.classList.contains('dark') ? 'dark' : null);

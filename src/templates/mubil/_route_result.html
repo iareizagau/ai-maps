@@ -1,126 +1,117 @@
 {% load i18n l10n %}
 <div x-data="{ r: {{ r_json|escape }} }"
-     x-init="window.mubilRouteRender && window.mubilRouteRender(r); $nextTick(() => window.mubilRouteRenderCharts && window.mubilRouteRenderCharts(r))">
+     x-init="$nextTick(() => { window.mubilRouteRender && window.mubilRouteRender(r); window.mubilRouteRenderCharts && window.mubilRouteRenderCharts(r); })"
+     class="space-y-4">
 
-  {# ---------- Headline ---------- #}
-  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-sm">
-    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-      <h2 class="text-lg sm:text-xl font-black text-estrata-navy dark:text-white" x-text="r.label"></h2>
-      <span x-show="r.via" x-cloak class="text-[10px] uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light font-bold">vía <span x-text="r.via"></span></span>
-      <span class="text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full"
+  {# ─────────── Headline ─────────── #}
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+      <h2 class="text-base sm:text-lg font-black text-estrata-navy dark:text-white leading-tight" x-text="r.label"></h2>
+      <span x-show="r.via" x-cloak class="text-[9px] uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light font-bold">vía <span x-text="r.via"></span></span>
+      <span class="text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full"
             :class="r.mode === 'free' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-estrata-teal/10 text-estrata-teal_dark dark:text-estrata-teal_light'"
             x-text="r.mode === 'free' ? 'O/D libre' : 'Ruta rápida'"></span>
     </div>
-    <p class="mt-1 text-sm text-slate-600 dark:text-slate-400"
+    <p class="mt-1 text-[11px] text-slate-600 dark:text-slate-400 truncate"
        x-text="r.vehicle_label || 'Vehículo genérico (18 kWh/100km)'"></p>
   </div>
 
-  {# ---------- Stat cards ---------- #}
-  <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+  {# ─────────── KPI cards (2×2 in narrow right column) ─────────── #}
+  <div class="grid grid-cols-2 gap-3">
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3">
       <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Distancia</p>
-      <p class="mt-1 text-2xl font-black text-slate-900 dark:text-white tabular-nums">{{ r.distance_km|floatformat:0 }} <span class="text-sm font-normal text-slate-500">km</span></p>
+      <p class="mt-0.5 text-xl font-black text-slate-900 dark:text-white tabular-nums">{{ r.distance_km|floatformat:0 }} <span class="text-xs font-normal text-slate-500">km</span></p>
     </div>
-    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3">
       <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Duración</p>
-      <p class="mt-1 text-2xl font-black text-slate-900 dark:text-white tabular-nums">{{ r.duration_min }} <span class="text-sm font-normal text-slate-500">min</span></p>
+      <p class="mt-0.5 text-xl font-black text-slate-900 dark:text-white tabular-nums">{{ r.duration_min }} <span class="text-xs font-normal text-slate-500">min</span></p>
     </div>
-    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3">
       <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Energía</p>
-      <p class="mt-1 text-2xl font-black text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums">{{ r.energy_kwh|floatformat:1 }} <span class="text-sm font-normal text-slate-500">kWh</span></p>
+      <p class="mt-0.5 text-xl font-black text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums">{{ r.energy_kwh|floatformat:1 }} <span class="text-xs font-normal text-slate-500">kWh</span></p>
     </div>
-    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-      <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Coste estimado</p>
-      <p class="mt-1 text-2xl font-black text-slate-900 dark:text-white tabular-nums">{{ r.estimated_cost_eur|floatformat:2 }} <span class="text-sm font-normal text-slate-500">€</span></p>
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3">
+      <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Coste</p>
+      <p class="mt-0.5 text-xl font-black text-slate-900 dark:text-white tabular-nums">{{ r.estimated_cost_eur|floatformat:2 }} <span class="text-xs font-normal text-slate-500">€</span></p>
     </div>
   </div>
 
-  {# ---------- EV vs ICE badge ---------- #}
+  {# ─────────── EV vs gasolina ─────────── #}
   {% if r.ice_baseline %}
-    <div class="mt-4 rounded-2xl border p-4"
+    <div class="rounded-2xl border p-4"
          :class="r.ice_baseline.vs_ev_eur >= 0 ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20' : 'border-rose-200 dark:border-rose-800 bg-rose-50/60 dark:bg-rose-950/20'">
-      <div class="flex items-start gap-3">
-        <span class="text-2xl"
+      <div class="flex items-start gap-2">
+        <span class="text-xl shrink-0"
               x-text="r.ice_baseline.vs_ev_eur >= 0 ? '🟢' : '🔴'"></span>
         <div class="min-w-0">
           <p class="text-[10px] font-bold uppercase tracking-widest"
-             :class="r.ice_baseline.vs_ev_eur >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'">
-            EV vs gasolina
-          </p>
-          <p class="mt-1 text-sm font-bold text-slate-900 dark:text-white">
+             :class="r.ice_baseline.vs_ev_eur >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'">EV vs gasolina</p>
+          <p class="mt-0.5 text-sm font-bold text-slate-900 dark:text-white">
             <template x-if="r.ice_baseline.vs_ev_eur >= 0">
               <span>Ahorras <span class="tabular-nums" x-text="r.ice_baseline.vs_ev_eur.toFixed(2)"></span> € <span class="text-slate-500 dark:text-slate-400 font-normal">(<span x-text="r.ice_baseline.vs_ev_pct.toFixed(0)"></span>%)</span></span>
             </template>
             <template x-if="r.ice_baseline.vs_ev_eur < 0">
-              <span>Te cuesta <span class="tabular-nums" x-text="(-r.ice_baseline.vs_ev_eur).toFixed(2)"></span> € más que un gasolina</span>
+              <span>Cuesta <span class="tabular-nums" x-text="(-r.ice_baseline.vs_ev_eur).toFixed(2)"></span> € más que un gasolina</span>
             </template>
           </p>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-            ICE 6,5 L/100 a <span class="tabular-nums" x-text="r.ice_baseline.price_eur_l.toFixed(3)"></span> €/L =
-            <span class="tabular-nums" x-text="r.ice_baseline.cost_eur.toFixed(2)"></span> € ·
-            <span class="tabular-nums" x-text="r.ice_baseline.fuel_l.toFixed(1)"></span> L
+          <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+            ICE 6,5 L/100 a <span class="tabular-nums" x-text="r.ice_baseline.price_eur_l.toFixed(3)"></span> €/L = <span class="tabular-nums" x-text="r.ice_baseline.cost_eur.toFixed(2)"></span> €
           </p>
         </div>
       </div>
     </div>
   {% endif %}
 
-  {# ---------- SOC bar ---------- #}
-  <div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+  {# ─────────── SOC bar ─────────── #}
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
     <div class="flex justify-between text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">
-      <span>SOC inicial: <strong class="text-slate-900 dark:text-white tabular-nums">{{ r.soc_start_pct|floatformat:0 }}%</strong></span>
-      <span>SOC final: <strong class="text-slate-900 dark:text-white tabular-nums">{{ r.soc_end_pct|floatformat:0 }}%</strong></span>
+      <span>Inicial: <strong class="text-slate-900 dark:text-white tabular-nums">{{ r.soc_start_pct|floatformat:0 }}%</strong></span>
+      <span>Final: <strong class="text-slate-900 dark:text-white tabular-nums">{{ r.soc_end_pct|floatformat:0 }}%</strong></span>
     </div>
-    <div class="mt-2 w-full h-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+    <div class="mt-2 w-full h-2.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
       <div class="h-full rounded-full"
            style="width: {{ r.soc_end_pct|floatformat:0 }}%; background: linear-gradient(90deg, #ef4444 0%, #f59e0b 30%, #10B0A0 60%);">
       </div>
     </div>
   </div>
 
-  {# ---------- SOC vs km chart ---------- #}
+  {# ─────────── SOC vs km mini-chart ─────────── #}
   {% if r.soc_curve %}
-    <div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
       <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">SOC vs km</p>
-      <div id="chart-soc" style="width:100%; height:200px;"></div>
+      <div id="chart-soc" style="width:100%; height:160px;"></div>
     </div>
   {% endif %}
 
-  {# ---------- Cost by hour chart ---------- #}
+  {# ─────────── Coste por hora mini-chart ─────────── #}
   {% if r.cost_by_hour %}
-    <div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
       <div class="flex items-baseline justify-between mb-2">
-        <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Coste por hora de salida</p>
+        <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Coste por hora</p>
         {% if r.departure_hour is not None %}
-          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+          <p class="text-[10px] text-slate-500 dark:text-slate-400">
             Tu hora: <strong class="text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums">{{ r.departure_hour|stringformat:"02d" }}:00</strong>
           </p>
         {% endif %}
       </div>
-      <div id="chart-hour" style="width:100%; height:200px;"></div>
+      <div id="chart-hour" style="width:100%; height:160px;"></div>
     </div>
   {% endif %}
 
-  {# ---------- Map ---------- #}
-  <div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-    <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Trazado, paradas y cargadores cercanos</p>
-    <div id="route-map" style="width:100%; height:380px; position:relative; z-index:0; border-radius: 0.75rem;"></div>
-  </div>
-
-  {# ---------- Nearby chargers list ---------- #}
+  {# ─────────── Cargadores DC cerca de la ruta ─────────── #}
   {% if r.nearby_chargers %}
-    <div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-      <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">Cargadores DC cerca de la ruta</p>
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+      <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Cargadores DC cerca</p>
       <ul class="divide-y divide-slate-100 dark:divide-slate-700">
         {% for c in r.nearby_chargers|slice:":5" %}
-          <li class="py-2 flex items-center justify-between gap-3 text-sm">
+          <li class="py-2 flex items-center justify-between gap-2 text-sm">
             <div class="min-w-0">
-              <p class="font-bold text-slate-900 dark:text-white truncate">{{ c.operator|default:"Cargador" }}</p>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ c.address|default:"" }}</p>
+              <p class="font-bold text-slate-900 dark:text-white truncate text-[13px]">{{ c.operator|default:"Cargador" }}</p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ c.address|default:"" }}</p>
             </div>
             <div class="text-right shrink-0">
-              <p class="text-sm font-bold text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums">{{ c.power_kw|floatformat:0 }} kW</p>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">{{ c.distance_km }} km de la ruta</p>
+              <p class="text-[13px] font-bold text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums">{{ c.power_kw|floatformat:0 }} kW</p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 tabular-nums">{{ c.distance_km }} km</p>
             </div>
           </li>
         {% endfor %}
@@ -128,22 +119,22 @@
     </div>
   {% endif %}
 
-  {# ---------- Segments timeline ---------- #}
-  <div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-    <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">Segmentos</p>
+  {# ─────────── Segmentos ─────────── #}
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+    <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Segmentos</p>
     <ol class="space-y-2">
       {% for s in r.segments %}
-        <li class="flex items-center gap-3 text-sm">
+        <li class="flex items-center gap-2 text-sm">
           {% if s.kind == 'drive' %}
-            <span class="inline-flex items-center justify-center h-7 w-7 rounded-full bg-estrata-teal/10 text-estrata-teal_dark dark:text-estrata-teal_light">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+            <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-estrata-teal/10 text-estrata-teal_dark dark:text-estrata-teal_light shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
             </span>
-            <span class="text-slate-700 dark:text-slate-300 tabular-nums">Conducción · {{ s.distance_km|floatformat:0 }} km · {{ s.duration_min }} min</span>
+            <span class="text-[13px] text-slate-700 dark:text-slate-300 tabular-nums">{{ s.distance_km|floatformat:0 }} km · {{ s.duration_min }} min</span>
           {% else %}
-            <span class="inline-flex items-center justify-center h-7 w-7 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             </span>
-            <span class="text-slate-700 dark:text-slate-300 tabular-nums">Carga rápida · +{{ s.meta.kwh_added|floatformat:1 }} kWh @ {{ s.meta.kw_session|floatformat:0 }} kW · {{ s.duration_min }} min</span>
+            <span class="text-[13px] text-slate-700 dark:text-slate-300 tabular-nums">+{{ s.meta.kwh_added|floatformat:1 }} kWh @ {{ s.meta.kw_session|floatformat:0 }} kW · {{ s.duration_min }} min</span>
           {% endif %}
         </li>
       {% endfor %}

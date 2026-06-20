@@ -1,3 +1,4 @@
+from django.conf import settings
 from .models import AppRegistry
 
 def app_config(request):
@@ -31,5 +32,6 @@ def app_config(request):
         }
 
     return {
-        'current_app': current_app
+        'current_app': current_app,
+        'GOOGLE_ANALYTICS_ID': getattr(settings, 'GOOGLE_ANALYTICS_ID', ''),
     }

@@ -555,5 +555,6 @@ class ContactLead(BaseModel):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.name} ({self.profile}) — {self.created_at:%Y-%m-%d %H:%M}"
+        created_str = f"{self.created_at:%Y-%m-%d %H:%M}" if self.created_at else "not saved"
+        return f"{self.name} ({self.profile}) — {created_str}"
 

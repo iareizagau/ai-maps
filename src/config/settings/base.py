@@ -206,6 +206,8 @@ LOGIN_REDIRECT_URL = 'home'
 EUSKALMET_API_KEY = env('EUSKALMET_API_KEY', default='')
 OPENWEATHERMAP_API_KEY = env('OPENWEATHERMAP_API_KEY', default='')
 
+GOOGLE_ANALYTICS_ID = env('GOOGLE_ANALYTICS_ID', default='')
+
 # Mubil — Gemini (embeddings gemini-embedding-001 @768d + generation gemini-3.5-flash).
 # Obtener gratis en https://aistudio.google.com/app/apikey
 # Note: text-embedding-004 was deprecated late 2025; gemini-embedding-001 replaces

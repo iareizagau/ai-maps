@@ -21,6 +21,7 @@ from .models import (
     MobilityDocument,
     NewsArticle,
     Vehicle,
+    ContactLead,
 )
 from .news import services as news_services
 from .news.tasks import refresh_news
@@ -421,13 +422,26 @@ def contact_submit(request):
 
     profile_label = _CONTACT_PROFILES.get(profile_key, _CONTACT_PROFILES['otro'])
 
-    # Validación mínima — sin Django Form para mantener el flujo HTMX ligero.
-    # Email opcional pero si viene mal formado lo dejamos pasar al campo libre;
-    # el operador humano lo reconducirá.
     if not name or not email or len(message) < 5:
-        return render(request, 'mubil/_contact_error.html', {
+        response = render(request, 'mubil/_contact_error.html', {
             'msg': 'Necesitamos al menos nombre, email y un mensaje breve.',
-        }, status=400)
+        })
+        response['HX-Retarget'] = '#contact-feedback'
+        response['HX-Reswap'] = 'innerHTML'
+        return response
+
+    # Guardar en base de datos
+    try:
+        ContactLead.objects.create(
+            name=name,
+            entity=entity,
+            email=email,
+            profile=profile_key,
+            message=message,
+        )
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception('contact_submit: database save failed')
 
     subject = f'[eStrata · landing] {profile_label} — {entity or name}'
     body = (

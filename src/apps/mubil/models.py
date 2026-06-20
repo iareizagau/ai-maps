@@ -534,3 +534,26 @@ class NewsArticle(BaseModel):
 
     def __str__(self):
         return f"[{self.source}] {self.title_orig[:60]}"
+
+
+# ============ CONTACT / LEADS ============
+
+
+class ContactLead(BaseModel):
+    """Lead capture from the 'Hablemos' landing contact form.
+
+    Aligned with the B2B/B2B2C segments of the Executive Summary / Memoria.
+    """
+
+    name = models.CharField(max_length=120)
+    entity = models.CharField(max_length=200, blank=True)
+    email = models.EmailField(max_length=200)
+    profile = models.CharField(max_length=40, db_index=True)
+    message = models.TextField()
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.profile}) — {self.created_at:%Y-%m-%d %H:%M}"
+

@@ -13,6 +13,7 @@ from .models import (
     MobilityDocument,
     DemandHex,
     EVRoutePlan,
+    ContactLead,
 )
 
 
@@ -79,3 +80,12 @@ class DemandHexAdmin(GISModelAdmin):
 class EVRoutePlanAdmin(GISModelAdmin):
     list_display = ('vehicle', 'distance_km', 'duration_min', 'energy_kwh', 'estimated_cost_eur', 'computed_at')
     readonly_fields = ('computed_at',)
+
+
+@admin.register(ContactLead)
+class ContactLeadAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'entity', 'profile', 'created_at')
+    list_filter = ('profile', 'created_at')
+    search_fields = ('name', 'email', 'entity', 'message')
+    readonly_fields = ('created_at', 'updated_at')
+

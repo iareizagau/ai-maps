@@ -1,4 +1,61 @@
-{% extends "mubil/base.html" %} {% load i18n humanize static %} {% block title %}eStrata · ¿Cuánto te ahorras con un coche eléctrico?{% endblock %} {% block content %}
+{% extends "mubil/base.html" %}
+{% load i18n humanize static %}
+
+{% block title %}eStrata · Ahorro de Coche Eléctrico y Movilidad Sostenible en Euskadi{% endblock %}
+
+{% block meta_description %}Calcula el ahorro real de cambiar tu coche actual por uno eléctrico en Euskadi. Compara precios de la luz (PVPC) y gasolina, consulta ayudas del programa Auto+ y localiza puntos de recarga.{% endblock %}
+
+{% block extra_head %}
+  <!-- Canonical Link -->
+  <link rel="canonical" href="https://estrata.eus/" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://estrata.eus/">
+  <meta property="og:title" content="eStrata · Ahorro de Coche Eléctrico y Movilidad Sostenible en Euskadi">
+  <meta property="og:description" content="Calcula gratis el ahorro real de cambiar tu coche por uno eléctrico. Con precios de luz en vivo, carburantes por provincia y ayudas oficiales en el País Vasco.">
+  <meta property="og:image" content="https://estrata.eus{% static 'img/estrata/hero_vasco.jpg' %}">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://estrata.eus/">
+  <meta property="twitter:title" content="eStrata · Ahorro de Coche Eléctrico y Movilidad Sostenible en Euskadi">
+  <meta property="twitter:description" content="Calcula gratis el ahorro real de cambiar tu coche por uno eléctrico. Con precios de luz en vivo, carburantes por provincia y ayudas oficiales en el País Vasco.">
+  <meta property="twitter:image" content="https://estrata.eus{% static 'img/estrata/hero_vasco.jpg' %}">
+
+  <!-- Structured Data (JSON-LD) for SoftwareApplication / WebApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "eStrata",
+    "url": "https://estrata.eus",
+    "description": "Plataforma abierta de datos e inteligencia para la toma de decisiones sobre movilidad sostenible en Euskadi y Navarra.",
+    "applicationCategory": "BusinessApplication, UtilitiesApplication",
+    "operatingSystem": "All",
+    "browserRequirements": "Requires JavaScript. Requires HTML5.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "EUR"
+    },
+    "creator": {
+      "@type": "Person",
+      "name": "Imanol Gasteasoro",
+      "email": "iareizagau@gmail.com"
+    },
+    "featureList": [
+      "Advisor TCO: Calculadora de ahorro eléctrico vs combustión con PVPC en vivo",
+      "Ask Q&A: Consultas de normativa y ayudas con referencias oficiales y RAG",
+      "Route: Planificador de rutas para vehículos eléctricos",
+      "Mapa: Red de infraestructura de carga en Euskal Herria",
+      "News: Resúmenes inteligentes de noticias sobre movilidad sostenible"
+    ]
+  }
+  </script>
+{% endblock %}
+
+{% block content %}
 
 {# ─── CINTA B2B · cara visible del modelo B2B2C de la Memoria B.7 ─── #}
 <a href="#hablemos"
@@ -67,6 +124,7 @@
 
         <div class="mt-8 flex flex-wrap items-center gap-4">
           <a
+            id="hero-cta-advisor"
             href="{% url 'mubil:advisor' %}"
             class="inline-flex items-center gap-2 rounded-xl bg-estrata-teal px-7 py-3.5 text-base font-bold text-white hover:bg-estrata-teal_dark transition shadow-lg shadow-estrata-teal/30"
           >
@@ -75,7 +133,7 @@
             </svg>
             Calcular mi caso
           </a>
-          <a href="#modulos" class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-estrata-teal_dark dark:hover:text-estrata-teal_light transition">
+          <a id="hero-link-how-it-works" href="#modulos" class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-estrata-teal_dark dark:hover:text-estrata-teal_light transition">
             Cómo funciona ↓
           </a>
         </div>
@@ -410,6 +468,7 @@
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
     {# Advisor — MUST #}
     <a
+      id="module-card-advisor"
       href="{% url 'mubil:advisor' %}"
       class="group relative rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-7 sm:p-8 hover:border-estrata-teal hover:shadow-xl transition"
     >
@@ -478,6 +537,7 @@
 
     {# Ask — MUST #}
     <a
+      id="module-card-ask"
       href="{% url 'mubil:ask' %}"
       class="group relative rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-7 sm:p-8 hover:border-estrata-teal hover:shadow-xl transition"
     >
@@ -543,6 +603,7 @@
 
     {# Route — funcional #}
     <a
+      id="module-card-route"
       href="{% url 'mubil:route' %}"
       class="group relative rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-7 sm:p-8 hover:border-estrata-teal hover:shadow-xl transition"
     >
@@ -608,6 +669,7 @@
 
     {# Mapa — funcional #}
     <a
+      id="module-card-infrastructure"
       href="{% url 'mubil:infrastructure' %}"
       class="group relative rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-7 sm:p-8 hover:border-estrata-teal hover:shadow-xl transition"
     >
@@ -679,6 +741,7 @@
     </a>
 
     <a
+      id="module-card-news"
       href="{% url 'mubil:news' %}"
       class="group relative rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy p-7 sm:p-8 hover:border-estrata-teal hover:shadow-xl transition md:col-span-2"
     >
@@ -799,7 +862,7 @@
     </div>
 
     {# Card CTA pilotos — cierre del bloque, no es un perfil más #}
-    <a href="#hablemos" class="group rounded-2xl border-2 border-dashed border-estrata-teal/40 hover:border-estrata-teal bg-estrata-teal/5 dark:bg-estrata-teal/10 p-6 flex flex-col justify-center transition">
+    <a id="card-cta-pilots" href="#hablemos" class="group rounded-2xl border-2 border-dashed border-estrata-teal/40 hover:border-estrata-teal bg-estrata-teal/5 dark:bg-estrata-teal/10 p-6 flex flex-col justify-center transition">
       <p class="text-xs font-bold uppercase tracking-widest text-estrata-teal_dark dark:text-estrata-teal_light">
         ¿Te ves en alguno de estos?
       </p>
@@ -959,7 +1022,7 @@
 
   <div class="mt-8 space-y-3">
     {# Q1 — la objeción "ahorro" para perfiles de pocos km #}
-    <details class="group rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy open:shadow-md transition-shadow">
+    <details id="faq-rentabilidad" class="group rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy open:shadow-md transition-shadow">
       <summary class="flex cursor-pointer items-start gap-3 p-5 list-none [&::-webkit-details-marker]:hidden">
         <span class="flex-1 text-base sm:text-lg font-bold text-estrata-navy dark:text-white">
           ¿Me sale rentable si hago pocos kilómetros?
@@ -983,7 +1046,7 @@
     </details>
 
     {# Q2 — la objeción nº 1 en Euskadi urbano: piso sin garaje #}
-    <details class="group rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy open:shadow-md transition-shadow">
+    <details id="faq-sin-garaje" class="group rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy open:shadow-md transition-shadow">
       <summary class="flex cursor-pointer items-start gap-3 p-5 list-none [&::-webkit-details-marker]:hidden">
         <span class="flex-1 text-base sm:text-lg font-bold text-estrata-navy dark:text-white">
           ¿Y si vivo en piso y no tengo cargador en casa?
@@ -1009,7 +1072,7 @@
     </details>
 
     {# Q3 — vigencia de ayudas en 2026, encadena con Ask como prueba de citas #}
-    <details class="group rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy open:shadow-md transition-shadow">
+    <details id="faq-ayudas-2026" class="group rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy open:shadow-md transition-shadow">
       <summary class="flex cursor-pointer items-start gap-3 p-5 list-none [&::-webkit-details-marker]:hidden">
         <span class="flex-1 text-base sm:text-lg font-bold text-estrata-navy dark:text-white">
           ¿Las ayudas Auto+ y Renove EH siguen vigentes en 2026?
@@ -1033,7 +1096,7 @@
     </details>
 
     {# Q4 — abrir el embudo a PHEV ("no me atrevo a 100% eléctrico") #}
-    <details class="group rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy open:shadow-md transition-shadow">
+    <details id="faq-enchufables" class="group rounded-2xl border border-slate-200 dark:border-estrata-teal/15 bg-white dark:bg-estrata-navy open:shadow-md transition-shadow">
       <summary class="flex cursor-pointer items-start gap-3 p-5 list-none [&::-webkit-details-marker]:hidden">
         <span class="flex-1 text-base sm:text-lg font-bold text-estrata-navy dark:text-white">
           ¿Sirve para híbridos enchufables o solo para eléctricos puros?
@@ -1148,6 +1211,7 @@
     <div id="contact-feedback" class="mb-4"></div>
 
     <form
+      id="contact-form"
       hx-post="{% url 'mubil:contact' %}"
       hx-target="this"
       hx-swap="outerHTML"
@@ -1158,22 +1222,22 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
         <label class="block">
           <span class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">Nombre</span>
-          <input type="text" name="name" required maxlength="120"
+          <input type="text" name="name" id="contact-name" required maxlength="120"
                  class="w-full rounded-lg border border-slate-200 dark:border-estrata-teal/20 bg-white dark:bg-estrata-navy_deep px-3 py-2.5 text-sm text-estrata-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal/50">
         </label>
         <label class="block">
           <span class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">Email</span>
-          <input type="email" name="email" required maxlength="200"
+          <input type="email" name="email" id="contact-email" required maxlength="200"
                  class="w-full rounded-lg border border-slate-200 dark:border-estrata-teal/20 bg-white dark:bg-estrata-navy_deep px-3 py-2.5 text-sm text-estrata-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal/50">
         </label>
         <label class="block sm:col-span-2">
           <span class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">Entidad o empresa <span class="text-slate-400 normal-case font-normal">(opcional)</span></span>
-          <input type="text" name="entity" maxlength="200"
+          <input type="text" name="entity" id="contact-entity" maxlength="200"
                  class="w-full rounded-lg border border-slate-200 dark:border-estrata-teal/20 bg-white dark:bg-estrata-navy_deep px-3 py-2.5 text-sm text-estrata-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal/50">
         </label>
         <label class="block sm:col-span-2">
           <span class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">Soy…</span>
-          <select name="profile" required
+          <select name="profile" id="contact-profile" required
                   class="w-full rounded-lg border border-slate-200 dark:border-estrata-teal/20 bg-white dark:bg-estrata-navy_deep px-3 py-2.5 text-sm text-estrata-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal/50">
             <option value="concesionario">Concesionario o grupo de automoción</option>
             <option value="flota">Empresa con flota o autónomo</option>
@@ -1185,7 +1249,7 @@
         </label>
         <label class="block sm:col-span-2">
           <span class="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">¿Qué quieres explorar?</span>
-          <textarea name="message" required rows="3" maxlength="2000"
+          <textarea name="message" id="contact-message" required rows="3" maxlength="2000"
                     placeholder="Ej: tengo una flota de 12 furgonetas y quiero saber cuáles electrificar primero."
                     class="w-full rounded-lg border border-slate-200 dark:border-estrata-teal/20 bg-white dark:bg-estrata-navy_deep px-3 py-2.5 text-sm text-estrata-navy dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal/50"></textarea>
         </label>
@@ -1194,7 +1258,7 @@
         <p class="text-xs text-slate-500 dark:text-slate-400">
           Sin spam · sin lista de correo · sin comercial agresivo.
         </p>
-        <button type="submit"
+        <button type="submit" id="contact-submit"
                 class="inline-flex items-center gap-2 rounded-xl bg-estrata-teal px-6 py-2.5 text-sm font-bold text-white hover:bg-estrata-teal_dark transition shadow-lg shadow-estrata-teal/30 disabled:opacity-50 disabled:cursor-wait">
           Enviar
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -1206,7 +1270,7 @@
 
     <p class="mt-4 text-center text-xs text-slate-500 dark:text-slate-400">
       ¿Prefieres email directo?
-      <a href="mailto:iareizagau@gmail.com" class="font-bold text-estrata-teal_dark dark:text-estrata-teal_light hover:underline">iareizagau@gmail.com</a>
+      <a href="mailto:iareizagau@gmail.com" id="contact-direct-email" class="font-bold text-estrata-teal_dark dark:text-estrata-teal_light hover:underline">iareizagau@gmail.com</a>
     </p>
   </div>
 </section>

@@ -96,7 +96,10 @@
     </p>
     <div class="relative pl-6 border-l border-slate-200 dark:border-slate-700 ml-3 space-y-5">
       <template x-for="(stop, sIdx) in r.ordered_stops" :key="stop.idx">
-        <div class="relative">
+        <div class="relative cursor-pointer rounded-lg -ml-2 pl-2 py-1 transition hover:bg-slate-50 dark:hover:bg-slate-900/50"
+             @mouseenter="window.mubilHighlightStop && window.mubilHighlightStop(stop.idx)"
+             @mouseleave="window.mubilUnhighlightStop && window.mubilUnhighlightStop(stop.idx)"
+             @click="window.mubilFocusStop && window.mubilFocusStop(stop.idx)">
           <!-- Marker dot -->
           <div class="absolute -left-[31px] top-1.5 h-4.5 w-4.5 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center shadow-sm"
                :class="{

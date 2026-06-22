@@ -8,6 +8,7 @@
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 {% endblock %}
 
@@ -32,8 +33,7 @@
 </header>
 
 <section class="w-full px-5 sm:px-8 lg:px-12 py-6 sm:py-10"
-         x-data="routePlannerApp({{ init_json|escape }})"
-         x-init="init()">
+         x-data="routePlannerApp({{ init_json|escape }})">
 
   <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
@@ -449,7 +449,13 @@ function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
     init() {
       _initMainMap().then(map => {
         if (!map) return;
-        map.on('click', (ev) => this._onMapClick(ev));
+        // Guard against double-bind. Alpine auto-calls init() once, but a
+        // stray x-init="init()" used to make this run twice → every click
+        // pushed two stops.
+        if (!map._mubilClickBound) {
+          map.on('click', (ev) => this._onMapClick(ev));
+          map._mubilClickBound = true;
+        }
         if (defaultOrigin) {
           // Pre-fill origin from advisor CP. User can move it by clicking.
           this._setOrigin(defaultOrigin.lat, defaultOrigin.lon, defaultOrigin.name);
@@ -809,9 +815,26 @@ window.mubilRouteRenderCharts = function (r) {
 };
 
 // ─────────────────────────── Multi-stop result renderer
-// Draws the full optimised tour + numbered stops + charge markers on the
-// shared map. Stop styling mirrors the timeline colours in the partial so
-// the map and itinerary read as one view.
+// Draws the optimised tour: polyline + direction arrows (so the eye
+// follows the sequence without reading every label), numbered delivery
+// markers, and emoji markers for depot / charge / return. Keeps a map
+// of markers keyed by stop.idx so the timeline in the result partial can
+// hover-highlight / click-focus them.
+window._mubilStopMarkers = window._mubilStopMarkers || {};
+
+function _mubilStopDivIcon(label, color, highlighted) {
+  // 28 px normally, 38 px on hover from the timeline. Larger size + teal
+  // ring makes the active stop unambiguous even when others overlap.
+  const size = highlighted ? 38 : 28;
+  const ring = highlighted ? 'box-shadow:0 0 0 4px rgba(16,176,160,0.55), 0 1px 3px rgba(0,0,0,.3);' : 'box-shadow:0 1px 3px rgba(0,0,0,.3);';
+  return L.divIcon({
+    className: '',
+    html: `<div style="background:${color};color:white;border:2px solid #0f172a;border-radius:9999px;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${highlighted ? 13 : 12}px;${ring}transition:width .12s,height .12s">${label}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  });
+}
+
 window.mubilMultiRouteRender = function (r) {
   _initMainMap().then(map => {
     if (!map) return;
@@ -820,10 +843,29 @@ window.mubilMultiRouteRender = function (r) {
     // Drop the editing markers so the optimised numbered stops aren't
     // doubled up with the raw user-input pins.
     if (_mubilStopsLayer)  _mubilStopsLayer.clearLayers();
+    window._mubilStopMarkers = {};
 
-    const line = L.polyline(r.polyline || [], {
+    const polylineLatLngs = r.polyline || [];
+    const line = L.polyline(polylineLatLngs, {
       color: '#10B0A0', weight: 5, opacity: 0.9,
     }).addTo(_mubilResultLayer);
+
+    // Direction arrows: rendered every 8% of the polyline so the user sees
+    // the travel direction without staring at numbers. PolylineDecorator
+    // skips this gracefully if the plugin failed to load (CDN hiccup).
+    if (window.L && L.polylineDecorator && polylineLatLngs.length >= 2) {
+      L.polylineDecorator(line, {
+        patterns: [{
+          offset: '6%',
+          repeat: '8%',
+          symbol: L.Symbol.arrowHead({
+            pixelSize: 12,
+            polygon: false,
+            pathOptions: { stroke: true, color: '#0A8278', weight: 3, opacity: 0.9 },
+          }),
+        }],
+      }).addTo(_mubilResultLayer);
+    }
 
     const colorByType = {
       depot:        '#10b981',
@@ -832,33 +874,42 @@ window.mubilMultiRouteRender = function (r) {
       depot_return: '#ef4444',
     };
 
-    let seq = 0;
+    // Numbering rule: only delivery stops get sequential numbers (1..N).
+    // Depot/return/charge get emoji so the eye separates "places I have
+    // to visit" from "places imposed by the optimiser".
+    let deliverySeq = 0;
     (r.ordered_stops || []).forEach(s => {
-      const isCharge = s.type === 'charge';
       const fill = colorByType[s.type] || '#64748b';
-      if (isCharge) {
-        L.marker([s.lat, s.lng])
-          .bindPopup(`<strong>${s.name}</strong><br>${s.charger?.power_kw || '?'} kW · +${s.charger?.charge_kwh || 0} kWh`)
-          .addTo(_mubilResultLayer);
+      let label;
+      if (s.type === 'charge')        label = '⚡';
+      else if (s.type === 'depot')    label = '🏠';
+      else if (s.type === 'depot_return') label = '🏁';
+      else                            label = String(++deliverySeq);
+
+      const m = L.marker([s.lat, s.lng], {
+        icon: _mubilStopDivIcon(label, fill, false),
+      }).addTo(_mubilResultLayer);
+
+      // Popup body differs for charge stops (show kW/kWh) vs delivery (SOC).
+      if (s.type === 'charge') {
+        m.bindPopup(`<strong>${s.name}</strong><br>${s.charger?.power_kw || '?'} kW · +${s.charger?.charge_kwh || 0} kWh`);
       } else {
-        seq += 1;
-        const label = s.type === 'depot' ? '🏠' :
-                      s.type === 'depot_return' ? '🏁' : String(seq);
-        L.marker([s.lat, s.lng], {
-          icon: L.divIcon({
-            className: '',
-            html: `<div style="background:${fill};color:white;border:2px solid #0f172a;border-radius:9999px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;box-shadow:0 1px 3px rgba(0,0,0,.3)">${label}</div>`,
-            iconSize: [26, 26],
-            iconAnchor: [13, 13],
-          }),
-        })
-          .bindPopup(`<strong>${s.name}</strong><br>SOC: ${s.arrival_soc}%`)
-          .addTo(_mubilResultLayer);
+        m.bindPopup(`<strong>${s.name}</strong><br>SOC: ${s.arrival_soc}%`);
       }
+
+      // Register for timeline ↔ map sync. The key matches stop.idx in the
+      // partial; the timeline calls window.mubilHighlightStop(idx) on hover
+      // and window.mubilFocusStop(idx) on click.
+      window._mubilStopMarkers[s.idx] = {
+        marker: m,
+        label,
+        color: fill,
+        latlng: [s.lat, s.lng],
+      };
     });
 
     try {
-      if (r.polyline && r.polyline.length) {
+      if (polylineLatLngs.length) {
         map.fitBounds(line.getBounds().pad(0.15));
       } else if (r.ordered_stops && r.ordered_stops.length) {
         const pts = r.ordered_stops.map(s => [s.lat, s.lng]);
@@ -866,6 +917,28 @@ window.mubilMultiRouteRender = function (r) {
       }
     } catch (e) { /* keep current view */ }
   });
+};
+
+// ─────────────────────────── Timeline ↔ map bridge
+// Called from _route_optimize_result.html on item hover/click. Idempotent;
+// silently skips if the marker doesn't exist (e.g., HTMX swap timing).
+window.mubilHighlightStop = function (idx) {
+  const entry = window._mubilStopMarkers && window._mubilStopMarkers[idx];
+  if (!entry) return;
+  entry.marker.setIcon(_mubilStopDivIcon(entry.label, entry.color, true));
+  try { entry.marker.setZIndexOffset(1000); } catch (e) {}
+};
+window.mubilUnhighlightStop = function (idx) {
+  const entry = window._mubilStopMarkers && window._mubilStopMarkers[idx];
+  if (!entry) return;
+  entry.marker.setIcon(_mubilStopDivIcon(entry.label, entry.color, false));
+  try { entry.marker.setZIndexOffset(0); } catch (e) {}
+};
+window.mubilFocusStop = function (idx) {
+  const entry = window._mubilStopMarkers && window._mubilStopMarkers[idx];
+  if (!entry || !window._mubilMap) return;
+  window._mubilMap.panTo(entry.latlng);
+  entry.marker.openPopup();
 };
 
 // ─────────────────────────── Multi-stop ECharts (battery curve only)

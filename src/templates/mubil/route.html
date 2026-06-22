@@ -71,91 +71,254 @@
     {# ─────────── RIGHT PANEL: controls + result ─────────── #}
     <div class="lg:col-span-2 space-y-4">
 
-      <form id="route-form"
-            hx-post="{% url 'mubil:route_plan' %}"
-            hx-target="#route-result"
-            hx-swap="innerHTML"
-            hx-indicator="#route-loading"
-            hx-trigger="submit, change from:select[name='vehicle_id'], change from:input[name='soc_start'], change from:input[name='departure_hour']"
-            class="space-y-3">
+      {# Tab Selector #}
+      <div class="flex p-1 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+        <button type="button" @click="tab = 'single'; resetMarkers();"
+                :class="tab === 'single' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                class="flex-1 py-1.5 text-xs font-bold rounded-lg transition">
+          Planificador A→B
+        </button>
+        <button type="button" @click="tab = 'multi'; resetMarkers(); submitOptimize();"
+                :class="tab === 'multi' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                class="flex-1 py-1.5 text-xs font-bold rounded-lg transition">
+          Optimizador de Rutas
+        </button>
+      </div>
 
-        {% csrf_token %}
+      {# ─── Tab 1: Single route planner ─── #}
+      <div x-show="tab === 'single'" class="space-y-4">
+        <form id="route-form"
+              hx-post="{% url 'mubil:route_plan' %}"
+              hx-target="#route-result"
+              hx-swap="innerHTML"
+              hx-indicator="#route-loading"
+              hx-trigger="submit, change from:select[name='vehicle_id'], change from:input[name='soc_start'], change from:input[name='departure_hour']"
+              class="space-y-3">
 
-        <input type="hidden" name="slug" x-model="form.slug" />
-        <input type="hidden" name="origin_lng" x-model="form.origin_lng" />
-        <input type="hidden" name="origin_lat" x-model="form.origin_lat" />
-        <input type="hidden" name="dest_lng" x-model="form.dest_lng" />
-        <input type="hidden" name="dest_lat" x-model="form.dest_lat" />
+          {% csrf_token %}
 
-        {# Rutas rápidas #}
+          <input type="hidden" name="slug" x-model="form.slug" />
+          <input type="hidden" name="origin_lng" x-model="form.origin_lng" />
+          <input type="hidden" name="origin_lat" x-model="form.origin_lat" />
+          <input type="hidden" name="dest_lng" x-model="form.dest_lng" />
+          <input type="hidden" name="dest_lat" x-model="form.dest_lat" />
+
+          {# Rutas rápidas #}
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Rutas rápidas</p>
+              <svg id="route-loading" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-spin htmx-indicator text-estrata-teal" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4zm2 5.3A8 8 0 014 12H0c0 3 1.1 5.8 3 7.9l3-2.6z"/>
+              </svg>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <template x-for="d in demos" :key="d.slug">
+                <button type="button" @click="pickDemo(d)"
+                        :class="form.slug === d.slug ? 'border-estrata-teal bg-estrata-teal/10 text-estrata-teal_dark dark:text-estrata-teal_light ring-1 ring-estrata-teal/40' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-estrata-teal/40'"
+                        class="rounded-full border px-3 py-1 text-[11px] font-bold transition tabular-nums">
+                  <span x-text="d.label"></span>
+                  <span class="text-slate-400 dark:text-slate-500"> · </span>
+                  <span x-text="d.distance_km.toFixed(0) + ' km'"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+
+          {# Controls grouped: vehicle / SOC / hora #}
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 space-y-4">
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">Vehículo eléctrico</label>
+              <select name="vehicle_id"
+                      class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal">
+                <option value="">Genérico (18 kWh/100km)</option>
+                {% for v in ev_vehicles %}
+                  <option value="{{ v.id }}" {% if v.id == default_vehicle_id %}selected{% endif %}>
+                    {{ v.make }} {{ v.model }}{% if v.range_wltp_km %} · {{ v.range_wltp_km }} km{% endif %}{% if v.battery_kwh %} · {{ v.battery_kwh }} kWh{% endif %}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                <span>SOC inicial</span>
+                <span class="text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="form.soc_start + '%'"></span>
+              </div>
+              <input type="range" name="soc_start" min="10" max="100" step="5" x-model="form.soc_start"
+                     class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-estrata-teal mt-1.5" />
+            </div>
+
+            <div>
+              <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                <span>Hora de salida</span>
+                <span class="text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="String(form.departure_hour).padStart(2,'0') + ':00'"></span>
+              </div>
+              <input type="range" name="departure_hour" min="0" max="23" step="1" x-model.number="form.departure_hour"
+                     class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-estrata-teal mt-1.5" />
+            </div>
+          </div>
+
+          <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed px-1">
+            Coste: PVPC nocturna en origen + carga rápida 0,45 €/kWh si necesaria. Margen reserva 15% SOC.
+          </p>
+        </form>
+
+        <div id="route-result" class="space-y-4"
+             hx-get="{% url 'mubil:route_plan' %}"
+             hx-trigger="load"
+             hx-include="#route-form"
+             hx-swap="innerHTML">
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 text-center text-slate-500 dark:text-slate-400">
+            <p class="text-sm">Cargando ruta…</p>
+          </div>
+        </div>
+      </div>
+
+      {# ─── Tab 2: Multi-stop route optimizer ─── #}
+      <div x-show="tab === 'multi'" class="space-y-4" x-cloak>
+        {# Presets / Casos de uso #}
         <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
           <div class="flex items-center justify-between mb-2">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Rutas rápidas</p>
-            <svg id="route-loading" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-spin htmx-indicator text-estrata-teal" fill="none" viewBox="0 0 24 24">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Casos de Uso de Ejemplo</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" @click="prefillUseCase('delivery')"
+                    class="rounded-full border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-estrata-teal/40 px-3 py-1 text-[11px] font-bold transition">
+              📦 Reparto de Última Milla (Último km)
+            </button>
+            <button type="button" @click="prefillUseCase('hvac')"
+                    class="rounded-full border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-estrata-teal/40 px-3 py-1 text-[11px] font-bold transition">
+              🔧 Técnico de Climatización (Bizkaia)
+            </button>
+          </div>
+        </div>
+
+        {# Stop list manager #}
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 space-y-4">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Direcciones / Paradas</p>
+              <span class="text-[10px] tabular-nums font-bold text-slate-400" x-text="locations.length + ' paradas'"></span>
+            </div>
+            
+            <div class="space-y-2 max-h-48 overflow-y-auto mb-3 pr-1">
+              <template x-for="(loc, index) in locations" :key="index">
+                <div class="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-xs">
+                  <div class="min-w-0 pr-2">
+                    <span class="font-bold block" :class="loc.is_depot ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-950 dark:text-slate-50'">
+                      <span x-text="loc.is_depot ? '🏠 Base: ' : ''"></span><span x-text="loc.name"></span>
+                    </span>
+                    <span class="text-[10px] text-slate-500 dark:text-slate-400 block truncate" x-text="loc.address"></span>
+                  </div>
+                  <button type="button" @click="removeStop(index)" class="text-rose-500 hover:text-rose-700 font-bold px-1 text-sm shrink-0 ml-2">
+                    ✕
+                  </button>
+                </div>
+              </template>
+            </div>
+
+            <!-- Manual add -->
+            <div class="space-y-2 border-t border-slate-100 dark:border-slate-700 pt-3">
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" placeholder="Nombre (ej: Cliente A)" x-model="newStopName"
+                       class="rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal" />
+                <input type="text" placeholder="Dirección / Ciudad" x-model="newStopAddress"
+                       @keydown.enter.prevent="addStop()"
+                       class="rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal" />
+              </div>
+              <button type="button" @click="addStop()"
+                      class="w-full bg-slate-100 dark:bg-slate-700 hover:bg-estrata-teal/20 text-slate-800 dark:text-white hover:text-estrata-teal_dark text-xs font-bold py-1.5 rounded-xl transition">
+                + Añadir Parada
+              </button>
+            </div>
+
+            <!-- Bulk import -->
+            <div class="mt-3">
+              <details class="group">
+                <summary class="text-[10px] font-bold uppercase tracking-widest text-slate-400 cursor-pointer list-none flex items-center gap-1">
+                  <span>Pegar lista de direcciones</span>
+                  <svg class="h-3 w-3 transition group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                </summary>
+                <div class="mt-2 space-y-2">
+                  <textarea placeholder="Una dirección por línea, ej:&#10;Calle Autonomía 14, Bilbao&#10;Gran Vía 35, Bilbao"
+                            x-model="bulkAddresses" rows="3"
+                            class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal"></textarea>
+                  <button type="button" @click="importBulk()"
+                          class="w-full bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-white text-xs font-bold py-1 rounded-xl transition">
+                    Importar Lista
+                  </button>
+                </div>
+              </details>
+            </div>
+          </div>
+        </div>
+
+        {# Form post #}
+        <form id="optimize-form"
+              hx-post="{% url 'mubil:route_optimize' %}"
+              hx-target="#optimize-result"
+              hx-swap="innerHTML"
+              hx-indicator="#optimize-loading"
+              class="space-y-3">
+          {% csrf_token %}
+          <input type="hidden" name="locations_json" :value="JSON.stringify(locations)" />
+
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 space-y-4">
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">Vehículo eléctrico</label>
+              <select name="vehicle_id"
+                      class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal">
+                <option value="">Genérico (18 kWh/100km)</option>
+                {% for v in ev_vehicles %}
+                  <option value="{{ v.id }}" {% if v.id == default_vehicle_id %}selected{% endif %}>
+                    {{ v.make }} {{ v.model }}{% if v.range_wltp_km %} · {{ v.range_wltp_km }} km{% endif %}{% if v.battery_kwh %} · {{ v.battery_kwh }} kWh{% endif %}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                <span>SOC inicial</span>
+                <span class="text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="form.soc_start + '%'"></span>
+              </div>
+              <input type="range" name="soc_start" min="10" max="100" step="5" x-model="form.soc_start"
+                     class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-estrata-teal mt-1.5" />
+            </div>
+
+            <div>
+              <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                <span>Hora de salida</span>
+                <span class="text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="String(form.departure_hour).padStart(2,'0') + ':00'"></span>
+              </div>
+              <input type="range" name="departure_hour" min="0" max="23" step="1" x-model.number="form.departure_hour"
+                     class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-estrata-teal mt-1.5" />
+            </div>
+
+            <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-100 dark:border-slate-700">
+              <span class="font-bold text-slate-600 dark:text-slate-300">Retornar a la base al finalizar</span>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" name="return_to_depot" class="sr-only peer" checked x-model="returnToDepot">
+                <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-estrata-teal"></div>
+              </label>
+            </div>
+          </div>
+
+          <button type="submit"
+                  class="w-full bg-estrata-teal hover:bg-estrata-teal_dark text-white text-sm font-black py-3 rounded-xl transition flex items-center justify-center gap-2">
+            <span>Calcular Ruta Óptima</span>
+            <svg id="optimize-loading" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-spin htmx-indicator text-white" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4zm2 5.3A8 8 0 014 12H0c0 3 1.1 5.8 3 7.9l3-2.6z"/>
             </svg>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <template x-for="d in demos" :key="d.slug">
-              <button type="button" @click="pickDemo(d)"
-                      :class="form.slug === d.slug ? 'border-estrata-teal bg-estrata-teal/10 text-estrata-teal_dark dark:text-estrata-teal_light ring-1 ring-estrata-teal/40' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-estrata-teal/40'"
-                      class="rounded-full border px-3 py-1 text-[11px] font-bold transition tabular-nums">
-                <span x-text="d.label"></span>
-                <span class="text-slate-400 dark:text-slate-500"> · </span>
-                <span x-text="d.distance_km.toFixed(0) + ' km'"></span>
-              </button>
-            </template>
-          </div>
-        </div>
+          </button>
+        </form>
 
-        {# Controls grouped: vehicle / SOC / hora #}
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 space-y-4">
-          <div>
-            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">Vehículo eléctrico</label>
-            <select name="vehicle_id"
-                    class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-estrata-teal">
-              <option value="">Genérico (18 kWh/100km)</option>
-              {% for v in ev_vehicles %}
-                <option value="{{ v.id }}" {% if v.id == default_vehicle_id %}selected{% endif %}>
-                  {{ v.make }} {{ v.model }}{% if v.range_wltp_km %} · {{ v.range_wltp_km }} km{% endif %}{% if v.battery_kwh %} · {{ v.battery_kwh }} kWh{% endif %}
-                </option>
-              {% endfor %}
-            </select>
+        <div id="optimize-result" class="space-y-4">
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 text-center text-slate-500 dark:text-slate-400">
+            <p class="text-sm">Configura tus paradas y haz clic en "Calcular Ruta Óptima".</p>
           </div>
-
-          <div>
-            <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-              <span>SOC inicial</span>
-              <span class="text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="form.soc_start + '%'"></span>
-            </div>
-            <input type="range" name="soc_start" min="10" max="100" step="5" x-model="form.soc_start"
-                   class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-estrata-teal mt-1.5" />
-          </div>
-
-          <div>
-            <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-              <span>Hora de salida</span>
-              <span class="text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums" x-text="String(form.departure_hour).padStart(2,'0') + ':00'"></span>
-            </div>
-            <input type="range" name="departure_hour" min="0" max="23" step="1" x-model.number="form.departure_hour"
-                   class="w-full h-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 appearance-none cursor-pointer accent-estrata-teal mt-1.5" />
-          </div>
-        </div>
-
-        <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed px-1">
-          Coste: PVPC nocturna en origen + carga rápida 0,45 €/kWh si necesaria. Margen reserva 10% SOC.
-        </p>
-      </form>
-
-      {# Result panel: KPIs, charts, lists, segments (HTMX target) #}
-      <div id="route-result" class="space-y-4"
-           hx-get="{% url 'mubil:route_plan' %}"
-           hx-trigger="load"
-           hx-include="#route-form"
-           hx-swap="innerHTML">
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 text-center text-slate-500 dark:text-slate-400">
-          <p class="text-sm">Cargando ruta…</p>
         </div>
       </div>
 
@@ -168,6 +331,7 @@
   .htmx-request .htmx-indicator { opacity: 1; }
   .htmx-request.htmx-indicator { opacity: 1; }
   [x-cloak] { display: none !important; }
+
 </style>
 {% endblock %}
 
@@ -199,12 +363,12 @@ function _mubilInvalidateAll() {
 }
 if (!window._mubilResizeBound) {
   window.addEventListener('resize', _mubilInvalidateAll);
-  // HTMX swap of #route-result changes the right panel height. On desktop
-  // that may add/remove a vertical scrollbar (~15 px), shifting the map
+  // HTMX swap of #route-result or #optimize-result changes the right panel height.
+  // On desktop that may add/remove a vertical scrollbar (~15 px), shifting the map
   // column's actual width. Leaflet does NOT receive a window resize event
   // for that — we have to invalidateSize() manually.
   document.body.addEventListener('htmx:afterSwap', (ev) => {
-    if (ev.target && ev.target.id === 'route-result') {
+    if (ev.target && (ev.target.id === 'route-result' || ev.target.id === 'optimize-result')) {
       requestAnimationFrame(_mubilInvalidateAll);
     }
   });
@@ -239,10 +403,20 @@ function _initMainMap() {
   });
 }
 
-// ─────────────────────────── Alpine: form + map clicks
+// ─────────────────────────── Alpine: form + map clicks + multi-stop logic
 function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
   return {
     demos,
+    tab: 'single',
+    locations: [
+      { name: 'Base Principal (Mungia)', address: 'Mungia, Bizkaia', is_depot: true },
+      { name: 'Entrega A (Bilbao)', address: 'Calle Autonomía 14, Bilbao', is_depot: false },
+      { name: 'Entrega B (Donostia)', address: 'Etxaide kalea 4, Donostia', is_depot: false }
+    ],
+    newStopName: '',
+    newStopAddress: '',
+    bulkAddresses: '',
+    returnToDepot: true,
     form: {
       slug: '{{ default_slug }}',
       vehicle_id: '{{ default_vehicle_id|default_if_none:"" }}',
@@ -264,6 +438,7 @@ function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
     },
 
     _onMapClick(ev) {
+      if (this.tab !== 'single') return;
       const { lat, lng } = ev.latlng;
       if (!this.form.origin_lat) {
         this._setOrigin(lat, lng);
@@ -303,8 +478,6 @@ function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
         ], { color: '#10B0A0', weight: 3, dashArray: '6,6', opacity: 0.7 }).addTo(_mubilPickerLayer);
         try { window._mubilMap.fitBounds(dashed.getBounds().pad(0.2)); } catch (e) {}
       }
-      // $nextTick lets Alpine flush the lat/lng x-model bindings before htmx
-      // reads the form.
       this.$nextTick(() => {
         document.getElementById('route-form').requestSubmit();
       });
@@ -319,20 +492,83 @@ function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
     },
 
     pickDemo(d) {
-      // Drop free-mode state FIRST — resetMarkers wipes slug + lat/lng, so
-      // doing it after would clobber the new slug.
       this.resetMarkers();
       this.form.slug = d.slug;
       this.$nextTick(() => {
         document.getElementById('route-form').requestSubmit();
       });
     },
+
+    // ─────────── Multi-stop tab methods ───────────
+    addStop() {
+      const name = (this.newStopName || '').trim();
+      const address = (this.newStopAddress || '').trim();
+      if (!address) return;
+      this.locations.push({
+        name: name || `Parada ${this.locations.length}`,
+        address,
+        is_depot: false,
+      });
+      this.newStopName = '';
+      this.newStopAddress = '';
+    },
+
+    removeStop(index) {
+      // Keep at least the depot in place; if we remove the depot, promote
+      // the next stop so the backend doesn't have to invent one.
+      const wasDepot = this.locations[index]?.is_depot;
+      this.locations.splice(index, 1);
+      if (wasDepot && this.locations.length > 0 && !this.locations.some(l => l.is_depot)) {
+        this.locations[0].is_depot = true;
+      }
+    },
+
+    importBulk() {
+      const lines = (this.bulkAddresses || '')
+        .split('\n').map(s => s.trim()).filter(Boolean);
+      lines.forEach((address, i) => {
+        this.locations.push({
+          name: `Parada ${this.locations.length}`,
+          address,
+          is_depot: false,
+        });
+      });
+      this.bulkAddresses = '';
+    },
+
+    prefillUseCase(kind) {
+      if (kind === 'delivery') {
+        this.locations = [
+          { name: 'Almacén Central',     address: 'Polígono Júndiz, Vitoria-Gasteiz', is_depot: true },
+          { name: 'Cliente A',           address: 'Calle Autonomía 14, Bilbao',       is_depot: false },
+          { name: 'Cliente B',           address: 'Etxaide kalea 4, Donostia',        is_depot: false },
+          { name: 'Cliente C',           address: 'Gran Vía 35, Bilbao',              is_depot: false },
+          { name: 'Cliente D',           address: 'Plaza Nueva 1, Vitoria-Gasteiz',   is_depot: false },
+        ];
+        this.returnToDepot = true;
+      } else if (kind === 'hvac') {
+        this.locations = [
+          { name: 'Taller Mungia',       address: 'Mungia, Bizkaia',                  is_depot: true },
+          { name: 'Aviso 1',             address: 'Getxo, Bizkaia',                   is_depot: false },
+          { name: 'Aviso 2',             address: 'Barakaldo, Bizkaia',               is_depot: false },
+          { name: 'Aviso 3',             address: 'Durango, Bizkaia',                 is_depot: false },
+        ];
+        this.returnToDepot = true;
+      }
+      this.$nextTick(() => this.submitOptimize());
+    },
+
+    submitOptimize() {
+      // Need at least depot + 1 stop. Silently skip otherwise so the tab
+      // switch doesn't fire a useless 400.
+      if (!this.locations || this.locations.length < 2) return;
+      const f = document.getElementById('optimize-form');
+      if (f) f.requestSubmit();
+    },
   };
 }
 
-// ─────────────────────────── Result renderer (called from the partial)
-// Replaces picker overlays with the computed route. The single shared map
-// stays in place; only the layer groups swap content.
+// ─────────────────────────── Single-route result renderer
 window.mubilRouteRender = function (r) {
   _initMainMap().then(map => {
     if (!map) return;
@@ -371,10 +607,8 @@ window.mubilRouteRender = function (r) {
   });
 };
 
-// ─────────────────────────── ECharts renderers (called from the partial)
+// ─────────────────────────── Single-route ECharts
 window.mubilRouteRenderCharts = function (r) {
-  // Tear down previous instances — HTMX wipes the DOM but chart objects on
-  // window persist with stale element references.
   ['_mubilSocChart', '_mubilHourChart'].forEach(k => {
     if (window[k]) { try { window[k].dispose(); } catch (e) {} window[k] = null; }
   });
@@ -425,5 +659,113 @@ window.mubilRouteRenderCharts = function (r) {
     });
   }
 };
+
+// ─────────────────────────── Multi-stop result renderer
+// Draws the full optimised tour + numbered stops + charge markers on the
+// shared map. Stop styling mirrors the timeline colours in the partial so
+// the map and itinerary read as one view.
+window.mubilMultiRouteRender = function (r) {
+  _initMainMap().then(map => {
+    if (!map) return;
+    if (_mubilPickerLayer) _mubilPickerLayer.clearLayers();
+    if (_mubilResultLayer) _mubilResultLayer.clearLayers();
+
+    const line = L.polyline(r.polyline || [], {
+      color: '#10B0A0', weight: 5, opacity: 0.9,
+    }).addTo(_mubilResultLayer);
+
+    const colorByType = {
+      depot:        '#10b981',
+      delivery:     '#6366f1',
+      charge:       '#f59e0b',
+      depot_return: '#ef4444',
+    };
+
+    let seq = 0;
+    (r.ordered_stops || []).forEach(s => {
+      const isCharge = s.type === 'charge';
+      const fill = colorByType[s.type] || '#64748b';
+      if (isCharge) {
+        L.marker([s.lat, s.lng])
+          .bindPopup(`<strong>${s.name}</strong><br>${s.charger?.power_kw || '?'} kW · +${s.charger?.charge_kwh || 0} kWh`)
+          .addTo(_mubilResultLayer);
+      } else {
+        seq += 1;
+        const label = s.type === 'depot' ? '🏠' :
+                      s.type === 'depot_return' ? '🏁' : String(seq);
+        L.marker([s.lat, s.lng], {
+          icon: L.divIcon({
+            className: '',
+            html: `<div style="background:${fill};color:white;border:2px solid #0f172a;border-radius:9999px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;box-shadow:0 1px 3px rgba(0,0,0,.3)">${label}</div>`,
+            iconSize: [26, 26],
+            iconAnchor: [13, 13],
+          }),
+        })
+          .bindPopup(`<strong>${s.name}</strong><br>SOC: ${s.arrival_soc}%`)
+          .addTo(_mubilResultLayer);
+      }
+    });
+
+    try {
+      if (r.polyline && r.polyline.length) {
+        map.fitBounds(line.getBounds().pad(0.15));
+      } else if (r.ordered_stops && r.ordered_stops.length) {
+        const pts = r.ordered_stops.map(s => [s.lat, s.lng]);
+        map.fitBounds(L.latLngBounds(pts).pad(0.15));
+      }
+    } catch (e) { /* keep current view */ }
+  });
+};
+
+// ─────────────────────────── Multi-stop ECharts (battery curve only)
+window.mubilMultiRouteRenderCharts = function (r) {
+  if (window._mubilSocChart) {
+    try { window._mubilSocChart.dispose(); } catch (e) {}
+    window._mubilSocChart = null;
+  }
+  const el = document.getElementById('chart-soc-multi');
+  if (!el || !r.soc_curve || !r.soc_curve.length) return;
+
+  const c = window.echarts.init(el, document.documentElement.classList.contains('dark') ? 'dark' : null);
+  window._mubilSocChart = c;
+  c.setOption({
+    backgroundColor: 'transparent',
+    grid: { left: 40, right: 20, top: 20, bottom: 30 },
+    xAxis: { type: 'value', name: 'km', nameLocation: 'middle', nameGap: 22 },
+    yAxis: { type: 'value', name: 'SOC %', min: 0, max: 100 },
+    tooltip: { trigger: 'axis', valueFormatter: v => Number(v).toFixed(1) },
+    series: [{
+      type: 'line', smooth: true, symbol: 'none',
+      data: r.soc_curve,
+      lineStyle: { color: '#10B0A0', width: 3 },
+      areaStyle: { color: 'rgba(16,176,160,0.15)' },
+    }],
+  });
+};
 </script>
 {% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

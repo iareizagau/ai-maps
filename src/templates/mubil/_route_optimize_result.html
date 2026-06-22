@@ -1,0 +1,143 @@
+{% load i18n l10n %}
+<div x-data="{ r: {{ r_json|escape }} }"
+     x-init="$nextTick(() => { window.mubilMultiRouteRender && window.mubilMultiRouteRender(r); window.mubilMultiRouteRenderCharts && window.mubilMultiRouteRenderCharts(r); })"
+     class="space-y-4">
+
+  {# ─────────── Headline ─────────── #}
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+      <h2 class="text-base sm:text-lg font-black text-estrata-navy dark:text-white leading-tight">Ruta Optimizada</h2>
+      <span class="text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+        Multi-parada
+      </span>
+      <span x-show="r.optimization_savings_pct > 0" x-cloak
+            class="text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full bg-estrata-teal/10 text-estrata-teal_dark dark:text-estrata-teal_light">
+        Ahorro 2-Opt: <span x-text="r.optimization_savings_pct"></span>%
+      </span>
+    </div>
+    <p class="mt-1 text-[11px] text-slate-600 dark:text-slate-400 truncate"
+       x-text="r.vehicle_label || 'Vehículo genérico (18 kWh/100km)'"></p>
+  </div>
+
+  {# ─────────── KPI cards ─────────── #}
+  <div class="grid grid-cols-2 gap-3">
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3">
+      <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Distancia Total</p>
+      <p class="mt-0.5 text-xl font-black text-slate-900 dark:text-white tabular-nums">
+        <span x-text="r.total_distance_km"></span> <span class="text-xs font-normal text-slate-500">km</span>
+      </p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3">
+      <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Duración Total</p>
+      <p class="mt-0.5 text-xl font-black text-slate-900 dark:text-white tabular-nums">
+        <span x-text="r.total_duration_min"></span> <span class="text-xs font-normal text-slate-500">min</span>
+      </p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3">
+      <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Energía</p>
+      <p class="mt-0.5 text-xl font-black text-estrata-teal_dark dark:text-estrata-teal_light tabular-nums">
+        <span x-text="r.total_energy_kwh"></span> <span class="text-xs font-normal text-slate-500">kWh</span>
+      </p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3">
+      <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Coste de Energía</p>
+      <p class="mt-0.5 text-xl font-black text-slate-900 dark:text-white tabular-nums">
+        <span x-text="r.ev_cost_eur.toFixed(2)"></span> <span class="text-xs font-normal text-slate-500">€</span>
+      </p>
+    </div>
+  </div>
+
+  {# ─────────── EV vs Diesel ─────────── #}
+  <div class="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 p-4">
+    <div class="flex items-start gap-2.5">
+      <span class="text-xl shrink-0">🌱</span>
+      <div class="min-w-0 w-full">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">
+          Impacto Económico y Ecológico
+        </p>
+        <div class="mt-1.5 flex flex-col gap-1 text-sm font-bold text-slate-900 dark:text-white">
+          <div class="flex justify-between">
+            <span>Ahorro financiero:</span>
+            <span class="text-emerald-600 dark:text-emerald-400 tabular-nums">
+              +<span x-text="r.savings_eur.toFixed(2)"></span> €
+            </span>
+          </div>
+          <div class="flex justify-between">
+            <span>Reducción de CO₂:</span>
+            <span class="text-emerald-600 dark:text-emerald-400 tabular-nums">
+              +<span x-text="r.co2_saved_kg"></span> kg
+            </span>
+          </div>
+        </div>
+        <div class="mt-2.5 border-t border-emerald-200/50 dark:border-emerald-800/50 pt-2 flex justify-between text-[10px] text-slate-500 dark:text-slate-400">
+          <span>Coste Diésel: <span x-text="r.ice_cost_eur.toFixed(2)"></span> €</span>
+          <span>Coste Eléctrico: <span x-text="r.ev_cost_eur.toFixed(2)"></span> €</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ─────────── Battery Curve ─────────── #}
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+    <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">
+      Curva de Batería (SOC)
+    </p>
+    <div id="chart-soc-multi" style="width:100%; height:160px;"></div>
+    <div class="mt-2 flex justify-between text-[10px] text-slate-400">
+      <span>Batería: <span x-text="r.battery_kwh"></span> kWh</span>
+      <span>SOC Inicial: <span x-text="r.soc_start"></span>%</span>
+    </div>
+  </div>
+
+  {# ─────────── Timeline Itinerary ─────────── #}
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+    <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-4">
+      Itinerario Optimizado
+    </p>
+    <div class="relative pl-6 border-l border-slate-200 dark:border-slate-700 ml-3 space-y-5">
+      <template x-for="(stop, sIdx) in r.ordered_stops" :key="stop.idx">
+        <div class="relative">
+          <!-- Marker dot -->
+          <div class="absolute -left-[31px] top-1.5 h-4.5 w-4.5 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center shadow-sm"
+               :class="{
+                 'bg-emerald-500': stop.type === 'depot',
+                 'bg-indigo-500': stop.type === 'delivery',
+                 'bg-amber-500': stop.type === 'charge',
+                 'bg-rose-500': stop.type === 'depot_return'
+               }">
+            <template x-if="stop.type === 'charge'">
+              <span class="text-[9px] text-white font-bold">⚡</span>
+            </template>
+          </div>
+
+          <div class="min-w-0">
+            <div class="flex justify-between items-start gap-2">
+              <h4 class="text-xs font-black text-slate-900 dark:text-white leading-snug" x-text="stop.name"></h4>
+              <span class="text-[10px] font-bold shrink-0 px-2 py-0.5 rounded-full"
+                    :class="{
+                      'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300': stop.type === 'depot',
+                      'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300': stop.type === 'delivery',
+                      'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300': stop.type === 'charge',
+                      'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300': stop.type === 'depot_return'
+                    }">
+                <span class="tabular-nums" x-text="stop.arrival_soc"></span>% SOC
+              </span>
+            </div>
+
+            <!-- Segment details -->
+            <p x-show="sIdx > 0" class="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
+              <span>+<span x-text="stop.distance_from_prev_km"></span> km</span>
+              <span>•</span>
+              <span><span x-text="stop.duration_from_prev_min"></span> min</span>
+              <template x-if="stop.type === 'charge'">
+                <span class="text-amber-600 dark:text-amber-400 font-bold">
+                  (Carga +<span x-text="stop.charger.charge_kwh"></span> kWh @ <span x-text="stop.charger.power_kw"></span> kW)
+                </template>
+              </p>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+
+</div>

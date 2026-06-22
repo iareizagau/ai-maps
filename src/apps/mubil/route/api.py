@@ -100,3 +100,56 @@ def _nearest_demo(o_lat: float, o_lon: float, d_lat: float, d_lon: float) -> dic
             best_score = score
     assert best is not None
     return best
+
+
+# ─────────────────────────────────────────────── multi-stop optimizer
+
+
+from ninja import Schema
+
+
+class OptimizeLocationIn(Schema):
+    name: str = ""
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    address: str = ""
+    is_depot: bool = False
+
+
+class OptimizeIn(Schema):
+    locations: List[OptimizeLocationIn]
+    vehicle_id: Optional[int] = None
+    soc_start: float = 85.0
+    departure_hour: Optional[int] = None
+    return_to_depot: bool = True
+
+
+@router.post('/optimize')
+def optimize(request, payload: OptimizeIn):
+    """Optimise a multi-stop route for an electric vehicle.
+
+    Accepts 2–20 locations (one marked ``is_depot``). Each location can
+    provide ``lat``/``lng`` directly or an ``address`` string that will be
+    geocoded via Nominatim.
+
+    Returns the optimised tour order, battery simulation with charge-stop
+    insertions, and an EV-vs-ICE cost comparison.
+    """
+    try:
+        result = services.optimize_multistop(
+            locations=[loc.dict() for loc in payload.locations],
+            vehicle_id=payload.vehicle_id,
+            soc_start_pct=payload.soc_start,
+            departure_hour=payload.departure_hour,
+            return_to_depot=payload.return_to_depot,
+        )
+        return result
+    except ValueError as e:
+        return router.api.create_response(
+            request, {"detail": str(e)}, status=422,
+        )
+    except Exception as e:
+        return router.api.create_response(
+            request, {"detail": f"Error interno: {e}"}, status=500,
+        )
+

@@ -622,6 +622,45 @@ def route_plan(request):
     })
 
 
+@require_http_methods(["POST"])
+def route_optimize(request):
+    """HTMX endpoint — returns the multi-stop route optimization result."""
+    locations_json = request.POST.get('locations_json', '[]')
+    try:
+        locations = json.loads(locations_json)
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest("Ubicaciones inválidas.")
+
+    try:
+        vehicle_id_raw = request.POST.get('vehicle_id') or ''
+        vehicle_id = int(vehicle_id_raw) if vehicle_id_raw else None
+        soc_start = float(request.POST.get('soc_start', 85))
+        dep_raw = request.POST.get('departure_hour')
+        departure_hour = int(dep_raw) if dep_raw not in (None, '') else None
+        return_to_depot = request.POST.get('return_to_depot') in ('true', 'on', '1')
+    except ValueError as e:
+        return HttpResponseBadRequest(f"Datos del formulario inválidos: {e}")
+
+    try:
+        result = route_services.optimize_multistop(
+            locations=locations,
+            vehicle_id=vehicle_id,
+            soc_start_pct=soc_start,
+            departure_hour=departure_hour,
+            return_to_depot=return_to_depot,
+        )
+    except ValueError as e:
+        return render(request, 'mubil/_route_optimize_error.html', {'error': str(e)})
+    except Exception as e:
+        return render(request, 'mubil/_route_optimize_error.html', {'error': f"Error inesperado: {e}"})
+
+    return render(request, 'mubil/_route_optimize_result.html', {
+        'r': result,
+        'r_json': json.dumps(result),
+    })
+
+
+
 def infrastructure_page(request):
     """Infrastructure map — chargers coloured by vehicle compatibility, plus
     a fast-charging-desert overlay over EH.

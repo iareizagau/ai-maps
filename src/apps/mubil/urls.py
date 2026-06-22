@@ -31,6 +31,7 @@ urlpatterns = [
     path('ask/query/', views.ask_query, name='ask_query'),
     path('route/', views.route_page, name='route'),
     path('route/plan/', views.route_plan, name='route_plan'),
+    path('route/optimize/', views.route_optimize, name='route_optimize'),
     path('plan/', views.plan_page, name='plan'),
     path('infrastructure/', views.infrastructure_page, name='infrastructure'),
     path('news/', views.news_page, name='news'),

@@ -921,3 +921,278 @@ def upsert_demo_plans(default_vehicle: Optional[Vehicle] = None) -> int:
             existing.save(update_fields=list(defaults.keys()))
         count += 1
     return count
+
+
+# ─────────────────────────────────────────────── multi-stop optimizer
+
+
+def optimize_multistop(
+    *,
+    locations: List[dict],
+    vehicle_id: Optional[int] = None,
+    soc_start_pct: float = 85.0,
+    departure_hour: Optional[int] = None,
+    return_to_depot: bool = True,
+) -> dict:
+    """Optimise a multi-stop route for an electric vehicle.
+
+    Public entry point consumed by the ``/api/route/optimize`` endpoint.
+    Stateless — no DB writes, all computation in memory.
+
+    Args:
+        locations: list of dicts with keys ``name``, and either ``lat``/``lng``
+            or ``address`` (geocoded via Nominatim). One must have
+            ``is_depot: true``.
+        vehicle_id: optional ``Vehicle`` pk for battery/consumption data.
+        soc_start_pct: starting battery percentage (0–100).
+        departure_hour: 0–23 (Madrid local), for PVPC costing.
+        return_to_depot: if True, the tour returns to the depot at the end.
+
+    Returns:
+        A dict ready for JSON serialisation with the optimised itinerary,
+        battery curve, costs, and EV-vs-ICE comparison.
+    """
+    from apps.mubil.route.optimizer import (
+        Location,
+        MultiStopResult,
+        StopResult,
+        build_distance_matrix,
+        geocode_address,
+        get_route_polyline,
+        simulate_battery,
+        solve_tsp,
+        _tour_distance,
+        FAST_CHARGE_PRICE_EUR_KWH,
+    )
+
+    if len(locations) < 2:
+        raise ValueError("Se necesitan al menos 2 ubicaciones (depot + 1 parada).")
+    if len(locations) > 20:
+        raise ValueError("Máximo 20 paradas por optimización.")
+
+    # ── 1. Resolve locations (geocode if needed)
+    locs: List[Location] = []
+    for raw in locations:
+        lat = raw.get("lat")
+        lng = raw.get("lng")
+        if lat is None or lng is None:
+            address = raw.get("address", "")
+            if not address:
+                raise ValueError(f"Ubicación '{raw.get('name', '?')}' sin coordenadas ni dirección.")
+            coords = geocode_address(address)
+            if coords is None:
+                raise ValueError(f"No se pudo geocodificar: '{address}'")
+            lat, lng = coords
+        locs.append(Location(
+            name=raw.get("name", f"Parada {len(locs) + 1}"),
+            lat=float(lat),
+            lng=float(lng),
+            is_depot=bool(raw.get("is_depot", False)),
+            address=raw.get("address", ""),
+        ))
+
+    # Ensure exactly one depot
+    depot_indices = [i for i, loc in enumerate(locs) if loc.is_depot]
+    if not depot_indices:
+        locs[0].is_depot = True
+        depot_indices = [0]
+    depot_idx = depot_indices[0]
+
+    # ── 2. Vehicle data
+    vehicle = None
+    if vehicle_id is not None:
+        try:
+            vehicle = Vehicle.objects.get(pk=vehicle_id)
+        except Vehicle.DoesNotExist:
+            raise ValueError(f"Vehículo id={vehicle_id} no encontrado.")
+
+    kwh_per_100 = float(_vehicle_kwh_per_100km(vehicle))
+    battery_kwh = float(_vehicle_battery_kwh(vehicle) or Decimal("60"))
+
+    # ── 3. Distance matrix
+    dist_matrix, dur_matrix = build_distance_matrix(locs)
+
+    # ── 4. Solve TSP
+    tour = solve_tsp(dist_matrix, depot=depot_idx)
+
+    # Measure improvement
+    nn_order = list(range(len(locs)))
+    nn_dist = _tour_distance(nn_order, dist_matrix)
+    opt_dist = _tour_distance(tour, dist_matrix)
+    opt_savings_pct = max(0.0, (1.0 - opt_dist / nn_dist) * 100) if nn_dist > 0 else 0.0
+
+    # ── 5. Simulate battery
+    legs, charge_stops = simulate_battery(
+        tour=tour,
+        dist_matrix=dist_matrix,
+        dur_matrix=dur_matrix,
+        kwh_per_100km=kwh_per_100,
+        battery_kwh=battery_kwh,
+        soc_start_pct=soc_start_pct,
+    )
+
+    # ── 6. Find real chargers for charge stops
+    for cs in charge_stops:
+        leg = legs[cs.after_leg_idx]
+        from_loc = locs[leg.from_idx]
+        to_loc = locs[leg.to_idx]
+        # Find charger along this leg's corridor
+        polyline_lonlat = [
+            (from_loc.lng, from_loc.lat),
+            (to_loc.lng, to_loc.lat),
+        ]
+        chargers = list(
+            ChargingStation.objects
+            .filter(power_kw__gte=50)
+            .along_route(polyline_lonlat, radius_km=10)[:5]
+        )
+        if chargers:
+            best = chargers[0]
+            cs.charger_id = best.id
+            cs.operator = best.operator or ""
+            cs.address = best.address or ""
+            cs.power_kw = float(best.power_kw) if best.power_kw else None
+            cs.lat = best.geom.y
+            cs.lng = best.geom.x
+
+    # ── 7. Build ordered stops list
+    ordered_stops: List[dict] = []
+    total_dist = 0.0
+    total_dur = 0.0
+    total_energy = 0.0
+    soc_curve: List[List[float]] = []  # [km_accum, soc_pct]
+
+    km_accum = 0.0
+    soc_curve.append([0.0, round(soc_start_pct, 1)])
+
+    # First stop is the depot
+    ordered_stops.append({
+        "idx": 0,
+        "name": locs[tour[0]].name,
+        "lat": locs[tour[0]].lat,
+        "lng": locs[tour[0]].lng,
+        "arrival_soc": round(soc_start_pct, 1),
+        "departure_soc": round(soc_start_pct, 1),
+        "type": "depot",
+        "distance_from_prev_km": 0,
+        "duration_from_prev_min": 0,
+    })
+
+    charge_stop_map = {cs.after_leg_idx: cs for cs in charge_stops}
+
+    for leg_idx, leg in enumerate(legs):
+        total_dist += leg.distance_km
+        total_dur += leg.duration_min
+        total_energy += leg.energy_kwh
+        km_accum += leg.distance_km
+
+        # Is the destination the return to depot?
+        is_last = leg_idx == len(legs) - 1
+        dest_loc = locs[leg.to_idx]
+        stop_type = "depot_return" if is_last else "delivery"
+
+        # SOC at arrival
+        arrival_soc = round(leg.soc_after, 1)
+        departure_soc = arrival_soc
+
+        soc_curve.append([round(km_accum, 1), arrival_soc])
+
+        # Check if there's a charge stop after this leg
+        if leg_idx in charge_stop_map:
+            cs = charge_stop_map[leg_idx]
+            departure_soc = round(cs.charge_to_soc, 1)
+            total_dur += cs.duration_min
+
+            # Insert charge stop before the delivery
+            if cs.lat and cs.lng:
+                ordered_stops.append({
+                    "idx": len(ordered_stops),
+                    "name": f"⚡ Carga rápida — {cs.operator or 'DC ≥50 kW'}",
+                    "lat": cs.lat,
+                    "lng": cs.lng,
+                    "arrival_soc": arrival_soc,
+                    "departure_soc": departure_soc,
+                    "type": "charge",
+                    "distance_from_prev_km": round(leg.distance_km, 1),
+                    "duration_from_prev_min": round(leg.duration_min, 0),
+                    "charger": {
+                        "id": cs.charger_id,
+                        "operator": cs.operator,
+                        "power_kw": cs.power_kw,
+                        "charge_kwh": round(cs.charge_kwh, 1),
+                        "charge_min": cs.duration_min,
+                    },
+                })
+                soc_curve.append([round(km_accum, 1), departure_soc])
+                # The delivery itself comes next with zero distance
+                ordered_stops.append({
+                    "idx": len(ordered_stops),
+                    "name": dest_loc.name,
+                    "lat": dest_loc.lat,
+                    "lng": dest_loc.lng,
+                    "arrival_soc": departure_soc,
+                    "departure_soc": departure_soc,
+                    "type": stop_type,
+                    "distance_from_prev_km": 0,
+                    "duration_from_prev_min": 0,
+                })
+                continue
+
+        ordered_stops.append({
+            "idx": len(ordered_stops),
+            "name": dest_loc.name,
+            "lat": dest_loc.lat,
+            "lng": dest_loc.lng,
+            "arrival_soc": arrival_soc,
+            "departure_soc": departure_soc,
+            "type": stop_type,
+            "distance_from_prev_km": round(leg.distance_km, 1),
+            "duration_from_prev_min": round(leg.duration_min, 0),
+        })
+
+    # ── 7.5. Fetch polylines for the entire tour
+    full_polyline = []
+    for leg in legs:
+        from_loc = locs[leg.from_idx]
+        to_loc = locs[leg.to_idx]
+        leg_poly = get_route_polyline(from_loc, to_loc)
+        full_polyline.extend(leg_poly)
+
+    # ── 8. Cost calculation
+    price_home = float(_energy_price_eur_kwh_home())
+    charge_energy = sum(cs.charge_kwh for cs in charge_stops)
+    home_energy = max(total_energy - charge_energy, 0.0)
+    ev_cost = home_energy * price_home + charge_energy * FAST_CHARGE_PRICE_EUR_KWH
+
+    ice_baseline = _ice_trip_cost(Decimal(str(total_dist)))
+    ice_cost = float(ice_baseline["cost_eur"])
+    savings = ice_cost - ev_cost
+
+    # CO2: ~2.31 kg/L diesel, ~0.2 kg/kWh grid mix
+    co2_ice = float(ice_baseline["fuel_l"]) * 2.31
+    co2_ev = total_energy * 0.2
+    co2_saved = max(co2_ice - co2_ev, 0.0)
+
+    # ── 9. Build response
+    return {
+        "total_distance_km": round(total_dist, 1),
+        "total_duration_min": round(total_dur, 0),
+        "total_energy_kwh": round(total_energy, 1),
+        "ev_cost_eur": round(ev_cost, 2),
+        "ice_cost_eur": round(ice_cost, 2),
+        "savings_eur": round(savings, 2),
+        "co2_saved_kg": round(co2_saved, 1),
+        "needs_charge_stop": len(charge_stops) > 0,
+        "ordered_stops": ordered_stops,
+        "soc_curve": soc_curve,
+        "tour_order": tour,
+        "optimization_savings_pct": round(opt_savings_pct, 1),
+        "vehicle_label": f"{vehicle.make} {vehicle.model}" if vehicle else None,
+        "battery_kwh": battery_kwh,
+        "soc_start": round(soc_start_pct, 1),
+        "polyline": full_polyline,
+    }
+
+
+
+

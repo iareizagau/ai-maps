@@ -875,6 +875,22 @@
     </p>
   </section>
 
+  {% if q.incentives.profile == 'particular' %}
+  <section class="rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 p-4 shadow-sm flex items-start gap-3">
+    <div class="text-amber-500 mt-0.5 shrink-0">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+    </div>
+    <div class="text-xs space-y-1 min-w-0">
+      <h4 class="font-bold text-amber-850 dark:text-amber-300">Nota sobre Fiscalidad (IRPF)</h4>
+      <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+        La ayuda directa del Plan Auto+ tributa en la declaración de la renta como ganancia patrimonial no derivada de transmisión de elementos patrimoniales. Te recomendamos reservar aproximadamente un <strong>25 % de la ayuda directa recibida</strong> para evitar sorpresas en la declaración. Esta carga fiscal se compensa y supera con la <strong>deducción del 15 % en el IRPF</strong> (hasta 3.000 € sobre una base de 20.000 € netos de ayuda) que puedes aplicar en la Renta del ejercicio de la compra.
+      </p>
+    </div>
+  </section>
+  {% endif %}
+
   {% if news_alerts %}
   <section class="rounded-2xl border border-amber-300/60 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 p-6 sm:p-7">
     <div class="flex items-center gap-2">

@@ -36,6 +36,8 @@ class AdvisorQuoteIn(Schema):
     # mensaje correcto.
     purchase_mode: Optional[str] = "switch"
     current_age_years: Optional[int] = None
+    assembled_in_eu: Optional[bool] = None
+    battery_made_in_eu: Optional[bool] = None
 
 
 
@@ -60,6 +62,8 @@ class VehicleSummary(Schema):
     variant_count: int = 1
     consumption_min: Optional[Decimal] = None
     consumption_max: Optional[Decimal] = None
+    assembled_in_eu: bool = False
+    battery_made_in_eu: bool = False
 
 
 class RecommendOut(Schema):

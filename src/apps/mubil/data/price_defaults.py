@@ -58,18 +58,18 @@ WALLBOX_CAPEX_EUR = Decimal("1500")
 
 
 # ============================================================ Incentivos
-# Importes Moves III (Real Decreto 821/2024 prorrogado, vigente 2026).
-# Particulares y autónomos/empresas tienen escalas distintas.
-MOVES3_BEV_PARTICULAR_EUR = Decimal("4500")
-MOVES3_BEV_PARTICULAR_SCRAP_EUR = Decimal("7000")
-MOVES3_BEV_EMPRESA_EUR = Decimal("2900")
-MOVES3_BEV_EMPRESA_SCRAP_EUR = Decimal("4000")
+# Nuevos límites y bases del Plan Auto+ 2026 (Criterio EEE)
+AUTO_PLUS_LIMIT_SIN_IVA = Decimal("45000")  # 54.450 € con IVA
+AUTO_PLUS_CONCESSIONAIRE_DISCOUNT = Decimal("1000")
 
-# Moves III infraestructura de recarga (capítulo II).
-# Particular: 70% sobre coste, tope 600 €. Empresa/autónomo: 35-50%, topes
-# mayores. Aproximamos al tope para una wallbox de 1.500 €.
-MOVES3_WALLBOX_PARTICULAR_EUR = Decimal("600")
-MOVES3_WALLBOX_EMPRESA_EUR = Decimal("800")
+# Ayudas Máximas por Categoría (Turismo M1, Furgoneta N1, Moto L3e, Cuadriciclo L6e/L7e)
+AUTO_PLUS_MAX_HELP = {
+    "M1": Decimal("4500"),
+    "N1": Decimal("5000"),
+    "L3e": Decimal("1100"),
+    "L6e": Decimal("1500"),
+    "L7e": Decimal("1500"),
+}
 
 # Deducción IRPF Real Decreto-ley 5/2023: 15% sobre base máxima 20.000 €
 # en compra de BEV nuevo. Solo personas físicas.

@@ -39,7 +39,12 @@ _ROLE = (
     "Si no sabes algo o la pregunta es muy general, di al usuario que use "
     "la sección Ask para consultas amplias. "
     "CONTEXTO IMPORTANTE: MOVES III ha finalizado. El programa vigente en "
-    "2026 es el Programa Auto+ (MINTUR, 400 M€)."
+    "2026 es el Plan Auto+ (MINTUR, 400 M€) basado en el Criterio EEE (Eléctrico, Económico, Europeo). "
+    "El Criterio EEE modula la ayuda máxima (p.ej. 4.500 € para turismos M1) aplicando: "
+    "1) Factor Eléctrico (50% BEV, 25% PHEV). "
+    "2) Factor Económico (25% si precio sin IVA <= 35.000 €; 15% si <= 45.000 €). "
+    "3) Factor Europeo (15% por ensamblado final en la UE y 10% si la batería se fabrica en la UE). "
+    "Si un vehículo no se monta en la UE (p.ej. Tesla Model 3 importado de China), pierde el 15% de bonificación por ensamblado final, y si la batería tampoco es europea pierde el 10% adicional, lo que reduce su ayuda total. Explica esto con precisión si el usuario pregunta."
 )
 
 _STEP_HINTS = {
@@ -92,6 +97,8 @@ class FormContext:
     home_pct: str = ""
     scrapping: bool = False
     purchase_mode: str = "switch"
+    assembled_in_eu: bool = False
+    battery_made_in_eu: bool = False
 
     @classmethod
     def from_dict(cls, d: dict) -> "FormContext":
@@ -113,6 +120,8 @@ class FormContext:
             home_pct=str(d.get("home_pct", "")),
             scrapping=bool(d.get("scrapping", False)),
             purchase_mode=d.get("purchase_mode", "switch"),
+            assembled_in_eu=bool(d.get("assembled_in_eu", False)),
+            battery_made_in_eu=bool(d.get("battery_made_in_eu", False)),
         )
 
     def to_context_block(self) -> str:
@@ -137,8 +146,10 @@ class FormContext:
         lines.append(f"Perfil fiscal: {self.profile}")
         lines.append(f"Wallbox: {self.wallbox_state}")
         if self.scrapping:
-            lines.append("Achatarramiento: Sí (mayor incentivo Auto+)")
+            lines.append("Achatarramiento: Sí")
         lines.append(f"Modo de compra: {self.purchase_mode}")
+        lines.append(f"Montado en la UE: {'Sí' if self.assembled_in_eu else 'No'}")
+        lines.append(f"Batería fabricada en la UE: {'Sí' if self.battery_made_in_eu else 'No'}")
         return "\n".join(lines)
 
 

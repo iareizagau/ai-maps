@@ -240,6 +240,10 @@ def _envelope_responder(payloads_by_ciclo):
 
 
 class IngestMarcaTests(TestCase):
+    def setUp(self):
+        super().setUp()
+        Vehicle.objects.all().delete()
+
     @mock.patch.object(idae_client.IDAESession, "fetch_listing")
     def test_merges_elec_and_wltp_by_idae_id(self, fetch_mock):
         fetch_mock.side_effect = _envelope_responder({

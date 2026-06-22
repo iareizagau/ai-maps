@@ -145,6 +145,10 @@ class FetchProvinceTests(TestCase):
 
 
 class IngestProvincesTests(TestCase):
+    def setUp(self):
+        super().setUp()
+        FuelStation.objects.all().delete()
+
     @mock.patch("apps.mubil.data.mincotur_client._session")
     def test_creates_stations(self, get_mock):
         get_mock.return_value = _make_session_mock()

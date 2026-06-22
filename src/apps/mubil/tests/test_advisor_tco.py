@@ -10,7 +10,7 @@ from django.contrib.gis.geos import Point
 from django.test import TestCase
 
 from apps.mubil.advisor import services
-from apps.mubil.models import ChargingStation, Vehicle
+from apps.mubil.models import ChargingStation, Vehicle, FuelStation
 
 
 class TCOServiceTests(TestCase):
@@ -18,6 +18,9 @@ class TCOServiceTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
+        # Clean FuelStation to avoid pollution under --keepdb
+        FuelStation.objects.all().delete()
+
         cls.golf = Vehicle.objects.create(
             make="Volkswagen", model="Golf 1.6 TDI", year=2024,
             propulsion=Vehicle.Propulsion.DIESEL,

@@ -289,6 +289,8 @@ def _parse_advisor_payload(src):
         'vehicle_target_price_override_eur': _opt_int('vehicle_target_price_override_eur'),
         'purchase_mode': (src.get('purchase_mode') or 'switch').strip(),
         'current_age_years': _opt_int('current_age_years'),
+        'assembled_in_eu': src.get('assembled_in_eu') in ('on', '1', 'true', 'True'),
+        'battery_made_in_eu': src.get('battery_made_in_eu') in ('on', '1', 'true', 'True'),
     }
 
 

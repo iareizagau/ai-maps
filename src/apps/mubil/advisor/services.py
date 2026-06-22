@@ -282,6 +282,8 @@ def calculate_tco_quote(
     vehicle_target_price_override_eur: Optional[int] = None,
     purchase_mode: Optional[str] = "switch",
     current_age_years: Optional[int] = None,
+    assembled_in_eu: Optional[bool] = None,
+    battery_made_in_eu: Optional[bool] = None,
 ) -> TCOQuote:
     """Calcula la comparativa TCO para el `advisor`.
 
@@ -380,6 +382,9 @@ def calculate_tco_quote(
         scrapping=scrapping,
         needs_wallbox=needs_wallbox,
         years_horizon=years_horizon,
+        vehicle=target,
+        assembled_in_eu=assembled_in_eu,
+        battery_made_in_eu=battery_made_in_eu,
     )
     if subvencion_override_eur is not None and subvencion_override_eur >= 0:
         total_subv = Decimal(subvencion_override_eur)

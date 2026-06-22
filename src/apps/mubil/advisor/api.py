@@ -84,6 +84,8 @@ def _vehicle_to_summary(v: Vehicle) -> dict:
         "variant_count": 1,
         "consumption_min": None,
         "consumption_max": None,
+        "assembled_in_eu": v.assembled_in_eu,
+        "battery_made_in_eu": v.battery_made_in_eu,
     }
 
 
@@ -349,6 +351,8 @@ def post_quote(request, payload: AdvisorQuoteIn):
             purchase_mode=payload.purchase_mode or "switch",
             current_age_years=payload.current_age_years,
             vehicle_target_price_override_eur=payload.vehicle_target_price_override_eur,
+            assembled_in_eu=payload.assembled_in_eu,
+            battery_made_in_eu=payload.battery_made_in_eu,
         )
     except Vehicle.DoesNotExist:
         return 404, {"message": "Vehículo no encontrado"}

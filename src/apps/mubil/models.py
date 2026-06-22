@@ -109,6 +109,16 @@ class Vehicle(BaseModel):
     co2_g_km_min = models.PositiveSmallIntegerField(null=True, blank=True)
     co2_g_km_max = models.PositiveSmallIntegerField(null=True, blank=True)
 
+    # Criterio Europeo Plan Auto+
+    assembled_in_eu = models.BooleanField(
+        default=False,
+        verbose_name=_("Montado / ensamblado final en la Unión Europea"),
+    )
+    battery_made_in_eu = models.BooleanField(
+        default=False,
+        verbose_name=_("Batería fabricada o ensamblada en la Unión Europea"),
+    )
+
     # No lo da IDAE; queda nullable. Se rellena via la pipeline de tres
     # capas: seed manual verificado → heurística calibrada → Gemini top-N.
     # El advisor también acepta override puntual en el formulario que no

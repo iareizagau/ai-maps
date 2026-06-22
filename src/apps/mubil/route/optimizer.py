@@ -402,6 +402,18 @@ def geocode_address(address: str) -> Optional[Tuple[float, float]]:
 
     Returns ``(lat, lng)`` or ``None`` on failure.
     """
+    result = geocode_address_full(address)
+    if result is None:
+        return None
+    return result[0], result[1]
+
+
+def geocode_address_full(address: str) -> Optional[Tuple[float, float, str]]:
+    """Geocode an address — returns ``(lat, lng, display_name)`` or ``None``.
+
+    The display_name is Nominatim's pretty label, useful when the address
+    came from a click instead of typing and the UI needs a human label.
+    """
     params = urllib.parse.urlencode({
         "q": address,
         "format": "json",
@@ -417,9 +429,41 @@ def geocode_address(address: str) -> Optional[Tuple[float, float]]:
         with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         if data:
-            return float(data[0]["lat"]), float(data[0]["lon"])
+            return (
+                float(data[0]["lat"]),
+                float(data[0]["lon"]),
+                str(data[0].get("display_name") or address),
+            )
     except Exception as e:
         log.warning("Nominatim geocode failed for '%s': %s", address, e)
+    return None
+
+
+def reverse_geocode(lat: float, lng: float) -> Optional[str]:
+    """Reverse-geocode coordinates via Nominatim, returning a display name.
+
+    Used when the user pins a stop by clicking the map — without a label
+    the optimised itinerary becomes unreadable ("Parada 3 → Parada 5").
+    """
+    params = urllib.parse.urlencode({
+        "lat": f"{lat:.6f}",
+        "lon": f"{lng:.6f}",
+        "format": "json",
+        "zoom": 16,
+    })
+    url = f"https://nominatim.openstreetmap.org/reverse?{params}"
+    try:
+        req = urllib.request.Request(url, headers={
+            "User-Agent": OSRM_USER_AGENT,
+            "Accept-Language": "es",
+        })
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        name = data.get("display_name") if isinstance(data, dict) else None
+        if name:
+            return str(name)
+    except Exception as e:
+        log.warning("Nominatim reverse failed for (%s, %s): %s", lat, lng, e)
     return None
 
 

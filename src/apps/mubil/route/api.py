@@ -102,6 +102,77 @@ def _nearest_demo(o_lat: float, o_lon: float, d_lat: float, d_lon: float) -> dic
     return best
 
 
+# ─────────────────────────────────────────────── geocoding helpers
+#
+# Two thin wrappers around Nominatim, cached for 24 h so a user building
+# a 10-stop list as they type doesn't blast the public server. We also
+# guard ourselves against the response shape changing — the optimizer
+# layer already handles errors gracefully, here we just translate to HTTP.
+
+
+from django.core.cache import cache
+
+from apps.mubil.route.optimizer import geocode_address_full, reverse_geocode
+
+_GEOCODE_TTL_S = 60 * 60 * 24
+
+
+@router.get('/geocode')
+def geocode(request, q: str):
+    """Forward geocode — returns ``{lat, lng, display_name}`` or 404.
+
+    Used by the multi-stop UI to drop a marker on the map as soon as the
+    user adds a stop, so they can verify the geocoder's pick before
+    paying for the OSRM optimisation round-trip.
+    """
+    q = (q or '').strip()
+    if not q:
+        return router.api.create_response(
+            request, {"detail": "Falta el parámetro q."}, status=400,
+        )
+    key = f'mubil:geocode:{q.lower()}'
+    cached = cache.get(key)
+    if cached is not None:
+        return cached if cached else router.api.create_response(
+            request, {"detail": "No encontrado."}, status=404,
+        )
+    found = geocode_address_full(q)
+    if found is None:
+        cache.set(key, {}, _GEOCODE_TTL_S)  # negative cache — short-circuit retries
+        return router.api.create_response(
+            request, {"detail": "No encontrado."}, status=404,
+        )
+    payload = {"lat": found[0], "lng": found[1], "display_name": found[2]}
+    cache.set(key, payload, _GEOCODE_TTL_S)
+    return payload
+
+
+@router.get('/geocode/reverse')
+def geocode_reverse(request, lat: float, lng: float):
+    """Reverse geocode — returns ``{display_name}`` for a clicked point.
+
+    Coordinates are bucketed to ~10 m before caching so identical clicks
+    on the same building hit the cache.
+    """
+    bucket_lat = round(lat, 4)
+    bucket_lng = round(lng, 4)
+    key = f'mubil:rgeocode:{bucket_lat}:{bucket_lng}'
+    cached = cache.get(key)
+    if cached is not None:
+        return cached if cached else router.api.create_response(
+            request, {"detail": "No encontrado."}, status=404,
+        )
+    name = reverse_geocode(lat, lng)
+    if name is None:
+        cache.set(key, {}, _GEOCODE_TTL_S)
+        return router.api.create_response(
+            request, {"detail": "No encontrado."}, status=404,
+        )
+    payload = {"display_name": name}
+    cache.set(key, payload, _GEOCODE_TTL_S)
+    return payload
+
+
 # ─────────────────────────────────────────────── multi-stop optimizer
 
 

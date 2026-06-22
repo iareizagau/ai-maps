@@ -73,12 +73,12 @@
 
       {# Tab Selector #}
       <div class="flex p-1 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-        <button type="button" @click="tab = 'single'; resetMarkers();"
+        <button type="button" @click="switchTab('single')"
                 :class="tab === 'single' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
                 class="flex-1 py-1.5 text-xs font-bold rounded-lg transition">
           Planificador A→B
         </button>
-        <button type="button" @click="tab = 'multi'; resetMarkers(); submitOptimize();"
+        <button type="button" @click="switchTab('multi')"
                 :class="tab === 'multi' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
                 class="flex-1 py-1.5 text-xs font-bold rounded-lg transition">
           Optimizador de Rutas
@@ -201,6 +201,9 @@
               <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Direcciones / Paradas</p>
               <span class="text-[10px] tabular-nums font-bold text-slate-400" x-text="locations.length + ' paradas'"></span>
             </div>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 mb-2 leading-relaxed">
+              Clica el mapa para añadir una parada. Arrastra los marcadores para afinar la posición.
+            </p>
             
             <div class="space-y-2 max-h-48 overflow-y-auto mb-3 pr-1">
               <template x-for="(loc, index) in locations" :key="index">
@@ -381,6 +384,10 @@ if (!window._mubilResizeBound) {
 // one without touching the other.
 let _mubilPickerLayer = null;
 let _mubilResultLayer = null;
+// Multi-stop preview layer — holds the user-managed stop markers while
+// they build the input list. Kept separate from picker/result so we can
+// toggle visibility per tab without touching the others.
+let _mubilStopsLayer = null;
 
 function _initMainMap() {
   if (window._mubilMap) return Promise.resolve(window._mubilMap);
@@ -398,8 +405,21 @@ function _initMainMap() {
     }).addTo(map);
     _mubilPickerLayer = L.layerGroup().addTo(map);
     _mubilResultLayer = L.layerGroup().addTo(map);
+    _mubilStopsLayer  = L.layerGroup().addTo(map);
     window._mubilMap = map;
     return map;
+  });
+}
+
+// ─────────────────────────── Stop-marker icon helper
+// One div-icon factory shared by all multi-stop markers so they look the
+// same across redraws. Numbered for deliveries (1..N), emoji for depot.
+function _mubilStopIcon(label, color) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="background:${color};color:white;border:2px solid #0f172a;border-radius:9999px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:grab">${label}</div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
   });
 }
 
@@ -437,17 +457,140 @@ function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
       });
     },
 
-    _onMapClick(ev) {
-      if (this.tab !== 'single') return;
-      const { lat, lng } = ev.latlng;
-      if (!this.form.origin_lat) {
-        this._setOrigin(lat, lng);
-      } else if (!this.form.dest_lat) {
-        this._setDest(lat, lng);
+    // ─────────── Tab switching ───────────
+    // Owns the cleanup so neither tab leaks markers into the other. Entering
+    // multi triggers a geocode + redraw so the user sees the points as they
+    // build the list, instead of an empty map until they hit Calcular.
+    switchTab(next) {
+      if (this.tab === next) return;
+      this.tab = next;
+      this.resetMarkers();
+      if (next === 'multi') {
+        this._geocodePending().then(() => this.redrawStops());
       } else {
-        // Third click after a result is showing → reset and start over.
-        this.resetMarkers();
-        this._setOrigin(lat, lng);
+        this.clearStopsLayer();
+      }
+    },
+
+    _onMapClick(ev) {
+      const { lat, lng } = ev.latlng;
+      if (this.tab === 'single') {
+        if (!this.form.origin_lat) {
+          this._setOrigin(lat, lng);
+        } else if (!this.form.dest_lat) {
+          this._setDest(lat, lng);
+        } else {
+          // Third click after a result is showing → reset and start over.
+          this.resetMarkers();
+          this._setOrigin(lat, lng);
+        }
+        return;
+      }
+      // Multi tab: append a stop at the click point, then look up a
+      // human label asynchronously so the itinerary stays readable.
+      const index = this.locations.length;
+      const placeholder = {
+        name: `Parada ${index}`,
+        address: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+        lat,
+        lng,
+        is_depot: this.locations.length === 0,
+      };
+      this.locations.push(placeholder);
+      this.redrawStops();
+      this._reverseLabel(index, lat, lng);
+    },
+
+    async _reverseLabel(index, lat, lng) {
+      try {
+        const r = await fetch(`/api/mubil/v1/route/geocode/reverse?lat=${lat}&lng=${lng}`);
+        if (!r.ok) return;
+        const data = await r.json();
+        const loc = this.locations[index];
+        if (!loc) return;
+        // Only overwrite if the user hasn't renamed in the meantime — the
+        // placeholder name starts with "Parada " so it's safe to replace.
+        if (loc.name && loc.name.startsWith('Parada')) {
+          loc.name = (data.display_name || '').split(',').slice(0, 2).join(',').trim() || loc.name;
+        }
+        loc.address = data.display_name || loc.address;
+        this.redrawStops();
+      } catch (e) { /* silent — placeholder name is fine */ }
+    },
+
+    async _geocodePending() {
+      // Fill lat/lng for every stop that only has an address, in parallel.
+      // Backend caches for 24h, so repeated tab switches stay snappy.
+      const tasks = this.locations.map(async (loc, i) => {
+        if (loc.lat != null && loc.lng != null) return;
+        if (!loc.address) return;
+        try {
+          const r = await fetch(`/api/mubil/v1/route/geocode?q=${encodeURIComponent(loc.address)}`);
+          if (!r.ok) { loc._geocode_failed = true; return; }
+          const data = await r.json();
+          loc.lat = data.lat;
+          loc.lng = data.lng;
+        } catch (e) { loc._geocode_failed = true; }
+      });
+      await Promise.all(tasks);
+    },
+
+    // ─────────── Multi-stop map sync ───────────
+    clearStopsLayer() {
+      if (_mubilStopsLayer) _mubilStopsLayer.clearLayers();
+    },
+
+    redrawStops() {
+      if (!_mubilStopsLayer || !window.L || this.tab !== 'multi') return;
+      _mubilStopsLayer.clearLayers();
+      const pts = [];
+      let seq = 0;
+      this.locations.forEach((loc, idx) => {
+        if (loc.lat == null || loc.lng == null) return;
+        const isDepot = !!loc.is_depot;
+        const label = isDepot ? '🏠' : String(++seq);
+        const color = isDepot ? '#10b981' : '#6366f1';
+        const m = L.marker([loc.lat, loc.lng], {
+          icon: _mubilStopIcon(label, color),
+          draggable: true,
+        }).addTo(_mubilStopsLayer);
+
+        const safeName = (loc.name || '').replace(/</g, '&lt;');
+        m.bindPopup(`
+          <div style="min-width:160px">
+            <strong>${safeName}</strong>
+            <div style="font-size:11px;color:#64748b;margin-top:2px">
+              ${(loc.address || '').replace(/</g, '&lt;').slice(0, 80)}
+            </div>
+            <button data-idx="${idx}"
+                    style="margin-top:6px;font-size:11px;font-weight:700;color:#e11d48;background:none;border:none;padding:0;cursor:pointer">
+              Eliminar parada
+            </button>
+          </div>
+        `);
+        m.on('popupopen', (ev) => {
+          const btn = ev.popup.getElement().querySelector('button[data-idx]');
+          if (btn) btn.addEventListener('click', () => {
+            this.removeStop(parseInt(btn.dataset.idx, 10));
+            m.closePopup();
+          }, { once: true });
+        });
+        m.on('dragend', (ev) => {
+          const ll = ev.target.getLatLng();
+          loc.lat = ll.lat;
+          loc.lng = ll.lng;
+          // The geocoded address is now stale; clear it so the backend
+          // uses the new coords directly (it prefers lat/lng over address).
+          loc.address = `${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}`;
+          this._reverseLabel(idx, ll.lat, ll.lng);
+        });
+
+        pts.push([loc.lat, loc.lng]);
+      });
+      if (pts.length >= 2 && window._mubilMap) {
+        try { window._mubilMap.fitBounds(L.latLngBounds(pts).pad(0.2)); } catch (e) {}
+      } else if (pts.length === 1 && window._mubilMap) {
+        try { window._mubilMap.setView(pts[0], 13); } catch (e) {}
       }
     },
 
@@ -511,6 +654,7 @@ function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
       });
       this.newStopName = '';
       this.newStopAddress = '';
+      this._geocodePending().then(() => this.redrawStops());
     },
 
     removeStop(index) {
@@ -521,6 +665,7 @@ function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
       if (wasDepot && this.locations.length > 0 && !this.locations.some(l => l.is_depot)) {
         this.locations[0].is_depot = true;
       }
+      this.redrawStops();
     },
 
     importBulk() {
@@ -534,6 +679,7 @@ function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
         });
       });
       this.bulkAddresses = '';
+      this._geocodePending().then(() => this.redrawStops());
     },
 
     prefillUseCase(kind) {
@@ -555,7 +701,9 @@ function routePlannerApp({ demos, defaultOrigin, defaultDepartureHour }) {
         ];
         this.returnToDepot = true;
       }
-      this.$nextTick(() => this.submitOptimize());
+      this._geocodePending()
+        .then(() => this.redrawStops())
+        .then(() => this.$nextTick(() => this.submitOptimize()));
     },
 
     submitOptimize() {
@@ -669,6 +817,9 @@ window.mubilMultiRouteRender = function (r) {
     if (!map) return;
     if (_mubilPickerLayer) _mubilPickerLayer.clearLayers();
     if (_mubilResultLayer) _mubilResultLayer.clearLayers();
+    // Drop the editing markers so the optimised numbered stops aren't
+    // doubled up with the raw user-input pins.
+    if (_mubilStopsLayer)  _mubilStopsLayer.clearLayers();
 
     const line = L.polyline(r.polyline || [], {
       color: '#10B0A0', weight: 5, opacity: 0.9,

@@ -155,22 +155,22 @@
             <div class="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800">
               <button type="button" @click="currentMode = 'search'"
                       :class="currentMode === 'search' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                      class="py-1 rounded-md text-[11px] font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-1.5">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                Buscar
+                      class="py-1.5 rounded-md text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider transition flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <span class="leading-none text-center">Buscar</span>
               </button>
               <button type="button" disabled
                       title="Próximamente"
-                      class="py-1 rounded-md text-[11px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-600 cursor-not-allowed flex items-center justify-center gap-1.5">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                Foto permiso
-                <span class="text-[8px] uppercase tracking-wider opacity-70">próx.</span>
+                      class="py-1.5 rounded-md text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-600 cursor-not-allowed flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 relative overflow-visible">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span class="leading-none text-center">Foto permiso</span>
+                <span class="text-[7px] sm:text-[8px] uppercase tracking-wider opacity-70 bg-slate-200 dark:bg-slate-800/80 px-1 py-0.5 rounded leading-none mt-0.5 sm:mt-0">próx.</span>
               </button>
               <button type="button" @click="useIceGeneric()"
                       :class="currentMode === 'generic' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                      class="py-1 rounded-md text-[11px] font-extrabold uppercase tracking-widest transition flex items-center justify-center gap-1.5">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m13.586 13.586l-.707-.707"/></svg>
-                Coche medio
+                      class="py-1.5 rounded-md text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider transition flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m13.586 13.586l-.707-.707"/></svg>
+                <span class="leading-none text-center">Coche medio</span>
               </button>
             </div>
 
@@ -238,18 +238,18 @@
                 <div class="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
                   <button type="button" @click="purchaseMode = 'switch'; recomputeCurrentResidual()"
                           :class="purchaseMode === 'switch' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                          class="py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition text-center px-0.5">
-                    Ya lo tengo
+                          class="min-h-[38px] flex items-center justify-center py-1 rounded-lg text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider transition text-center px-1 leading-tight">
+                    <span>Ya lo tengo</span>
                   </button>
                   <button type="button" @click="purchaseMode = 'new_vs_new'; currentPriceOverride = null"
                           :class="purchaseMode === 'new_vs_new' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                          class="py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition text-center px-0.5">
-                    Comprar nuevo
+                          class="min-h-[38px] flex items-center justify-center py-1 rounded-lg text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider transition text-center px-1 leading-tight">
+                    <span>Comprar nuevo</span>
                   </button>
                   <button type="button" @click="purchaseMode = 'replace'; recomputeCurrentResidual()"
                           :class="purchaseMode === 'replace' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-                          class="py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition text-center px-0.5">
-                    Vender y comprar
+                          class="min-h-[38px] flex items-center justify-center py-1 rounded-lg text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider transition text-center px-1 leading-tight">
+                    <span>Vender y comprar</span>
                   </button>
                 </div>
                 <input type="hidden" name="purchase_mode" :value="purchaseMode" />

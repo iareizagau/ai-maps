@@ -30,6 +30,47 @@
         </div>
     </div>
 
+    <!-- Layer Filter Toggles (Bottom Center) -->
+    <div class="absolute bottom-4 left-4 right-4 z-20 flex gap-2 overflow-x-auto pb-1.5 scrollbar-none justify-start sm:justify-center pointer-events-auto" 
+         x-show="!selectedPoint || !L.Browser.mobile"
+         x-cloak>
+        <!-- Todas -->
+        <button @click="setFilter('all')" 
+                :class="activeFilter === 'all' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent shadow-lg scale-105' : 'bg-white/95 text-slate-700 dark:bg-slate-800/95 dark:text-slate-200 border-slate-200/50 dark:border-slate-700/50'"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold border backdrop-blur-md transition-all hover:scale-105 active:scale-95 whitespace-nowrap">
+            <span>🌈</span>
+            <span>{% trans "Todas" %}</span>
+        </button>
+        <!-- Kultur -->
+        <button @click="setFilter('kultur')" 
+                :class="activeFilter === 'kultur' ? 'bg-rose-500 text-white border-transparent shadow-lg scale-105' : 'bg-white/95 text-slate-700 dark:bg-slate-800/95 dark:text-slate-200 border-slate-200/50 dark:border-slate-700/50'"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold border backdrop-blur-md transition-all hover:scale-105 active:scale-95 whitespace-nowrap">
+            <span>🎭</span>
+            <span>{% trans "Kultur" %}</span>
+        </button>
+        <!-- Pintxos -->
+        <button @click="setFilter('pintxos')" 
+                :class="activeFilter === 'pintxos' ? 'bg-orange-500 text-white border-transparent shadow-lg scale-105' : 'bg-white/95 text-slate-700 dark:bg-slate-800/95 dark:text-slate-200 border-slate-200/50 dark:border-slate-700/50'"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold border backdrop-blur-md transition-all hover:scale-105 active:scale-95 whitespace-nowrap">
+            <span>🍢</span>
+            <span>{% trans "Pintxos" %}</span>
+        </button>
+        <!-- SBK -->
+        <button @click="setFilter('sbk')" 
+                :class="activeFilter === 'sbk' ? 'bg-emerald-500 text-white border-transparent shadow-lg scale-105' : 'bg-white/95 text-slate-700 dark:bg-slate-800/95 dark:text-slate-200 border-slate-200/50 dark:border-slate-700/50'"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold border backdrop-blur-md transition-all hover:scale-105 active:scale-95 whitespace-nowrap">
+            <span>💃</span>
+            <span>{% trans "SBK" %}</span>
+        </button>
+        <!-- Inguru -->
+        <button @click="setFilter('inguru')" 
+                :class="activeFilter === 'inguru' ? 'bg-cyan-500 text-white border-transparent shadow-lg scale-105' : 'bg-white/95 text-slate-700 dark:bg-slate-800/95 dark:text-slate-200 border-slate-200/50 dark:border-slate-700/50'"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold border backdrop-blur-md transition-all hover:scale-105 active:scale-95 whitespace-nowrap">
+            <span>🍃</span>
+            <span>{% trans "Aire" %}</span>
+        </button>
+    </div>
+
     <!-- Bottom Sheet Details (Mobile only) -->
     <div x-show="selectedPoint && !isLocked"
          x-transition:enter="transition ease-out duration-300 transform"
@@ -63,7 +104,7 @@
                 <h4 class="text-sm font-bold text-slate-900 dark:text-white leading-snug" x-text="selectedPoint.headline"></h4>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed" x-text="selectedPoint.subline"></p>
                 
-                <a :href="selectedPoint.url" class="inline-flex items-center justify-center w-full py-3 mt-4 rounded-xl text-xs font-bold text-white transition-all text-center shadow-md active:scale-98"
+                <a :href="selectedPoint.url" class="inline-flex items-center justify-center w-full py-3 mt-4 rounded-xl text-xs font-bold text-white transition-all text-center shadow-md active:scale-98 animate-pulse-subtle"
                    :style="`background-color: ${selectedPoint.accent};`">
                     {% trans "Ver detalle" %}
                     <i data-lucide="arrow-right" class="w-3.5 h-3.5 ml-1"></i>
@@ -86,24 +127,14 @@
     <style>
         .leaflet-container { font-family: inherit; background: #f8fafc; }
         .dark .leaflet-container { background: #0f172a; }
-        .pulse-marker {
-            border-radius: 9999px;
-            box-shadow: 0 0 0 4px rgba(255,255,255,0.7), 0 0 0 8px var(--marker-color, #f97316);
-            animation: pulse-ring 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        .dark .pulse-marker {
-            box-shadow: 0 0 0 4px rgba(15,23,42,0.7), 0 0 0 8px var(--marker-color, #f97316);
-        }
-        @keyframes pulse-ring {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.15); opacity: 0.85; }
-        }
+        
         .pulse-popup .leaflet-popup-content-wrapper {
             background: rgba(255,255,255,0.95) !important;
             backdrop-filter: blur(12px);
             border-radius: 16px !important;
             border: 1px solid rgba(0,0,0,0.05);
             padding: 4px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1) !important;
         }
         .dark .pulse-popup .leaflet-popup-content-wrapper {
             background: rgba(30,41,59,0.95) !important;
@@ -116,6 +147,14 @@
         .dark .pulse-popup .leaflet-popup-tip {
             background: rgba(30,41,59,0.95) !important;
         }
+        
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.92; }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 2s infinite ease-in-out;
+        }
     </style>
 </div>
 
@@ -127,6 +166,8 @@ function liveMap(initialPoints) {
         initialized: false,
         isLocked: true,
         selectedPoint: null,
+        activeFilter: 'all',
+        markerGroup: null,
 
         init() {
             // Esperar a Leaflet (cargado en extra_head de home.html)
@@ -164,6 +205,9 @@ function liveMap(initialPoints) {
                 .addAttribution('© <a href="https://www.openstreetmap.org/copyright">OSM</a> · <a href="https://carto.com/attributions">CARTO</a>')
                 .addTo(this.map);
 
+            // Initialize markerGroup
+            this.markerGroup = L.featureGroup().addTo(this.map);
+
             this.renderMarkers();
 
             // Cerrar bottom sheet al pulsar fuera del marcador
@@ -186,22 +230,44 @@ function liveMap(initialPoints) {
             }, 50);
         },
 
+        setFilter(category) {
+            this.activeFilter = category;
+            this.selectedPoint = null;
+            this.renderMarkers();
+        },
+
         renderMarkers() {
+            if (!this.markerGroup) return;
+            this.markerGroup.clearLayers();
+
             if (!this.points || this.points.length === 0) return;
 
             const isMobile = L.Browser.mobile;
             const markers = [];
             this.points.forEach((p) => {
                 if (p.lat == null || p.lon == null) return;
+                
+                // Filter by category
+                if (this.activeFilter !== 'all' && p.category !== this.activeFilter) return;
 
+                // Premium map pin with custom SVG/Lucide icon inside
                 const icon = L.divIcon({
                     className: '',
-                    html: `<div class="pulse-marker" style="--marker-color: ${p.accent}; width: 14px; height: 14px; background: ${p.accent};"></div>`,
-                    iconSize: [14, 14],
-                    iconAnchor: [7, 7],
+                    html: `
+                        <div class="relative flex items-center justify-center">
+                            <!-- Outer pulsing ring using Tailwind ping -->
+                            <div class="absolute -inset-1.5 rounded-full opacity-30 animate-ping" style="background-color: ${p.accent};"></div>
+                            <!-- Inner pin circle -->
+                            <div class="relative w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 shadow-md flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95" style="background-color: ${p.accent};">
+                                <i data-lucide="${p.icon || 'map-pin'}" class="w-3.5 h-3.5 text-white"></i>
+                            </div>
+                        </div>
+                    `,
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14],
                 });
 
-                const marker = L.marker([p.lat, p.lon], { icon }).addTo(this.map);
+                const marker = L.marker([p.lat, p.lon], { icon }).addTo(this.markerGroup);
                 
                 if (isMobile) {
                     marker.on('click', (e) => {
@@ -231,12 +297,17 @@ function liveMap(initialPoints) {
                 markers.push(marker);
             });
 
+            // Auto fit bounds to visible markers
             if (markers.length > 1) {
-                const group = L.featureGroup(markers);
-                this.map.fitBounds(group.getBounds().pad(0.4));
+                this.map.fitBounds(this.markerGroup.getBounds().pad(0.2));
             } else if (markers.length === 1) {
-                this.map.setView(markers[0].getLatLng(), 11);
+                this.map.setView(markers[0].getLatLng(), 12);
             }
+
+            // Trigger Lucide to render icon tags added dynamically in custom DivIcons
+            setTimeout(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, 50);
         },
 
         escape(s) {

@@ -42,21 +42,8 @@ def home(request):
     ).order_by('-latest_update_at')[:3])
 
     pulse_items = pulse.get_pulse_items()
-    # Solo los pulse items con coords reales van al mapa hero; el resto se queda en cards.
-    map_points = [
-        {
-            'lat': it['lat'],
-            'lon': it['lon'],
-            'app_name': it['app_name'],
-            'app_slug': it.get('app_slug', ''),
-            'accent': it['accent'],
-            'headline': it['headline'],
-            'subline': it.get('subline') or '',
-            'url': it['url'],
-        }
-        for it in pulse_items
-        if it.get('lat') is not None and it.get('lon') is not None
-    ]
+    # Get all aggregated points for the home map layers
+    map_points = pulse.get_dashboard_points()
 
     return render(request, 'home.html', {
         'live_apps': live_apps,

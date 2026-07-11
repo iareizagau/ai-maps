@@ -1,0 +1,94 @@
+[project]
+name = "maps"
+version = "0.1.0"
+description = "Maps.eus - Web app and GIS platform"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=6.0a1",
+    "django-hosts",
+    "django-cotton",
+    "django-ninja",
+    "django-environ",
+    "psycopg[binary]",
+    "django-extensions",
+    "whitenoise",
+    "django-allauth",
+    "requests",
+    "beautifulsoup4",
+    "PyJWT",
+    "cryptography",
+    "Pillow",
+    "gunicorn",
+    "django-leaflet",
+    "pgvector",
+    "google-genai>=1.0",
+    "trafilatura>=1.10",
+    "pypdf>=4.3",
+    "feedparser>=6.0",
+    "celery[redis]>=5.4",
+    "redis>=5.0",
+    "django-celery-beat>=2.6",
+    "django-anymail[brevo]",
+    "gpxpy",
+    "osmium",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-django",
+    "faker",
+    "debugpy",
+    "ruff",
+    "pre-commit",
+    "bandit",
+    "pip-audit",
+    "mypy",
+    "django-stubs",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "F",    # Pyflakes
+    "E",    # Pycodestyle error
+    "W",    # Pycodestyle warning
+    "I",    # Isort (imports sorting)
+    "N",    # pep8-naming
+    "UP",   # Pyupgrade (modernize syntax)
+    "B",    # flake8-bugbear (common design issues)
+    "DJ",   # flake8-django (django specific best practices)
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+    "RUF",  # Ruff-specific rules
+]
+ignore = []
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+known-first-party = ["apps", "config"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.local"
+python_files = ["test_*.py", "*_test.py", "tests.py"]
+django_find_project = true
+pythonpath = ["src"]
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main"]
+strict_optional = true
+ignore_missing_imports = true
+exclude = ["venv", ".venv", "migrations"]
+
+[tool.django-stubs]
+django_settings_module = "config.settings.local"

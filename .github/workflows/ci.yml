@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Lint, Format, and Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: timescale/timescaledb-ha:pg15
+        env:
+          POSTGRES_DB: maps_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies for GIS
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            binutils libproj-dev gdal-bin libgdal-dev python3-gdal \
+            libpq-dev build-essential gettext
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen
+
+      - name: Check Ruff formatting
+        run: |
+          uv run ruff format --check .
+
+      - name: Check Ruff linting
+        run: |
+          uv run ruff check .
+
+      - name: Run pytest tests
+        env:
+          DATABASE_URL: postgres://postgres:postgres_password@localhost:5432/maps_db
+          REDIS_URL: redis://localhost:6379/0
+          ENV: test
+          SECRET_KEY: test-secret-key-for-ci
+          ALLOWED_HOSTS: localhost
+        run: |
+          uv run pytest

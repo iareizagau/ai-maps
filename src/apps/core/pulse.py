@@ -413,4 +413,30 @@ def get_dashboard_points():
                     'category': 'inguru',
                 })
                 
+    # 5. ZBE LAYER (Low Emission Zones)
+    zbe_app = apps_by_slug.get('zbe')
+    if zbe_app:
+        from apps.zbe.models import LowEmissionZone
+        import json
+        
+        # Get all zones, filter those with centroid in Euskadi
+        zones = LowEmissionZone.objects.all()
+        for z in zones:
+            if z.geom:
+                centroid = z.geom.centroid
+                if 42.4 <= centroid.y <= 43.6 and -3.5 <= centroid.x <= -1.4:
+                    points.append({
+                        'lat': centroid.y,
+                        'lon': centroid.x,
+                        'app_name': zbe_app.name,
+                        'app_slug': zbe_app.slug,
+                        'accent': zbe_app.primary_color or '#f43f5e',
+                        'icon': 'ban',
+                        'headline': z.name,
+                        'subline': _("Zona de Bajas Emisiones (ZBE) en Euskadi"),
+                        'url': reverse('zbe:home'),
+                        'category': 'zbe',
+                        'geojson': json.loads(z.geom.geojson),
+                    })
+                
     return points

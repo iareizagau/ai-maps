@@ -69,6 +69,13 @@
             <span>🍃</span>
             <span>{% trans "Aire" %}</span>
         </button>
+        <!-- ZBE -->
+        <button @click="setFilter('zbe')" 
+                :class="activeFilter === 'zbe' ? 'bg-rose-600 text-white border-transparent shadow-lg scale-105' : 'bg-white/95 text-slate-700 dark:bg-slate-800/95 dark:text-slate-200 border-slate-200/50 dark:border-slate-700/50'"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold border backdrop-blur-md transition-all hover:scale-105 active:scale-95 whitespace-nowrap">
+            <span>🚫</span>
+            <span>{% trans "ZBE" %}</span>
+        </button>
     </div>
 
     <!-- Bottom Sheet Details (Mobile only) -->
@@ -244,67 +251,146 @@ function liveMap(initialPoints) {
 
             const isMobile = L.Browser.mobile;
             const markers = [];
+            
             this.points.forEach((p) => {
                 if (p.lat == null || p.lon == null) return;
                 
                 // Filter by category
                 if (this.activeFilter !== 'all' && p.category !== this.activeFilter) return;
 
-                // Premium map pin with custom SVG/Lucide icon inside
-                const icon = L.divIcon({
-                    className: '',
-                    html: `
-                        <div class="relative flex items-center justify-center">
-                            <!-- Outer pulsing ring using Tailwind ping -->
-                            <div class="absolute -inset-1.5 rounded-full opacity-30 animate-ping" style="background-color: ${p.accent};"></div>
-                            <!-- Inner pin circle -->
-                            <div class="relative w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 shadow-md flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95" style="background-color: ${p.accent};">
-                                <i data-lucide="${p.icon || 'map-pin'}" class="w-3.5 h-3.5 text-white"></i>
-                            </div>
-                        </div>
-                    `,
-                    iconSize: [28, 28],
-                    iconAnchor: [14, 14],
-                });
+                // Render ZBE polygon geometry
+                if (p.category === 'zbe') {
+                    if (this.activeFilter === 'zbe') {
+                        // Render full polygon boundaries
+                        const zbeLayer = L.geoJSON(p.geojson, {
+                            style: {
+                                color: p.accent,
+                                fillColor: p.accent,
+                                fillOpacity: 0.25,
+                                weight: 2.5,
+                                dashArray: '5, 5'
+                            }
+                        }).addTo(this.markerGroup);
 
-                const marker = L.marker([p.lat, p.lon], { icon }).addTo(this.markerGroup);
-                
-                if (isMobile) {
-                    marker.on('click', (e) => {
-                        this.selectedPoint = p;
-                        L.DomEvent.stopPropagation(e);
-                        // Asegurar que Lucide renderice los iconos dentro del bottom sheet
-                        setTimeout(() => {
-                            if (window.lucide) window.lucide.createIcons();
-                        }, 50);
-                    });
+                        if (isMobile) {
+                            zbeLayer.on('click', (e) => {
+                                this.selectedPoint = p;
+                                L.DomEvent.stopPropagation(e);
+                                setTimeout(() => {
+                                    if (window.lucide) window.lucide.createIcons();
+                                }, 50);
+                            });
+                        } else {
+                            zbeLayer.bindPopup(`
+                                <div class="px-3 py-2 min-w-[180px]">
+                                    <p class="text-[9px] font-black uppercase tracking-widest mb-1" style="color: ${p.accent}">${this.escape(p.app_name)}</p>
+                                    <p class="text-sm font-bold text-slate-900 dark:text-white leading-snug">${this.escape(p.headline)}</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${this.escape(p.subline)}</p>
+                                    <a href="${p.url}" class="inline-flex items-center gap-1 mt-2 text-[10px] font-black uppercase tracking-widest" style="color: ${p.accent}">
+                                        {% trans "Ver" %} →
+                                    </a>
+                                </div>
+                            `, { className: 'pulse-popup', maxWidth: 260, closeButton: false });
+                        }
+
+                        // Add invisible marker at centroid for fitBounds calculation
+                        const marker = L.marker([p.lat, p.lon], { opacity: 0 }).addTo(this.markerGroup);
+                        markers.push(marker);
+                    } else {
+                        // In "all" mode, just show a standard warning pin at the centroid to avoid clutter
+                        const icon = L.divIcon({
+                            className: '',
+                            html: `
+                                <div class="relative flex items-center justify-center">
+                                    <div class="absolute -inset-1.5 rounded-full opacity-30 animate-ping" style="background-color: ${p.accent};"></div>
+                                    <div class="relative w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 shadow-md flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95" style="background-color: ${p.accent};">
+                                        <i data-lucide="${p.icon || 'map-pin'}" class="w-3.5 h-3.5 text-white"></i>
+                                    </div>
+                                </div>
+                            `,
+                            iconSize: [28, 28],
+                            iconAnchor: [14, 14],
+                        });
+
+                        const marker = L.marker([p.lat, p.lon], { icon }).addTo(this.markerGroup);
+                        
+                        if (isMobile) {
+                            marker.on('click', (e) => {
+                                this.selectedPoint = p;
+                                L.DomEvent.stopPropagation(e);
+                                setTimeout(() => {
+                                    if (window.lucide) window.lucide.createIcons();
+                                }, 50);
+                            });
+                        } else {
+                            marker.bindPopup(`
+                                <div class="px-3 py-2 min-w-[180px]">
+                                    <p class="text-[9px] font-black uppercase tracking-widest mb-1" style="color: ${p.accent}">${this.escape(p.app_name)}</p>
+                                    <p class="text-sm font-bold text-slate-900 dark:text-white leading-snug">${this.escape(p.headline)}</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${this.escape(p.subline)}</p>
+                                    <a href="${p.url}" class="inline-flex items-center gap-1 mt-2 text-[10px] font-black uppercase tracking-widest" style="color: ${p.accent}">
+                                        {% trans "Ver" %} →
+                                    </a>
+                                </div>
+                            `, { className: 'pulse-popup', maxWidth: 260, closeButton: false });
+                        }
+
+                        markers.push(marker);
+                    }
                 } else {
-                    const sublineHtml = p.subline
-                        ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${this.escape(p.subline)}</p>`
-                        : '';
-                    marker.bindPopup(`
-                        <div class="px-3 py-2 min-w-[180px]">
-                            <p class="text-[9px] font-black uppercase tracking-widest mb-1" style="color: ${p.accent}">${this.escape(p.app_name)}</p>
-                            <p class="text-sm font-bold text-slate-900 dark:text-white leading-snug">${this.escape(p.headline)}</p>
-                            ${sublineHtml}
-                            <a href="${p.url}" class="inline-flex items-center gap-1 mt-2 text-[10px] font-black uppercase tracking-widest" style="color: ${p.accent}">
-                                {% trans "Ver" %} →
-                            </a>
-                        </div>
-                    `, { className: 'pulse-popup', maxWidth: 260, closeButton: false });
-                }
+                    // Regular category markers
+                    const icon = L.divIcon({
+                        className: '',
+                        html: `
+                            <div class="relative flex items-center justify-center">
+                                <div class="absolute -inset-1.5 rounded-full opacity-30 animate-ping" style="background-color: ${p.accent};"></div>
+                                <div class="relative w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 shadow-md flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95" style="background-color: ${p.accent};">
+                                    <i data-lucide="${p.icon || 'map-pin'}" class="w-3.5 h-3.5 text-white"></i>
+                                </div>
+                            </div>
+                        `,
+                        iconSize: [28, 28],
+                        iconAnchor: [14, 14],
+                    });
 
-                markers.push(marker);
+                    const marker = L.marker([p.lat, p.lon], { icon }).addTo(this.markerGroup);
+                    
+                    if (isMobile) {
+                        marker.on('click', (e) => {
+                            this.selectedPoint = p;
+                            L.DomEvent.stopPropagation(e);
+                            setTimeout(() => {
+                                if (window.lucide) window.lucide.createIcons();
+                            }, 50);
+                        });
+                    } else {
+                        const sublineHtml = p.subline
+                            ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${this.escape(p.subline)}</p>`
+                            : '';
+                        marker.bindPopup(`
+                            <div class="px-3 py-2 min-w-[180px]">
+                                <p class="text-[9px] font-black uppercase tracking-widest mb-1" style="color: ${p.accent}">${this.escape(p.app_name)}</p>
+                                <p class="text-sm font-bold text-slate-900 dark:text-white leading-snug">${this.escape(p.headline)}</p>
+                                ${sublineHtml}
+                                <a href="${p.url}" class="inline-flex items-center gap-1 mt-2 text-[10px] font-black uppercase tracking-widest" style="color: ${p.accent}">
+                                    {% trans "Ver" %} →
+                                </a>
+                            </div>
+                        `, { className: 'pulse-popup', maxWidth: 260, closeButton: false });
+                    }
+
+                    markers.push(marker);
+                }
             });
 
-            // Auto fit bounds to visible markers
+            // Fit bounds to visible markers/layers
             if (markers.length > 1) {
                 this.map.fitBounds(this.markerGroup.getBounds().pad(0.2));
             } else if (markers.length === 1) {
                 this.map.setView(markers[0].getLatLng(), 12);
             }
 
-            // Trigger Lucide to render icon tags added dynamically in custom DivIcons
+            // Trigger Lucide icon parsing
             setTimeout(() => {
                 if (window.lucide) window.lucide.createIcons();
             }, 50);

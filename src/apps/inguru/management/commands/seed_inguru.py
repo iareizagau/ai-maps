@@ -7,11 +7,17 @@ class Command(BaseCommand):
     help = 'Semilla inicial de estaciones para Inguru'
 
     def handle(self, *args, **options):
+        # Delete old seeded stations with incorrect IDs to avoid duplicates
+        old_ids = ['BIL_MDH', 'BIL_PDC', 'SS_EASO', 'VIT_AVG']
+        deleted_count, _ = EnvironmentalStation.objects.filter(external_id__in=old_ids).delete()
+        if deleted_count > 0:
+            self.stdout.write(f"Eliminadas {deleted_count} estaciones antiguas obsoletas.")
+
         stations_data = [
             # Bilbao
             {
                 'name': 'Bilbao - Maria Diaz de Haro',
-                'external_id': 'BIL_MDH',
+                'external_id': '81',
                 'station_type': 'AIR',
                 'location': Point(-2.9416, 43.2627),
                 'municipality': 'Bilbao',
@@ -19,7 +25,7 @@ class Command(BaseCommand):
             },
             {
                 'name': 'Bilbao - Parque Doña Casilda',
-                'external_id': 'BIL_PDC',
+                'external_id': 'POLLEN_020',
                 'station_type': 'POLLEN',
                 'location': Point(-2.9410, 43.2640),
                 'municipality': 'Bilbao',
@@ -28,7 +34,7 @@ class Command(BaseCommand):
             # San Sebastian
             {
                 'name': 'Donostia - Easo',
-                'external_id': 'SS_EASO',
+                'external_id': '89',
                 'station_type': 'AIR',
                 'location': Point(-1.9812, 43.3150),
                 'municipality': 'Donostia',
@@ -37,7 +43,7 @@ class Command(BaseCommand):
             # Vitoria
             {
                 'name': 'Vitoria - Avenida Gasteiz',
-                'external_id': 'VIT_AVG',
+                'external_id': '78',
                 'station_type': 'AIR',
                 'location': Point(-2.6820, 42.8465),
                 'municipality': 'Vitoria-Gasteiz',
@@ -56,3 +62,4 @@ class Command(BaseCommand):
                 self.stdout.write(f"Actualizada estación: {station.name}")
         
         self.stdout.write(self.style.SUCCESS("Semilla de Inguru completada."))
+

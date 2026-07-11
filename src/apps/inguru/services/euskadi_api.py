@@ -11,16 +11,12 @@ class EuskadiOpenDataClient:
     """
     BASE_URL = "https://api.euskadi.eus"
     
-    # Endpoints
+    # Endpoints base
     ENDPOINTS = {
         "air_quality_stations": "/air-quality/stations",
-        "air_quality_latest": "/air-quality/measurements",
         "pollen_species": "/pollen-quality/species",
-        "pollen_latest": "/pollen-quality/measurements",
         "water_mass_stations": "/watermass-quality/sampling-points",
-        "water_mass_latest": "/watermass-quality/measurements",
         "drinking_water_stations": "/water-quality/sampling-points",
-        "drinking_water_latest": "/water-quality/measurements",
         "euskalmet_forecast": "/euskalmet/weather/forecast/daily",
     }
 
@@ -38,21 +34,92 @@ class EuskadiOpenDataClient:
             logger.error(f"Error fetching from {endpoint_key}: {e}")
             return {}
 
-    def get_air_quality(self) -> List[Dict[str, Any]]:
-        """Obtiene las mediciones más recientes de calidad del aire."""
-        return self._get("air_quality_latest")
+    # --- Calidad del Aire (Air Quality) ---
+    
+    def get_air_quality_stations(self) -> List[Dict[str, Any]]:
+        """Obtiene la lista de estaciones de calidad del aire."""
+        res = self._get("air_quality_stations")
+        return res.get("features", [])
 
-    def get_pollen_levels(self) -> List[Dict[str, Any]]:
-        """Obtiene los niveles de polen actuales."""
-        return self._get("pollen_latest")
+    def get_air_quality_measurements(self, station_id: str, date_from: str, date_to: str) -> List[Dict[str, Any]]:
+        """
+        Obtiene las mediciones horarias de calidad del aire para una estación en un rango de fechas.
+        date_from y date_to deben tener formato 'YYYY-MM-DDTHH:MM' (ej: '2026-07-10T00:00').
+        """
+        url = f"{self.BASE_URL}/air-quality/measurements/hourly/stations/{station_id}/from/{date_from}/to/{date_to}"
+        try:
+            response = self.session.get(url, timeout=15)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"Error fetching air quality measurements for station {station_id}: {e}")
+            return []
 
-    def get_water_quality(self) -> List[Dict[str, Any]]:
-        """Obtiene la calidad de las masas de agua (URA)."""
-        return self._get("water_mass_latest")
+    # --- Polen (Pollen Quality) ---
 
-    def get_drinking_water(self) -> List[Dict[str, Any]]:
-        """Obtiene datos de la red de vigilancia de aguas de consumo."""
-        return self._get("drinking_water_latest")
+    def get_pollen_species(self) -> List[Dict[str, Any]]:
+        """Obtiene todas las especies de polen controladas."""
+        res = self._get("pollen_species")
+        return res if isinstance(res, list) else []
+
+    def get_pollen_measurements(self, date_from: str, date_to: str) -> List[Dict[str, Any]]:
+        """
+        Obtiene los niveles de polen de todos los municipios en un rango de fechas.
+        date_from y date_to deben tener formato 'YYYY-MM-DD'.
+        """
+        url = f"{self.BASE_URL}/pollen-quality/measurements/municipalities/from/{date_from}/to/{date_to}"
+        try:
+            response = self.session.get(url, timeout=15)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"Error fetching pollen measurements: {e}")
+            return []
+
+    # --- Calidad de Masas de Agua (URA) ---
+
+    def get_water_mass_sampling_points(self) -> List[Dict[str, Any]]:
+        """Obtiene los puntos de muestreo de calidad de masas de agua."""
+        res = self._get("water_mass_stations")
+        return res.get("features", [])
+
+    def get_water_mass_measurements(self, point_id: str, date_from: str, date_to: str) -> List[Dict[str, Any]]:
+        """
+        Obtiene las mediciones de calidad de aguas para un punto específico y rango de fechas.
+        date_from y date_to deben tener formato 'YYYY-MM-DD'.
+        """
+        url = f"{self.BASE_URL}/watermass-quality/measurements/sampling-points/{point_id}/from/{date_from}/to/{date_to}"
+        try:
+            response = self.session.get(url, timeout=15)
+            response.raise_for_status()
+            res_json = response.json()
+            return res_json.get("measurements", [])
+        except Exception as e:
+            logger.error(f"Error fetching water mass measurements for point {point_id}: {e}")
+            return []
+
+    # --- Aguas de Consumo (Drinking Water) ---
+
+    def get_drinking_water_sampling_points(self) -> List[Dict[str, Any]]:
+        """Obtiene los puntos de muestreo de aguas de consumo."""
+        res = self._get("drinking_water_stations")
+        return res.get("items", [])
+
+    def get_drinking_water_measurements(self, point_id: str, date_from: str, date_to: str) -> List[Dict[str, Any]]:
+        """
+        Obtiene las mediciones de aguas de consumo para un punto específico en un rango de fechas.
+        date_from y date_to deben tener formato 'YYYY-MM-DD'.
+        """
+        url = f"{self.BASE_URL}/water-quality/sampling-points/{point_id}/measurements/from/{date_from}/to/{date_to}"
+        try:
+            response = self.session.get(url, timeout=15)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"Error fetching drinking water measurements for point {point_id}: {e}")
+            return []
+
+    # --- Meteorología (Euskalmet) ---
 
     def get_weather_forecast(self) -> Dict[str, Any]:
         """
@@ -67,10 +134,11 @@ class EuskadiOpenDataClient:
                 "temp_min": 12
             }
         
-        # En una implementación real, aquí se gestionaría el JWT de Euskalmet
         headers = {"Authorization": f"Bearer {self.api_key}"}
         try:
-            response = requests.get(f"{self.BASE_URL}{self.ENDPOINTS['euskalmet_forecast']}", headers=headers)
+            response = requests.get(f"{self.BASE_URL}{self.ENDPOINTS['euskalmet_forecast']}", headers=headers, timeout=10)
             return response.json()
-        except:
+        except Exception as e:
+            logger.error(f"Euskalmet API failed: {e}")
             return {"status": "error", "message": "Euskalmet API failed"}
+

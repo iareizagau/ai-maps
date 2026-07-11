@@ -2,29 +2,14 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Docker: Compose Up",
+            "label": "Django: Run Command",
             "type": "shell",
-            "command": "docker compose up -d",
-            "group": "build",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Docker: Compose Down",
-            "type": "shell",
-            "command": "docker compose down",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Django: Make Migrations (Docker)",
-            "type": "shell",
-            "command": "docker compose exec web python manage.py makemigrations",
-            "group": "build",
+            "command": "python src/manage.py ${input:manageCommand}",
+            "options": {
+                "env": {
+                    "ENV": "${input:envSelect}"
+                }
+            },
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
@@ -32,10 +17,9 @@
             "problemMatcher": []
         },
         {
-            "label": "Django: Migrate (Docker)",
+            "label": "Django: Make Messages",
             "type": "shell",
-            "command": "docker compose exec web python manage.py migrate",
-            "group": "build",
+            "command": "cd src && python manage.py makemessages -l eu -l es -l en",
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
@@ -43,9 +27,9 @@
             "problemMatcher": []
         },
         {
-            "label": "Django: Make Messages (Docker)",
+            "label": "Django: Compile Messages",
             "type": "shell",
-            "command": "docker compose exec web python manage.py makemessages -l eu -l es -l en",
+            "command": "cd src && python manage.py compilemessages",
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
@@ -53,91 +37,43 @@
             "problemMatcher": []
         },
         {
-            "label": "Django: Compile Messages (Docker)",
+            "label": "Django: Seed All",
             "type": "shell",
-            "command": "docker compose exec web python manage.py compilemessages",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Django: Init Apps (Docker)",
-            "type": "shell",
-            "command": "docker compose exec web python manage.py init_apps",
+            "command": "cd src && python manage.py seed_pintxos && python manage.py seed_mock_data && python manage.py seed_inguru && python manage.py load_events && python manage.py load_sbk_events",
             "group": "build",
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
             },
             "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "envSelect",
+            "type": "pickString",
+            "description": "Selecciona el entorno (ENV)",
+            "options": [
+                "maps",
+                "estrata"
+            ],
+            "default": "maps"
         },
         {
-            "label": "Django: Seed Pintxos (Docker)",
-            "type": "shell",
-            "command": "docker compose exec web python manage.py seed_pintxos",
-            "group": "build",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Django: Seed Mock Data (Docker)",
-            "type": "shell",
-            "command": "docker compose exec web python manage.py seed_mock_data",
-            "group": "build",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Django: Seed Inguru (Docker)",
-            "type": "shell",
-            "command": "docker compose exec web python manage.py seed_inguru",
-            "group": "build",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Django: Load Events Kultur (Docker)",
-            "type": "shell",
-            "command": "docker compose exec web python manage.py load_events",
-            "group": "build",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Django: Load SBK Events (Docker)",
-            "type": "shell",
-            "command": "docker compose exec web python manage.py load_sbk_events",
-            "group": "build",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Django: Seed All (Docker)",
-            "type": "shell",
-            "command": "docker compose exec web bash -c \"python manage.py seed_pintxos && python manage.py seed_mock_data && python manage.py seed_inguru && python manage.py load_events && python manage.py load_sbk_events\"",
-            "group": "build",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
+            "id": "manageCommand",
+            "type": "pickString",
+            "description": "Comando de Django",
+            "options": [
+                "makemigrations",
+                "migrate",
+                "init_apps",
+                "seed_pintxos",
+                "seed_mock_data",
+                "seed_inguru",
+                "load_events",
+                "load_sbk_events"
+            ],
+            "default": "makemigrations"
         }
     ]
 }

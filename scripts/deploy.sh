@@ -17,7 +17,7 @@ export COMPOSE_DOCKER_CLI_BUILD=1
 COMPOSE="docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose.prod.yml"
 
 echo ">> Building web image (worker/beat reuse the same image tag)..."
-$COMPOSE build web
+$COMPOSE build web_estrata
 
 echo ">> Current commit: $(git rev-parse HEAD)"
 
@@ -32,13 +32,13 @@ for _ in {1..30}; do
 done
 
 echo ">> Running migrations..."
-$COMPOSE run --rm web python manage.py migrate --noinput
+$COMPOSE run --rm web_estrata python manage.py migrate --noinput
 
 echo ">> Initializing app registry..."
-$COMPOSE run --rm web python manage.py init_apps
+$COMPOSE run --rm web_estrata python manage.py init_apps
 
 echo ">> Initializing OAuth (Site + SocialApp)..."
-$COMPOSE run --rm web python manage.py init_oauth
+$COMPOSE run --rm web_estrata python manage.py init_oauth
 
 echo ">> Starting services..."
 $COMPOSE up -d --force-recreate --remove-orphans

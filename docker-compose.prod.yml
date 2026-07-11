@@ -1,6 +1,6 @@
 services:
   db:
-    container_name: maps_db_prod
+    container_name: ${COMPOSE_PROJECT_NAME:-maps}_db_prod
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-maps_db}
@@ -8,11 +8,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env.prod}
 
   redis:
-    container_name: maps_redis_prod
+    container_name: ${COMPOSE_PROJECT_NAME:-maps}_redis_prod
     restart: unless-stopped
 
-  web:
-    container_name: maps_web_prod
+  web_estrata:
+    container_name: ${COMPOSE_PROJECT_NAME:-maps}_web_estrata_prod
     restart: unless-stopped
     command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile - --error-logfile -
     ports:
@@ -21,9 +21,22 @@ services:
       - .env.prod
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.prod
+      ENV: estrata
+
+  web_maps:
+    container_name: ${COMPOSE_PROJECT_NAME:-maps}_web_maps_prod
+    restart: unless-stopped
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile - --error-logfile -
+    ports:
+      - "127.0.0.1:9060:8000"
+    env_file:
+      - .env.prod
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      ENV: maps
 
   worker:
-    container_name: maps_worker_prod
+    container_name: ${COMPOSE_PROJECT_NAME:-maps}_worker_prod
     restart: unless-stopped
     env_file:
       - .env.prod
@@ -31,7 +44,7 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings.prod
 
   beat:
-    container_name: maps_beat_prod
+    container_name: ${COMPOSE_PROJECT_NAME:-maps}_beat_prod
     restart: unless-stopped
     env_file:
       - .env.prod

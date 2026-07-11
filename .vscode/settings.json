@@ -15,5 +15,7 @@
         "**/node_modules": true
     },
     "editor.formatOnSave": true,
-    "python.formatting.provider": "black"
+    "python.formatting.provider": "black",
+    "python.defaultInterpreterPath": "/usr/local/bin/python"
 }
+

@@ -1,0 +1,48 @@
+{
+  "name": "Maps - Dev Container",
+  "dockerComposeFile": [
+    "../docker-compose.yml",
+    "../docker-compose.override.yml",
+    "docker-compose.devcontainer.yml"
+  ],
+  "service": "web",
+  "workspaceFolder": "/workspace",
+  "remoteUser": "root",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "version": "latest",
+      "moby": true,
+      "installDockerBuildx": true,
+      "installDockerComposeSwitch": true
+    }
+  },
+  "forwardPorts": [9000, 9001, 9002, 9003, 5678],
+  "portsAttributes": {
+    "9000": { "label": "Django Web (maps)" },
+    "9001": { "label": "Django Web (estrata)" },
+    "9002": { "label": "Django Web (extra)" },
+    "9003": { "label": "Django Web (extra)" },
+    "5678": { "label": "Django Debugpy" }
+  },
+  "shutdownAction": "stopCompose",
+  "postCreateCommand": "cd /app && python manage.py migrate --noinput && python manage.py init_apps",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.debugpy",
+        "batisteo.vscode-django",
+        "anthropic.claude-code",
+        "ms-azuretools.vscode-containers",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.makefile-tools",
+        "mechatroner.rainbow-csv"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "files.eol": "\n",
+        "python.defaultInterpreterPath": "/usr/local/bin/python"
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    # Tag distinto para no pisar `maps-app:latest` (que usan worker/beat en modo
+    # normal). El Dockerfile del devcontainer hace `FROM maps-app:latest`, así
+    # que asegúrate de haberlo construido antes: `docker compose build web`.
+    image: maps-app:dev
+    command: sleep infinity
+    volumes:
+      # Además del mount `./src:/app` que ya trae docker-compose.override.yml,
+      # exponemos el repo entero como workspace para que VS Code vea .devcontainer,
+      # scripts/, docker-compose.yml, etc.
+      # NOTA: las rutas relativas en ficheros `-f` de compose se resuelven contra
+      # el PRIMER `-f` (docker-compose.yml en maps/), no contra este fichero.
+      # Por eso `.` = maps/, no `.devcontainer/`.
+      - .:/workspace
+    ports:
+      - "5678:5678"

@@ -2,184 +2,109 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Django: Docker Debug",
+            "name": "Django: Run Server (Select ENV+Port)",
             "type": "debugpy",
-            "request": "attach",
-            "connect": {
-                "host": "localhost",
-                "port": 5678
-            },
-            "pathMappings": [
-                {
-                    "localRoot": "${workspaceFolder}/src",
-                    "remoteRoot": "/app"
-                }
+            "request": "launch",
+            "python": "/usr/local/bin/python",
+            "program": "${workspaceFolder}/src/manage.py",
+            "args": [
+                "runserver",
+                "0.0.0.0:${input:portSelect}"
             ],
             "django": true,
             "justMyCode": true,
-            "preLaunchTask": "Docker: Compose Up"
+            "env": {
+                "ENV": "${input:envSelect}"
+            }
         },
         {
-            "name": "Django: Make Migrations (Docker)",
+            "name": "Django: Run Server (Maps :9900)",
             "type": "debugpy",
-            "request": "attach",
-            "connect": {
-                "host": "localhost",
-                "port": 5678
-            },
-            "pathMappings": [
-                {
-                    "localRoot": "${workspaceFolder}/src",
-                    "remoteRoot": "/app"
-                }
+            "request": "launch",
+            "python": "/usr/local/bin/python",
+            "program": "${workspaceFolder}/src/manage.py",
+            "args": [
+                "runserver",
+                "0.0.0.0:9900"
             ],
             "django": true,
             "justMyCode": true,
-            "preLaunchTask": "Django: Make Migrations (Docker)"
+            "env": {
+                "ENV": "maps"
+            }
         },
         {
-            "name": "Django: Migrate (Docker)",
+            "name": "Django: Run Server (Estrata :9000)",
             "type": "debugpy",
-            "request": "attach",
-            "connect": {
-                "host": "localhost",
-                "port": 5678
-            },
-            "pathMappings": [
-                {
-                    "localRoot": "${workspaceFolder}/src",
-                    "remoteRoot": "/app"
-                }
+            "request": "launch",
+            "python": "/usr/local/bin/python",
+            "program": "${workspaceFolder}/src/manage.py",
+            "args": [
+                "runserver",
+                "0.0.0.0:9000"
             ],
             "django": true,
             "justMyCode": true,
-            "preLaunchTask": "Django: Migrate (Docker)"
+            "env": {
+                "ENV": "estrata"
+            }
         },
         {
-            "name": "Django: Init Apps (Docker)",
+            "name": "Django: Run Management Command",
             "type": "debugpy",
-            "request": "attach",
-            "connect": {
-                "host": "localhost",
-                "port": 5678
-            },
-            "pathMappings": [
-                {
-                    "localRoot": "${workspaceFolder}/src",
-                    "remoteRoot": "/app"
-                }
+            "request": "launch",
+            "python": "/usr/local/bin/python",
+            "program": "${workspaceFolder}/src/manage.py",
+            "args": [
+                "${input:manageCommand}"
             ],
             "django": true,
             "justMyCode": true,
-            "preLaunchTask": "Django: Init Apps (Docker)"
+            "env": {
+                "ENV": "${input:envSelect}"
+            }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "envSelect",
+            "type": "pickString",
+            "description": "Selecciona el entorno (ENV)",
+            "options": [
+                "maps",
+                "estrata"
+            ],
+            "default": "maps"
         },
         {
-            "name": "Django: Seed Pintxos (Docker)",
-            "type": "debugpy",
-            "request": "attach",
-            "connect": {
-                "host": "localhost",
-                "port": 5678
-            },
-            "pathMappings": [
-                {
-                    "localRoot": "${workspaceFolder}/src",
-                    "remoteRoot": "/app"
-                }
+            "id": "portSelect",
+            "type": "pickString",
+            "description": "Puerto de runserver",
+            "options": [
+                "9900",
+                "9000",
+                "9001",
+                "9002",
+                "9003"
             ],
-            "django": true,
-            "justMyCode": true,
-            "preLaunchTask": "Django: Seed Pintxos (Docker)"
+            "default": "9900"
         },
         {
-            "name": "Django: Seed Mock Data (Docker)",
-            "type": "debugpy",
-            "request": "attach",
-            "connect": {
-                "host": "localhost",
-                "port": 5678
-            },
-            "pathMappings": [
-                {
-                    "localRoot": "${workspaceFolder}/src",
-                    "remoteRoot": "/app"
-                }
+            "id": "manageCommand",
+            "type": "pickString",
+            "description": "Comando de Django",
+            "options": [
+                "makemigrations",
+                "migrate",
+                "init_apps",
+                "seed_pintxos",
+                "seed_mock_data",
+                "seed_inguru",
+                "load_events",
+                "load_sbk_events",
+                "shell"
             ],
-            "django": true,
-            "justMyCode": true,
-            "preLaunchTask": "Django: Seed Mock Data (Docker)"
-        },
-        {
-            "name": "Django: Seed Inguru (Docker)",
-            "type": "debugpy",
-            "request": "attach",
-            "connect": {
-                "host": "localhost",
-                "port": 5678
-            },
-            "pathMappings": [
-                {
-                    "localRoot": "${workspaceFolder}/src",
-                    "remoteRoot": "/app"
-                }
-            ],
-            "django": true,
-            "justMyCode": true,
-            "preLaunchTask": "Django: Seed Inguru (Docker)"
-        },
-        {
-            "name": "Django: Load Events Kultur (Docker)",
-            "type": "debugpy",
-            "request": "attach",
-            "connect": {
-                "host": "localhost",
-                "port": 5678
-            },
-            "pathMappings": [
-                {
-                    "localRoot": "${workspaceFolder}/src",
-                    "remoteRoot": "/app"
-                }
-            ],
-            "django": true,
-            "justMyCode": true,
-            "preLaunchTask": "Django: Load Events Kultur (Docker)"
-        },
-        {
-            "name": "Django: Load SBK Events (Docker)",
-            "type": "debugpy",
-            "request": "attach",
-            "connect": {
-                "host": "localhost",
-                "port": 5678
-            },
-            "pathMappings": [
-                {
-                    "localRoot": "${workspaceFolder}/src",
-                    "remoteRoot": "/app"
-                }
-            ],
-            "django": true,
-            "justMyCode": true,
-            "preLaunchTask": "Django: Load SBK Events (Docker)"
-        },
-        {
-            "name": "Django: Seed All (Docker)",
-            "type": "debugpy",
-            "request": "attach",
-            "connect": {
-                "host": "localhost",
-                "port": 5678
-            },
-            "pathMappings": [
-                {
-                    "localRoot": "${workspaceFolder}/src",
-                    "remoteRoot": "/app"
-                }
-            ],
-            "django": true,
-            "justMyCode": true,
-            "preLaunchTask": "Django: Seed All (Docker)"
+            "default": "makemigrations"
         }
     ]
 }

@@ -1150,29 +1150,37 @@
       </span>
     </button>
 
+    {# ── Backdrop (Mobile) ── #}
+    <div
+      x-data="{ open: false }"
+      x-show="open"
+      @toggle-assistant.window="open = $event.detail.open"
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+      @click="$dispatch('toggle-assistant', { open: false })"
+      class="fixed inset-0 z-[190] lg:hidden"
+      style="background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);"
+      x-cloak
+    ></div>
+
     {# ════════════ AI ASSISTANT PANEL ════════════ #}
     <div x-data="advisorAssistant()"
          x-show="open"
+         x-transition:enter="transition-transform ease-out duration-300"
+         x-transition:enter-start="translate-y-full lg:translate-x-full lg:translate-y-0"
+         x-transition:enter-end="translate-y-0 lg:translate-x-0"
+         x-transition:leave="transition-transform ease-in duration-200"
+         x-transition:leave-start="translate-y-0 lg:translate-x-0"
+         x-transition:leave-end="translate-y-full lg:translate-x-full lg:translate-y-0"
          x-cloak
          @keydown.escape.window="open && closePanel()"
          @toggle-assistant.window="open = $event.detail.open"
          class="fixed bottom-0 right-0 z-[195] w-full sm:w-[440px] lg:relative lg:bottom-auto lg:right-auto lg:z-[10] lg:w-[35%] lg:shrink-0 lg:sticky lg:top-24 lg:self-start flex flex-col"
          style="height: clamp(400px, 82vh, 680px);">
-
-  {# ── Backdrop ── #}
-  <div
-    x-show="open"
-    x-transition:enter="transition ease-out duration-200"
-    x-transition:enter-start="opacity-0"
-    x-transition:enter-end="opacity-100"
-    x-transition:leave="transition ease-in duration-150"
-    x-transition:leave-start="opacity-100"
-    x-transition:leave-end="opacity-0"
-    @click="closePanel()"
-    class="fixed inset-0 z-[190] lg:hidden"
-    style="background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);"
-    x-cloak
-  ></div>
 
   {# ── Slide-over panel ── #}
   <aside
@@ -1327,15 +1335,6 @@
   .htmx-request .htmx-indicator { opacity: 1; }
   .htmx-request.htmx-indicator { opacity: 1; }
   [x-cloak] { display: none !important; }
-
-  /* ── Panel slide transition ── */
-  #advisor-assist-panel {
-    transition: transform 0.3s cubic-bezier(0.32,0.72,0,1), opacity 0.25s ease;
-  }
-  #advisor-assist-panel[style*="display: none"] {
-    transform: translateX(100%);
-    opacity: 0;
-  }
 
   /* ── Panel background — deep dark glassmorphism ── */
   .assist-panel-bg {

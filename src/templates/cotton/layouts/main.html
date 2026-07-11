@@ -138,12 +138,20 @@
             .premium-popup {
                 @apply bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-700 shadow-2xl rounded-xl;
             }
+            
+            /* Leaflet mobile offset for bottom navigation dock */
+            @media (max-width: 767px) {
+                .leaflet-bottom.leaflet-right,
+                .leaflet-bottom.leaflet-left {
+                    bottom: 92px !important;
+                }
+            }
         }
     </style>
     
     {{ extra_head }}
 </head>
-<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' class="bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-slate-200 font-sans antialiased selection:bg-primary/30 selection:text-white transition-colors duration-300">
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' class="bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-slate-200 font-sans antialiased selection:bg-primary/30 selection:text-white transition-colors duration-300 pb-24 md:pb-0">
     
     <div class="min-h-screen flex flex-col">
         <!-- Navigation -->
@@ -157,6 +165,9 @@
         <!-- Footer -->
         <c-organisms.footer />
     </div>
+
+    <!-- Mobile Navigation Dock -->
+    <c-organisms.navbar_dock />
 
     {{ extra_js }}
 </body>

@@ -1,0 +1,142 @@
+{% load i18n %}
+<div x-data="{ moreMenuOpen: false }" class="md:hidden">
+    <!-- Bottom Dock -->
+    <div class="fixed bottom-5 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border border-slate-200/50 dark:border-white/10 shadow-[0_15px_30px_-5px_rgba(0,0,0,0.15)] dark:shadow-[0_15px_30px_-5px_rgba(0,0,0,0.5)] rounded-2xl px-2 py-2 flex justify-between items-center transition-all duration-300">
+        <!-- Inicio -->
+        <a href="/" class="flex flex-col items-center justify-center flex-1 py-1.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary active:scale-95 transition-all">
+            <i data-lucide="home" class="w-5 h-5"></i>
+            <span class="text-[10px] font-bold mt-1">{% trans "Inicio" %}</span>
+        </a>
+        <!-- Bidaiak -->
+        <a href="/bidaiak/" class="flex flex-col items-center justify-center flex-1 py-1.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary active:scale-95 transition-all">
+            <i data-lucide="compass" class="w-5 h-5"></i>
+            <span class="text-[10px] font-bold mt-1">Bidaiak</span>
+        </a>
+        <!-- Pintxos -->
+        <a href="/pintxos/" class="flex flex-col items-center justify-center flex-1 py-1.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary active:scale-95 transition-all">
+            <i data-lucide="utensils" class="w-5 h-5"></i>
+            <span class="text-[10px] font-bold mt-1">Pintxos</span>
+        </a>
+        <!-- Más Trigger -->
+        <button @click="moreMenuOpen = true" class="flex flex-col items-center justify-center flex-1 py-1.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary active:scale-95 transition-all">
+            <i data-lucide="grid" class="w-5 h-5"></i>
+            <span class="text-[10px] font-bold mt-1">{% trans "Más" %}</span>
+        </button>
+    </div>
+
+    <!-- Bottom Sheet Modal Backdrop -->
+    <div x-show="moreMenuOpen"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click="moreMenuOpen = false"
+         class="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-45"
+         x-cloak>
+    </div>
+
+    <!-- Bottom Sheet Modal Content -->
+    <div x-show="moreMenuOpen"
+         x-transition:enter="transition ease-out duration-300 transform"
+         x-transition:enter-start="translate-y-full"
+         x-transition:enter-end="translate-y-0"
+         x-transition:leave="transition ease-in duration-200 transform"
+         x-transition:leave-start="translate-y-0"
+         x-transition:leave-end="translate-y-full"
+         class="fixed bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-white/10 rounded-t-3xl shadow-2xl z-50 px-5 pt-4 pb-8"
+         x-cloak>
+         
+        <!-- Header / Handle -->
+        <div class="flex flex-col items-center mb-6">
+            <div class="w-12 h-1 bg-slate-200 dark:bg-white/15 rounded-full mb-3 cursor-pointer" @click="moreMenuOpen = false"></div>
+            <h3 class="text-sm font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{% trans "Menú de Navegación" %}</h3>
+        </div>
+
+        <!-- Apps Grid -->
+        <div class="grid grid-cols-3 gap-3 mb-6">
+            <!-- Kultur -->
+            <a href="/kultur/" class="flex flex-col items-center p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 active:scale-95 transition-all text-center">
+                <span class="w-9 h-9 rounded-xl flex items-center justify-center bg-violet-500/10 text-violet-500 dark:text-violet-400 mb-2">
+                    <i data-lucide="music" class="w-5 h-5"></i>
+                </span>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Kultur</span>
+            </a>
+            <!-- SBK -->
+            <a href="/sbk/" class="flex flex-col items-center p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 active:scale-95 transition-all text-center">
+                <span class="w-9 h-9 rounded-xl flex items-center justify-center bg-pink-500/10 text-pink-500 dark:text-pink-400 mb-2">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                </span>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-200">SBK</span>
+            </a>
+            <!-- Inguru -->
+            <a href="/inguru/" class="flex flex-col items-center p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 active:scale-95 transition-all text-center">
+                <span class="w-9 h-9 rounded-xl flex items-center justify-center bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 mb-2">
+                    <i data-lucide="leaf" class="w-5 h-5"></i>
+                </span>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Inguru</span>
+            </a>
+            <!-- Gailur -->
+            <a href="/gailur/" class="flex flex-col items-center p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 active:scale-95 transition-all text-center">
+                <span class="w-9 h-9 rounded-xl flex items-center justify-center bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mb-2">
+                    <i data-lucide="mountain" class="w-5 h-5"></i>
+                </span>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Gailur</span>
+            </a>
+            <!-- Adventure -->
+            <a href="/adventure/" class="flex flex-col items-center p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 active:scale-95 transition-all text-center">
+                <span class="w-9 h-9 rounded-xl flex items-center justify-center bg-amber-500/10 text-amber-600 dark:text-amber-400 mb-2">
+                    <i data-lucide="compass" class="w-5 h-5"></i>
+                </span>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Adventure</span>
+            </a>
+            <!-- ZBE -->
+            <a href="/zbe/" class="flex flex-col items-center p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 active:scale-95 transition-all text-center">
+                <span class="w-9 h-9 rounded-xl flex items-center justify-center bg-green-500/10 text-green-600 dark:text-green-400 mb-2">
+                    <i data-lucide="car" class="w-5 h-5"></i>
+                </span>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-200">ZBE</span>
+            </a>
+        </div>
+
+        <!-- Quick actions (Theme & Language) -->
+        <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-2xl mb-6">
+            <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{% trans "Preferencia visual y de idioma" %}</span>
+            <div class="flex items-center gap-4">
+                <c-molecules.language_selector />
+                <c-molecules.theme_toggle />
+            </div>
+        </div>
+
+        <!-- User / Auth Section -->
+        <div class="border-t border-slate-100 dark:border-white/5 pt-5">
+            {% if user.is_authenticated %}
+                <div class="flex items-center justify-between p-3 bg-primary/10 border border-primary/20 rounded-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-white shadow-md">
+                            {{ user.username|first|upper }}
+                        </div>
+                        <div class="text-left">
+                            <p class="text-[10px] font-black uppercase tracking-widest text-primary">{% trans "Sesión iniciada" %}</p>
+                            <p class="text-sm font-bold text-slate-800 dark:text-white">{{ user.username }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a href="{% url 'account_identity' %}" class="w-8 h-8 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-white/5 active:scale-95 transition-all">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                        </a>
+                        <a href="/accounts/logout/" class="w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center active:scale-95 transition-all">
+                            <i data-lucide="log-out" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+            {% else %}
+                <a href="/accounts/login/" class="flex items-center justify-center w-full py-3.5 bg-primary text-white rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 active:scale-98 transition-all">
+                    <i data-lucide="log-in" class="w-4 h-4 mr-2"></i>
+                    {% trans "Iniciar Sesión" %}
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>

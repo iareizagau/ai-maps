@@ -19,6 +19,59 @@
         </div>
     </div>
 
+    <!-- Scroll Safe Lock Overlay (Mobile only) -->
+    <div x-show="isLocked" 
+         @click="unlock()"
+         class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/20 dark:bg-slate-950/40 backdrop-blur-[1px] cursor-pointer sm:hidden text-center p-4 transition-all duration-300"
+         x-cloak>
+        <div class="glass px-4 py-2.5 rounded-full border border-white/20 flex items-center gap-2 text-slate-800 dark:text-white shadow-lg active:scale-95 transition-all">
+            <i data-lucide="map" class="w-4 h-4 text-primary"></i>
+            <span class="text-[10px] font-black uppercase tracking-widest">{% trans "Toca para explorar el mapa" %}</span>
+        </div>
+    </div>
+
+    <!-- Bottom Sheet Details (Mobile only) -->
+    <div x-show="selectedPoint && !isLocked"
+         x-transition:enter="transition ease-out duration-300 transform"
+         x-transition:enter-start="translate-y-full"
+         x-transition:enter-end="translate-y-0"
+         x-transition:leave="transition ease-in duration-200 transform"
+         x-transition:leave-start="translate-y-0"
+         x-transition:leave-end="translate-y-full"
+         class="absolute bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-white/10 rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.15)] px-5 pt-4 pb-6 sm:hidden text-left"
+         x-cloak>
+        
+        <!-- Handle bar -->
+        <div class="flex justify-center mb-4">
+            <div class="w-10 h-1 bg-slate-200 dark:bg-white/15 rounded-full cursor-pointer" @click="selectedPoint = null"></div>
+        </div>
+
+        <!-- Close button -->
+        <button @click="selectedPoint = null" class="absolute top-4 right-4 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors" aria-label="{% trans 'Cerrar' %}">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+        
+        <template x-if="selectedPoint">
+            <div>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="w-6.5 h-6.5 rounded-lg flex items-center justify-center shrink-0"
+                          :style="`background-color: ${selectedPoint.accent}20; color: ${selectedPoint.accent};`">
+                        <i :data-lucide="selectedPoint.icon || 'map-pin'" class="w-3.5 h-3.5"></i>
+                    </span>
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400" x-text="selectedPoint.app_name"></span>
+                </div>
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white leading-snug" x-text="selectedPoint.headline"></h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed" x-text="selectedPoint.subline"></p>
+                
+                <a :href="selectedPoint.url" class="inline-flex items-center justify-center w-full py-3 mt-4 rounded-xl text-xs font-bold text-white transition-all text-center shadow-md active:scale-98"
+                   :style="`background-color: ${selectedPoint.accent};`">
+                    {% trans "Ver detalle" %}
+                    <i data-lucide="arrow-right" class="w-3.5 h-3.5 ml-1"></i>
+                </a>
+            </div>
+        </template>
+    </div>
+
     <!-- Sin datos: fallback overlay -->
     <template x-if="!points || points.length === 0">
         <div class="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
@@ -72,6 +125,8 @@ function liveMap(initialPoints) {
         map: null,
         points: initialPoints,
         initialized: false,
+        isLocked: true,
+        selectedPoint: null,
 
         init() {
             // Esperar a Leaflet (cargado en extra_head de home.html)
@@ -88,10 +143,15 @@ function liveMap(initialPoints) {
             if (this.initialized) return;
             this.initialized = true;
 
+            const isMobile = L.Browser.mobile;
+            this.isLocked = isMobile;
+
             this.map = L.map('home-live-map', {
                 scrollWheelZoom: false,
                 zoomControl: false,
                 attributionControl: false,
+                dragging: !isMobile,
+                tap: !isMobile,
             }).setView([43.05, -2.4], 8);
 
             // CartoDB Voyager — limpio, sin API key, gratis para uso razonable
@@ -106,12 +166,30 @@ function liveMap(initialPoints) {
 
             this.renderMarkers();
 
+            // Cerrar bottom sheet al pulsar fuera del marcador
+            this.map.on('click', () => {
+                this.selectedPoint = null;
+            });
+
             setTimeout(() => this.map.invalidateSize(), 300);
+        },
+
+        unlock() {
+            this.isLocked = false;
+            if (this.map) {
+                this.map.dragging.enable();
+                if (this.map.tap) this.map.tap.enable();
+            }
+            // Volver a renderizar iconos en caso de que se abran diálogos
+            setTimeout(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, 50);
         },
 
         renderMarkers() {
             if (!this.points || this.points.length === 0) return;
 
+            const isMobile = L.Browser.mobile;
             const markers = [];
             this.points.forEach((p) => {
                 if (p.lat == null || p.lon == null) return;
@@ -124,19 +202,31 @@ function liveMap(initialPoints) {
                 });
 
                 const marker = L.marker([p.lat, p.lon], { icon }).addTo(this.map);
-                const sublineHtml = p.subline
-                    ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${this.escape(p.subline)}</p>`
-                    : '';
-                marker.bindPopup(`
-                    <div class="px-3 py-2 min-w-[180px]">
-                        <p class="text-[9px] font-black uppercase tracking-widest mb-1" style="color: ${p.accent}">${this.escape(p.app_name)}</p>
-                        <p class="text-sm font-bold text-slate-900 dark:text-white leading-snug">${this.escape(p.headline)}</p>
-                        ${sublineHtml}
-                        <a href="${p.url}" class="inline-flex items-center gap-1 mt-2 text-[10px] font-black uppercase tracking-widest" style="color: ${p.accent}">
-                            {% trans "Ver" %} →
-                        </a>
-                    </div>
-                `, { className: 'pulse-popup', maxWidth: 260, closeButton: false });
+                
+                if (isMobile) {
+                    marker.on('click', (e) => {
+                        this.selectedPoint = p;
+                        L.DomEvent.stopPropagation(e);
+                        // Asegurar que Lucide renderice los iconos dentro del bottom sheet
+                        setTimeout(() => {
+                            if (window.lucide) window.lucide.createIcons();
+                        }, 50);
+                    });
+                } else {
+                    const sublineHtml = p.subline
+                        ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${this.escape(p.subline)}</p>`
+                        : '';
+                    marker.bindPopup(`
+                        <div class="px-3 py-2 min-w-[180px]">
+                            <p class="text-[9px] font-black uppercase tracking-widest mb-1" style="color: ${p.accent}">${this.escape(p.app_name)}</p>
+                            <p class="text-sm font-bold text-slate-900 dark:text-white leading-snug">${this.escape(p.headline)}</p>
+                            ${sublineHtml}
+                            <a href="${p.url}" class="inline-flex items-center gap-1 mt-2 text-[10px] font-black uppercase tracking-widest" style="color: ${p.accent}">
+                                {% trans "Ver" %} →
+                            </a>
+                        </div>
+                    `, { className: 'pulse-popup', maxWidth: 260, closeButton: false });
+                }
 
                 markers.push(marker);
             });

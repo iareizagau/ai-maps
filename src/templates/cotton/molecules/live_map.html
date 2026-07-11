@@ -195,12 +195,17 @@ function liveMap(initialPoints) {
             this.isLocked = isMobile;
 
             this.map = L.map('home-live-map', {
-                scrollWheelZoom: false,
+                scrollWheelZoom: true,
                 zoomControl: false,
                 attributionControl: false,
                 dragging: !isMobile,
                 tap: !isMobile,
+                touchZoom: true,
+                doubleClickZoom: true,
             }).setView([43.05, -2.4], 8);
+
+            // Add standard Leaflet zoom buttons in the top-right corner to avoid overlaps
+            L.control.zoom({ position: 'topright' }).addTo(this.map);
 
             // CartoDB Voyager — limpio, sin API key, gratis para uso razonable
             L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -230,6 +235,8 @@ function liveMap(initialPoints) {
             if (this.map) {
                 this.map.dragging.enable();
                 if (this.map.tap) this.map.tap.enable();
+                if (this.map.touchZoom) this.map.touchZoom.enable();
+                if (this.map.doubleClickZoom) this.map.doubleClickZoom.enable();
             }
             // Volver a renderizar iconos en caso de que se abran diálogos
             setTimeout(() => {
@@ -258,85 +265,79 @@ function liveMap(initialPoints) {
                 // Filter by category
                 if (this.activeFilter !== 'all' && p.category !== this.activeFilter) return;
 
-                // Render ZBE polygon geometry
+                // Render ZBE polygon geometry (always drawn if visible)
                 if (p.category === 'zbe') {
-                    if (this.activeFilter === 'zbe') {
-                        // Render full polygon boundaries
-                        const zbeLayer = L.geoJSON(p.geojson, {
-                            style: {
-                                color: p.accent,
-                                fillColor: p.accent,
-                                fillOpacity: 0.25,
-                                weight: 2.5,
-                                dashArray: '5, 5'
-                            }
-                        }).addTo(this.markerGroup);
-
-                        if (isMobile) {
-                            zbeLayer.on('click', (e) => {
-                                this.selectedPoint = p;
-                                L.DomEvent.stopPropagation(e);
-                                setTimeout(() => {
-                                    if (window.lucide) window.lucide.createIcons();
-                                }, 50);
-                            });
-                        } else {
-                            zbeLayer.bindPopup(`
-                                <div class="px-3 py-2 min-w-[180px]">
-                                    <p class="text-[9px] font-black uppercase tracking-widest mb-1" style="color: ${p.accent}">${this.escape(p.app_name)}</p>
-                                    <p class="text-sm font-bold text-slate-900 dark:text-white leading-snug">${this.escape(p.headline)}</p>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${this.escape(p.subline)}</p>
-                                    <a href="${p.url}" class="inline-flex items-center gap-1 mt-2 text-[10px] font-black uppercase tracking-widest" style="color: ${p.accent}">
-                                        {% trans "Ver" %} →
-                                    </a>
-                                </div>
-                            `, { className: 'pulse-popup', maxWidth: 260, closeButton: false });
+                    // Always render full polygon boundaries
+                    const zbeLayer = L.geoJSON(p.geojson, {
+                        style: {
+                            color: p.accent,
+                            fillColor: p.accent,
+                            fillOpacity: 0.25,
+                            weight: 2.5,
+                            dashArray: '5, 5'
                         }
+                    }).addTo(this.markerGroup);
 
-                        // Add invisible marker at centroid for fitBounds calculation
-                        const marker = L.marker([p.lat, p.lon], { opacity: 0 }).addTo(this.markerGroup);
-                        markers.push(marker);
-                    } else {
-                        // In "all" mode, just show a standard warning pin at the centroid to avoid clutter
-                        const icon = L.divIcon({
-                            className: '',
-                            html: `
-                                <div class="relative flex items-center justify-center">
-                                    <div class="absolute -inset-1.5 rounded-full opacity-30 animate-ping" style="background-color: ${p.accent};"></div>
-                                    <div class="relative w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 shadow-md flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95" style="background-color: ${p.accent};">
-                                        <i data-lucide="${p.icon || 'map-pin'}" class="w-3.5 h-3.5 text-white"></i>
-                                    </div>
-                                </div>
-                            `,
-                            iconSize: [28, 28],
-                            iconAnchor: [14, 14],
+                    if (isMobile) {
+                        zbeLayer.on('click', (e) => {
+                            this.selectedPoint = p;
+                            L.DomEvent.stopPropagation(e);
+                            setTimeout(() => {
+                                if (window.lucide) window.lucide.createIcons();
+                            }, 50);
                         });
-
-                        const marker = L.marker([p.lat, p.lon], { icon }).addTo(this.markerGroup);
-                        
-                        if (isMobile) {
-                            marker.on('click', (e) => {
-                                this.selectedPoint = p;
-                                L.DomEvent.stopPropagation(e);
-                                setTimeout(() => {
-                                    if (window.lucide) window.lucide.createIcons();
-                                }, 50);
-                            });
-                        } else {
-                            marker.bindPopup(`
-                                <div class="px-3 py-2 min-w-[180px]">
-                                    <p class="text-[9px] font-black uppercase tracking-widest mb-1" style="color: ${p.accent}">${this.escape(p.app_name)}</p>
-                                    <p class="text-sm font-bold text-slate-900 dark:text-white leading-snug">${this.escape(p.headline)}</p>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${this.escape(p.subline)}</p>
-                                    <a href="${p.url}" class="inline-flex items-center gap-1 mt-2 text-[10px] font-black uppercase tracking-widest" style="color: ${p.accent}">
-                                        {% trans "Ver" %} →
-                                    </a>
-                                </div>
-                            `, { className: 'pulse-popup', maxWidth: 260, closeButton: false });
-                        }
-
-                        markers.push(marker);
+                    } else {
+                        zbeLayer.bindPopup(`
+                            <div class="px-3 py-2 min-w-[180px]">
+                                <p class="text-[9px] font-black uppercase tracking-widest mb-1" style="color: ${p.accent}">${this.escape(p.app_name)}</p>
+                                <p class="text-sm font-bold text-slate-900 dark:text-white leading-snug">${this.escape(p.headline)}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${this.escape(p.subline)}</p>
+                                <a href="${p.url}" class="inline-flex items-center gap-1 mt-2 text-[10px] font-black uppercase tracking-widest" style="color: ${p.accent}">
+                                    {% trans "Ver" %} →
+                                </a>
+                            </div>
+                        `, { className: 'pulse-popup', maxWidth: 260, closeButton: false });
                     }
+
+                    // Add visible centroid warning marker
+                    const icon = L.divIcon({
+                        className: '',
+                        html: `
+                            <div class="relative flex items-center justify-center">
+                                <div class="absolute -inset-1.5 rounded-full opacity-35 animate-ping" style="background-color: ${p.accent};"></div>
+                                <div class="relative w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 shadow-md flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95" style="background-color: ${p.accent};">
+                                    <i data-lucide="${p.icon || 'map-pin'}" class="w-3.5 h-3.5 text-white"></i>
+                                </div>
+                            </div>
+                        `,
+                        iconSize: [28, 28],
+                        iconAnchor: [14, 14],
+                    });
+
+                    const marker = L.marker([p.lat, p.lon], { icon }).addTo(this.markerGroup);
+                    
+                    if (isMobile) {
+                        marker.on('click', (e) => {
+                            this.selectedPoint = p;
+                            L.DomEvent.stopPropagation(e);
+                            setTimeout(() => {
+                                if (window.lucide) window.lucide.createIcons();
+                            }, 50);
+                        });
+                    } else {
+                        marker.bindPopup(`
+                            <div class="px-3 py-2 min-w-[180px]">
+                                <p class="text-[9px] font-black uppercase tracking-widest mb-1" style="color: ${p.accent}">${this.escape(p.app_name)}</p>
+                                <p class="text-sm font-bold text-slate-900 dark:text-white leading-snug">${this.escape(p.headline)}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${this.escape(p.subline)}</p>
+                                <a href="${p.url}" class="inline-flex items-center gap-1 mt-2 text-[10px] font-black uppercase tracking-widest" style="color: ${p.accent}">
+                                    {% trans "Ver" %} →
+                                </a>
+                            </div>
+                        `, { className: 'pulse-popup', maxWidth: 260, closeButton: false });
+                    }
+
+                    markers.push(marker);
                 } else {
                     // Regular category markers
                     const icon = L.divIcon({

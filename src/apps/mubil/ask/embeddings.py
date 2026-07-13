@@ -19,7 +19,6 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass
-from typing import List, Optional
 
 from django.conf import settings
 
@@ -31,7 +30,7 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------- config
 
 EMBEDDING_DIM = 768
-DEFAULT_THROTTLE_S = 0.6   # ~100 RPM free-tier ceiling on gemini-embedding-001
+DEFAULT_THROTTLE_S = 0.6  # ~100 RPM free-tier ceiling on gemini-embedding-001
 DEFAULT_BATCH_SIZE = 50
 MAX_INPUT_CHARS = 8000
 
@@ -79,7 +78,7 @@ def _configure_genai():
     return genai.Client(api_key=settings.GEMINI_API_KEY)
 
 
-def _normalize(vec: List[float]) -> List[float]:
+def _normalize(vec: list[float]) -> list[float]:
     """Unit-normalize. gemini-embedding-001 only normalizes the full 3072d
     output; truncated MRL vectors must be normalized by the caller for cosine
     similarity to behave as expected.
@@ -90,7 +89,7 @@ def _normalize(vec: List[float]) -> List[float]:
     return [v / norm for v in vec]
 
 
-def embed_text(text: str, *, task_type: str = "RETRIEVAL_DOCUMENT") -> List[float]:
+def embed_text(text: str, *, task_type: str = "RETRIEVAL_DOCUMENT") -> list[float]:
     """Call Gemini embedding model for a single text.
 
     Args:
@@ -129,7 +128,7 @@ def embed_corpus(
     *,
     batch_size: int = DEFAULT_BATCH_SIZE,
     throttle_s: float = DEFAULT_THROTTLE_S,
-    limit: Optional[int] = None,
+    limit: int | None = None,
     dry_run: bool = False,
 ) -> EmbedStats:
     """Embed every MobilityDocument whose `embedding` is null.
@@ -162,8 +161,10 @@ def embed_corpus(
 
         try:
             vec = embed_text(doc.content, task_type="RETRIEVAL_DOCUMENT")
-        except Exception as e:  # noqa: BLE001
-            log.warning("embed failed for doc id=%d (%s): %s", doc.id, doc.title[:60], e)
+        except Exception as e:
+            log.warning(
+                "embed failed for doc id=%d (%s): %s", doc.id, doc.title[:60], e
+            )
             stats.errors += 1
             continue
 

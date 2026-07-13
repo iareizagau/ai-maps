@@ -4,20 +4,25 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('mubil', '0014_contactlead_and_more'),
+        ("mubil", "0014_contactlead_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='vehicle',
-            name='assembled_in_eu',
-            field=models.BooleanField(default=False, verbose_name='Montado / ensamblado final en la Unión Europea'),
+            model_name="vehicle",
+            name="assembled_in_eu",
+            field=models.BooleanField(
+                default=False,
+                verbose_name="Montado / ensamblado final en la Unión Europea",
+            ),
         ),
         migrations.AddField(
-            model_name='vehicle',
-            name='battery_made_in_eu',
-            field=models.BooleanField(default=False, verbose_name='Batería fabricada o ensamblada en la Unión Europea'),
+            model_name="vehicle",
+            name="battery_made_in_eu",
+            field=models.BooleanField(
+                default=False,
+                verbose_name="Batería fabricada o ensamblada en la Unión Europea",
+            ),
         ),
     ]

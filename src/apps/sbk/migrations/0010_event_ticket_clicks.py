@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('sbk', '0009_seed_load_events_schedule'),
+        ("sbk", "0009_seed_load_events_schedule"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='event',
-            name='ticket_clicks',
+            model_name="event",
+            name="ticket_clicks",
             field=models.PositiveIntegerField(default=0),
         ),
     ]

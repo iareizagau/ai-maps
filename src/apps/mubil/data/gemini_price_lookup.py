@@ -18,7 +18,6 @@ import json
 import logging
 import re
 from dataclasses import dataclass
-from typing import Optional
 
 from django.conf import settings
 
@@ -30,7 +29,7 @@ log = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class PriceEstimate:
-    price_eur: Optional[int]
+    price_eur: int | None
     confidence: float
     raw: str  # respuesta sin parsear (para debug)
 
@@ -127,7 +126,10 @@ def estimate_price(v: Vehicle) -> PriceEstimate:
 
 
 def validate_against_heuristic(
-    *, gemini_price: int, heuristic_price: int, tolerance_pct: float = 0.50,
+    *,
+    gemini_price: int,
+    heuristic_price: int,
+    tolerance_pct: float = 0.50,
 ) -> bool:
     """Acepta el precio Gemini si difiere < tolerance del heurístico.
 

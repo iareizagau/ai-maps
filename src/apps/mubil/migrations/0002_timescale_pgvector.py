@@ -19,7 +19,6 @@ reaches ~1k rows for optimal performance.
 
 from django.db import migrations
 
-
 HYPERTABLE_ENERGY_SQL = """
 ALTER TABLE mubil_energypricepvpc DROP CONSTRAINT mubil_energypricepvpc_pkey;
 SELECT create_hypertable(
@@ -64,9 +63,8 @@ DROP INDEX IF EXISTS mubil_mobdoc_emb_ivf;
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('mubil', '0001_initial'),
+        ("mubil", "0001_initial"),
     ]
 
     operations = [

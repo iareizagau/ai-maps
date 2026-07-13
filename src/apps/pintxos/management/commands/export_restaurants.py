@@ -1,7 +1,9 @@
-import json
 import csv
+import json
+
 from django.core.management.base import BaseCommand
-from apps.pintxos.models import Restaurant, Dish
+
+from apps.pintxos.models import Dish, Restaurant
 
 
 class Command(BaseCommand):
@@ -51,7 +53,9 @@ class Command(BaseCommand):
                 "phone": restaurant.phone,
                 "website": restaurant.website,
                 "description": restaurant.description,
-                "created_at": restaurant.created_at.isoformat() if restaurant.created_at else None,
+                "created_at": restaurant.created_at.isoformat()
+                if restaurant.created_at
+                else None,
             }
 
             if include_dishes:
@@ -62,7 +66,9 @@ class Command(BaseCommand):
                         "name": dish.name,
                         "category": dish.get_category_display(),
                         "price": str(dish.price) if dish.price else None,
-                        "avg_rating": float(dish.avg_rating) if dish.avg_rating else None,
+                        "avg_rating": float(dish.avg_rating)
+                        if dish.avg_rating
+                        else None,
                         "rating_count": dish.rating_count,
                     }
                     for dish in dishes
@@ -75,7 +81,11 @@ class Command(BaseCommand):
         if output_file:
             with open(output_file, "w", encoding="utf-8") as f:
                 f.write(output)
-            self.stdout.write(self.style.SUCCESS(f"✓ Exported {len(data)} restaurants to {output_file}"))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"✓ Exported {len(data)} restaurants to {output_file}"
+                )
+            )
         else:
             self.stdout.write(output)
 
@@ -86,24 +96,34 @@ class Command(BaseCommand):
             for restaurant in restaurants:
                 dishes = Dish.objects.filter(restaurant=restaurant)
                 for dish in dishes:
-                    rows.append({
-                        "restaurant_id": restaurant.id,
-                        "restaurant_name": restaurant.name,
-                        "restaurant_category": restaurant.get_category_display(),
-                        "restaurant_address": restaurant.address,
-                        "restaurant_phone": restaurant.phone,
-                        "dish_id": dish.id,
-                        "dish_name": dish.name,
-                        "dish_category": dish.get_category_display(),
-                        "dish_price": dish.price,
-                        "dish_avg_rating": dish.avg_rating,
-                        "dish_rating_count": dish.rating_count,
-                    })
+                    rows.append(
+                        {
+                            "restaurant_id": restaurant.id,
+                            "restaurant_name": restaurant.name,
+                            "restaurant_category": restaurant.get_category_display(),
+                            "restaurant_address": restaurant.address,
+                            "restaurant_phone": restaurant.phone,
+                            "dish_id": dish.id,
+                            "dish_name": dish.name,
+                            "dish_category": dish.get_category_display(),
+                            "dish_price": dish.price,
+                            "dish_avg_rating": dish.avg_rating,
+                            "dish_rating_count": dish.rating_count,
+                        }
+                    )
 
             fieldnames = [
-                "restaurant_id", "restaurant_name", "restaurant_category", "restaurant_address",
-                "restaurant_phone", "dish_id", "dish_name", "dish_category", "dish_price",
-                "dish_avg_rating", "dish_rating_count",
+                "restaurant_id",
+                "restaurant_name",
+                "restaurant_category",
+                "restaurant_address",
+                "restaurant_phone",
+                "dish_id",
+                "dish_name",
+                "dish_category",
+                "dish_price",
+                "dish_avg_rating",
+                "dish_rating_count",
             ]
         else:
             # Export only restaurants
@@ -121,16 +141,28 @@ class Command(BaseCommand):
                 for r in restaurants
             ]
 
-            fieldnames = ["id", "name", "category", "address", "latitude", "longitude", "phone", "website"]
+            fieldnames = [
+                "id",
+                "name",
+                "category",
+                "address",
+                "latitude",
+                "longitude",
+                "phone",
+                "website",
+            ]
 
         if output_file:
             with open(output_file, "w", newline="", encoding="utf-8") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writeheader()
                 writer.writerows(rows)
-            self.stdout.write(self.style.SUCCESS(f"✓ Exported {len(rows)} rows to {output_file}"))
+            self.stdout.write(
+                self.style.SUCCESS(f"✓ Exported {len(rows)} rows to {output_file}")
+            )
         else:
             import sys
+
             writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(rows)

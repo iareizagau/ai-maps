@@ -23,9 +23,9 @@ PROPUESTA.md §3.1.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, replace
 from decimal import Decimal
-from typing import Callable, Dict, Iterable, List, Optional
 
 from django.db import transaction
 
@@ -69,7 +69,7 @@ class IDAEIngestStats:
             "errors": self.errors,
         }
 
-    def __sub__(self, other: "IDAEIngestStats") -> "IDAEIngestStats":
+    def __sub__(self, other: IDAEIngestStats) -> IDAEIngestStats:
         """Delta entre dos snapshots — útil para reportar lo aportado por una marca."""
         return IDAEIngestStats(
             marcas_seen=self.marcas_seen - other.marcas_seen,
@@ -88,8 +88,8 @@ class IDAEIngestStats:
 
 def _infer_dgt_label(
     *,
-    propulsion: Optional[str],
-    co2_min: Optional[int],
+    propulsion: str | None,
+    co2_min: int | None,
 ) -> str:
     """Best-effort DGT environmental label from propulsion + CO₂ min.
 
@@ -117,8 +117,8 @@ def _infer_dgt_label(
 
 
 def _merge_pair(
-    elec: Optional[idae_client.IDAEElecRow],
-    wltp: Optional[idae_client.IDAEWLTPRow],
+    elec: idae_client.IDAEElecRow | None,
+    wltp: idae_client.IDAEWLTPRow | None,
 ) -> dict:
     """Build the kwargs dict for `Vehicle.objects.update_or_create`.
 
@@ -150,7 +150,11 @@ def _merge_pair(
     # Average min/max combustion consumption — the advisor only knows one l/100
     # number, so collapse the WLTP range to its midpoint.
     cons_l = None
-    if wltp and wltp.consumption_l_100km_min is not None and wltp.consumption_l_100km_max is not None:
+    if (
+        wltp
+        and wltp.consumption_l_100km_min is not None
+        and wltp.consumption_l_100km_max is not None
+    ):
         cons_l = (
             (wltp.consumption_l_100km_min + wltp.consumption_l_100km_max) / Decimal("2")
         ).quantize(Decimal("0.01"))
@@ -183,13 +187,14 @@ def _upsert(defaults: dict, idae_id: int, stats: IDAEIngestStats) -> None:
     try:
         with transaction.atomic():
             _obj, created = Vehicle.objects.update_or_create(
-                idae_id=idae_id, defaults=defaults,
+                idae_id=idae_id,
+                defaults=defaults,
             )
         if created:
             stats.created += 1
         else:
             stats.updated += 1
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         log.warning("Vehicle upsert failed (idae_id=%s): %s", idae_id, e)
         stats.errors += 1
 
@@ -200,8 +205,8 @@ def _upsert(defaults: dict, idae_id: int, stats: IDAEIngestStats) -> None:
 def ingest_marca(
     marca_id: int,
     *,
-    session: Optional[idae_client.IDAESession] = None,
-    stats: Optional[IDAEIngestStats] = None,
+    session: idae_client.IDAESession | None = None,
+    stats: IDAEIngestStats | None = None,
     dry_run: bool = False,
 ) -> IDAEIngestStats:
     """Ingest every vehicle for one IDAE `marca_id`.
@@ -213,8 +218,8 @@ def ingest_marca(
     stats = stats or IDAEIngestStats()
     session = session or idae_client.IDAESession()
 
-    elec_by_id: Dict[int, idae_client.IDAEElecRow] = {}
-    wltp_by_id: Dict[int, idae_client.IDAEWLTPRow] = {}
+    elec_by_id: dict[int, idae_client.IDAEElecRow] = {}
+    wltp_by_id: dict[int, idae_client.IDAEWLTPRow] = {}
 
     try:
         for row in idae_client.iter_elec(session, marca_id=marca_id):
@@ -245,11 +250,11 @@ def ingest_marca(
 
 def ingest_full(
     *,
-    only_marcas: Optional[Iterable[int]] = None,
+    only_marcas: Iterable[int] | None = None,
     throttle_s: float = idae_client.DEFAULT_THROTTLE_S,
     dry_run: bool = False,
-    on_marcas_listed: Optional[Callable[[List[idae_client.Marca]], None]] = None,
-    on_marca_done: Optional[MarcaCallback] = None,
+    on_marcas_listed: Callable[[list[idae_client.Marca]], None] | None = None,
+    on_marca_done: MarcaCallback | None = None,
 ) -> IDAEIngestStats:
     """Ingest the entire IDAE catalog, marca by marca.
 
@@ -266,7 +271,7 @@ def ingest_full(
             con log.warning para no abortar la ingesta global.
     """
     session = idae_client.IDAESession(throttle_s=throttle_s)
-    marcas: List[idae_client.Marca] = session.marcas()
+    marcas: list[idae_client.Marca] = session.marcas()
 
     if only_marcas is not None:
         wanted = set(only_marcas)
@@ -275,7 +280,7 @@ def ingest_full(
     if on_marcas_listed is not None:
         try:
             on_marcas_listed(marcas)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             log.warning("on_marcas_listed callback failed: %s", e)
 
     stats = IDAEIngestStats()
@@ -287,7 +292,7 @@ def ingest_full(
         if on_marca_done is not None:
             try:
                 on_marca_done(marca, stats - snapshot, stats)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 log.warning("on_marca_done callback failed for %s: %s", marca.name, e)
 
     return stats

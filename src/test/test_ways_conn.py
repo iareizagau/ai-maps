@@ -1,5 +1,7 @@
-import django
 import os
+
+import django
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.base")
 django.setup()
 
@@ -19,13 +21,16 @@ with connection.cursor() as cursor:
     """)
     row = cursor.fetchone()
     print("Close vertices:", row)
-    
+
     if row:
         src, tgt = row
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT count(*) FROM pgr_dijkstra(
                 'SELECT gid as id, source, target, cost FROM ways',
                 %s, %s, directed := false
             )
-        """, [src, tgt])
+        """,
+            [src, tgt],
+        )
         print("Dijkstra count:", cursor.fetchone()[0])

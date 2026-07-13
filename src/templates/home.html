@@ -233,6 +233,47 @@
     </section>
     {% endif %}
 
+    {# ─── ARTÍCULOS TÉCNICOS (BLOG) ─── #}
+    {% if latest_blog_posts %}
+    <section class="px-4 sm:px-6 lg:px-8 pb-10 sm:pb-16 lg:pb-24">
+        <div class="max-w-3xl mx-auto">
+            <div class="flex items-end justify-between mb-3 sm:mb-4 px-1">
+                <h2 class="text-[11px] sm:text-xs font-black uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
+                    {% trans "Artículos Técnicos & Blog" %}
+                </h2>
+                <a href="{% url 'blog:post_list' %}" class="text-[10px] sm:text-xs font-black uppercase tracking-wider text-primary hover:text-primary_hover transition-colors">
+                    {% trans "Ver todo" %} &rarr;
+                </a>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-4">
+                {% for post in latest_blog_posts %}
+                <a href="{% url 'blog:post_detail' post.slug %}" class="group block overflow-hidden rounded-2xl border border-slate-200/50 dark:border-white/5 glass p-4 hover:-translate-y-0.5 transition-all">
+                    <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                                {% if post.category %}
+                                <span class="text-primary">{{ post.category.name }}</span>
+                                <span>·</span>
+                                {% endif %}
+                                <span>{{ post.read_time }} min {% trans "lectura" %}</span>
+                            </div>
+                            <h3 class="mt-1 text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-primary transition-colors leading-snug line-clamp-1">
+                                {{ post.title }}
+                            </h3>
+                            <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                                {{ post.summary }}
+                            </p>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 self-center hidden sm:block"></i>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
     {# ─── ABOUT TEASER ─── #}
     <section id="about" class="px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12">
         <div class="max-w-3xl mx-auto">

@@ -38,39 +38,39 @@ class Vehicle(BaseModel):
     """
 
     class Propulsion(models.TextChoices):
-        BEV = 'BEV', _('Eléctrico (BEV)')
-        PHEV = 'PHEV', _('Híbrido enchufable')
-        HEV = 'HEV', _('Híbrido')
-        ICE = 'ICE', _('Gasolina')
-        DIESEL = 'DIESEL', _('Diésel')
-        CNG = 'CNG', _('Gas Natural Comprimido')
-        LPG = 'LPG', _('GLP / Autogás')
+        BEV = "BEV", _("Eléctrico (BEV)")
+        PHEV = "PHEV", _("Híbrido enchufable")
+        HEV = "HEV", _("Híbrido")
+        ICE = "ICE", _("Gasolina")
+        DIESEL = "DIESEL", _("Diésel")
+        CNG = "CNG", _("Gas Natural Comprimido")
+        LPG = "LPG", _("GLP / Autogás")
 
     class DGTLabel(models.TextChoices):
-        CERO = '0', _('Cero emisiones')
-        ECO = 'ECO', _('ECO')
-        C = 'C', _('C')
-        B = 'B', _('B')
-        SIN = 'SIN', _('Sin etiqueta')
+        CERO = "0", _("Cero emisiones")
+        ECO = "ECO", _("ECO")
+        C = "C", _("C")
+        B = "B", _("B")
+        SIN = "SIN", _("Sin etiqueta")
 
     class Category(models.TextChoices):
-        M1 = 'M1', _('Turismo')
-        M2 = 'M2', _('Autobús ligero')
-        N1 = 'N1', _('Furgoneta ligera')
-        N2 = 'N2', _('Furgón pesado')
-        L3e = 'L3e', _('Motocicleta')
-        L6e = 'L6e', _('Cuadriciclo ligero')
-        L7e = 'L7e', _('Cuadriciclo pesado')
+        M1 = "M1", _("Turismo")
+        M2 = "M2", _("Autobús ligero")
+        N1 = "N1", _("Furgoneta ligera")
+        N2 = "N2", _("Furgón pesado")
+        L3e = "L3e", _("Motocicleta")
+        L6e = "L6e", _("Cuadriciclo ligero")
+        L7e = "L7e", _("Cuadriciclo pesado")
 
     class EnergyClass(models.TextChoices):
-        A = 'A', _('A')
-        B = 'B', _('B')
-        C = 'C', _('C')
-        D = 'D', _('D')
-        E = 'E', _('E')
-        F = 'F', _('F')
-        G = 'G', _('G')
-        S = 'S', _('Sin clasificar')
+        A = "A", _("A")
+        B = "B", _("B")
+        C = "C", _("C")
+        D = "D", _("D")
+        E = "E", _("E")
+        F = "F", _("F")
+        G = "G", _("G")
+        S = "S", _("Sin clasificar")
 
     # Idempotency key for the IDAE ingest. NULL for manual seed rows.
     idae_id = models.PositiveIntegerField(null=True, blank=True, db_index=True)
@@ -82,28 +82,44 @@ class Vehicle(BaseModel):
     model = models.CharField(max_length=200)
     # Distinguishes the dozens of versions a single (make, model, year) hides
     # in IDAE (TFSI 110 / TDI 115 / GTI / R). Empty string for legacy rows.
-    variant = models.CharField(max_length=200, blank=True, default='')
+    variant = models.CharField(max_length=200, blank=True, default="")
     year = models.PositiveSmallIntegerField()
-    propulsion = models.CharField(max_length=8, choices=Propulsion.choices, db_index=True)
+    propulsion = models.CharField(
+        max_length=8, choices=Propulsion.choices, db_index=True
+    )
 
     # Búsqueda y filtrado por etiqueta DGT / categoría / segmento — los chips
     # que va a tocar el jurado en el pitch.
     dgt_label = models.CharField(
-        max_length=4, choices=DGTLabel.choices, blank=True, db_index=True,
+        max_length=4,
+        choices=DGTLabel.choices,
+        blank=True,
+        db_index=True,
     )
     category = models.CharField(
-        max_length=4, choices=Category.choices, blank=True, db_index=True,
+        max_length=4,
+        choices=Category.choices,
+        blank=True,
+        db_index=True,
     )
     energy_class = models.CharField(
-        max_length=1, choices=EnergyClass.choices, blank=True,
+        max_length=1,
+        choices=EnergyClass.choices,
+        blank=True,
     )
     segment = models.CharField(max_length=40, blank=True, db_index=True)
 
     mtma_kg = models.PositiveIntegerField(null=True, blank=True)
-    battery_kwh = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    battery_kwh = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True
+    )
     range_wltp_km = models.PositiveIntegerField(null=True, blank=True)
-    consumption_kwh_100km = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    consumption_l_100km = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    consumption_kwh_100km = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True
+    )
+    consumption_l_100km = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True
+    )
 
     # CO₂ WLTP — rango por las 4 fases. Para vehículos eléctricos se reporta 0.
     co2_g_km_min = models.PositiveSmallIntegerField(null=True, blank=True)
@@ -126,53 +142,55 @@ class Vehicle(BaseModel):
     price_eur = models.PositiveIntegerField(null=True, blank=True)
 
     class PriceSource(models.TextChoices):
-        UNKNOWN = 'unknown', _('Desconocido')
-        MOCK = 'mock', _('Mock (placeholder)')
-        MANUAL = 'manual', _('Verificado manual')
-        HEURISTIC = 'heuristic', _('Estimado heurístico')
-        GEMINI = 'gemini', _('Estimado Gemini')
+        UNKNOWN = "unknown", _("Desconocido")
+        MOCK = "mock", _("Mock (placeholder)")
+        MANUAL = "manual", _("Verificado manual")
+        HEURISTIC = "heuristic", _("Estimado heurístico")
+        GEMINI = "gemini", _("Estimado Gemini")
 
     # Trazabilidad del precio para que la UI pueda etiquetar la confianza
     # ("PVP verificado" vs "estimado ±20 %") y los comandos de re-seed
     # sepan qué filas pueden sobrescribir sin perder datos verificados.
     price_source = models.CharField(
-        max_length=16, choices=PriceSource.choices,
-        default=PriceSource.UNKNOWN, db_index=True,
+        max_length=16,
+        choices=PriceSource.choices,
+        default=PriceSource.UNKNOWN,
+        db_index=True,
     )
     price_updated_at = models.DateTimeField(null=True, blank=True)
 
     source_url = models.URLField(blank=True)
 
     class Meta:
-        ordering = ['make', 'model', '-year']
+        ordering = ["make", "model", "-year"]
         constraints = [
             # IDAE id es la clave natural cuando existe (ingesta idempotente).
             models.UniqueConstraint(
-                fields=['idae_id'],
+                fields=["idae_id"],
                 condition=models.Q(idae_id__isnull=False),
-                name='vehicle_idae_unique',
+                name="vehicle_idae_unique",
             ),
             # Clave natural extendida solo para filas MANUALES (idae_id NULL):
             # IDAE tiene varias versiones del mismo (make, model, variant) con
             # distinto idae_id y year=0, así que no podemos imponer este
             # constraint sobre filas importadas.
             models.UniqueConstraint(
-                fields=['make', 'model', 'variant', 'year'],
+                fields=["make", "model", "variant", "year"],
                 condition=models.Q(idae_id__isnull=True),
-                name='vehicle_manual_natural_unique',
+                name="vehicle_manual_natural_unique",
             ),
         ]
         indexes = [
-            models.Index(fields=['propulsion', 'year']),
-            models.Index(fields=['propulsion', 'dgt_label']),
-            models.Index(fields=['category', 'segment']),
+            models.Index(fields=["propulsion", "year"]),
+            models.Index(fields=["propulsion", "dgt_label"]),
+            models.Index(fields=["category", "segment"]),
             # Fuzzy text search across make/model/variant — drives the
             # advisor's "type your car" autocomplete. Requires the pg_trgm
             # extension, created in migration 0005.
             GinIndex(
-                name='vehicle_text_trgm',
-                fields=['make', 'model', 'variant'],
-                opclasses=['gin_trgm_ops', 'gin_trgm_ops', 'gin_trgm_ops'],
+                name="vehicle_text_trgm",
+                fields=["make", "model", "variant"],
+                opclasses=["gin_trgm_ops", "gin_trgm_ops", "gin_trgm_ops"],
             ),
         ]
 
@@ -185,14 +203,16 @@ class Vehicle(BaseModel):
 
 class FuelStationQuerySet(models.QuerySet):
     def nearby(self, longitude, latitude, radius_km=5):
+        from django.contrib.gis.db.models.functions import Distance
         from django.contrib.gis.geos import Point
         from django.contrib.gis.measure import D
-        from django.contrib.gis.db.models.functions import Distance
 
         point = Point(float(longitude), float(latitude))
-        return self.filter(
-            geom__distance_lte=(point, D(km=radius_km))
-        ).annotate(distance=Distance('geom', point)).order_by('distance')
+        return (
+            self.filter(geom__distance_lte=(point, D(km=radius_km)))
+            .annotate(distance=Distance("geom", point))
+            .order_by("distance")
+        )
 
 
 class FuelStation(models.Model):
@@ -216,13 +236,15 @@ class FuelStation(models.Model):
     # {"gasolina_95_e5": "1.659", "gasoleo_a": "1.499", ...}
 
     schedule = models.CharField(max_length=120, blank=True)  # "Horario"
-    sale_type = models.CharField(max_length=4, blank=True)   # "P" public / "R" restricted
+    sale_type = models.CharField(
+        max_length=4, blank=True
+    )  # "P" public / "R" restricted
 
     updated_at = models.DateTimeField(auto_now=True)
     last_seen_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        ordering = ['municipality_name', 'brand']
+        ordering = ["municipality_name", "brand"]
 
     def __str__(self):
         return f"{self.brand} @ {self.municipality_name}"
@@ -230,14 +252,16 @@ class FuelStation(models.Model):
 
 class ChargingStationQuerySet(models.QuerySet):
     def nearby(self, longitude, latitude, radius_km=5):
+        from django.contrib.gis.db.models.functions import Distance
         from django.contrib.gis.geos import Point
         from django.contrib.gis.measure import D
-        from django.contrib.gis.db.models.functions import Distance
 
         point = Point(float(longitude), float(latitude))
-        return self.filter(
-            geom__distance_lte=(point, D(km=radius_km))
-        ).annotate(distance=Distance('geom', point)).order_by('distance')
+        return (
+            self.filter(geom__distance_lte=(point, D(km=radius_km)))
+            .annotate(distance=Distance("geom", point))
+            .order_by("distance")
+        )
 
     def fast(self):
         return self.filter(power_kw__gte=50)
@@ -254,8 +278,8 @@ class ChargingStationQuerySet(models.QuerySet):
         with a degrees radius — PostGIS requires numeric degrees, not
         ``Distance``, for ``dwithin`` on geographic (4326) geometry columns.
         """
-        from django.contrib.gis.geos import LineString
         from django.contrib.gis.db.models.functions import Distance
+        from django.contrib.gis.geos import LineString
 
         coords = [(float(lon), float(lat)) for lon, lat in polyline_lonlat]
         if len(coords) < 2:
@@ -265,11 +289,11 @@ class ChargingStationQuerySet(models.QuerySet):
         # (~43°N, where 1° lon ≈ 81 km), so the corridor is a bit wider in
         # E-W direction — acceptable for a fast-charger pre-filter.
         radius_deg = float(radius_km) / 111.0
-        return self.filter(
-            geom__dwithin=(line, radius_deg)
-        ).annotate(
-            distance=Distance('geom', line, spheroid=True)
-        ).order_by('distance')
+        return (
+            self.filter(geom__dwithin=(line, radius_deg))
+            .annotate(distance=Distance("geom", line, spheroid=True))
+            .order_by("distance")
+        )
 
 
 class ChargingStation(models.Model):
@@ -286,13 +310,17 @@ class ChargingStation(models.Model):
     objects = ChargingStationQuerySet.as_manager()
 
     external_id = models.CharField(max_length=80, blank=True)  # id fuente original
-    source = models.CharField(max_length=40, blank=True)        # opendata_euskadi / miteco / ocm
+    source = models.CharField(
+        max_length=40, blank=True
+    )  # opendata_euskadi / miteco / ocm
     operator = models.CharField(max_length=120, blank=True)
     address = models.CharField(max_length=300, blank=True)
 
     geom = gis_models.PointField(srid=4326, spatial_index=True)
 
-    power_kw = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    power_kw = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True
+    )
     connectors = models.JSONField(default=list, blank=True)
     # [{"type": "CCS2", "kw": 150}, ...]
 
@@ -301,8 +329,8 @@ class ChargingStation(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-power_kw', 'operator']
-        indexes = [models.Index(fields=['source', 'external_id'])]
+        ordering = ["-power_kw", "operator"]
+        indexes = [models.Index(fields=["source", "external_id"])]
 
     def __str__(self):
         return f"{self.operator or 'Cargador'} ({self.power_kw}kW)"
@@ -319,24 +347,24 @@ class EnergyPricePVPC(models.Model):
     """
 
     class Tariff(models.TextChoices):
-        P1 = '2.0TD_P1', _('2.0TD P1 (punta)')
-        P2 = '2.0TD_P2', _('2.0TD P2 (llano)')
-        P3 = '2.0TD_P3', _('2.0TD P3 (valle)')
+        P1 = "2.0TD_P1", _("2.0TD P1 (punta)")
+        P2 = "2.0TD_P2", _("2.0TD P2 (llano)")
+        P3 = "2.0TD_P3", _("2.0TD P3 (valle)")
 
     timestamp = models.DateTimeField(db_index=True)
     tariff = models.CharField(max_length=12, choices=Tariff.choices, default=Tariff.P1)
     price_eur_mwh = models.DecimalField(max_digits=8, decimal_places=3)
 
     class Meta:
-        unique_together = ('timestamp', 'tariff')
-        ordering = ['-timestamp']
+        unique_together = ("timestamp", "tariff")
+        ordering = ["-timestamp"]
 
     def __str__(self):
         return f"PVPC {self.tariff} @ {self.timestamp:%Y-%m-%d %H:%M} = {self.price_eur_mwh}€/MWh"
 
     @property
     def price_eur_kwh(self) -> Decimal:
-        return (self.price_eur_mwh / Decimal('1000')).quantize(Decimal('0.0001'))
+        return (self.price_eur_mwh / Decimal("1000")).quantize(Decimal("0.0001"))
 
 
 class EVRegistration(models.Model):
@@ -353,9 +381,9 @@ class EVRegistration(models.Model):
     count = models.PositiveIntegerField()
 
     class Meta:
-        unique_together = ('municipality_naia', 'year', 'month', 'propulsion')
-        ordering = ['-year', '-month']
-        indexes = [models.Index(fields=['propulsion', 'year', 'month'])]
+        unique_together = ("municipality_naia", "year", "month", "propulsion")
+        ordering = ["-year", "-month"]
+        indexes = [models.Index(fields=["propulsion", "year", "month"])]
 
     def __str__(self):
         return f"{self.municipality_name} {self.year}/{self.month} {self.propulsion}={self.count}"
@@ -368,17 +396,17 @@ class MobilityTrip(models.Model):
     """
 
     class Mode(models.TextChoices):
-        WALK = 'walk', _('A pie')
-        BIKE = 'bike', _('Bici')
-        CAR = 'car', _('Coche')
-        BUS = 'bus', _('Autobús')
-        TRAIN = 'train', _('Tren')
+        WALK = "walk", _("A pie")
+        BIKE = "bike", _("Bici")
+        CAR = "car", _("Coche")
+        BUS = "bus", _("Autobús")
+        TRAIN = "train", _("Tren")
 
     class Motive(models.TextChoices):
-        HOME = 'home', _('Casa')
-        WORK = 'work', _('Trabajo')
-        STUDY = 'study', _('Estudio')
-        OTHER = 'other', _('Otros')
+        HOME = "home", _("Casa")
+        WORK = "work", _("Trabajo")
+        STUDY = "study", _("Estudio")
+        OTHER = "other", _("Otros")
 
     origin_naia = models.CharField(max_length=16, db_index=True)
     dest_naia = models.CharField(max_length=16, db_index=True)
@@ -390,10 +418,10 @@ class MobilityTrip(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['date', 'origin_naia', 'dest_naia']),
-            models.Index(fields=['date', 'mode']),
+            models.Index(fields=["date", "origin_naia", "dest_naia"]),
+            models.Index(fields=["date", "mode"]),
         ]
-        ordering = ['-date', 'hour']
+        ordering = ["-date", "hour"]
 
 
 # ============ RAG / ASK (pgvector) ============
@@ -410,14 +438,16 @@ class MobilityDocument(models.Model):
     """
 
     class SourceType(models.TextChoices):
-        DATASET = 'dataset', _('Dataset')
-        BLOG = 'blog', _('Blog/article')
-        NORMA = 'norma', _('Normativa')
-        GTFS = 'gtfs_summary', _('GTFS resumen')
+        DATASET = "dataset", _("Dataset")
+        BLOG = "blog", _("Blog/article")
+        NORMA = "norma", _("Normativa")
+        GTFS = "gtfs_summary", _("GTFS resumen")
 
     title = models.CharField(max_length=300)
     source_url = models.URLField(blank=True)
-    source_type = models.CharField(max_length=16, choices=SourceType.choices, db_index=True)
+    source_type = models.CharField(
+        max_length=16, choices=SourceType.choices, db_index=True
+    )
     municipality_naia = models.CharField(max_length=16, blank=True, db_index=True)
 
     content = models.TextField()
@@ -429,7 +459,7 @@ class MobilityDocument(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-ingested_at']
+        ordering = ["-ingested_at"]
 
     def __str__(self):
         return f"[{self.source_type}] {self.title[:60]}"
@@ -458,7 +488,7 @@ class DemandHex(models.Model):
     computed_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-score_now']
+        ordering = ["-score_now"]
 
     def __str__(self):
         return f"{self.h3_index} ({self.municipality_naia}) → {self.score_now}"
@@ -477,20 +507,28 @@ class EVRoutePlan(models.Model):
     dest = gis_models.PointField(srid=4326)
 
     vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, null=True)
-    soc_start = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    soc_start = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True
+    )
 
     geojson = models.JSONField(default=dict)
     # {"polyline": [...], "segments": [{"kind": "drive", ...}, {"kind": "charge_stop", ...}]}
 
-    distance_km = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    distance_km = models.DecimalField(
+        max_digits=7, decimal_places=2, null=True, blank=True
+    )
     duration_min = models.PositiveIntegerField(null=True, blank=True)
-    energy_kwh = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
-    estimated_cost_eur = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    energy_kwh = models.DecimalField(
+        max_digits=7, decimal_places=2, null=True, blank=True
+    )
+    estimated_cost_eur = models.DecimalField(
+        max_digits=7, decimal_places=2, null=True, blank=True
+    )
 
     computed_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-computed_at']
+        ordering = ["-computed_at"]
 
     def __str__(self):
         return f"EV route → {self.distance_km}km / {self.duration_min}min"
@@ -507,16 +545,16 @@ class NewsArticle(BaseModel):
     """
 
     class Relevance(models.TextChoices):
-        EUSKADI = 'EUSKADI', _('Euskadi')
-        ESPANA = 'ESPANA', _('España')
-        GLOBAL = 'GLOBAL', _('Global')
+        EUSKADI = "EUSKADI", _("Euskadi")
+        ESPANA = "ESPANA", _("España")
+        GLOBAL = "GLOBAL", _("Global")
 
     class Source(models.TextChoices):
-        NEWSAPI = 'newsapi', 'NewsAPI'
-        FORO_EV = 'forocoches_ev', 'Forococheselectricos'
-        HIBRIDOS = 'hibridos_electricos', 'Híbridos y Eléctricos'
-        MOVILIDAD_EV = 'movilidad_electrica', 'Movilidad Eléctrica'
-        MOTORPASION = 'motorpasion_ev', 'Motorpasión Eléctrico'
+        NEWSAPI = "newsapi", "NewsAPI"
+        FORO_EV = "forocoches_ev", "Forococheselectricos"
+        HIBRIDOS = "hibridos_electricos", "Híbridos y Eléctricos"
+        MOVILIDAD_EV = "movilidad_electrica", "Movilidad Eléctrica"
+        MOTORPASION = "motorpasion_ev", "Motorpasión Eléctrico"
 
     source = models.CharField(max_length=32, choices=Source.choices, db_index=True)
     source_url = models.URLField(max_length=500, unique=True)
@@ -529,7 +567,10 @@ class NewsArticle(BaseModel):
 
     published_at = models.DateTimeField(db_index=True)
     relevance = models.CharField(
-        max_length=8, choices=Relevance.choices, default=Relevance.GLOBAL, db_index=True,
+        max_length=8,
+        choices=Relevance.choices,
+        default=Relevance.GLOBAL,
+        db_index=True,
     )
     tags = models.JSONField(default=list, blank=True)
     affects_user_plan = models.BooleanField(default=False, db_index=True)
@@ -537,9 +578,9 @@ class NewsArticle(BaseModel):
     embedding = VectorField(dimensions=768, null=True, blank=True)
 
     class Meta:
-        ordering = ['-published_at']
+        ordering = ["-published_at"]
         indexes = [
-            models.Index(fields=['-published_at', 'relevance']),
+            models.Index(fields=["-published_at", "relevance"]),
         ]
 
     def __str__(self):
@@ -562,9 +603,10 @@ class ContactLead(BaseModel):
     message = models.TextField()
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
     def __str__(self):
-        created_str = f"{self.created_at:%Y-%m-%d %H:%M}" if self.created_at else "not saved"
+        created_str = (
+            f"{self.created_at:%Y-%m-%d %H:%M}" if self.created_at else "not saved"
+        )
         return f"{self.name} ({self.profile}) — {created_str}"
-

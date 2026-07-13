@@ -36,7 +36,9 @@ class Command(BaseCommand):
         vehicle_id = options.get("vehicle_id")
         vehicle = self._resolve_vehicle(vehicle_id)
         n = services.upsert_demo_plans(default_vehicle=vehicle)
-        label = f"{vehicle.make} {vehicle.model}" if vehicle else "no vehicle (defaults)"
+        label = (
+            f"{vehicle.make} {vehicle.model}" if vehicle else "no vehicle (defaults)"
+        )
         self.stdout.write(
             self.style.SUCCESS(f"Seeded {n} route demos against: {label}")
         )
@@ -46,13 +48,16 @@ class Command(BaseCommand):
             try:
                 return Vehicle.objects.get(pk=vehicle_id)
             except Vehicle.DoesNotExist:
-                self.stdout.write(self.style.WARNING(
-                    f"Vehicle id={vehicle_id} not found — seeding without vehicle."
-                ))
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"Vehicle id={vehicle_id} not found — seeding without vehicle."
+                    )
+                )
                 return None
         # Prefer the demo Niro EV so the cached numbers are immediately useful.
         v = Vehicle.objects.filter(
-            propulsion=Vehicle.Propulsion.BEV, model__icontains="Niro",
+            propulsion=Vehicle.Propulsion.BEV,
+            model__icontains="Niro",
         ).first()
         if v is not None:
             return v

@@ -4,25 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('sbk', '0012_eventoccurrence_person_delete_artist_and_more'),
+        ("sbk", "0012_eventoccurrence_person_delete_artist_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='person',
-            name='city',
-            field=models.CharField(blank=True, default='', max_length=100),
+            model_name="person",
+            name="city",
+            field=models.CharField(blank=True, default="", max_length=100),
         ),
         migrations.AlterField(
-            model_name='person',
-            name='country',
-            field=models.CharField(blank=True, default='', max_length=100),
+            model_name="person",
+            name="country",
+            field=models.CharField(blank=True, default="", max_length=100),
         ),
         migrations.AlterField(
-            model_name='person',
-            name='instagram',
-            field=models.CharField(blank=True, default='', max_length=100),
+            model_name="person",
+            name="instagram",
+            field=models.CharField(blank=True, default="", max_length=100),
         ),
     ]

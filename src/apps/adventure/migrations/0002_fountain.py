@@ -5,26 +5,33 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('adventure', '0001_initial'),
+        ("adventure", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Fountain',
+            name="Fountain",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('osm_id', models.BigIntegerField(unique=True)),
-                ('name', models.CharField(blank=True, max_length=255)),
-                ('location', django.contrib.gis.db.models.fields.PointField(srid=4326)),
-                ('operational', models.BooleanField(default=True)),
-                ('description', models.TextField(blank=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("osm_id", models.BigIntegerField(unique=True)),
+                ("name", models.CharField(blank=True, max_length=255)),
+                ("location", django.contrib.gis.db.models.fields.PointField(srid=4326)),
+                ("operational", models.BooleanField(default=True)),
+                ("description", models.TextField(blank=True)),
             ],
             options={
-                'verbose_name': 'Fuente',
-                'verbose_name_plural': 'Fuentes',
-                'db_table': 'adventure_fountains',
+                "verbose_name": "Fuente",
+                "verbose_name_plural": "Fuentes",
+                "db_table": "adventure_fountains",
             },
         ),
     ]

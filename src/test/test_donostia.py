@@ -1,5 +1,7 @@
-import django
 import os
+
+import django
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.base")
 django.setup()
 
@@ -19,10 +21,11 @@ with connection.cursor() as cursor:
     print("Vertices in Donostia:")
     for r in rows:
         print(" -", r)
-        
+
     if rows:
         src, tgt, _ = rows[0]
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT seq, node, edge, cost, agg_cost FROM pgr_dijkstra(
                 'SELECT gid as id, source, target, 
                         CASE WHEN cost <= 0 THEN 0.00001 ELSE cost END as cost,
@@ -30,5 +33,7 @@ with connection.cursor() as cursor:
                  FROM ways',
                 %s, %s, directed := false
             )
-        """, [src, tgt])
+        """,
+            [src, tgt],
+        )
         print("Dijkstra result:", cursor.fetchall())

@@ -17,25 +17,24 @@ NOTE: bachatacalendar.co.uk is a Supabase-backed SPA. This command calls the
       Supabase REST API directly using the public anon key extracted from the JS
       bundle — no browser/JS rendering required, works from any server IP.
 """
+
 import re
 import time
-import json
-from datetime import datetime, timezone as dt_tz, timedelta
+from datetime import datetime, timedelta
 from xml.etree import ElementTree
 
 import requests
 from django.core.management.base import BaseCommand
 from django.utils.text import slugify
 
-from apps.sbk.models import Event, EventOccurrence, DanceStyle, EventType
-
+from apps.sbk.models import DanceStyle, Event, EventOccurrence, EventType
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-SITE_URL       = "https://www.bachatacalendar.co.uk"
-SITEMAP_URL    = "https://bachatacalendar.co.uk/sitemap.xml"
-SUPABASE_URL   = "https://stsdtacfauprzrdebmzg.supabase.co"
+SITE_URL = "https://www.bachatacalendar.co.uk"
+SITEMAP_URL = "https://bachatacalendar.co.uk/sitemap.xml"
+SUPABASE_URL = "https://stsdtacfauprzrdebmzg.supabase.co"
 
 HEADERS = {
     "User-Agent": (
@@ -52,9 +51,12 @@ _KNOWN_BUNDLE_PATH = "/assets/index-DNuTsjp4.js"
 # Step 1: Discover the current JS bundle URL
 # ---------------------------------------------------------------------------
 
+
 def _get_bundle_url() -> str:
     """Fetch the SPA homepage and extract the main JS bundle src."""
-    r = requests.get(SITE_URL, headers={"User-Agent": HEADERS["User-Agent"]}, timeout=15)
+    r = requests.get(
+        SITE_URL, headers={"User-Agent": HEADERS["User-Agent"]}, timeout=15
+    )
     r.raise_for_status()
     matches = re.findall(r'src="(/assets/index-[^"]+\.js)"', r.text)
     if matches:
@@ -67,24 +69,27 @@ def _get_bundle_url() -> str:
 # Step 2: Extract Supabase anon JWT from the bundle
 # ---------------------------------------------------------------------------
 
+
 def _extract_anon_key(bundle_url: str) -> str | None:
     """
     Find the full Supabase anon JWT in the minified JS bundle.
     The JWT format is: <header>.<payload>.<signature>  (all base64url segments).
     The payload we already know starts with eyJpc3MiOiJzdXBhYmFzZSIs...
     """
-    r = requests.get(bundle_url, headers={"User-Agent": HEADERS["User-Agent"]}, timeout=20)
+    r = requests.get(
+        bundle_url, headers={"User-Agent": HEADERS["User-Agent"]}, timeout=20
+    )
     r.raise_for_status()
     js = r.text
 
     # Find full JWT: three base64url segments separated by dots
     # The known payload starts with eyJpc3MiOiJzdXBhYmFzZSIs
     pattern = re.compile(
-        r'(eyJ[A-Za-z0-9_\-]+'     # header
-        r'\.'
-        r'eyJpc3MiOiJzdXBhYmFzZSIs[A-Za-z0-9_\-]+'  # known payload prefix
-        r'\.'
-        r'[A-Za-z0-9_\-]+)'        # signature
+        r"(eyJ[A-Za-z0-9_\-]+"  # header
+        r"\."
+        r"eyJpc3MiOiJzdXBhYmFzZSIs[A-Za-z0-9_\-]+"  # known payload prefix
+        r"\."
+        r"[A-Za-z0-9_\-]+)"  # signature
     )
     m = pattern.search(js)
     if m:
@@ -99,16 +104,19 @@ def _extract_anon_key(bundle_url: str) -> str | None:
 # Step 3: Parse sitemap to get event slugs
 # ---------------------------------------------------------------------------
 
+
 def _get_event_slugs_from_sitemap() -> list[str]:
     """Parse sitemap.xml and return all /event/<slug> paths."""
-    r = requests.get(SITEMAP_URL, headers={"User-Agent": HEADERS["User-Agent"]}, timeout=15)
+    r = requests.get(
+        SITEMAP_URL, headers={"User-Agent": HEADERS["User-Agent"]}, timeout=15
+    )
     r.raise_for_status()
     root = ElementTree.fromstring(r.content)
     ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
     slugs = []
     for url_el in root.findall("sm:url", ns):
         loc = url_el.findtext("sm:loc", "", ns)
-        m = re.match(r'https?://[^/]+/event/([^/]+)$', loc)
+        m = re.match(r"https?://[^/]+/event/([^/]+)$", loc)
         if m:
             slugs.append(m.group(1))
     return slugs
@@ -118,6 +126,7 @@ def _get_event_slugs_from_sitemap() -> list[str]:
 # Step 4: Query Supabase REST API
 # ---------------------------------------------------------------------------
 
+
 def _supabase_headers(anon_key: str) -> dict:
     return {
         "apikey": anon_key,
@@ -126,12 +135,20 @@ def _supabase_headers(anon_key: str) -> dict:
     }
 
 
-def _fetch_events_from_supabase(anon_key: str, city_slug: str = "london-gb", limit: int = 200) -> list[dict]:
+def _fetch_events_from_supabase(
+    anon_key: str, city_slug: str = "london-gb", limit: int = 200
+) -> list[dict]:
     """
     Try common Supabase table/view names for events.
     Returns raw rows or [] if none found.
     """
-    candidate_tables = ["events", "event", "london_events", "city_events", "bachata_events"]
+    candidate_tables = [
+        "events",
+        "event",
+        "london_events",
+        "city_events",
+        "bachata_events",
+    ]
     hdrs = _supabase_headers(anon_key)
 
     for table in candidate_tables:
@@ -176,6 +193,7 @@ def _fetch_events_by_slug(anon_key: str, slug: str) -> dict | None:
 # Step 5: Geocode via Nominatim
 # ---------------------------------------------------------------------------
 
+
 def _geocode(query: str) -> tuple[float | None, float | None]:
     try:
         r = requests.get(
@@ -199,18 +217,18 @@ def _geocode(query: str) -> tuple[float | None, float | None]:
 
 KNOWN_FIELD_MAPS = {
     # Possible field name variations for key fields
-    "name":        ["name", "title", "event_name"],
+    "name": ["name", "title", "event_name"],
     "description": ["description", "desc", "details", "about"],
-    "start_date":  ["start_date", "starts_at", "date", "event_date", "start"],
-    "end_date":    ["end_date", "ends_at", "end"],
-    "venue":       ["venue", "venue_name", "location_name", "place"],
-    "address":     ["address", "full_address", "location"],
-    "city":        ["city", "city_name"],
-    "lat":         ["lat", "latitude"],
-    "lng":         ["lng", "lon", "longitude"],
-    "ticket_url":  ["ticket_url", "url", "link", "eventbrite_url", "tickets_url"],
-    "image_url":   ["image_url", "image", "poster", "photo", "cover_image"],
-    "price":       ["price", "price_info", "cost", "ticket_price"],
+    "start_date": ["start_date", "starts_at", "date", "event_date", "start"],
+    "end_date": ["end_date", "ends_at", "end"],
+    "venue": ["venue", "venue_name", "location_name", "place"],
+    "address": ["address", "full_address", "location"],
+    "city": ["city", "city_name"],
+    "lat": ["lat", "latitude"],
+    "lng": ["lng", "lon", "longitude"],
+    "ticket_url": ["ticket_url", "url", "link", "eventbrite_url", "tickets_url"],
+    "image_url": ["image_url", "image", "poster", "photo", "cover_image"],
+    "price": ["price", "price_info", "cost", "ticket_price"],
 }
 
 
@@ -232,7 +250,9 @@ def _parse_iso(s: str | None) -> datetime | None:
 
 def _event_type(name: str) -> str:
     n = name.lower()
-    if any(w in n for w in ("workshop", "class", "bootcamp", "lesson", "course", "styling")):
+    if any(
+        w in n for w in ("workshop", "class", "bootcamp", "lesson", "course", "styling")
+    ):
         return EventType.WORKSHOP
     if any(w in n for w in ("festival", "congress")):
         return EventType.FESTIVAL
@@ -256,11 +276,11 @@ def _normalise_row(row: dict, stdout, style) -> dict | None:
         return None
 
     start_dt = _parse_iso(_pick(row, KNOWN_FIELD_MAPS["start_date"]))
-    end_dt   = _parse_iso(_pick(row, KNOWN_FIELD_MAPS["end_date"]))
+    end_dt = _parse_iso(_pick(row, KNOWN_FIELD_MAPS["end_date"]))
 
-    venue    = _pick(row, KNOWN_FIELD_MAPS["venue"], "")
-    address  = _pick(row, KNOWN_FIELD_MAPS["address"], venue)
-    city     = _pick(row, KNOWN_FIELD_MAPS["city"], "London") or "London"
+    venue = _pick(row, KNOWN_FIELD_MAPS["venue"], "")
+    address = _pick(row, KNOWN_FIELD_MAPS["address"], venue)
+    city = _pick(row, KNOWN_FIELD_MAPS["city"], "London") or "London"
 
     lat = _pick(row, KNOWN_FIELD_MAPS["lat"])
     lng = _pick(row, KNOWN_FIELD_MAPS["lng"])
@@ -272,21 +292,25 @@ def _normalise_row(row: dict, stdout, style) -> dict | None:
         time.sleep(1.1)  # Nominatim rate limit
 
     return {
-        "name":         name,
-        "description":  _pick(row, KNOWN_FIELD_MAPS["description"], ""),
-        "city":         city,
-        "address":      address or venue,
-        "country":      "United Kingdom",
-        "lat":          float(lat) if lat else None,
-        "lng":          float(lng) if lng else None,
-        "start_date":   start_dt,
-        "end_date":     end_dt,
-        "ticket_url":   _pick(row, KNOWN_FIELD_MAPS["ticket_url"], f"{SITE_URL}/event/{row.get('slug', '')}"),
-        "image_url":    _pick(row, KNOWN_FIELD_MAPS["image_url"], ""),
+        "name": name,
+        "description": _pick(row, KNOWN_FIELD_MAPS["description"], ""),
+        "city": city,
+        "address": address or venue,
+        "country": "United Kingdom",
+        "lat": float(lat) if lat else None,
+        "lng": float(lng) if lng else None,
+        "start_date": start_dt,
+        "end_date": end_dt,
+        "ticket_url": _pick(
+            row,
+            KNOWN_FIELD_MAPS["ticket_url"],
+            f"{SITE_URL}/event/{row.get('slug', '')}",
+        ),
+        "image_url": _pick(row, KNOWN_FIELD_MAPS["image_url"], ""),
         "primary_style": _dance_style(name),
-        "event_type":   _event_type(name),
-        "price_info":   str(_pick(row, KNOWN_FIELD_MAPS["price"], "") or ""),
-        "source":       "bachatacalendar",
+        "event_type": _event_type(name),
+        "price_info": str(_pick(row, KNOWN_FIELD_MAPS["price"], "") or ""),
+        "source": "bachatacalendar",
     }
 
 
@@ -294,25 +318,26 @@ def _normalise_row(row: dict, stdout, style) -> dict | None:
 # Slug-based fallback: normalise from slug name alone (no Supabase data)
 # ---------------------------------------------------------------------------
 
+
 def _normalise_slug(slug: str) -> dict:
     """Minimal event dict built from the slug string when Supabase is unavailable."""
     name = slug.replace("-", " ").title()
     return {
-        "name":         name,
-        "description":  "",
-        "city":         "London",
-        "address":      "",
-        "country":      "United Kingdom",
-        "lat":          None,
-        "lng":          None,
-        "start_date":   None,
-        "end_date":     None,
-        "ticket_url":   f"{SITE_URL}/event/{slug}",
-        "image_url":    "",
+        "name": name,
+        "description": "",
+        "city": "London",
+        "address": "",
+        "country": "United Kingdom",
+        "lat": None,
+        "lng": None,
+        "start_date": None,
+        "end_date": None,
+        "ticket_url": f"{SITE_URL}/event/{slug}",
+        "image_url": "",
         "primary_style": _dance_style(name),
-        "event_type":   _event_type(name),
-        "price_info":   "",
-        "source":       "bachatacalendar",
+        "event_type": _event_type(name),
+        "price_info": "",
+        "source": "bachatacalendar",
     }
 
 
@@ -320,27 +345,34 @@ def _normalise_slug(slug: str) -> dict:
 # Django management command
 # ---------------------------------------------------------------------------
 
+
 class Command(BaseCommand):
     help = "Scrapes bachatacalendar.co.uk (London) via Supabase REST API and seeds events into the DB"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--limit", type=int, default=200,
+            "--limit",
+            type=int,
+            default=200,
             help="Max events to fetch from Supabase (default: 200)",
         )
         parser.add_argument(
-            "--clear", action="store_true",
+            "--clear",
+            action="store_true",
             help="Delete previously seeded BachataCalendar events before re-importing",
         )
         parser.add_argument(
-            "--dry-run", action="store_true",
+            "--dry-run",
+            action="store_true",
             help="Scrape and print without writing to DB",
         )
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.MIGRATE_HEADING(
-            "\n🕷  Scraping bachatacalendar.co.uk via Supabase REST API\n"
-        ))
+        self.stdout.write(
+            self.style.MIGRATE_HEADING(
+                "\n🕷  Scraping bachatacalendar.co.uk via Supabase REST API\n"
+            )
+        )
 
         # ------------------------------------------------------------------
         # 1. Discover JS bundle & extract anon key
@@ -356,9 +388,13 @@ class Command(BaseCommand):
         self.stdout.write("  🔑 Extracting Supabase anon key…")
         anon_key = _extract_anon_key(bundle_url)
         if anon_key:
-            self.stdout.write(self.style.SUCCESS(f"  Anon key found ({len(anon_key)} chars)"))
+            self.stdout.write(
+                self.style.SUCCESS(f"  Anon key found ({len(anon_key)} chars)")
+            )
         else:
-            self.stdout.write(self.style.WARNING("  Anon key NOT found — will use slug-only fallback"))
+            self.stdout.write(
+                self.style.WARNING("  Anon key NOT found — will use slug-only fallback")
+            )
 
         # ------------------------------------------------------------------
         # 2. Fetch events
@@ -367,20 +403,28 @@ class Command(BaseCommand):
         table_name = None
 
         if anon_key:
-            self.stdout.write(f"  📡 Querying Supabase REST API (limit={options['limit']})…")
-            raw_rows, table_name = _fetch_events_from_supabase(anon_key, limit=options["limit"])
+            self.stdout.write(
+                f"  📡 Querying Supabase REST API (limit={options['limit']})…"
+            )
+            raw_rows, table_name = _fetch_events_from_supabase(
+                anon_key, limit=options["limit"]
+            )
             if raw_rows:
-                self.stdout.write(self.style.SUCCESS(
-                    f"  Found {len(raw_rows)} rows in table '{table_name}'"
-                ))
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f"  Found {len(raw_rows)} rows in table '{table_name}'"
+                    )
+                )
                 # Show field names to help debug schema
                 if raw_rows:
                     self.stdout.write(f"  Fields: {list(raw_rows[0].keys())}")
             else:
-                self.stdout.write(self.style.WARNING(
-                    "  No rows found in Supabase (table name unknown or RLS blocks anon). "
-                    "Falling back to sitemap slugs."
-                ))
+                self.stdout.write(
+                    self.style.WARNING(
+                        "  No rows found in Supabase (table name unknown or RLS blocks anon). "
+                        "Falling back to sitemap slugs."
+                    )
+                )
 
         # Fallback: use sitemap slugs (no dates/addresses available)
         if not raw_rows:
@@ -431,10 +475,12 @@ class Command(BaseCommand):
         # 5. Clear
         # ------------------------------------------------------------------
         if options["clear"]:
-            deleted, _ = Event.objects.filter(
-                ticket_url__startswith=SITE_URL
-            ).delete()
-            self.stdout.write(self.style.WARNING(f"  Cleared {deleted} existing BachataCalendar events."))
+            deleted, _ = Event.objects.filter(ticket_url__startswith=SITE_URL).delete()
+            self.stdout.write(
+                self.style.WARNING(
+                    f"  Cleared {deleted} existing BachataCalendar events."
+                )
+            )
 
         # ------------------------------------------------------------------
         # 6. Insert into DB
@@ -444,7 +490,9 @@ class Command(BaseCommand):
         for data in events:
             if not data.get("start_date"):
                 # Events without a date get skipped (slug-only fallback rows)
-                self.stdout.write(self.style.WARNING(f"  SKIP (no date): {data['name']}"))
+                self.stdout.write(
+                    self.style.WARNING(f"  SKIP (no date): {data['name']}")
+                )
                 skipped += 1
                 continue
 
@@ -479,29 +527,36 @@ class Command(BaseCommand):
                     moderation_status="verified",
                 )
                 EventOccurrence.objects.get_or_create(
-                    event=event, start_date=start,
+                    event=event,
+                    start_date=start,
                     defaults={"end_date": end},
                 )
-                self.stdout.write(self.style.SUCCESS(
-                    f"  CREATED: {event.name}  ({data['city']}, {start.strftime('%a %d %b %H:%M')})"
-                ))
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f"  CREATED: {event.name}  ({data['city']}, {start.strftime('%a %d %b %H:%M')})"
+                    )
+                )
                 created += 1
             except Exception as exc:
                 self.stdout.write(self.style.ERROR(f"  ERROR {data['name']!r}: {exc}"))
                 errors += 1
 
-        self.stdout.write(self.style.SUCCESS(
-            f"\n✅  Done — {created} created, {skipped} skipped, {errors} errors."
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"\n✅  Done — {created} created, {skipped} skipped, {errors} errors."
+            )
+        )
 
         # ------------------------------------------------------------------
         # 7. Debug hint if Supabase had no data
         # ------------------------------------------------------------------
         if table_name == "sitemap":
-            self.stdout.write(self.style.WARNING(
-                "\n⚠️  Imported from sitemap only (no dates/addresses). "
-                "If the Supabase anon key is found, re-run to get full data.\n"
-                "To inspect Supabase tables manually:\n"
-                f"  curl '{SUPABASE_URL}/rest/v1/' "
-                f"-H 'apikey: <anon_key>' -H 'Authorization: Bearer <anon_key>'"
-            ))
+            self.stdout.write(
+                self.style.WARNING(
+                    "\n⚠️  Imported from sitemap only (no dates/addresses). "
+                    "If the Supabase anon key is found, re-run to get full data.\n"
+                    "To inspect Supabase tables manually:\n"
+                    f"  curl '{SUPABASE_URL}/rest/v1/' "
+                    f"-H 'apikey: <anon_key>' -H 'Authorization: Bearer <anon_key>'"
+                )
+            )

@@ -1,12 +1,14 @@
-import django
 import os
+
+import django
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.base")
 django.setup()
 
 from django.db import connection
 
-start_node = 1477582 # Donostia
-end_node = 1427446 # Tolosa
+start_node = 1477582  # Donostia
+end_node = 1427446  # Tolosa
 
 # Test with both cost and reverse_cost properly selected and positive!
 query = """

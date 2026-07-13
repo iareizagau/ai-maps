@@ -16,7 +16,6 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import List, Optional
 
 from django.conf import settings
 from pgvector.django import CosineDistance
@@ -42,10 +41,10 @@ class RetrievedDoc:
     title: str
     source_url: str
     source_type: str
-    score: float          # cosine similarity in [0, 1] (1 = identical)
+    score: float  # cosine similarity in [0, 1] (1 = identical)
     content: str
     kind: str = "dataset"  # "dataset" | "news"
-    date: Optional[str] = None  # ISO date, only set for news
+    date: str | None = None  # ISO date, only set for news
 
     def to_source(self) -> dict:
         return {
@@ -61,9 +60,9 @@ class RetrievedDoc:
 @dataclass
 class AskAnswer:
     answer_md: str
-    sources: List[RetrievedDoc] = field(default_factory=list)
+    sources: list[RetrievedDoc] = field(default_factory=list)
     latency_ms: int = 0
-    error: Optional[str] = None  # None = success; sentinel code on failure
+    error: str | None = None  # None = success; sentinel code on failure
 
     def to_out(self) -> dict:
         return {
@@ -78,11 +77,11 @@ class AskAnswer:
 
 
 def retrieve_topk(
-    query_vec: List[float],
+    query_vec: list[float],
     *,
     k: int = DEFAULT_TOP_K,
-    municipality_naia: Optional[str] = None,
-) -> List[RetrievedDoc]:
+    municipality_naia: str | None = None,
+) -> list[RetrievedDoc]:
     """pgvector cosine similarity search.
 
     Note: `pgvector.django.CosineDistance` returns *distance* (lower is closer).
@@ -93,10 +92,9 @@ def retrieve_topk(
     if municipality_naia:
         qs = qs.filter(municipality_naia=municipality_naia)
 
-    rows = (
-        qs.annotate(distance=CosineDistance("embedding", query_vec))
-        .order_by("distance")[:k]
-    )
+    rows = qs.annotate(distance=CosineDistance("embedding", query_vec)).order_by(
+        "distance"
+    )[:k]
 
     return [
         RetrievedDoc(
@@ -112,10 +110,10 @@ def retrieve_topk(
 
 
 def retrieve_news_topk(
-    query_vec: List[float],
+    query_vec: list[float],
     *,
     k: int = DEFAULT_TOP_K_NEWS,
-) -> List[RetrievedDoc]:
+) -> list[RetrievedDoc]:
     """pgvector cosine similarity search over NewsArticle embeddings.
 
     Returns `RetrievedDoc` with `kind='news'` and `date=published_at.date()`
@@ -167,7 +165,7 @@ SYSTEM_PROMPT = (
 )
 
 
-def compose_prompt(query: str, docs: List[RetrievedDoc]) -> str:
+def compose_prompt(query: str, docs: list[RetrievedDoc]) -> str:
     """Build the grounded prompt for Gemini Flash."""
     if not docs:
         return (
@@ -251,7 +249,7 @@ def _should_fallback(exc: Exception) -> bool:
     return any(m in msg for m in _FALLBACK_MARKERS)
 
 
-def _generation_ladder() -> List[str]:
+def _generation_ladder() -> list[str]:
     """Resolve the model fallback list.
 
     Honours ``GEMINI_GENERATION_FALLBACK_MODELS`` if present; otherwise
@@ -285,15 +283,19 @@ def _call_gemini_generate(prompt: str) -> str:
     )
 
     ladder = _generation_ladder()
-    last_exc: Optional[Exception] = None
+    last_exc: Exception | None = None
     for model in ladder:
         try:
             response = client.models.generate_content(
-                model=model, contents=prompt, config=cfg,
+                model=model,
+                contents=prompt,
+                config=cfg,
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             if _should_fallback(e):
-                log.warning("Gemini model %s soft-failed (%s) — falling through.", model, e)
+                log.warning(
+                    "Gemini model %s soft-failed (%s) — falling through.", model, e
+                )
                 last_exc = e
                 continue
             raise
@@ -317,7 +319,7 @@ def answer(
     *,
     query: str,
     k: int = DEFAULT_TOP_K,
-    municipality_naia: Optional[str] = None,
+    municipality_naia: str | None = None,
 ) -> AskAnswer:
     """Full RAG pipeline: embed query → retrieve → compose → generate."""
     if not query.strip():
@@ -327,7 +329,7 @@ def answer(
 
     try:
         query_vec = embeddings.embed_text(query, task_type="RETRIEVAL_QUERY")
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         log.exception("Gemini embed_content failed for query: %s", e)
         elapsed_ms = int((time.monotonic() - t0) * 1000)
         return AskAnswer(
@@ -355,8 +357,8 @@ def answer(
     docs = merged
     try:
         answer_md = _call_gemini_generate(prompt)
-        gen_error: Optional[str] = None
-    except Exception as e:  # noqa: BLE001
+        gen_error: str | None = None
+    except Exception as e:
         log.exception("Gemini generation failed: %s", e)
         answer_md = (
             "El servicio de generación está temporalmente no disponible. "
@@ -366,7 +368,10 @@ def answer(
 
     elapsed_ms = int((time.monotonic() - t0) * 1000)
     return AskAnswer(
-        answer_md=answer_md, sources=docs, latency_ms=elapsed_ms, error=gen_error,
+        answer_md=answer_md,
+        sources=docs,
+        latency_ms=elapsed_ms,
+        error=gen_error,
     )
 
 
@@ -402,5 +407,5 @@ SUGGESTED_PROMPTS = [
 ]
 
 
-def list_suggested() -> List[dict]:
+def list_suggested() -> list[dict]:
     return [{"id": p["id"], "label": p["label"]} for p in SUGGESTED_PROMPTS]

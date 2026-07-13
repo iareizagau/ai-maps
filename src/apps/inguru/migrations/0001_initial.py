@@ -6,45 +6,114 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='EnvironmentalStation',
+            name="EnvironmentalStation",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('name', models.CharField(max_length=200)),
-                ('external_id', models.CharField(help_text='ID en el sistema de Open Data Euskadi', max_length=100, unique=True)),
-                ('station_type', models.CharField(choices=[('AIR', 'Calidad del Aire'), ('POLLEN', 'Polen'), ('WATER_MASS', 'Calidad de Aguas (URA)'), ('DRINKING_WATER', 'Aguas de Consumo'), ('METEO', 'Meteorología (Euskalmet)')], max_length=20)),
-                ('location', django.contrib.gis.db.models.fields.PointField(srid=4326)),
-                ('municipality', models.CharField(blank=True, max_length=100)),
-                ('province', models.CharField(blank=True, max_length=50)),
-                ('metadata', models.JSONField(blank=True, default=dict, help_text='Información adicional específica de la estación')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("name", models.CharField(max_length=200)),
+                (
+                    "external_id",
+                    models.CharField(
+                        help_text="ID en el sistema de Open Data Euskadi",
+                        max_length=100,
+                        unique=True,
+                    ),
+                ),
+                (
+                    "station_type",
+                    models.CharField(
+                        choices=[
+                            ("AIR", "Calidad del Aire"),
+                            ("POLLEN", "Polen"),
+                            ("WATER_MASS", "Calidad de Aguas (URA)"),
+                            ("DRINKING_WATER", "Aguas de Consumo"),
+                            ("METEO", "Meteorología (Euskalmet)"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                ("location", django.contrib.gis.db.models.fields.PointField(srid=4326)),
+                ("municipality", models.CharField(blank=True, max_length=100)),
+                ("province", models.CharField(blank=True, max_length=50)),
+                (
+                    "metadata",
+                    models.JSONField(
+                        blank=True,
+                        default=dict,
+                        help_text="Información adicional específica de la estación",
+                    ),
+                ),
             ],
             options={
-                'indexes': [models.Index(fields=['station_type', 'external_id'], name='inguru_envi_station_3af234_idx')],
+                "indexes": [
+                    models.Index(
+                        fields=["station_type", "external_id"],
+                        name="inguru_envi_station_3af234_idx",
+                    )
+                ],
             },
         ),
         migrations.CreateModel(
-            name='Measurement',
+            name="Measurement",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('timestamp', models.DateTimeField()),
-                ('values', models.JSONField(help_text="Valores medidos (ej: {'NO2': 20, 'O3': 40})")),
-                ('eco_score', models.IntegerField(blank=True, help_text='Índice unificado calculado (0-100)', null=True)),
-                ('station', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='measurements', to='inguru.environmentalstation')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("timestamp", models.DateTimeField()),
+                (
+                    "values",
+                    models.JSONField(
+                        help_text="Valores medidos (ej: {'NO2': 20, 'O3': 40})"
+                    ),
+                ),
+                (
+                    "eco_score",
+                    models.IntegerField(
+                        blank=True,
+                        help_text="Índice unificado calculado (0-100)",
+                        null=True,
+                    ),
+                ),
+                (
+                    "station",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="measurements",
+                        to="inguru.environmentalstation",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-timestamp'],
-                'indexes': [models.Index(fields=['station', '-timestamp'], name='inguru_meas_station_74da5c_idx')],
+                "ordering": ["-timestamp"],
+                "indexes": [
+                    models.Index(
+                        fields=["station", "-timestamp"],
+                        name="inguru_meas_station_74da5c_idx",
+                    )
+                ],
             },
         ),
     ]

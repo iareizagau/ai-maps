@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('pintxos', '0002_remove_dish_embedding'),
+        ("pintxos", "0002_remove_dish_embedding"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dishrating',
-            name='price',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=6, null=True),
+            model_name="dishrating",
+            name="price",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=6, null=True
+            ),
         ),
     ]

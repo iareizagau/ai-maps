@@ -38,7 +38,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         dry_run = options["dry_run"]
         path = options.get("csv")
-        self.stdout.write(f"Ingesting EV registrations (csv={path or 'default'}, dry_run={dry_run})…")
+        self.stdout.write(
+            f"Ingesting EV registrations (csv={path or 'default'}, dry_run={dry_run})…"
+        )
         stats = ingest.ingest_csv(path=path, dry_run=dry_run)
         out = json.dumps(stats.as_dict(), indent=2, ensure_ascii=False)
         if stats.errors:

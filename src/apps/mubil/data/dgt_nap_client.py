@@ -23,9 +23,9 @@ from __future__ import annotations
 
 import logging
 import xml.etree.ElementTree as ET
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
-from typing import IO, List, Optional, Union
+from typing import IO
 
 import requests
 
@@ -69,7 +69,7 @@ class DGTNAPError(RuntimeError):
 # ─────────────────────────────────────────────── parsing helpers
 
 
-def _watts_text_to_kw(value: Optional[str]) -> Optional[Decimal]:
+def _watts_text_to_kw(value: str | None) -> Decimal | None:
     """``"22000.0"`` (watts) → ``Decimal("22.00")`` (kW). Empty/invalid → None."""
     if value is None:
         return None
@@ -83,7 +83,7 @@ def _watts_text_to_kw(value: Optional[str]) -> Optional[Decimal]:
     return (watts / Decimal("1000")).quantize(Decimal("0.01"))
 
 
-def _parse_iso8601(value: Optional[str]) -> Optional[datetime]:
+def _parse_iso8601(value: str | None) -> datetime | None:
     """Parse DATEX II timestamps (``2026-06-09T10:57:18.000+02:00``).
 
     Returns timezone-aware UTC, or None on parse failure.
@@ -98,11 +98,11 @@ def _parse_iso8601(value: Optional[str]) -> Optional[datetime]:
     except ValueError:
         return None
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
+        dt = dt.replace(tzinfo=UTC)
+    return dt.astimezone(UTC)
 
 
-def _text_of(elem: Optional[ET.Element]) -> str:
+def _text_of(elem: ET.Element | None) -> str:
     if elem is None or elem.text is None:
         return ""
     return elem.text.strip()
@@ -110,12 +110,10 @@ def _text_of(elem: Optional[ET.Element]) -> str:
 
 def _address_line_text(line_elem: ET.Element) -> str:
     """Extract the human text from one ``locx:addressLine`` element."""
-    return _text_of(
-        line_elem.find(f"./{_NS_LOCX}text/{_NS_COM}values/{_NS_COM}value")
-    )
+    return _text_of(line_elem.find(f"./{_NS_LOCX}text/{_NS_COM}values/{_NS_COM}value"))
 
 
-def _parse_site(elem: ET.Element, *, eh_only: bool) -> Optional[ChargingPOIRecord]:
+def _parse_site(elem: ET.Element, *, eh_only: bool) -> ChargingPOIRecord | None:
     """Map one ``egi:energyInfrastructureSite`` element to a record.
 
     Returns ``None`` to skip (missing id/coords, or filtered out by EH).
@@ -128,10 +126,14 @@ def _parse_site(elem: ET.Element, *, eh_only: bool) -> Optional[ChargingPOIRecor
     # ``xsi:type="loc:PointLocation"``), not the ``loc:`` namespace despite
     # what the type attribute suggests. Verified against the live feed.
     lat_text = _text_of(
-        elem.find(f"./{_NS_FAC}locationReference/{_NS_LOC}coordinatesForDisplay/{_NS_LOC}latitude")
+        elem.find(
+            f"./{_NS_FAC}locationReference/{_NS_LOC}coordinatesForDisplay/{_NS_LOC}latitude"
+        )
     )
     lon_text = _text_of(
-        elem.find(f"./{_NS_FAC}locationReference/{_NS_LOC}coordinatesForDisplay/{_NS_LOC}longitude")
+        elem.find(
+            f"./{_NS_FAC}locationReference/{_NS_LOC}coordinatesForDisplay/{_NS_LOC}longitude"
+        )
     )
     try:
         lat = float(lat_text)
@@ -139,7 +141,7 @@ def _parse_site(elem: ET.Element, *, eh_only: bool) -> Optional[ChargingPOIRecor
     except ValueError:
         return None
 
-    addr_lines: List[str] = []
+    addr_lines: list[str] = []
     provincia = ""
     for line in elem.findall(
         f"./{_NS_FAC}locationReference/{_NS_LOC}_locationReferenceExtension"
@@ -150,33 +152,37 @@ def _parse_site(elem: ET.Element, *, eh_only: bool) -> Optional[ChargingPOIRecor
             continue
         addr_lines.append(txt)
         if txt.startswith(_PROVINCIA_PREFIX):
-            provincia = txt[len(_PROVINCIA_PREFIX):].strip()
+            provincia = txt[len(_PROVINCIA_PREFIX) :].strip()
 
     if eh_only and provincia not in EH_PROVINCES:
         return None
 
     operator = _text_of(
-        elem.find(
-            f"./{_NS_FAC}operator/{_NS_FAC}name/{_NS_COM}values/{_NS_COM}value"
-        )
+        elem.find(f"./{_NS_FAC}operator/{_NS_FAC}name/{_NS_COM}values/{_NS_COM}value")
     )
 
-    connectors: List[dict] = []
-    max_kw: Optional[Decimal] = None
+    connectors: list[dict] = []
+    max_kw: Decimal | None = None
     for cn in elem.findall(
         f"./{_NS_EGI}energyInfrastructureStation/{_NS_EGI}refillPoint/{_NS_EGI}connector"
     ):
-        kw = _watts_text_to_kw(_text_of(cn.find(f"./{_NS_EGI}maxPowerAtSocket")) or None)
+        kw = _watts_text_to_kw(
+            _text_of(cn.find(f"./{_NS_EGI}maxPowerAtSocket")) or None
+        )
         if kw is not None and (max_kw is None or kw > max_kw):
             max_kw = kw
-        connectors.append({
-            "type": _text_of(cn.find(f"./{_NS_EGI}connectorType")),
-            "kw": str(kw) if kw is not None else "",
-            "mode": _text_of(cn.find(f"./{_NS_EGI}chargingMode")),
-            "format": _text_of(cn.find(f"./{_NS_EGI}connectorFormat")),
-        })
+        connectors.append(
+            {
+                "type": _text_of(cn.find(f"./{_NS_EGI}connectorType")),
+                "kw": str(kw) if kw is not None else "",
+                "mode": _text_of(cn.find(f"./{_NS_EGI}chargingMode")),
+                "format": _text_of(cn.find(f"./{_NS_EGI}connectorFormat")),
+            }
+        )
 
-    last_updated = _parse_iso8601(_text_of(elem.find(f"./{_NS_FAC}lastUpdated")) or None)
+    last_updated = _parse_iso8601(
+        _text_of(elem.find(f"./{_NS_FAC}lastUpdated")) or None
+    )
 
     return ChargingPOIRecord(
         external_id=f"dgt_nap-{site_id}",
@@ -196,10 +202,10 @@ def _parse_site(elem: ET.Element, *, eh_only: bool) -> Optional[ChargingPOIRecor
 
 
 def parse_stream(
-    source: Union[str, IO[bytes]],
+    source: str | IO[bytes],
     *,
     eh_only: bool = False,
-) -> List[ChargingPOIRecord]:
+) -> list[ChargingPOIRecord]:
     """Parse a DATEX II EnergyInfrastructureTablePublication stream.
 
     Args:
@@ -212,7 +218,7 @@ def parse_stream(
     Memory: each ``energyInfrastructureSite`` is cleared right after its record
     is emitted, so peak resident size stays bounded regardless of feed length.
     """
-    records: List[ChargingPOIRecord] = []
+    records: list[ChargingPOIRecord] = []
     # "end" events only — we wait until each site is fully parsed before
     # clearing it. The root accumulates emptied <site/> shells; at 12k sites
     # those amount to a few MB, negligible next to the 85 MB feed itself, so
@@ -233,7 +239,7 @@ def fetch_and_parse(
     *,
     url: str = BASE_URL,
     eh_only: bool = False,
-) -> List[ChargingPOIRecord]:
+) -> list[ChargingPOIRecord]:
     """Stream the live DGT NAP feed and parse it into records.
 
     Args:

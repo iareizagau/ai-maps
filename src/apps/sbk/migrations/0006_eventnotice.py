@@ -6,22 +6,54 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('sbk', '0005_danceprofile'),
+        ("sbk", "0005_danceprofile"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='EventNotice',
+            name="EventNotice",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('category', models.CharField(choices=[('partner', '🤝 Buscar Pareja'), ('transport', '🚗 Compartir Coche'), ('dinner', '🥘 Cena / Quedada'), ('other', '✨ Otros')], default='other', max_length=20)),
-                ('message', models.TextField(max_length=250)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('event', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='notices', to='sbk.event')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "category",
+                    models.CharField(
+                        choices=[
+                            ("partner", "🤝 Buscar Pareja"),
+                            ("transport", "🚗 Compartir Coche"),
+                            ("dinner", "🥘 Cena / Quedada"),
+                            ("other", "✨ Otros"),
+                        ],
+                        default="other",
+                        max_length=20,
+                    ),
+                ),
+                ("message", models.TextField(max_length=250)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "event",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="notices",
+                        to="sbk.event",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]

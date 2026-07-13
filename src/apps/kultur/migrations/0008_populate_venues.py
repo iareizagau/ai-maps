@@ -14,13 +14,12 @@ from django.db import migrations
 
 
 def populate_venues(apps, schema_editor):
-    CulturalEvent = apps.get_model('kultur', 'CulturalEvent')
-    Venue = apps.get_model('kultur', 'Venue')
+    CulturalEvent = apps.get_model("kultur", "CulturalEvent")
+    Venue = apps.get_model("kultur", "Venue")
 
     qs = (
-        CulturalEvent.objects
-        .exclude(venue_name_es__isnull=True)
-        .exclude(venue_name_es='')
+        CulturalEvent.objects.exclude(venue_name_es__isnull=True)
+        .exclude(venue_name_es="")
         .exclude(location__isnull=True)
     )
 
@@ -28,17 +27,17 @@ def populate_venues(apps, schema_editor):
     to_update = []
 
     for event in qs.iterator(chunk_size=500):
-        key = (event.venue_name_es.strip(), (event.municipality_es or '').strip())
+        key = (event.venue_name_es.strip(), (event.municipality_es or "").strip())
         venue_id = cache.get(key)
         if venue_id is None:
             venue, _ = Venue.objects.get_or_create(
                 name_es=key[0],
                 municipality=key[1],
                 defaults={
-                    'name_eu': (event.venue_name_eu or '').strip(),
-                    'province': (event.province or '').strip(),
-                    'location': event.location,
-                    'geocoding_source': 'municipality_centroid',
+                    "name_eu": (event.venue_name_eu or "").strip(),
+                    "province": (event.province or "").strip(),
+                    "location": event.location,
+                    "geocoding_source": "municipality_centroid",
                 },
             )
             venue_id = venue.pk
@@ -47,11 +46,11 @@ def populate_venues(apps, schema_editor):
         to_update.append(event)
 
         if len(to_update) >= 1000:
-            CulturalEvent.objects.bulk_update(to_update, ['venue'])
+            CulturalEvent.objects.bulk_update(to_update, ["venue"])
             to_update.clear()
 
     if to_update:
-        CulturalEvent.objects.bulk_update(to_update, ['venue'])
+        CulturalEvent.objects.bulk_update(to_update, ["venue"])
 
 
 def reverse(apps, schema_editor):
@@ -61,9 +60,8 @@ def reverse(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('kultur', '0007_venue_culturalevent_venue'),
+        ("kultur", "0007_venue_culturalevent_venue"),
     ]
 
     operations = [

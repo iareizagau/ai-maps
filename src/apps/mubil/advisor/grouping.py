@@ -25,16 +25,21 @@ correctamente, con drill-down futuro para el 5 % restante.
 import re
 from collections import defaultdict
 from decimal import Decimal
-from typing import List, Optional, Tuple
-
 
 # Prefijos compuestos donde la "base" son 2+ tokens. Ampliar al observar
 # colisiones reales. Lista corta a propósito — más permite agrupación más
 # fina pero exige mantenimiento.
 COMPOUND_PREFIXES = (
-    "Model 3", "Model S", "Model X", "Model Y",        # Tesla
-    "A4 Avant", "A6 Avant", "A4 Allroad", "A6 Allroad", # Audi estate
-    "EQE SUV", "EQS SUV",                              # Mercedes
+    "Model 3",
+    "Model S",
+    "Model X",
+    "Model Y",  # Tesla
+    "A4 Avant",
+    "A6 Avant",
+    "A4 Allroad",
+    "A6 Allroad",  # Audi estate
+    "EQE SUV",
+    "EQS SUV",  # Mercedes
 )
 
 # Marcas canónicas (lower → display name). El catálogo IDAE tiene la marca
@@ -89,8 +94,12 @@ CANONICAL_MAKES = {
 # Sufijos que las concesionarias añaden al nombre de marca. Strip y revolver
 # a buscar en CANONICAL_MAKES.
 DEALER_SUFFIXES = (
-    " canarias", " turismos", " vehículos comerciales", " vehiculos comerciales",
-    " trucks españa", " trucks",  # CUIDADO: "Renault Trucks" es brand diferente
+    " canarias",
+    " turismos",
+    " vehículos comerciales",
+    " vehiculos comerciales",
+    " trucks españa",
+    " trucks",  # CUIDADO: "Renault Trucks" es brand diferente
     " motors",
 )
 
@@ -152,7 +161,7 @@ def extract_model_base(model: str) -> str:
     return first
 
 
-def _consumption_value(v, propulsion_hint: Optional[str] = None) -> Optional[Decimal]:
+def _consumption_value(v, propulsion_hint: str | None = None) -> Decimal | None:
     """Consumo comparable en una unidad. BEV/PHEV usan kWh/100, el resto
     L/100. Si la fila no tiene el campo apropiado, devolvemos None.
     """
@@ -163,9 +172,9 @@ def _consumption_value(v, propulsion_hint: Optional[str] = None) -> Optional[Dec
 
 
 def group_by_model_base(
-    vehicles: List,
-    propulsion_hint: Optional[str] = None,
-) -> List[dict]:
+    vehicles: list,
+    propulsion_hint: str | None = None,
+) -> list[dict]:
     """Agrupa por `(make_canonical, model_base)` (case-insensitive).
 
     Devuelve por grupo:
@@ -181,10 +190,10 @@ def group_by_model_base(
     Orden: respeta el orden de aparición del primer miembro de cada grupo,
     para no romper el ranking trigram del caller.
     """
-    groups: dict[Tuple[str, str, str], List] = defaultdict(list)
-    canonical_make_for: dict[Tuple[str, str, str], str] = {}
-    base_for: dict[Tuple[str, str, str], str] = {}
-    order: List[Tuple[str, str, str]] = []
+    groups: dict[tuple[str, str, str], list] = defaultdict(list)
+    canonical_make_for: dict[tuple[str, str, str], str] = {}
+    base_for: dict[tuple[str, str, str], str] = {}
+    order: list[tuple[str, str, str]] = []
 
     for v in vehicles:
         canonical_make = normalize_make(v.make)
@@ -197,7 +206,7 @@ def group_by_model_base(
             base_for[key] = base
         groups[key].append(v)
 
-    out: List[dict] = []
+    out: list[dict] = []
     for key in order:
         variants = groups[key]
         sortable = [(v, _consumption_value(v, propulsion_hint)) for v in variants]
@@ -205,12 +214,14 @@ def group_by_model_base(
         rep = sortable[(len(sortable) - 1) // 2][0]
         cons_vals = [c for _, c in sortable if c is not None]
 
-        out.append({
-            "representative": rep,
-            "make_display": canonical_make_for[key],
-            "model_base": base_for[key],
-            "variant_count": len(variants),
-            "consumption_min": min(cons_vals) if cons_vals else None,
-            "consumption_max": max(cons_vals) if cons_vals else None,
-        })
+        out.append(
+            {
+                "representative": rep,
+                "make_display": canonical_make_for[key],
+                "model_base": base_for[key],
+                "variant_count": len(variants),
+                "consumption_min": min(cons_vals) if cons_vals else None,
+                "consumption_max": max(cons_vals) if cons_vals else None,
+            }
+        )
     return out

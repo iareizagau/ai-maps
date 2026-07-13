@@ -1,9 +1,12 @@
-import django
 import os
+
+import django
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.base")
 django.setup()
 
 from django.db import connection
+
 from apps.mubil.advisor.services import find_nearest_drivable_node, get_commute_route
 
 # Coordinates roughly Beasain to Errenteria
@@ -33,4 +36,6 @@ if start_node and end_node:
     # Let's see if we can do a path WITH the bbox filter from get_commute_route!
     res = get_commute_route(start_lon, start_lat, end_lon, end_lat)
     print("get_commute_route result distance:", res["distance_km"])
-    print("get_commute_route notes:", res["route_geojson"].get("metadata", {}).get("note"))
+    print(
+        "get_commute_route notes:", res["route_geojson"].get("metadata", {}).get("note")
+    )

@@ -6,47 +6,82 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Building',
+            name="Building",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('osm_id', models.BigIntegerField(db_index=True, unique=True)),
-                ('name', models.CharField(blank=True, max_length=255)),
-                ('geom', django.contrib.gis.db.models.fields.PolygonField(srid=4326)),
-                ('height', models.FloatField(blank=True, null=True)),
-                ('levels', models.IntegerField(blank=True, null=True)),
-                ('building_type', models.CharField(blank=True, max_length=100)),
-                ('roof_area', models.FloatField(blank=True, help_text='Área útil proyectada del tejado en m2', null=True)),
-                ('azimuth', models.FloatField(blank=True, help_text='Orientación predominante (0=Sur, 90=Oeste, -90=Este)', null=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("osm_id", models.BigIntegerField(db_index=True, unique=True)),
+                ("name", models.CharField(blank=True, max_length=255)),
+                ("geom", django.contrib.gis.db.models.fields.PolygonField(srid=4326)),
+                ("height", models.FloatField(blank=True, null=True)),
+                ("levels", models.IntegerField(blank=True, null=True)),
+                ("building_type", models.CharField(blank=True, max_length=100)),
+                (
+                    "roof_area",
+                    models.FloatField(
+                        blank=True,
+                        help_text="Área útil proyectada del tejado en m2",
+                        null=True,
+                    ),
+                ),
+                (
+                    "azimuth",
+                    models.FloatField(
+                        blank=True,
+                        help_text="Orientación predominante (0=Sur, 90=Oeste, -90=Este)",
+                        null=True,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Edificio',
-                'verbose_name_plural': 'Edificios',
-                'db_table': 'solar_buildings',
+                "verbose_name": "Edificio",
+                "verbose_name_plural": "Edificios",
+                "db_table": "solar_buildings",
             },
         ),
         migrations.CreateModel(
-            name='SolarPotential',
+            name="SolarPotential",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('annual_generation_kwh', models.FloatField(blank=True, null=True)),
-                ('monthly_generation_json', models.JSONField(blank=True, null=True)),
-                ('peak_power_kwp', models.FloatField(blank=True, null=True)),
-                ('estimated_panels', models.IntegerField(blank=True, null=True)),
-                ('last_calculated', models.DateTimeField(auto_now=True)),
-                ('building', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='potential', to='solar.building')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("annual_generation_kwh", models.FloatField(blank=True, null=True)),
+                ("monthly_generation_json", models.JSONField(blank=True, null=True)),
+                ("peak_power_kwp", models.FloatField(blank=True, null=True)),
+                ("estimated_panels", models.IntegerField(blank=True, null=True)),
+                ("last_calculated", models.DateTimeField(auto_now=True)),
+                (
+                    "building",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="potential",
+                        to="solar.building",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Potencial Solar',
-                'verbose_name_plural': 'Potenciales Solares',
-                'db_table': 'solar_potentials',
+                "verbose_name": "Potencial Solar",
+                "verbose_name_plural": "Potenciales Solares",
+                "db_table": "solar_potentials",
             },
         ),
     ]

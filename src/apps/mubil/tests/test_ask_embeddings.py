@@ -41,7 +41,7 @@ class EmbedTextTests(TestCase):
 
         self.assertEqual(len(vec), 768)
         # values were uniform → normalization makes every entry equal to 1/sqrt(768).
-        expected = 1.0 / (768 ** 0.5)
+        expected = 1.0 / (768**0.5)
         self.assertAlmostEqual(vec[0], expected, places=6)
         client.models.embed_content.assert_called_once()
         _, kwargs = client.models.embed_content.call_args
@@ -126,7 +126,7 @@ class EmbedCorpusTests(TestCase):
         doc = MobilityDocument.objects.first()
         self.assertIsNotNone(doc.embedding)
         # Normalized uniform vector → each component = 1/sqrt(768).
-        expected = 1.0 / (768 ** 0.5)
+        expected = 1.0 / (768**0.5)
         self.assertAlmostEqual(float(doc.embedding[0]), expected, places=5)
 
     @mock.patch("apps.mubil.ask.embeddings._configure_genai")

@@ -40,9 +40,9 @@ import html
 import logging
 import re
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
-from typing import Dict, Iterable, Iterator, List, Optional, Tuple
 from urllib.parse import unquote, urlencode
 
 import requests
@@ -69,7 +69,7 @@ class IDAEError(RuntimeError):
 _DECIMAL_RX = re.compile(r"-?\d+(?:[.,]\d+)?")
 
 
-def _to_decimal(value: object) -> Optional[Decimal]:
+def _to_decimal(value: object) -> Decimal | None:
     """Parse "13,2" / "13.2" / 13.2 / "" → Decimal or None.
 
     IDAE's JSON mixes raw numbers and Spanish-locale strings depending on the
@@ -92,7 +92,7 @@ def _to_decimal(value: object) -> Optional[Decimal]:
         return None
 
 
-def _to_int(value: object) -> Optional[int]:
+def _to_int(value: object) -> int | None:
     d = _to_decimal(value)
     if d is None:
         return None
@@ -109,15 +109,15 @@ def _extract_energy_class(html_blob: object) -> str:
     if m:
         return m.group(1)
     # Fallback: parse the title attribute.
-    m = re.search(r'Clasificaci[oó]n:\s*([A-GS])\b', s)
+    m = re.search(r"Clasificaci[oó]n:\s*([A-GS])\b", s)
     return m.group(1) if m else ""
 
 
 def _normalize_make_model(
     modelo_raw: str,
     *,
-    make_hint: Optional[str] = None,
-) -> Tuple[str, str]:
+    make_hint: str | None = None,
+) -> tuple[str, str]:
     """Split the IDAE Modelo string into (make, model_plus_variant).
 
     The Modelo string is the marca name concatenated with the model+variant.
@@ -138,7 +138,7 @@ def _normalize_make_model(
     if make_hint:
         hint = make_hint.strip()
         if s.lower().startswith(hint.lower()):
-            return hint, s[len(hint):].strip()
+            return hint, s[len(hint) :].strip()
 
     parts = re.split(r"\s{2,}", s, maxsplit=1)
     if len(parts) == 2:
@@ -153,7 +153,7 @@ def _normalize_make_model(
 
 # Maps IDAE's "Motorización" column to our Vehicle.Propulsion choices.
 # Keys are lowercased + accent-stripped on lookup; ordered for first-match.
-_PROPULSION_PATTERNS: List[Tuple[str, str]] = [
+_PROPULSION_PATTERNS: list[tuple[str, str]] = [
     ("electricos puros", "BEV"),
     # IDAE labels PHEVs as "Híbridos enchufables" (plural) — must match
     # before any "hibrid" / "hibridos" rule, otherwise PHEVs fall into HEV.
@@ -172,11 +172,12 @@ _PROPULSION_PATTERNS: List[Tuple[str, str]] = [
 
 def _strip_accents(s: str) -> str:
     import unicodedata
+
     nfkd = unicodedata.normalize("NFKD", s)
     return "".join(c for c in nfkd if not unicodedata.combining(c))
 
 
-def map_propulsion(motorizacion: str) -> Optional[str]:
+def map_propulsion(motorizacion: str) -> str | None:
     """Map IDAE's free-text Motorización to a `Vehicle.Propulsion` choice."""
     if not motorizacion:
         return None
@@ -198,13 +199,13 @@ class IDAEElecRow:
     make: str
     model: str
     energy_class: str = ""
-    propulsion: Optional[str] = None  # Vehicle.Propulsion choice
+    propulsion: str | None = None  # Vehicle.Propulsion choice
     category: str = ""
-    mtma_kg: Optional[int] = None
-    consumption_kwh_100km: Optional[Decimal] = None
-    power_kw: Optional[Decimal] = None  # not stored; reserved for future use
-    range_wltp_km: Optional[int] = None
-    battery_kwh: Optional[Decimal] = None
+    mtma_kg: int | None = None
+    consumption_kwh_100km: Decimal | None = None
+    power_kw: Decimal | None = None  # not stored; reserved for future use
+    range_wltp_km: int | None = None
+    battery_kwh: Decimal | None = None
 
 
 @dataclass
@@ -215,10 +216,10 @@ class IDAEWLTPRow:
     make: str
     model: str
     energy_class: str = ""
-    consumption_l_100km_min: Optional[Decimal] = None
-    consumption_l_100km_max: Optional[Decimal] = None
-    co2_g_km_min: Optional[int] = None
-    co2_g_km_max: Optional[int] = None
+    consumption_l_100km_min: Decimal | None = None
+    consumption_l_100km_max: Decimal | None = None
+    co2_g_km_min: int | None = None
+    co2_g_km_max: int | None = None
 
 
 @dataclass
@@ -236,7 +237,7 @@ class _SessionState:
     form_token: str
     ajax_token: str
     xsrf_header: str
-    marcas: List[Marca] = field(default_factory=list)
+    marcas: list[Marca] = field(default_factory=list)
 
 
 class IDAESession:
@@ -254,7 +255,7 @@ class IDAESession:
 
     def __init__(self, *, throttle_s: float = DEFAULT_THROTTLE_S):
         self.throttle_s = throttle_s
-        self._state: Optional[_SessionState] = None
+        self._state: _SessionState | None = None
         self._last_request_at = 0.0
 
     # ---------------- internal helpers
@@ -270,9 +271,9 @@ class IDAESession:
         method: str,
         path: str,
         *,
-        data: Optional[dict] = None,
+        data: dict | None = None,
         cookies=None,
-        headers: Optional[dict] = None,
+        headers: dict | None = None,
         ajax: bool = False,
     ) -> requests.Response:
         self._throttle()
@@ -284,7 +285,12 @@ class IDAESession:
         if headers:
             h.update(headers)
         r = requests.request(
-            method, url, data=data, cookies=cookies, headers=h, timeout=HTTP_TIMEOUT,
+            method,
+            url,
+            data=data,
+            cookies=cookies,
+            headers=h,
+            timeout=HTTP_TIMEOUT,
         )
         return r
 
@@ -306,7 +312,8 @@ class IDAESession:
         # with its own AJAX `_token` and the populated `<select id="marca">`.
         xsrf = self._xsrf_header_value(cookies)
         r = self._http(
-            "POST", FORM_PATH,
+            "POST",
+            FORM_PATH,
             data={
                 "_token": form_token,
                 "tipo": "marca-y-modelo",
@@ -326,7 +333,9 @@ class IDAESession:
             raise IDAEError("Could not extract AJAX _token from results page.")
         marcas = self._extract_marcas(r.text)
         if not marcas:
-            log.warning("IDAE marca list parsed empty — selector markup may have changed.")
+            log.warning(
+                "IDAE marca list parsed empty — selector markup may have changed."
+            )
 
         # Cookies may have rotated after the POST.
         if r.cookies:
@@ -359,7 +368,7 @@ class IDAESession:
         return unquote(raw) if raw else ""
 
     @staticmethod
-    def _extract_marcas(page: str) -> List[Marca]:
+    def _extract_marcas(page: str) -> list[Marca]:
         # Slice the `<select id="marca">…</select>` block then pull options.
         m = re.search(
             r'<select[^>]*id="marca"[^>]*>(.*?)</select>',
@@ -369,22 +378,26 @@ class IDAESession:
         if not m:
             return []
         block = m.group(1)
-        out: List[Marca] = []
+        out: list[Marca] = []
         for opt in re.finditer(r'<option\s+value="(\d+)"[^>]*>([^<]+)</option>', block):
-            out.append(Marca(idae_id=int(opt.group(1)), name=html.unescape(opt.group(2)).strip()))
+            out.append(
+                Marca(
+                    idae_id=int(opt.group(1)), name=html.unescape(opt.group(2)).strip()
+                )
+            )
         return out
 
     # ---------------- public API
 
-    def marcas(self) -> List[Marca]:
+    def marcas(self) -> list[Marca]:
         return list(self._open().marcas)
 
     def fetch_listing(
         self,
         *,
-        ciclo: str,                                        # 'elec' | 'wltp'
-        marca_id: Optional[int] = None,
-        categoria_id: Optional[int] = None,
+        ciclo: str,  # 'elec' | 'wltp'
+        marca_id: int | None = None,
+        categoria_id: int | None = None,
         start: int = 0,
         length: int = PAGE_LENGTH,
     ) -> dict:
@@ -421,7 +434,8 @@ class IDAESession:
         ]
 
         r = self._http(
-            "POST", AJAX_PATH,
+            "POST",
+            AJAX_PATH,
             data=data,
             cookies=state.cookies,
             headers={"X-XSRF-TOKEN": state.xsrf_header},
@@ -439,7 +453,8 @@ class IDAESession:
                     filtros_pairs[i] = ("_token", state.ajax_token)
             data[3] = ("filtros", urlencode(filtros_pairs))
             r = self._http(
-                "POST", AJAX_PATH,
+                "POST",
+                AJAX_PATH,
                 data=data,
                 cookies=state.cookies,
                 headers={"X-XSRF-TOKEN": state.xsrf_header},
@@ -461,8 +476,8 @@ class IDAESession:
 def iter_elec(
     session: IDAESession,
     *,
-    marca_id: Optional[int] = None,
-    make_hint: Optional[str] = None,
+    marca_id: int | None = None,
+    make_hint: str | None = None,
     page_length: int = PAGE_LENGTH,
 ) -> Iterator[IDAEElecRow]:
     """Yield every electric/hybrid row, paging through `ciclo=elec`.
@@ -477,7 +492,10 @@ def iter_elec(
     start = 0
     while True:
         envelope = session.fetch_listing(
-            ciclo="elec", marca_id=marca_id, start=start, length=page_length,
+            ciclo="elec",
+            marca_id=marca_id,
+            start=start,
+            length=page_length,
         )
         rows = envelope.get("data") or []
         if not rows:
@@ -494,8 +512,8 @@ def iter_elec(
 def iter_wltp(
     session: IDAESession,
     *,
-    marca_id: Optional[int] = None,
-    make_hint: Optional[str] = None,
+    marca_id: int | None = None,
+    make_hint: str | None = None,
     page_length: int = PAGE_LENGTH,
 ) -> Iterator[IDAEWLTPRow]:
     """Yield every combustion row, paging through `ciclo=wltp`."""
@@ -504,7 +522,10 @@ def iter_wltp(
     start = 0
     while True:
         envelope = session.fetch_listing(
-            ciclo="wltp", marca_id=marca_id, start=start, length=page_length,
+            ciclo="wltp",
+            marca_id=marca_id,
+            start=start,
+            length=page_length,
         )
         rows = envelope.get("data") or []
         if not rows:
@@ -518,7 +539,7 @@ def iter_wltp(
             return
 
 
-def _lookup_marca_name(session: IDAESession, marca_id: int) -> Optional[str]:
+def _lookup_marca_name(session: IDAESession, marca_id: int) -> str | None:
     for m in session.marcas():
         if m.idae_id == marca_id:
             return m.name
@@ -531,8 +552,8 @@ def _lookup_marca_name(session: IDAESession, marca_id: int) -> Optional[str]:
 def _parse_elec_row(
     raw: list,
     *,
-    make_hint: Optional[str] = None,
-) -> Optional[IDAEElecRow]:
+    make_hint: str | None = None,
+) -> IDAEElecRow | None:
     """Map one raw `ciclo=elec` JSON row to :class:`IDAEElecRow`.
 
     Columns (verified live 2026-05-29):
@@ -566,8 +587,8 @@ def _parse_elec_row(
 def _parse_wltp_row(
     raw: list,
     *,
-    make_hint: Optional[str] = None,
-) -> Optional[IDAEWLTPRow]:
+    make_hint: str | None = None,
+) -> IDAEWLTPRow | None:
     """Map one raw `ciclo=wltp` JSON row to :class:`IDAEWLTPRow`.
 
     Columns:

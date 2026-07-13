@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('mubil', '0006_vehicle_unique_idae_conditional'),
+        ("mubil", "0006_vehicle_unique_idae_conditional"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='vehicle',
-            name='model',
+            model_name="vehicle",
+            name="model",
             field=models.CharField(max_length=200),
         ),
         migrations.AlterField(
-            model_name='vehicle',
-            name='variant',
-            field=models.CharField(blank=True, default='', max_length=200),
+            model_name="vehicle",
+            name="variant",
+            field=models.CharField(blank=True, default="", max_length=200),
         ),
     ]

@@ -14,8 +14,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import List, Optional
+from datetime import UTC, datetime
 
 import requests
 from django.conf import settings
@@ -29,7 +28,7 @@ HTTP_TIMEOUT = 30
 USER_AGENT = "mubil/0.1 (iareizagau@gmail.com)"
 
 # ESIOS indicator IDs we care about — extend as needed.
-INDICATOR_PVPC = 1001          # PVPC 2.0TD horario (€/MWh)
+INDICATOR_PVPC = 1001  # PVPC 2.0TD horario (€/MWh)
 
 
 class ESIOSError(RuntimeError):
@@ -40,9 +39,9 @@ class ESIOSError(RuntimeError):
 class ESIOSValue:
     """One hourly datapoint from an ESIOS indicator."""
 
-    timestamp: datetime          # tz-aware UTC
-    value: float                 # raw indicator value (units depend on indicator)
-    geo_id: Optional[int] = None
+    timestamp: datetime  # tz-aware UTC
+    value: float  # raw indicator value (units depend on indicator)
+    geo_id: int | None = None
     geo_name: str = ""
 
 
@@ -61,8 +60,8 @@ def fetch_indicator(
     *,
     start: datetime,
     end: datetime,
-    geo_ids: Optional[List[int]] = None,
-) -> List[ESIOSValue]:
+    geo_ids: list[int] | None = None,
+) -> list[ESIOSValue]:
     """Fetch hourly values for an ESIOS indicator between `start` and `end`.
 
     Args:
@@ -96,7 +95,9 @@ def fetch_indicator(
     if r.status_code == 401:
         raise ESIOSError("ESIOS rejected the token (401). Verify settings.ESIOS_TOKEN.")
     if r.status_code == 403:
-        raise ESIOSError("ESIOS denied access (403). Token may lack permission for this indicator.")
+        raise ESIOSError(
+            "ESIOS denied access (403). Token may lack permission for this indicator."
+        )
     r.raise_for_status()
     try:
         payload = r.json()
@@ -104,7 +105,7 @@ def fetch_indicator(
         raise ESIOSError(f"ESIOS returned non-JSON: {e}") from e
 
     raw_values = (payload.get("indicator") or {}).get("values") or []
-    parsed: List[ESIOSValue] = []
+    parsed: list[ESIOSValue] = []
     for v in raw_values:
         ts_raw = v.get("datetime") or v.get("datetime_utc")
         if not ts_raw:
@@ -113,19 +114,21 @@ def fetch_indicator(
         if ts is None:
             continue
         if ts.tzinfo is None:
-            ts = ts.replace(tzinfo=timezone.utc)
+            ts = ts.replace(tzinfo=UTC)
         else:
-            ts = ts.astimezone(timezone.utc)
+            ts = ts.astimezone(UTC)
         try:
             value = float(v["value"])
         except (KeyError, TypeError, ValueError):
             continue
-        parsed.append(ESIOSValue(
-            timestamp=ts,
-            value=value,
-            geo_id=v.get("geo_id"),
-            geo_name=v.get("geo_name") or "",
-        ))
+        parsed.append(
+            ESIOSValue(
+                timestamp=ts,
+                value=value,
+                geo_id=v.get("geo_id"),
+                geo_name=v.get("geo_name") or "",
+            )
+        )
 
     parsed.sort(key=lambda x: x.timestamp)
     return parsed

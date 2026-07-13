@@ -4,15 +4,14 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0007_subscription'),
+        ("core", "0007_subscription"),
     ]
 
     operations = [
         migrations.RenameIndex(
-            model_name='subscription',
-            new_name='core_subscr_user_id_d435c1_idx',
-            old_name='core_subscr_user_status_idx',
+            model_name="subscription",
+            new_name="core_subscr_user_id_d435c1_idx",
+            old_name="core_subscr_user_status_idx",
         ),
     ]

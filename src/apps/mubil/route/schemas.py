@@ -1,6 +1,5 @@
 """Schemas for `route`. PROPUESTA.md §3.3."""
 
-from typing import List, Optional
 
 from ninja import Schema
 
@@ -16,14 +15,14 @@ class EVPlanIn(Schema):
 
 class RouteSegment(Schema):
     kind: str  # drive | charge_stop | transit_leg
-    distance_km: Optional[float] = None
-    duration_min: Optional[int] = None
+    distance_km: float | None = None
+    duration_min: int | None = None
     meta: dict = {}
 
 
 class EVPlanOut(Schema):
-    polyline: List[List[float]]  # [[lat, lon], ...]
-    segments: List[RouteSegment]
+    polyline: list[list[float]]  # [[lat, lon], ...]
+    segments: list[RouteSegment]
     distance_km: float
     duration_min: int
     energy_kwh: float

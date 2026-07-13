@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from unittest import mock
 
@@ -14,7 +14,10 @@ from apps.mubil.route import services
 
 
 def _make_vehicle(
-    *, make="Kia", model="Niro EV", battery_kwh=Decimal("64.0"),
+    *,
+    make="Kia",
+    model="Niro EV",
+    battery_kwh=Decimal("64.0"),
     consumption_kwh_100km=Decimal("16.0"),
 ) -> Vehicle:
     return Vehicle.objects.create(
@@ -46,8 +49,15 @@ class DemoCatalogTests(TestCase):
         demos = services.list_demos()
         self.assertEqual(len(demos), 5)
         first = demos[0]
-        for key in ("slug", "label", "origin_name", "dest_name", "via",
-                    "distance_km", "duration_min"):
+        for key in (
+            "slug",
+            "label",
+            "origin_name",
+            "dest_name",
+            "via",
+            "distance_km",
+            "duration_min",
+        ):
             self.assertIn(key, first)
 
 
@@ -75,7 +85,9 @@ class PlanTests(TestCase):
     def test_long_trip_low_soc_inserts_charge_stop(self):
         v = _make_vehicle(battery_kwh=Decimal("30.0"))  # small battery
         result = services.plan(
-            slug="donostia-bilbao", vehicle_id=v.id, soc_start_pct=30.0,
+            slug="donostia-bilbao",
+            vehicle_id=v.id,
+            soc_start_pct=30.0,
         )
         kinds = [s.kind for s in result.segments]
         self.assertIn("charge_stop", kinds)
@@ -85,7 +97,9 @@ class PlanTests(TestCase):
     def test_high_soc_no_stop_needed(self):
         v = _make_vehicle()  # 64 kWh, full
         result = services.plan(
-            slug="donostia-tolosa", vehicle_id=v.id, soc_start_pct=95.0,
+            slug="donostia-tolosa",
+            vehicle_id=v.id,
+            soc_start_pct=95.0,
         )
         self.assertTrue(all(s.kind == "drive" for s in result.segments))
 
@@ -97,12 +111,15 @@ class PlanTests(TestCase):
 
     def test_to_dict_is_json_safe(self):
         import json
+
         result = services.plan(slug="donostia-bilbao")
         data = result.to_dict()
         # Round-trips through json without TypeError.
         json.dumps(data)
         self.assertEqual(data["slug"], "donostia-bilbao")
-        self.assertEqual(len(data["polyline"]), len(services.ROUTE_DEMOS[0]["polyline"]))
+        self.assertEqual(
+            len(data["polyline"]), len(services.ROUTE_DEMOS[0]["polyline"])
+        )
 
 
 class Phase1FieldsTests(TestCase):
@@ -128,12 +145,21 @@ class Phase1FieldsTests(TestCase):
 
     def test_to_dict_includes_phase1_fields(self):
         import json
+
         v = _make_vehicle()
-        result = services.plan(slug="donostia-bilbao", vehicle_id=v.id,
-                               departure_hour=3)
+        result = services.plan(
+            slug="donostia-bilbao", vehicle_id=v.id, departure_hour=3
+        )
         data = result.to_dict()
-        for key in ("mode", "departure_hour", "soc_curve", "cost_by_hour",
-                    "nearby_chargers", "selected_charger", "ice_baseline"):
+        for key in (
+            "mode",
+            "departure_hour",
+            "soc_curve",
+            "cost_by_hour",
+            "nearby_chargers",
+            "selected_charger",
+            "ice_baseline",
+        ):
             self.assertIn(key, data)
         self.assertEqual(data["departure_hour"], 3)
         # JSON-serialisable end-to-end (no Decimal leakage)
@@ -160,7 +186,7 @@ class Phase1FieldsTests(TestCase):
 
     def test_pvpc_curve_buckets_by_hour(self):
         # Insert two days of synthetic data: hour 3 cheap, hour 12 expensive.
-        now = datetime.now(tz=timezone.utc).replace(minute=0, second=0, microsecond=0)
+        now = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
         # Build at Madrid-local hours by going through tz conversion. We just
         # need the bucket to be deterministically different.
         for day in (1, 2):
@@ -185,7 +211,8 @@ class Phase1FieldsTests(TestCase):
         curve[3] = Decimal("0.05")
         curve[20] = Decimal("0.30")
         costs = services._cost_by_hour(
-            energy_kwh=Decimal("20"), kwh_fast_charge=Decimal("0"),
+            energy_kwh=Decimal("20"),
+            kwh_fast_charge=Decimal("0"),
             pvpc_curve=curve,
         )
         self.assertEqual(len(costs), 24)
@@ -206,13 +233,15 @@ class ChargersAlongRouteTests(TestCase):
     def test_along_route_filters_by_corridor(self):
         # Charger sitting roughly on the Donostia-Bilbao polyline
         on_route = ChargingStation.objects.create(
-            source="test", external_id="on",
+            source="test",
+            external_id="on",
             geom=Point(-2.4970, 43.3576, srid=4326),
             power_kw=Decimal("150"),
         )
         # Charger far away (Madrid)
         ChargingStation.objects.create(
-            source="test", external_id="off",
+            source="test",
+            external_id="off",
             geom=Point(-3.7000, 40.4000, srid=4326),
             power_kw=Decimal("150"),
         )
@@ -240,18 +269,20 @@ class FreeODTests(TestCase):
             "urban_pct": 5.0,
             "route_geojson": {
                 "type": "FeatureCollection",
-                "features": [{
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "LineString",
-                        "coordinates": [
-                            [-1.9812, 43.3183],
-                            [-2.4970, 43.3576],
-                            [-2.9253, 43.2627],
-                        ],
-                    },
-                    "properties": {},
-                }],
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": [
+                                [-1.9812, 43.3183],
+                                [-2.4970, 43.3576],
+                                [-2.9253, 43.2627],
+                            ],
+                        },
+                        "properties": {},
+                    }
+                ],
                 "metadata": {},
             },
         }
@@ -263,9 +294,12 @@ class FreeODTests(TestCase):
             return_value=self._stub_route(distance_km=120.0),
         ) as patched:
             result = services.plan(
-                origin_lng=-1.9812, origin_lat=43.3183,
-                dest_lng=-2.9253, dest_lat=43.2627,
-                vehicle_id=v.id, soc_start_pct=80.0,
+                origin_lng=-1.9812,
+                origin_lat=43.3183,
+                dest_lng=-2.9253,
+                dest_lat=43.2627,
+                vehicle_id=v.id,
+                soc_start_pct=80.0,
             )
         patched.assert_called_once()
         self.assertEqual(result.mode, "free")
@@ -282,12 +316,13 @@ class FreeODTests(TestCase):
         with mock.patch(
             "apps.mubil.advisor.services.get_commute_route",
             return_value={"distance_km": 0, "route_geojson": {}},
-        ):
-            with self.assertRaises(ValueError):
-                services.plan(
-                    origin_lng=-1.9812, origin_lat=43.3183,
-                    dest_lng=-1.9812, dest_lat=43.3183,
-                )
+        ), self.assertRaises(ValueError):
+            services.plan(
+                origin_lng=-1.9812,
+                origin_lat=43.3183,
+                dest_lng=-1.9812,
+                dest_lat=43.3183,
+            )
 
 
 class UpsertDemoPlansTests(TestCase):

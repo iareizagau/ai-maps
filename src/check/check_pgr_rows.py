@@ -1,5 +1,7 @@
-import django
 import os
+
+import django
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.base")
 django.setup()
 
@@ -8,7 +10,7 @@ from django.db import connection
 with connection.cursor() as cursor:
     cursor.execute("SELECT COUNT(*) FROM ways")
     print("ways count:", cursor.fetchone()[0])
-    
+
     try:
         cursor.execute("SELECT COUNT(*) FROM pgr_ways")
         print("pgr_ways count:", cursor.fetchone()[0])

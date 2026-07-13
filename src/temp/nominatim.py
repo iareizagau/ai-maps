@@ -1,14 +1,13 @@
-import requests
-import time
-import json
 import hashlib
+import json
+import time
 from pathlib import Path
+
+import requests
 
 BASE_URL = "https://nominatim.openstreetmap.org/search"
 
-HEADERS = {
-    "User-Agent": "MiGeocoderPersonal/1.0 (contacto: tuemail@example.com)"
-}
+HEADERS = {"User-Agent": "MiGeocoderPersonal/1.0 (contacto: tuemail@example.com)"}
 
 CACHE_DIR = Path("./cache")
 CACHE_DIR.mkdir(exist_ok=True)
@@ -29,19 +28,10 @@ def search(query: str):
         print("[CACHE]")
         return json.loads(path.read_text())
 
-    params = {
-        "q": query,
-        "format": "jsonv2",
-        "limit": 1
-    }
+    params = {"q": query, "format": "jsonv2", "limit": 1}
 
     try:
-        r = requests.get(
-            BASE_URL,
-            params=params,
-            headers=HEADERS,
-            timeout=20
-        )
+        r = requests.get(BASE_URL, params=params, headers=HEADERS, timeout=20)
 
         if r.status_code == 429:
             print("Rate limit alcanzado.")

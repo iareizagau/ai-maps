@@ -1,5 +1,7 @@
-import django
 import os
+
+import django
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.base")
 django.setup()
 
@@ -17,11 +19,14 @@ with connection.cursor() as cursor:
 print("Testing reachability from 20 nodes:")
 for node in nodes:
     with connection.cursor() as cursor:
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT count(*) FROM pgr_drivingDistance(
                 'SELECT gid as id, source, target, length_m as cost, length_m as reverse_cost FROM ways',
                 %s, 5000, directed := false
             )
-        """, [node])
+        """,
+            [node],
+        )
         count = cursor.fetchone()[0]
         print(f" - Node {node}: reached {count} nodes within 5km")

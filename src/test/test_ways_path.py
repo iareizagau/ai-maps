@@ -1,5 +1,7 @@
-import django
 import os
+
+import django
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.base")
 django.setup()
 
@@ -16,16 +18,19 @@ with connection.cursor() as cursor:
     """)
     row = cursor.fetchone()
     print("Directly connected vertices via 2 edges:", row)
-    
+
     if row:
         src, tgt, dist = row
         # Dijkstra
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT seq, node, edge, cost, agg_cost FROM pgr_dijkstra(
                 'SELECT gid as id, source, target, CASE WHEN cost <= 0 THEN 0.00001 ELSE cost END as cost FROM ways',
                 %s, %s, directed := false
             )
-        """, [src, tgt])
+        """,
+            [src, tgt],
+        )
         print("Dijkstra 2-hop result:", cursor.fetchall())
 
     # Let's check if there is any larger path (e.g. 5 steps)
@@ -43,10 +48,13 @@ with connection.cursor() as cursor:
     print("5-hop connected vertices:", row)
     if row:
         src, tgt = row
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT seq, node, edge, cost, agg_cost FROM pgr_dijkstra(
                 'SELECT gid as id, source, target, CASE WHEN cost <= 0 THEN 0.00001 ELSE cost END as cost FROM ways',
                 %s, %s, directed := false
             )
-        """, [src, tgt])
+        """,
+            [src, tgt],
+        )
         print("Dijkstra 5-hop result count:", len(cursor.fetchall()))

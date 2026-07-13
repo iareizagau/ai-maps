@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0005_appregistry_description_appregistry_icon_and_more'),
+        ("core", "0005_appregistry_description_appregistry_icon_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='appregistry',
-            name='is_featured',
-            field=models.BooleanField(default=False, help_text='Show this app in the Home Hero section'),
+            model_name="appregistry",
+            name="is_featured",
+            field=models.BooleanField(
+                default=False, help_text="Show this app in the Home Hero section"
+            ),
         ),
     ]

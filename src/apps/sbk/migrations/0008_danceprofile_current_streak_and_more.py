@@ -4,25 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('sbk', '0007_vibereport_checkin'),
+        ("sbk", "0007_vibereport_checkin"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='danceprofile',
-            name='current_streak',
+            model_name="danceprofile",
+            name="current_streak",
             field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='danceprofile',
-            name='last_checkin_date',
+            model_name="danceprofile",
+            name="last_checkin_date",
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='danceprofile',
-            name='max_streak',
+            model_name="danceprofile",
+            name="max_streak",
             field=models.IntegerField(default=0),
         ),
     ]

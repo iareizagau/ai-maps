@@ -1,13 +1,13 @@
-f = '/app/templates/adventure/follow.html'
-c = open(f, 'r', encoding='utf-8').read()
+f = "/app/templates/adventure/follow.html"
+c = open(f, encoding="utf-8").read()
 
 # ── PATCH 1: Replace inner dashboard block ─────────────────────────────────
 # We use unique anchor strings to slice out the old block and insert the new one
 
-START_ANCHOR = '<!-- Predictive ClimbPro Style Profile -->'
-END_ANCHOR   = '        </div>\n\n        <!-- EXPANDED VIEW'
+START_ANCHOR = "<!-- Predictive ClimbPro Style Profile -->"
+END_ANCHOR = "        </div>\n\n        <!-- EXPANDED VIEW"
 
-new_inner = '''        <!-- Predictive Chart embedded as top header strip -->
+new_inner = """        <!-- Predictive Chart embedded as top header strip -->
         <div id="predictive-profile-container" class="relative w-full shrink-0 transition-opacity duration-300" style="height:70px;">
             <div class="absolute top-2 left-4 right-4 flex justify-between items-center z-10 pointer-events-none">
                 <span class="text-[9px] font-black text-white/60 uppercase tracking-widest">Proximos 3 km</span>
@@ -53,10 +53,10 @@ new_inner = '''        <!-- Predictive Chart embedded as top header strip -->
             </div>
         </div>
 
-        '''
+        """
 
 start_idx = c.find(START_ANCHOR)
-end_idx   = c.find(END_ANCHOR)
+end_idx = c.find(END_ANCHOR)
 
 if start_idx == -1:
     print("ERROR: start anchor not found")
@@ -65,7 +65,7 @@ elif end_idx == -1:
 else:
     print(f"Replacing HTML block: chars {start_idx} to {end_idx}")
     # Keep the 8 spaces before START_ANCHOR (they're already in new_inner)
-    c = c[:start_idx] + new_inner + c[end_idx + len(END_ANCHOR):]
+    c = c[:start_idx] + new_inner + c[end_idx + len(END_ANCHOR) :]
     print("HTML patch applied")
 
 # ── PATCH 2: Fix toggleDashboard JS ────────────────────────────────────────
@@ -101,5 +101,5 @@ if old_bind in c:
 else:
     print("WARNING: handle bind not found")
 
-open(f, 'w', encoding='utf-8').write(c)
+open(f, "w", encoding="utf-8").write(c)
 print("File saved.")

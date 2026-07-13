@@ -4,25 +4,31 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('sbk', '0002_event_is_user_submitted_event_submitted_by'),
+        ("sbk", "0002_event_is_user_submitted_event_submitted_by"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='event',
-            name='atmosphere',
-            field=models.CharField(blank=True, help_text='e.g. Chill, Pure Social, Training', max_length=100, null=True),
+            model_name="event",
+            name="atmosphere",
+            field=models.CharField(
+                blank=True,
+                help_text="e.g. Chill, Pure Social, Training",
+                max_length=100,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='event',
-            name='poster',
-            field=models.ImageField(blank=True, null=True, upload_to='sbk/posters/'),
+            model_name="event",
+            name="poster",
+            field=models.ImageField(blank=True, null=True, upload_to="sbk/posters/"),
         ),
         migrations.AddField(
-            model_name='event',
-            name='price_info',
-            field=models.CharField(blank=True, help_text='e.g. 10€ with drink', max_length=100, null=True),
+            model_name="event",
+            name="price_info",
+            field=models.CharField(
+                blank=True, help_text="e.g. 10€ with drink", max_length=100, null=True
+            ),
         ),
     ]

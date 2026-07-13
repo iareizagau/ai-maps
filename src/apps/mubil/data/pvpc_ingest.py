@@ -25,9 +25,8 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import List, Optional
 from zoneinfo import ZoneInfo
 
 from django.db.models import Avg
@@ -51,8 +50,10 @@ PENINSULA_GEO_ID = 8741
 
 # Hour ranges are half-open: [start, end). Reference:
 # https://www.cnmc.es/ambitos-de-actuacion/energia/mercado-electrico#peajes-y-cargos
-_P1_HOURS = set(range(10, 14)) | set(range(18, 22))          # 10–14, 18–22
-_P2_HOURS = set(range(8, 10)) | set(range(14, 18)) | set(range(22, 24))  # 8–10, 14–18, 22–24
+_P1_HOURS = set(range(10, 14)) | set(range(18, 22))  # 10–14, 18–22
+_P2_HOURS = (
+    set(range(8, 10)) | set(range(14, 18)) | set(range(22, 24))
+)  # 8–10, 14–18, 22–24
 # everything else is P3 (0–8 + all weekend hours)
 
 
@@ -64,7 +65,7 @@ def classify_tariff(ts_utc: datetime) -> str:
     """
     local = ts_utc.astimezone(PENINSULA_TZ)
     weekday = local.weekday()  # 0=Mon … 6=Sun
-    if weekday >= 5:           # Sat/Sun → P3 all day
+    if weekday >= 5:  # Sat/Sun → P3 all day
         return EnergyPricePVPC.Tariff.P3
     hour = local.hour
     if hour in _P1_HOURS:
@@ -153,7 +154,7 @@ def ingest_window(
     for v in values:
         try:
             _upsert_value(v, stats)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             log.warning("PVPC upsert failed at %s: %s", v.timestamp.isoformat(), e)
             stats.errors += 1
 
@@ -167,7 +168,7 @@ def ingest_recent_hours(hours: int = 48, *, dry_run: bool = False) -> PVPCIngest
     PVPC around 20:00 Madrid time, so an hourly cron will eventually pick it
     up without us needing to track "is tomorrow already there".
     """
-    end = datetime.now(tz=timezone.utc).replace(minute=0, second=0, microsecond=0)
+    end = datetime.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
     start = end - timedelta(hours=hours)
     return ingest_window(start=start, end=end, dry_run=dry_run)
 
@@ -179,9 +180,9 @@ DEFAULT_AVG_WINDOW_DAYS = 30
 
 def recent_avg_eur_kwh(
     *,
-    tariff: Optional[str] = None,
+    tariff: str | None = None,
     window_days: int = DEFAULT_AVG_WINDOW_DAYS,
-) -> Optional[Decimal]:
+) -> Decimal | None:
     """Average PVPC over the recent window, in €/kWh.
 
     Args:
@@ -193,7 +194,7 @@ def recent_avg_eur_kwh(
         Decimal €/kWh, or `None` if no rows in the window. ESIOS publishes
         €/MWh; this divides by 1000.
     """
-    cutoff = datetime.now(tz=timezone.utc) - timedelta(days=window_days)
+    cutoff = datetime.now(tz=UTC) - timedelta(days=window_days)
     qs = EnergyPricePVPC.objects.filter(timestamp__gte=cutoff)
     if tariff is not None:
         qs = qs.filter(tariff=tariff)
@@ -218,11 +219,17 @@ def current_price_eur_kwh(*, night_charging: bool) -> Decimal:
         avg = recent_avg_eur_kwh(tariff=EnergyPricePVPC.Tariff.P3)
         if avg is not None:
             return avg
-        log.warning("PVPC valle empty in last %dd — falling back to default.", DEFAULT_AVG_WINDOW_DAYS)
+        log.warning(
+            "PVPC valle empty in last %dd — falling back to default.",
+            DEFAULT_AVG_WINDOW_DAYS,
+        )
         return DEFAULT_PVPC_VALLE_EUR_KWH
 
     avg = recent_avg_eur_kwh(tariff=None)
     if avg is not None:
         return avg
-    log.warning("PVPC blended empty in last %dd — falling back to default.", DEFAULT_AVG_WINDOW_DAYS)
+    log.warning(
+        "PVPC blended empty in last %dd — falling back to default.",
+        DEFAULT_AVG_WINDOW_DAYS,
+    )
     return DEFAULT_PVPC_EUR_KWH

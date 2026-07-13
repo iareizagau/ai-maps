@@ -14,6 +14,7 @@ Each vertical app may expose `apps.<slug>.account` with two callables:
 removes it from the hub without code changes. Apps without an `account` module
 (zbe, inguru, gailur today) simply don't appear.
 """
+
 import importlib
 import logging
 
@@ -24,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def _load_module(slug):
     try:
-        return importlib.import_module(f'apps.{slug}.account')
+        return importlib.import_module(f"apps.{slug}.account")
     except ModuleNotFoundError:
         return None
     except Exception:
@@ -38,11 +39,11 @@ def collect_panels(user):
     `get_summary_card` or returning None are filtered out.
     """
     cards = []
-    for app in AppRegistry.objects.filter(is_active=True).order_by('slug'):
+    for app in AppRegistry.objects.filter(is_active=True).order_by("slug"):
         mod = _load_module(app.slug)
         if not mod:
             continue
-        getter = getattr(mod, 'get_summary_card', None)
+        getter = getattr(mod, "get_summary_card", None)
         if not getter:
             continue
         try:
@@ -63,7 +64,7 @@ def render_app_panel(request, slug):
     mod = _load_module(slug)
     if not mod:
         return None
-    renderer = getattr(mod, 'render_panel', None)
+    renderer = getattr(mod, "render_panel", None)
     if not renderer:
         return None
     return renderer(request)

@@ -44,9 +44,15 @@ EH_PROVINCES: dict[str, str] = {
 
 # Accept names/aliases → INE code. Keys are normalised (lowercase, no accents).
 _PROVINCE_ALIASES: dict[str, str] = {
-    "01": "01", "araba": "01", "alava": "01",
-    "48": "48", "bizkaia": "48", "vizcaya": "48",
-    "20": "20", "gipuzkoa": "20", "guipuzcoa": "20",
+    "01": "01",
+    "araba": "01",
+    "alava": "01",
+    "48": "48",
+    "bizkaia": "48",
+    "vizcaya": "48",
+    "20": "20",
+    "gipuzkoa": "20",
+    "guipuzcoa": "20",
 }
 
 # Raw propulsion labels → Vehicle.Propulsion. Keys normalised.
@@ -131,7 +137,9 @@ def _resolve_headers(fieldnames: list[str]) -> dict[str, str]:
     return resolved
 
 
-def ingest_csv(path: str | Path | None = None, *, dry_run: bool = False) -> EVRegIngestStats:
+def ingest_csv(
+    path: str | Path | None = None, *, dry_run: bool = False
+) -> EVRegIngestStats:
     """Parse a province-level matriculaciones CSV and upsert EVRegistration rows.
 
     Idempotent: re-running the same CSV updates counts in place (unique key is
@@ -161,18 +169,25 @@ def ingest_csv(path: str | Path | None = None, *, dry_run: bool = False) -> EVRe
             try:
                 year = int(raw[cols["year"]])
                 month = int(raw[cols["month"]])
-                count = int(float(raw[cols["count"]].replace(".", "").replace(",", ".")))
+                count = int(
+                    float(raw[cols["count"]].replace(".", "").replace(",", "."))
+                )
                 if not (1 <= month <= 12) or year < 2000 or count < 0:
                     raise ValueError
             except (ValueError, KeyError, AttributeError):
                 stats.skipped_malformed += 1
                 continue
 
-            pending.append(EVRegistration(
-                municipality_naia=f"PROV-{code}",
-                municipality_name=EH_PROVINCES[code],
-                year=year, month=month, propulsion=prop, count=count,
-            ))
+            pending.append(
+                EVRegistration(
+                    municipality_naia=f"PROV-{code}",
+                    municipality_name=EH_PROVINCES[code],
+                    year=year,
+                    month=month,
+                    propulsion=prop,
+                    count=count,
+                )
+            )
 
     if dry_run:
         stats.upserted = len(pending)
@@ -182,8 +197,13 @@ def ingest_csv(path: str | Path | None = None, *, dry_run: bool = False) -> EVRe
         for obj in pending:
             EVRegistration.objects.update_or_create(
                 municipality_naia=obj.municipality_naia,
-                year=obj.year, month=obj.month, propulsion=obj.propulsion,
-                defaults={"municipality_name": obj.municipality_name, "count": obj.count},
+                year=obj.year,
+                month=obj.month,
+                propulsion=obj.propulsion,
+                defaults={
+                    "municipality_name": obj.municipality_name,
+                    "count": obj.count,
+                },
             )
             stats.upserted += 1
     return stats

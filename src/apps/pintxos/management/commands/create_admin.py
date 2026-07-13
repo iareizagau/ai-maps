@@ -1,5 +1,5 @@
-from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand, CommandError
 
 User = get_user_model()
 
@@ -9,7 +9,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("username", type=str, help="Username for the admin account")
-        parser.add_argument("email", type=str, help="Email address for the admin account")
+        parser.add_argument(
+            "email", type=str, help="Email address for the admin account"
+        )
         parser.add_argument("password", type=str, help="Password for the admin account")
 
     def handle(self, *args, **options):

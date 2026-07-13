@@ -1,6 +1,8 @@
-from ninja import Schema
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Any
+
+from ninja import Schema
+
 
 class StationOut(Schema):
     id: int
@@ -11,19 +13,21 @@ class StationOut(Schema):
     longitude: float
     municipality: str
     province: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
+
 
 class MeasurementOut(Schema):
     id: int
     station_id: int
     timestamp: datetime
-    values: Dict[str, Any]
-    eco_score: Optional[int]
+    values: dict[str, Any]
+    eco_score: int | None
+
 
 class EcoScoreSummary(Schema):
     station_name: str
     station_type: str
     score: int
     status: str  # e.g., "Bueno", "Regular", "Pobre"
-    main_pollutant: Optional[str]
+    main_pollutant: str | None
     last_update: datetime

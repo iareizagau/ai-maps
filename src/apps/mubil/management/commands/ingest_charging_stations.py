@@ -30,7 +30,6 @@ from django.core.management.base import BaseCommand, CommandError
 
 from apps.mubil.data import charging_ingest
 
-
 SOURCE_CHOICES = ("miteco", "ocm", "dgt_nap", "all")
 
 
@@ -72,10 +71,14 @@ class Command(BaseCommand):
                 f"Ingesting MITECO CSV (eh_only={eh_only}, dry_run={dry_run})…"
             )
             stats = charging_ingest.ingest_miteco_csv(
-                csv_path=csv_path, eh_only=eh_only, dry_run=dry_run,
+                csv_path=csv_path,
+                eh_only=eh_only,
+                dry_run=dry_run,
             )
             results["miteco"] = stats.as_dict()
-            self.stdout.write(self.style.SUCCESS(json.dumps(results["miteco"], indent=2)))
+            self.stdout.write(
+                self.style.SUCCESS(json.dumps(results["miteco"], indent=2))
+            )
 
         if source in ("ocm", "all"):
             self.stdout.write(f"Ingesting OpenChargeMap (dry_run={dry_run})…")
@@ -91,7 +94,9 @@ class Command(BaseCommand):
             )
             stats = charging_ingest.ingest_dgt_nap(dry_run=dry_run)
             results["dgt_nap"] = stats.as_dict()
-            self.stdout.write(self.style.SUCCESS(json.dumps(results["dgt_nap"], indent=2)))
+            self.stdout.write(
+                self.style.SUCCESS(json.dumps(results["dgt_nap"], indent=2))
+            )
 
         if not results:
             raise CommandError(f"Unknown source: {source}")

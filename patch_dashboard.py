@@ -1,12 +1,11 @@
-import re
 
-with open('src/templates/adventure/follow.html', 'r', encoding='utf-8') as f:
+with open("src/templates/adventure/follow.html", encoding="utf-8") as f:
     content = f.read()
 
 # ─── 1. Replace the inner dashboard HTML (lines 70-131) ─────────────────────
 # We identify the block from the opening comment to </div> of view-compact
 
-old_inner = '''        
+old_inner = """        
         <!-- Predictive ClimbPro Style Profile -->
         <div id="predictive-profile-container" class="absolute left-4 right-20 z-40 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl p-2 transition-opacity duration-300 pointer-events-none opacity-100" style="top: -110px;">
             <div class="flex justify-between items-center mb-1 px-1">
@@ -67,9 +66,9 @@ old_inner = '''
                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                 Pausar
             </button>
-        </div>'''
+        </div>"""
 
-new_inner = '''        
+new_inner = """        
         <!-- Predictive Chart embedded as top header strip -->
         <div id="predictive-profile-container" class="relative w-full shrink-0 transition-opacity duration-300" style="height:70px;">
             <!-- Label overlay -->
@@ -123,7 +122,7 @@ new_inner = '''
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>
                 </button>
             </div>
-        </div>'''
+        </div>"""
 
 if old_inner in content:
     content = content.replace(old_inner, new_inner)
@@ -254,7 +253,7 @@ else:
     print("❌ Bind NOT found")
 
 
-with open('src/templates/adventure/follow.html', 'w', encoding='utf-8') as f:
+with open("src/templates/adventure/follow.html", "w", encoding="utf-8") as f:
     f.write(content)
 
 print("✅ File written successfully")

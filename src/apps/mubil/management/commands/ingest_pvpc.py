@@ -10,7 +10,7 @@ Usage:
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -23,7 +23,7 @@ def _parse_iso_date(s: str) -> datetime:
     except ValueError as e:
         raise CommandError(f"Invalid date {s!r}: {e}")
     if d.tzinfo is None:
-        d = d.replace(tzinfo=timezone.utc)
+        d = d.replace(tzinfo=UTC)
     return d
 
 

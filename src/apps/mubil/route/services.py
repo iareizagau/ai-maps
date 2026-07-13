@@ -13,10 +13,9 @@ the templates stay JSON-fed and the API can serialise the same structure.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from math import asin, cos, radians, sin, sqrt
-from typing import List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
 from django.db.models import Avg
@@ -25,14 +24,13 @@ from django.db.models.functions import ExtractHour
 from apps.mubil.data import fuel_ingest, pvpc_ingest
 from apps.mubil.models import ChargingStation, EnergyPricePVPC, EVRoutePlan, Vehicle
 
-
 # ─────────────────────────────────────────────── demo set
 
 
 # Hand-traced polylines along the main motorway between Euskal Herria pairs.
 # Resolution is intentionally coarse (~10 waypoints) — enough for a visible
 # Leaflet polyline without shipping a 200-point GeoJSON per route.
-ROUTE_DEMOS: List[dict] = [
+ROUTE_DEMOS: list[dict] = [
     {
         "slug": "donostia-bilbao",
         "label": "Donostia ↔ Bilbao",
@@ -149,8 +147,8 @@ ROUTE_DEMOS: List[dict] = [
 @dataclass(frozen=True)
 class RouteSegment:
     kind: str  # 'drive' | 'charge_stop'
-    distance_km: Optional[Decimal] = None
-    duration_min: Optional[int] = None
+    distance_km: Decimal | None = None
+    duration_min: int | None = None
     meta: dict = field(default_factory=dict)
 
 
@@ -161,27 +159,27 @@ class RoutePlanResult:
     origin_name: str
     dest_name: str
     via: str
-    origin: Tuple[float, float]
-    dest: Tuple[float, float]
-    polyline: List[Tuple[float, float]]
+    origin: tuple[float, float]
+    dest: tuple[float, float]
+    polyline: list[tuple[float, float]]
     distance_km: Decimal
     duration_min: int
     energy_kwh: Decimal
     estimated_cost_eur: Decimal
     soc_start_pct: Decimal
     soc_end_pct: Decimal
-    segments: List[RouteSegment]
-    vehicle_id: Optional[int] = None
-    vehicle_label: Optional[str] = None
+    segments: list[RouteSegment]
+    vehicle_id: int | None = None
+    vehicle_label: str | None = None
     # ── Fase 1 additions (Frontend Phase 4 consumes these). All optional so
     # legacy callers and demo seeds keep working without changes.
-    mode: str = "demo"                                           # 'demo' | 'free'
-    departure_hour: Optional[int] = None                         # 0–23, Madrid local
-    soc_curve: List[Tuple[float, float]] = field(default_factory=list)
-    cost_by_hour: List[Tuple[int, float]] = field(default_factory=list)
-    nearby_chargers: List[dict] = field(default_factory=list)
-    selected_charger: Optional[dict] = None
-    ice_baseline: Optional[dict] = None
+    mode: str = "demo"  # 'demo' | 'free'
+    departure_hour: int | None = None  # 0–23, Madrid local
+    soc_curve: list[tuple[float, float]] = field(default_factory=list)
+    cost_by_hour: list[tuple[int, float]] = field(default_factory=list)
+    nearby_chargers: list[dict] = field(default_factory=list)
+    selected_charger: dict | None = None
+    ice_baseline: dict | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -211,7 +209,9 @@ class RoutePlanResult:
             "segments": [
                 {
                     "kind": s.kind,
-                    "distance_km": float(s.distance_km) if s.distance_km is not None else None,
+                    "distance_km": float(s.distance_km)
+                    if s.distance_km is not None
+                    else None,
                     "duration_min": s.duration_min,
                     "meta": s.meta,
                 }
@@ -234,8 +234,8 @@ DEFAULT_KWH_PER_100KM = Decimal("18.0")
 SOC_RESERVE_PCT = Decimal("10")
 
 # Fast-charger session profile used when a stop is needed.
-FAST_CHARGE_KW = Decimal("100")            # representative DC kW
-FAST_CHARGE_PRICE_EUR_KWH = Decimal("0.45") # IONITY / Iberdrola fast-DC band
+FAST_CHARGE_KW = Decimal("100")  # representative DC kW
+FAST_CHARGE_PRICE_EUR_KWH = Decimal("0.45")  # IONITY / Iberdrola fast-DC band
 
 # Stop duration is "energy delivered ÷ effective power" — see
 # :func:`_charge_stop_duration_min`. Cap to keep the demo card readable.
@@ -260,7 +260,7 @@ SOC_CURVE_TARGET_SAMPLES = 30
 _PVPC_LOCAL_TZ = ZoneInfo("Europe/Madrid")
 
 
-def _midpoint(p1: Tuple[float, float], p2: Tuple[float, float]) -> Tuple[float, float]:
+def _midpoint(p1: tuple[float, float], p2: tuple[float, float]) -> tuple[float, float]:
     return ((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2)
 
 
@@ -276,13 +276,13 @@ def _charge_stop_duration_min(kwh_to_add: Decimal) -> int:
     return max(capped, 10)  # never show <10 min — implausible
 
 
-def _vehicle_kwh_per_100km(vehicle: Optional[Vehicle]) -> Decimal:
+def _vehicle_kwh_per_100km(vehicle: Vehicle | None) -> Decimal:
     if vehicle is None or vehicle.consumption_kwh_100km is None:
         return DEFAULT_KWH_PER_100KM
     return Decimal(vehicle.consumption_kwh_100km)
 
 
-def _vehicle_battery_kwh(vehicle: Optional[Vehicle]) -> Optional[Decimal]:
+def _vehicle_battery_kwh(vehicle: Vehicle | None) -> Decimal | None:
     if vehicle is None or vehicle.battery_kwh is None:
         return None
     return Decimal(vehicle.battery_kwh)
@@ -296,18 +296,21 @@ def _energy_price_eur_kwh_home() -> Decimal:
 # ─────────────────────────────────────────────── new helpers (Phase 1)
 
 
-def _haversine_km(p1: Tuple[float, float], p2: Tuple[float, float]) -> float:
+def _haversine_km(p1: tuple[float, float], p2: tuple[float, float]) -> float:
     """Great-circle distance in km between two (lat, lon) points."""
     lat1, lon1 = p1
     lat2, lon2 = p2
     r = 6371.0088  # WGS-84 mean radius
     dlat = radians(lat2 - lat1)
     dlon = radians(lon2 - lon1)
-    a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
+    a = (
+        sin(dlat / 2) ** 2
+        + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
+    )
     return 2 * r * asin(sqrt(a))
 
 
-def _cumulative_km(polyline: List[Tuple[float, float]]) -> List[float]:
+def _cumulative_km(polyline: list[tuple[float, float]]) -> list[float]:
     """Cumulative haversine distance at each vertex (km). First entry = 0."""
     if len(polyline) < 2:
         return [0.0] * len(polyline)
@@ -317,7 +320,7 @@ def _cumulative_km(polyline: List[Tuple[float, float]]) -> List[float]:
     return cum
 
 
-def _pvpc_24h_curve(window_days: int = 7) -> List[Decimal]:
+def _pvpc_24h_curve(window_days: int = 7) -> list[Decimal]:
     """Average PVPC €/kWh per hour-of-day (Madrid local), 24 values, last N days.
 
     The Frontend Phase 4 chart shows what each departure hour would cost. We
@@ -327,37 +330,33 @@ def _pvpc_24h_curve(window_days: int = 7) -> List[Decimal]:
     Falls back to a flat curve at :func:`pvpc_ingest.current_price_eur_kwh`
     when the table is empty — keeps the FE rendering even on a cold DB.
     """
-    cutoff = datetime.now(tz=timezone.utc) - timedelta(days=window_days)
+    cutoff = datetime.now(tz=UTC) - timedelta(days=window_days)
     rows = (
-        EnergyPricePVPC.objects
-        .filter(timestamp__gte=cutoff)
-        .annotate(hour=ExtractHour('timestamp', tzinfo=_PVPC_LOCAL_TZ))
-        .values('hour')
-        .annotate(avg=Avg('price_eur_mwh'))
-        .order_by('hour')
+        EnergyPricePVPC.objects.filter(timestamp__gte=cutoff)
+        .annotate(hour=ExtractHour("timestamp", tzinfo=_PVPC_LOCAL_TZ))
+        .values("hour")
+        .annotate(avg=Avg("price_eur_mwh"))
+        .order_by("hour")
     )
     by_hour: dict = {}
     for r in rows:
-        if r['avg'] is None:
+        if r["avg"] is None:
             continue
-        by_hour[int(r['hour'])] = (Decimal(r['avg']) / Decimal('1000'))
+        by_hour[int(r["hour"])] = Decimal(r["avg"]) / Decimal("1000")
 
     if not by_hour:
         fallback = pvpc_ingest.current_price_eur_kwh(night_charging=False)
-        return [Decimal(fallback).quantize(Decimal('0.0001'))] * 24
+        return [Decimal(fallback).quantize(Decimal("0.0001"))] * 24
 
-    overall = sum(by_hour.values(), Decimal('0')) / Decimal(len(by_hour))
-    return [
-        by_hour.get(h, overall).quantize(Decimal('0.0001'))
-        for h in range(24)
-    ]
+    overall = sum(by_hour.values(), Decimal("0")) / Decimal(len(by_hour))
+    return [by_hour.get(h, overall).quantize(Decimal("0.0001")) for h in range(24)]
 
 
 def _cost_by_hour(
     energy_kwh: Decimal,
     kwh_fast_charge: Decimal,
-    pvpc_curve: List[Decimal],
-) -> List[Tuple[int, float]]:
+    pvpc_curve: list[Decimal],
+) -> list[tuple[int, float]]:
     """Cost of the trip if it departed at each hour 0..23.
 
     Model: home/destination charging tracks the hourly PVPC, the en-route
@@ -365,25 +364,28 @@ def _cost_by_hour(
     is the total trip consumption; we charge the slice that isn't covered by
     fast-DC at the home rate.
     """
-    home_kwh = max(energy_kwh - kwh_fast_charge, Decimal('0'))
-    fast_cost = (kwh_fast_charge * FAST_CHARGE_PRICE_EUR_KWH)
-    out: List[Tuple[int, float]] = []
+    home_kwh = max(energy_kwh - kwh_fast_charge, Decimal("0"))
+    fast_cost = kwh_fast_charge * FAST_CHARGE_PRICE_EUR_KWH
+    out: list[tuple[int, float]] = []
     for h in range(24):
-        c = (home_kwh * pvpc_curve[h] + fast_cost).quantize(Decimal('0.01'))
+        c = (home_kwh * pvpc_curve[h] + fast_cost).quantize(Decimal("0.01"))
         out.append((h, float(c)))
     return out
 
 
-def _ice_trip_cost(distance_km: Decimal, *, postal_code: Optional[str] = None) -> dict:
+def _ice_trip_cost(distance_km: Decimal, *, postal_code: str | None = None) -> dict:
     """Comparable gasoline-95 trip cost for the EV vs ICE badge."""
-    fuel_l = (distance_km * ICE_BASELINE_L_PER_100KM / Decimal('100')).quantize(Decimal('0.01'))
-    price_l = fuel_ingest.current_price_eur_l(
-        fuel_key=ICE_BASELINE_FUEL_KEY, postal_code=postal_code,
+    fuel_l = (distance_km * ICE_BASELINE_L_PER_100KM / Decimal("100")).quantize(
+        Decimal("0.01")
     )
-    cost_eur = (fuel_l * price_l).quantize(Decimal('0.01'))
+    price_l = fuel_ingest.current_price_eur_l(
+        fuel_key=ICE_BASELINE_FUEL_KEY,
+        postal_code=postal_code,
+    )
+    cost_eur = (fuel_l * price_l).quantize(Decimal("0.01"))
     return {
         "fuel_l": float(fuel_l),
-        "price_eur_l": float(price_l.quantize(Decimal('0.001'))),
+        "price_eur_l": float(price_l.quantize(Decimal("0.001"))),
         "cost_eur": float(cost_eur),
     }
 
@@ -391,10 +393,10 @@ def _ice_trip_cost(distance_km: Decimal, *, postal_code: Optional[str] = None) -
 def _ice_vs_ev(ev_cost_eur: Decimal, ice: dict) -> dict:
     """Augments ``ice`` with vs-EV deltas. EV cheaper → positive savings."""
     ice_cost = Decimal(str(ice["cost_eur"]))
-    savings = (ice_cost - ev_cost_eur).quantize(Decimal('0.01'))
-    pct = Decimal('0')
+    savings = (ice_cost - ev_cost_eur).quantize(Decimal("0.01"))
+    pct = Decimal("0")
     if ice_cost > 0:
-        pct = (savings / ice_cost * Decimal('100')).quantize(Decimal('0.1'))
+        pct = (savings / ice_cost * Decimal("100")).quantize(Decimal("0.1"))
     return {
         **ice,
         "vs_ev_eur": float(savings),
@@ -403,41 +405,44 @@ def _ice_vs_ev(ev_cost_eur: Decimal, ice: dict) -> dict:
 
 
 def _chargers_along_route(
-    polyline_latlon: List[Tuple[float, float]],
-    *, radius_km: int = 5, min_kw: int = 50, limit: int = 10,
-) -> List[dict]:
+    polyline_latlon: list[tuple[float, float]],
+    *,
+    radius_km: int = 5,
+    min_kw: int = 50,
+    limit: int = 10,
+) -> list[dict]:
     """Top-N DC fast chargers within ``radius_km`` of the route line."""
     if len(polyline_latlon) < 2:
         return []
     polyline_lonlat = [(lon, lat) for lat, lon in polyline_latlon]
-    qs = (
-        ChargingStation.objects
-        .filter(power_kw__gte=min_kw)
-        .along_route(polyline_lonlat, radius_km=radius_km)[:limit]
-    )
-    out: List[dict] = []
+    qs = ChargingStation.objects.filter(power_kw__gte=min_kw).along_route(
+        polyline_lonlat, radius_km=radius_km
+    )[:limit]
+    out: list[dict] = []
     for c in qs:
-        out.append({
-            "id": c.id,
-            "operator": c.operator or "",
-            "address": c.address or "",
-            "power_kw": float(c.power_kw) if c.power_kw is not None else None,
-            "lat": c.geom.y,
-            "lon": c.geom.x,
-            # `distance` is a Distance object (m). Round to km for the UI.
-            "distance_km": round(c.distance.m / 1000.0, 2) if c.distance else None,
-        })
+        out.append(
+            {
+                "id": c.id,
+                "operator": c.operator or "",
+                "address": c.address or "",
+                "power_kw": float(c.power_kw) if c.power_kw is not None else None,
+                "lat": c.geom.y,
+                "lon": c.geom.x,
+                # `distance` is a Distance object (m). Round to km for the UI.
+                "distance_km": round(c.distance.m / 1000.0, 2) if c.distance else None,
+            }
+        )
     return out
 
 
 def _select_charge_stop(
-    polyline_latlon: List[Tuple[float, float]],
+    polyline_latlon: list[tuple[float, float]],
     distance_km: Decimal,
     soc_start_pct: Decimal,
     energy_kwh: Decimal,
-    battery_kwh: Optional[Decimal],
-    nearby_chargers: List[dict],
-) -> Optional[dict]:
+    battery_kwh: Decimal | None,
+    nearby_chargers: list[dict],
+) -> dict | None:
     """Pick the closest real fast-charger to the point where SOC crosses reserve.
 
     Returns the matching dict from ``nearby_chargers`` (with ``charge_km``
@@ -445,9 +450,9 @@ def _select_charge_stop(
     """
     if not battery_kwh or battery_kwh <= 0 or not nearby_chargers:
         return None
-    kwh_per_km = energy_kwh / distance_km if distance_km > 0 else Decimal('0')
+    kwh_per_km = energy_kwh / distance_km if distance_km > 0 else Decimal("0")
     # km at which SOC would drop to reserve
-    soc_drop_kwh = (soc_start_pct - SOC_RESERVE_PCT) / Decimal('100') * battery_kwh
+    soc_drop_kwh = (soc_start_pct - SOC_RESERVE_PCT) / Decimal("100") * battery_kwh
     if soc_drop_kwh >= energy_kwh:
         return None  # arrives with margin, no stop
     if kwh_per_km <= 0:
@@ -468,7 +473,7 @@ def _select_charge_stop(
     target = polyline_latlon[idx]
 
     best = None
-    best_d = float('inf')
+    best_d = float("inf")
     for ch in nearby_chargers:
         d = _haversine_km(target, (ch["lat"], ch["lon"]))
         if d < best_d:
@@ -480,14 +485,14 @@ def _select_charge_stop(
 
 
 def _soc_curve_points(
-    polyline_latlon: List[Tuple[float, float]],
+    polyline_latlon: list[tuple[float, float]],
     distance_km: Decimal,
     energy_kwh: Decimal,
-    battery_kwh: Optional[Decimal],
+    battery_kwh: Decimal | None,
     soc_start_pct: Decimal,
-    charge_km: Optional[float] = None,
-    charge_kwh: Decimal = Decimal('0'),
-) -> List[Tuple[float, float]]:
+    charge_km: float | None = None,
+    charge_kwh: Decimal = Decimal("0"),
+) -> list[tuple[float, float]]:
     """``(km_acum, soc_pct)`` samples for the FE line chart.
 
     Returns ``[]`` when the catalog row has no ``battery_kwh`` — same
@@ -513,7 +518,7 @@ def _soc_curve_points(
     if indices[-1] != n - 1:
         indices.append(n - 1)
 
-    out: List[Tuple[float, float]] = []
+    out: list[tuple[float, float]] = []
     soc = float(soc_start_pct)
     bumped = False
     last_km = 0.0
@@ -534,12 +539,16 @@ def _soc_curve_points(
 def _build_segments(
     distance_km: Decimal,
     duration_min: int,
-    polyline: List[Tuple[float, float]],
+    polyline: list[tuple[float, float]],
     needs_stop: bool,
     kwh_to_add: Decimal,
-) -> List[RouteSegment]:
+) -> list[RouteSegment]:
     if not needs_stop:
-        return [RouteSegment(kind="drive", distance_km=distance_km, duration_min=duration_min)]
+        return [
+            RouteSegment(
+                kind="drive", distance_km=distance_km, duration_min=duration_min
+            )
+        ]
 
     half_km = (distance_km / Decimal("2")).quantize(Decimal("0.1"))
     half_min = duration_min // 2
@@ -566,11 +575,11 @@ def _build_segments(
 
 def _plan_for_demo(
     demo: dict,
-    vehicle: Optional[Vehicle],
+    vehicle: Vehicle | None,
     soc_start_pct: Decimal,
     *,
-    departure_hour: Optional[int] = None,
-    postal_code: Optional[str] = None,
+    departure_hour: int | None = None,
+    postal_code: str | None = None,
 ) -> RoutePlanResult:
     distance_km = Decimal(demo["distance_km"])
     duration_min = int(demo["duration_min"])
@@ -582,7 +591,9 @@ def _plan_for_demo(
     # Without it we fall back to "no stop needed" and show the trip as-is —
     # better than fabricating a charge_stop on imaginary capacity.
     if battery_kwh and battery_kwh > 0:
-        soc_consumed_pct = (energy_kwh / battery_kwh * Decimal("100")).quantize(Decimal("0.1"))
+        soc_consumed_pct = (energy_kwh / battery_kwh * Decimal("100")).quantize(
+            Decimal("0.1")
+        )
         soc_end_pct = (soc_start_pct - soc_consumed_pct).quantize(Decimal("0.1"))
         needs_stop = soc_end_pct < SOC_RESERVE_PCT
     else:
@@ -593,7 +604,9 @@ def _plan_for_demo(
         # Top up just enough to land at ~80% (typical fast-charge cut-off
         # before taper). kwh_to_add is the energy delivered during the stop.
         target_soc = Decimal("80")
-        kwh_to_add = ((target_soc - soc_end_pct) / Decimal("100") * battery_kwh).quantize(Decimal("0.1"))
+        kwh_to_add = (
+            (target_soc - soc_end_pct) / Decimal("100") * battery_kwh
+        ).quantize(Decimal("0.1"))
         if kwh_to_add < Decimal("5"):
             # Anything <5 kWh is below the noise floor for a real stop.
             needs_stop = False
@@ -609,28 +622,45 @@ def _plan_for_demo(
     if needs_stop:
         stop_min = _charge_stop_duration_min(kwh_to_add)
         total_duration_min = duration_min + stop_min
-        soc_end_pct = (soc_end_pct + (kwh_to_add / battery_kwh * Decimal("100"))).quantize(Decimal("0.1"))
+        soc_end_pct = (
+            soc_end_pct + (kwh_to_add / battery_kwh * Decimal("100"))
+        ).quantize(Decimal("0.1"))
     else:
         total_duration_min = duration_min
 
-    segments = _build_segments(distance_km, duration_min, demo["polyline"], needs_stop, kwh_to_add)
+    segments = _build_segments(
+        distance_km, duration_min, demo["polyline"], needs_stop, kwh_to_add
+    )
 
     polyline = demo["polyline"]
     nearby_chargers = _chargers_along_route(polyline)
     selected_charger = (
-        _select_charge_stop(polyline, distance_km, soc_start_pct, energy_kwh,
-                            battery_kwh, nearby_chargers)
-        if needs_stop else None
+        _select_charge_stop(
+            polyline,
+            distance_km,
+            soc_start_pct,
+            energy_kwh,
+            battery_kwh,
+            nearby_chargers,
+        )
+        if needs_stop
+        else None
     )
     charge_km = float(selected_charger["charge_km"]) if selected_charger else None
     soc_curve = _soc_curve_points(
-        polyline, distance_km, energy_kwh, battery_kwh, soc_start_pct,
-        charge_km=charge_km, charge_kwh=kwh_to_add,
+        polyline,
+        distance_km,
+        energy_kwh,
+        battery_kwh,
+        soc_start_pct,
+        charge_km=charge_km,
+        charge_kwh=kwh_to_add,
     )
     pvpc_curve = _pvpc_24h_curve()
     cost_by_hour = _cost_by_hour(energy_kwh, kwh_to_add, pvpc_curve)
-    ice_baseline = _ice_vs_ev(estimated_cost_eur,
-                              _ice_trip_cost(distance_km, postal_code=postal_code))
+    ice_baseline = _ice_vs_ev(
+        estimated_cost_eur, _ice_trip_cost(distance_km, postal_code=postal_code)
+    )
 
     return RoutePlanResult(
         slug=demo["slug"],
@@ -660,7 +690,7 @@ def _plan_for_demo(
     )
 
 
-def list_demos() -> List[dict]:
+def list_demos() -> list[dict]:
     """Lightweight metadata for the route selector dropdown / API list."""
     return [
         {
@@ -676,21 +706,21 @@ def list_demos() -> List[dict]:
     ]
 
 
-def get_demo(slug: str) -> Optional[dict]:
+def get_demo(slug: str) -> dict | None:
     for d in ROUTE_DEMOS:
         if d["slug"] == slug:
             return d
     return None
 
 
-def _polyline_from_route_geojson(route_geojson: dict) -> List[Tuple[float, float]]:
+def _polyline_from_route_geojson(route_geojson: dict) -> list[tuple[float, float]]:
     """Flatten a FeatureCollection of LineStrings into a ``(lat, lon)`` list.
 
     Matches the shape returned by ``advisor.services.get_commute_route``
     (pgRouting fan-out as N segments, or OSRM as one). Duplicate consecutive
     points across feature boundaries are dropped.
     """
-    out: List[Tuple[float, float]] = []
+    out: list[tuple[float, float]] = []
     features = (route_geojson or {}).get("features", [])
     for feat in features:
         geom = (feat or {}).get("geometry") or {}
@@ -705,12 +735,14 @@ def _polyline_from_route_geojson(route_geojson: dict) -> List[Tuple[float, float
 
 def _plan_for_free_od(
     *,
-    origin_lng: float, origin_lat: float,
-    dest_lng: float, dest_lat: float,
-    vehicle: Optional[Vehicle],
+    origin_lng: float,
+    origin_lat: float,
+    dest_lng: float,
+    dest_lat: float,
+    vehicle: Vehicle | None,
     soc_start_pct: Decimal,
-    departure_hour: Optional[int],
-    postal_code: Optional[str],
+    departure_hour: int | None,
+    postal_code: str | None,
 ) -> RoutePlanResult:
     """Plan a route with arbitrary origin/destination via advisor's pgRouting.
 
@@ -735,14 +767,18 @@ def _plan_for_free_od(
         polyline = [(origin_lat, origin_lng), (dest_lat, dest_lng)]
 
     # Duration: routing layer doesn't surface one; estimate from avg speed.
-    duration_min = int((distance_km / FREE_MODE_AVG_KMH * Decimal("60")).to_integral_value())
+    duration_min = int(
+        (distance_km / FREE_MODE_AVG_KMH * Decimal("60")).to_integral_value()
+    )
 
     kwh_per_100 = _vehicle_kwh_per_100km(vehicle)
     energy_kwh = (kwh_per_100 * distance_km / Decimal("100")).quantize(Decimal("0.01"))
     battery_kwh = _vehicle_battery_kwh(vehicle)
 
     if battery_kwh and battery_kwh > 0:
-        soc_consumed_pct = (energy_kwh / battery_kwh * Decimal("100")).quantize(Decimal("0.1"))
+        soc_consumed_pct = (energy_kwh / battery_kwh * Decimal("100")).quantize(
+            Decimal("0.1")
+        )
         soc_end_pct = (soc_start_pct - soc_consumed_pct).quantize(Decimal("0.1"))
         needs_stop = soc_end_pct < SOC_RESERVE_PCT
     else:
@@ -751,7 +787,9 @@ def _plan_for_free_od(
 
     if needs_stop and battery_kwh:
         target_soc = Decimal("80")
-        kwh_to_add = ((target_soc - soc_end_pct) / Decimal("100") * battery_kwh).quantize(Decimal("0.1"))
+        kwh_to_add = (
+            (target_soc - soc_end_pct) / Decimal("100") * battery_kwh
+        ).quantize(Decimal("0.1"))
         if kwh_to_add < Decimal("5"):
             needs_stop = False
             kwh_to_add = Decimal("0")
@@ -766,27 +804,44 @@ def _plan_for_free_od(
     if needs_stop:
         stop_min = _charge_stop_duration_min(kwh_to_add)
         total_duration_min = duration_min + stop_min
-        soc_end_pct = (soc_end_pct + (kwh_to_add / battery_kwh * Decimal("100"))).quantize(Decimal("0.1"))
+        soc_end_pct = (
+            soc_end_pct + (kwh_to_add / battery_kwh * Decimal("100"))
+        ).quantize(Decimal("0.1"))
     else:
         total_duration_min = duration_min
 
-    segments = _build_segments(distance_km, duration_min, polyline, needs_stop, kwh_to_add)
+    segments = _build_segments(
+        distance_km, duration_min, polyline, needs_stop, kwh_to_add
+    )
 
     nearby_chargers = _chargers_along_route(polyline)
     selected_charger = (
-        _select_charge_stop(polyline, distance_km, soc_start_pct, energy_kwh,
-                            battery_kwh, nearby_chargers)
-        if needs_stop else None
+        _select_charge_stop(
+            polyline,
+            distance_km,
+            soc_start_pct,
+            energy_kwh,
+            battery_kwh,
+            nearby_chargers,
+        )
+        if needs_stop
+        else None
     )
     charge_km = float(selected_charger["charge_km"]) if selected_charger else None
     soc_curve = _soc_curve_points(
-        polyline, distance_km, energy_kwh, battery_kwh, soc_start_pct,
-        charge_km=charge_km, charge_kwh=kwh_to_add,
+        polyline,
+        distance_km,
+        energy_kwh,
+        battery_kwh,
+        soc_start_pct,
+        charge_km=charge_km,
+        charge_kwh=kwh_to_add,
     )
     pvpc_curve = _pvpc_24h_curve()
     cost_by_hour = _cost_by_hour(energy_kwh, kwh_to_add, pvpc_curve)
-    ice_baseline = _ice_vs_ev(estimated_cost_eur,
-                              _ice_trip_cost(distance_km, postal_code=postal_code))
+    ice_baseline = _ice_vs_ev(
+        estimated_cost_eur, _ice_trip_cost(distance_km, postal_code=postal_code)
+    )
 
     label = f"{origin_lat:.4f},{origin_lng:.4f} → {dest_lat:.4f},{dest_lng:.4f}"
     return RoutePlanResult(
@@ -819,15 +874,15 @@ def _plan_for_free_od(
 
 def plan(
     *,
-    slug: Optional[str] = None,
-    origin_lng: Optional[float] = None,
-    origin_lat: Optional[float] = None,
-    dest_lng: Optional[float] = None,
-    dest_lat: Optional[float] = None,
-    vehicle_id: Optional[int] = None,
+    slug: str | None = None,
+    origin_lng: float | None = None,
+    origin_lat: float | None = None,
+    dest_lng: float | None = None,
+    dest_lat: float | None = None,
+    vehicle_id: int | None = None,
     soc_start_pct: float = 80.0,
-    departure_hour: Optional[int] = None,
-    postal_code: Optional[str] = None,
+    departure_hour: int | None = None,
+    postal_code: str | None = None,
 ) -> RoutePlanResult:
     """Build a :class:`RoutePlanResult`.
 
@@ -863,18 +918,21 @@ def plan(
         if demo is None:
             raise ValueError(f"Unknown route slug: {slug}")
         return _plan_for_demo(
-            demo, vehicle, Decimal(str(soc_start_pct)),
-            departure_hour=departure_hour, postal_code=postal_code,
+            demo,
+            vehicle,
+            Decimal(str(soc_start_pct)),
+            departure_hour=departure_hour,
+            postal_code=postal_code,
         )
 
     coords = (origin_lng, origin_lat, dest_lng, dest_lat)
     if any(c is None for c in coords):
-        raise ValueError(
-            "plan() requires either `slug` or all four O/D coordinates"
-        )
+        raise ValueError("plan() requires either `slug` or all four O/D coordinates")
     return _plan_for_free_od(
-        origin_lng=float(origin_lng), origin_lat=float(origin_lat),
-        dest_lng=float(dest_lng), dest_lat=float(dest_lat),
+        origin_lng=float(origin_lng),
+        origin_lat=float(origin_lat),
+        dest_lng=float(dest_lng),
+        dest_lat=float(dest_lat),
         vehicle=vehicle,
         soc_start_pct=Decimal(str(soc_start_pct)),
         departure_hour=departure_hour,
@@ -885,7 +943,7 @@ def plan(
 # ─────────────────────────────────────────────── seed (persist demo plans)
 
 
-def upsert_demo_plans(default_vehicle: Optional[Vehicle] = None) -> int:
+def upsert_demo_plans(default_vehicle: Vehicle | None = None) -> int:
     """Persist the 5 demos into :class:`EVRoutePlan` (idempotent).
 
     Used by ``manage.py seed_route_demos``. The cache row is keyed on the
@@ -911,7 +969,9 @@ def upsert_demo_plans(default_vehicle: Optional[Vehicle] = None) -> int:
         # No natural-key UNIQUE on the model — match the previous row for the
         # same (origin, dest, vehicle) tuple to keep the cache idempotent.
         existing = EVRoutePlan.objects.filter(
-            origin=origin, dest=dest, vehicle=default_vehicle,
+            origin=origin,
+            dest=dest,
+            vehicle=default_vehicle,
         ).first()
         if existing is None:
             EVRoutePlan.objects.create(origin=origin, dest=dest, **defaults)
@@ -928,10 +988,10 @@ def upsert_demo_plans(default_vehicle: Optional[Vehicle] = None) -> int:
 
 def optimize_multistop(
     *,
-    locations: List[dict],
-    vehicle_id: Optional[int] = None,
+    locations: list[dict],
+    vehicle_id: int | None = None,
     soc_start_pct: float = 85.0,
-    departure_hour: Optional[int] = None,
+    departure_hour: int | None = None,
     return_to_depot: bool = True,
 ) -> dict:
     """Optimise a multi-stop route for an electric vehicle.
@@ -953,16 +1013,14 @@ def optimize_multistop(
         battery curve, costs, and EV-vs-ICE comparison.
     """
     from apps.mubil.route.optimizer import (
+        FAST_CHARGE_PRICE_EUR_KWH,
         Location,
-        MultiStopResult,
-        StopResult,
+        _tour_distance,
         build_distance_matrix,
         geocode_address,
         get_route_polyline,
         simulate_battery,
         solve_tsp,
-        _tour_distance,
-        FAST_CHARGE_PRICE_EUR_KWH,
     )
 
     if len(locations) < 2:
@@ -971,25 +1029,29 @@ def optimize_multistop(
         raise ValueError("Máximo 20 paradas por optimización.")
 
     # ── 1. Resolve locations (geocode if needed)
-    locs: List[Location] = []
+    locs: list[Location] = []
     for raw in locations:
         lat = raw.get("lat")
         lng = raw.get("lng")
         if lat is None or lng is None:
             address = raw.get("address", "")
             if not address:
-                raise ValueError(f"Ubicación '{raw.get('name', '?')}' sin coordenadas ni dirección.")
+                raise ValueError(
+                    f"Ubicación '{raw.get('name', '?')}' sin coordenadas ni dirección."
+                )
             coords = geocode_address(address)
             if coords is None:
                 raise ValueError(f"No se pudo geocodificar: '{address}'")
             lat, lng = coords
-        locs.append(Location(
-            name=raw.get("name", f"Parada {len(locs) + 1}"),
-            lat=float(lat),
-            lng=float(lng),
-            is_depot=bool(raw.get("is_depot", False)),
-            address=raw.get("address", ""),
-        ))
+        locs.append(
+            Location(
+                name=raw.get("name", f"Parada {len(locs) + 1}"),
+                lat=float(lat),
+                lng=float(lng),
+                is_depot=bool(raw.get("is_depot", False)),
+                address=raw.get("address", ""),
+            )
+        )
 
     # Ensure exactly one depot
     depot_indices = [i for i, loc in enumerate(locs) if loc.is_depot]
@@ -1042,9 +1104,9 @@ def optimize_multistop(
             (to_loc.lng, to_loc.lat),
         ]
         chargers = list(
-            ChargingStation.objects
-            .filter(power_kw__gte=50)
-            .along_route(polyline_lonlat, radius_km=10)[:5]
+            ChargingStation.objects.filter(power_kw__gte=50).along_route(
+                polyline_lonlat, radius_km=10
+            )[:5]
         )
         if chargers:
             best = chargers[0]
@@ -1056,27 +1118,29 @@ def optimize_multistop(
             cs.lng = best.geom.x
 
     # ── 7. Build ordered stops list
-    ordered_stops: List[dict] = []
+    ordered_stops: list[dict] = []
     total_dist = 0.0
     total_dur = 0.0
     total_energy = 0.0
-    soc_curve: List[List[float]] = []  # [km_accum, soc_pct]
+    soc_curve: list[list[float]] = []  # [km_accum, soc_pct]
 
     km_accum = 0.0
     soc_curve.append([0.0, round(soc_start_pct, 1)])
 
     # First stop is the depot
-    ordered_stops.append({
-        "idx": 0,
-        "name": locs[tour[0]].name,
-        "lat": locs[tour[0]].lat,
-        "lng": locs[tour[0]].lng,
-        "arrival_soc": round(soc_start_pct, 1),
-        "departure_soc": round(soc_start_pct, 1),
-        "type": "depot",
-        "distance_from_prev_km": 0,
-        "duration_from_prev_min": 0,
-    })
+    ordered_stops.append(
+        {
+            "idx": 0,
+            "name": locs[tour[0]].name,
+            "lat": locs[tour[0]].lat,
+            "lng": locs[tour[0]].lng,
+            "arrival_soc": round(soc_start_pct, 1),
+            "departure_soc": round(soc_start_pct, 1),
+            "type": "depot",
+            "distance_from_prev_km": 0,
+            "duration_from_prev_min": 0,
+        }
+    )
 
     charge_stop_map = {cs.after_leg_idx: cs for cs in charge_stops}
 
@@ -1105,50 +1169,56 @@ def optimize_multistop(
 
             # Insert charge stop before the delivery
             if cs.lat and cs.lng:
-                ordered_stops.append({
-                    "idx": len(ordered_stops),
-                    "name": f"⚡ Carga rápida — {cs.operator or 'DC ≥50 kW'}",
-                    "lat": cs.lat,
-                    "lng": cs.lng,
-                    "arrival_soc": arrival_soc,
-                    "departure_soc": departure_soc,
-                    "type": "charge",
-                    "distance_from_prev_km": round(leg.distance_km, 1),
-                    "duration_from_prev_min": round(leg.duration_min, 0),
-                    "charger": {
-                        "id": cs.charger_id,
-                        "operator": cs.operator,
-                        "power_kw": cs.power_kw,
-                        "charge_kwh": round(cs.charge_kwh, 1),
-                        "charge_min": cs.duration_min,
-                    },
-                })
+                ordered_stops.append(
+                    {
+                        "idx": len(ordered_stops),
+                        "name": f"⚡ Carga rápida — {cs.operator or 'DC ≥50 kW'}",
+                        "lat": cs.lat,
+                        "lng": cs.lng,
+                        "arrival_soc": arrival_soc,
+                        "departure_soc": departure_soc,
+                        "type": "charge",
+                        "distance_from_prev_km": round(leg.distance_km, 1),
+                        "duration_from_prev_min": round(leg.duration_min, 0),
+                        "charger": {
+                            "id": cs.charger_id,
+                            "operator": cs.operator,
+                            "power_kw": cs.power_kw,
+                            "charge_kwh": round(cs.charge_kwh, 1),
+                            "charge_min": cs.duration_min,
+                        },
+                    }
+                )
                 soc_curve.append([round(km_accum, 1), departure_soc])
                 # The delivery itself comes next with zero distance
-                ordered_stops.append({
-                    "idx": len(ordered_stops),
-                    "name": dest_loc.name,
-                    "lat": dest_loc.lat,
-                    "lng": dest_loc.lng,
-                    "arrival_soc": departure_soc,
-                    "departure_soc": departure_soc,
-                    "type": stop_type,
-                    "distance_from_prev_km": 0,
-                    "duration_from_prev_min": 0,
-                })
+                ordered_stops.append(
+                    {
+                        "idx": len(ordered_stops),
+                        "name": dest_loc.name,
+                        "lat": dest_loc.lat,
+                        "lng": dest_loc.lng,
+                        "arrival_soc": departure_soc,
+                        "departure_soc": departure_soc,
+                        "type": stop_type,
+                        "distance_from_prev_km": 0,
+                        "duration_from_prev_min": 0,
+                    }
+                )
                 continue
 
-        ordered_stops.append({
-            "idx": len(ordered_stops),
-            "name": dest_loc.name,
-            "lat": dest_loc.lat,
-            "lng": dest_loc.lng,
-            "arrival_soc": arrival_soc,
-            "departure_soc": departure_soc,
-            "type": stop_type,
-            "distance_from_prev_km": round(leg.distance_km, 1),
-            "duration_from_prev_min": round(leg.duration_min, 0),
-        })
+        ordered_stops.append(
+            {
+                "idx": len(ordered_stops),
+                "name": dest_loc.name,
+                "lat": dest_loc.lat,
+                "lng": dest_loc.lng,
+                "arrival_soc": arrival_soc,
+                "departure_soc": departure_soc,
+                "type": stop_type,
+                "distance_from_prev_km": round(leg.distance_km, 1),
+                "duration_from_prev_min": round(leg.duration_min, 0),
+            }
+        )
 
     # ── 7.5. Fetch polylines for the entire tour
     full_polyline = []
@@ -1192,7 +1262,3 @@ def optimize_multistop(
         "soc_start": round(soc_start_pct, 1),
         "polyline": full_polyline,
     }
-
-
-
-

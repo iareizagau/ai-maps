@@ -5,26 +5,43 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='LowEmissionZone',
+            name="LowEmissionZone",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=150, verbose_name='Nombre de la Zona')),
-                ('description', models.TextField(blank=True, null=True, verbose_name='Descripción')),
-                ('geom', django.contrib.gis.db.models.fields.MultiPolygonField(srid=4326, verbose_name='Geometría')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(max_length=150, verbose_name="Nombre de la Zona"),
+                ),
+                (
+                    "description",
+                    models.TextField(blank=True, null=True, verbose_name="Descripción"),
+                ),
+                (
+                    "geom",
+                    django.contrib.gis.db.models.fields.MultiPolygonField(
+                        srid=4326, verbose_name="Geometría"
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
-                'verbose_name': 'Zona de Bajas Emisiones',
-                'verbose_name_plural': 'Zonas de Bajas Emisiones',
+                "verbose_name": "Zona de Bajas Emisiones",
+                "verbose_name_plural": "Zonas de Bajas Emisiones",
             },
         ),
     ]

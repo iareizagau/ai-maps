@@ -18,10 +18,9 @@ from __future__ import annotations
 
 import io
 import logging
-import re
 import time
-from dataclasses import dataclass, field
-from typing import Iterable, List, Optional, Tuple
+from collections.abc import Iterable
+from dataclasses import dataclass
 
 import requests
 
@@ -38,8 +37,8 @@ USER_AGENT = (
     "MUBIL Mobility Awards 2026"
 )
 DEFAULT_CHUNK_CHARS = 2000
-MIN_BODY_CHARS = 200            # below this we skip the source (likely empty/JS page).
-DEFAULT_THROTTLE_S = 1.0        # be polite to gov.es / Wikipedia.
+MIN_BODY_CHARS = 200  # below this we skip the source (likely empty/JS page).
+DEFAULT_THROTTLE_S = 1.0  # be polite to gov.es / Wikipedia.
 
 # Reuse the existing source_type. 'norma' is the closest semantic match
 # already in MobilityDocument.SourceType.choices.
@@ -49,7 +48,7 @@ SOURCE_TYPE = MobilityDocument.SourceType.NORMA
 # ─────────────────────────────────────────────── fetch + extract
 
 
-def _fetch(url: str) -> Tuple[bytes, str]:
+def _fetch(url: str) -> tuple[bytes, str]:
     """Return ``(raw_bytes, content_type)``. Raises on HTTP errors."""
     r = requests.get(
         url,
@@ -71,29 +70,33 @@ def _is_pdf(url: str, content_type: str) -> bool:
 def _extract_pdf(raw: bytes) -> str:
     """Extract concatenated text from a PDF byte string."""
     import pypdf
+
     reader = pypdf.PdfReader(io.BytesIO(raw))
     pages = []
     for p in reader.pages:
         try:
             pages.append(p.extract_text() or "")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             log.debug("PDF page extract failed: %s", e)
     return "\n\n".join(t for t in pages if t.strip())
 
 
-def _extract_html(raw: bytes, url: str) -> Tuple[str, str]:
+def _extract_html(raw: bytes, url: str) -> tuple[str, str]:
     """Return ``(main_text, title)`` from an HTML byte string."""
     import trafilatura
 
     # trafilatura.extract handles encoding detection internally when given bytes.
-    body = trafilatura.extract(
-        raw,
-        url=url,
-        favor_recall=False,
-        include_comments=False,
-        include_tables=False,
-        no_fallback=False,
-    ) or ""
+    body = (
+        trafilatura.extract(
+            raw,
+            url=url,
+            favor_recall=False,
+            include_comments=False,
+            include_tables=False,
+            no_fallback=False,
+        )
+        or ""
+    )
 
     # Title via metadata extractor — falls back gracefully if missing.
     title = ""
@@ -101,7 +104,7 @@ def _extract_html(raw: bytes, url: str) -> Tuple[str, str]:
         meta = trafilatura.metadata.extract_metadata(raw)
         if meta and meta.title:
             title = meta.title.strip()
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass
 
     return body, title
@@ -117,7 +120,7 @@ def _extract_html(raw: bytes, url: str) -> Tuple[str, str]:
 _BOUNDARIES = ("\n\n", "\n", ". ", " ")
 
 
-def chunk_text(text: str, max_chars: int = DEFAULT_CHUNK_CHARS) -> List[str]:
+def chunk_text(text: str, max_chars: int = DEFAULT_CHUNK_CHARS) -> list[str]:
     """Split ``text`` into ≤ ``max_chars`` chunks at the best boundary found.
 
     Strategy per chunk: scan back from ``max_chars`` for the latest paragraph
@@ -128,7 +131,7 @@ def chunk_text(text: str, max_chars: int = DEFAULT_CHUNK_CHARS) -> List[str]:
     if not text:
         return []
     text = text.strip()
-    chunks: List[str] = []
+    chunks: list[str] = []
     while len(text) > max_chars:
         cut = max_chars
         for sep in _BOUNDARIES:
@@ -164,11 +167,13 @@ class NormativaIngestStats(IngestStats):
 
     def as_dict(self) -> dict:
         d = super().as_dict()
-        d.update({
-            "sources_fetched": self.sources_fetched,
-            "sources_skipped": self.sources_skipped,
-            "chunks_total": self.chunks_total,
-        })
+        d.update(
+            {
+                "sources_fetched": self.sources_fetched,
+                "sources_skipped": self.sources_skipped,
+                "chunks_total": self.chunks_total,
+            }
+        )
         return d
 
 
@@ -180,7 +185,7 @@ def _ingest_one(
 ) -> None:
     try:
         raw, content_type = _fetch(src.url)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         log.warning("Fetch failed for %s: %s", src.url, e)
         stats.errors += 1
         stats.sources_skipped += 1
@@ -207,7 +212,7 @@ def _ingest_one(
     stats.chunks_total += len(chunks)
     n = len(chunks)
     for i, chunk in enumerate(chunks):
-        chunk_title = title[:280] + (f" (parte {i+1}/{n})" if n > 1 else "")
+        chunk_title = title[:280] + (f" (parte {i + 1}/{n})" if n > 1 else "")
         # Each chunk needs a unique source_url so _upsert can match it back.
         # MobilityDocument.source_url is max_length=200 — keep room for the
         # fragment.
@@ -228,7 +233,7 @@ def _ingest_one(
 
 def ingest_normativa(
     *,
-    only: Optional[Iterable[str]] = None,
+    only: Iterable[str] | None = None,
     throttle_s: float = DEFAULT_THROTTLE_S,
     dry_run: bool = False,
 ) -> NormativaIngestStats:

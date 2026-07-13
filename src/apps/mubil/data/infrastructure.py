@@ -20,21 +20,21 @@ cache_page if the page gets hot.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable, List, Optional
 
+from django.contrib.gis.geos import Point, Polygon
 from django.db import models
 from django.db.models import Func
-from django.contrib.gis.db.models.functions import AsGeoJSON
-from django.contrib.gis.geos import Point, Polygon
 
-from apps.mubil.models import ChargingStation, Vehicle, FuelStation
+from apps.mubil.models import ChargingStation, FuelStation, Vehicle
 
 
 def _eh_polygon() -> Polygon:
     """EH bbox polygon — same one the OCM ingest uses. Built lazily so we
     don't pay GEOS init cost when callers only need the dot-grid helpers."""
     from apps.mubil.data.openchargemap_client import EH_BBOX_NE, EH_BBOX_SW
+
     sw_lat, sw_lon = EH_BBOX_SW
     ne_lat, ne_lon = EH_BBOX_NE
     poly = Polygon.from_bbox((sw_lon, sw_lat, ne_lon, ne_lat))
@@ -43,12 +43,12 @@ def _eh_polygon() -> Polygon:
 
 
 class ST_X(Func):
-    function = 'ST_X'
+    function = "ST_X"
     output_field = models.FloatField()
 
 
 class ST_Y(Func):
-    function = 'ST_Y'
+    function = "ST_Y"
     output_field = models.FloatField()
 
 
@@ -61,26 +61,28 @@ class ST_Y(Func):
 # Mitsubishi BEVs use CHAdeMO — we keep it in the set so the few legacy
 # vehicles in the catalog are not silently shown as "no compatible station".
 # Values are normalised to lowercase before comparison.
-_COMPATIBLE_CONNECTORS = frozenset({
-    "iec62196t2",        # Type 2 AC (mennekes)
-    "iec62196t2combo",   # CCS Combo 2 (DC fast)
-    "ccs",               # OCM legacy label, same as above
-    "type2",             # OCM legacy label
-    "chademo",           # Legacy DC (Nissan Leaf 1/2, Mitsubishi i-MiEV)
-})
+_COMPATIBLE_CONNECTORS = frozenset(
+    {
+        "iec62196t2",  # Type 2 AC (mennekes)
+        "iec62196t2combo",  # CCS Combo 2 (DC fast)
+        "ccs",  # OCM legacy label, same as above
+        "type2",  # OCM legacy label
+        "chademo",  # Legacy DC (Nissan Leaf 1/2, Mitsubishi i-MiEV)
+    }
+)
 
 # Power tier thresholds (kW). Drives the marker color in the Leaflet layer.
 # The thresholds map to the realistic user experience: slow = overnight only,
 # medium = top-up while shopping, fast = highway recharging.
-POWER_TIER_SLOW = 22.0       # AC single-phase or 3-phase 11 kW typical
-POWER_TIER_FAST = 50.0       # DC fast, useful for highway stops
+POWER_TIER_SLOW = 22.0  # AC single-phase or 3-phase 11 kW typical
+POWER_TIER_FAST = 50.0  # DC fast, useful for highway stops
 
 # Euskal Herria bounding box (lat/lon corners). Same one as the OCM client.
 EH_BBOX_SW = (42.30, -3.45)
 EH_BBOX_NE = (43.55, -1.30)
 
 
-def _power_tier(power_kw: Optional[float]) -> str:
+def _power_tier(power_kw: float | None) -> str:
     """Bucket a kW value into ``slow`` / ``medium`` / ``fast`` / ``unknown``."""
     if power_kw is None:
         return "unknown"
@@ -107,7 +109,8 @@ def _connector_is_compatible(connectors: Iterable[dict]) -> bool:
 def _vehicle_takes_ev_charge(vehicle: Vehicle) -> bool:
     """Only BEV and PHEV plug into public chargers."""
     return vehicle.propulsion in (
-        Vehicle.Propulsion.BEV, Vehicle.Propulsion.PHEV,
+        Vehicle.Propulsion.BEV,
+        Vehicle.Propulsion.PHEV,
     )
 
 
@@ -121,25 +124,28 @@ class ChargerStyle:
     Kept on the server so the template doesn't have to re-encode the
     business rules in JS. ``color`` mirrors the legend the UI shows.
     """
-    tier: str          # slow | medium | fast | unknown
-    compatible: bool   # True if compatible with the session vehicle (or no vehicle)
-    color: str         # CSS color literal, e.g. "#16a34a"
+
+    tier: str  # slow | medium | fast | unknown
+    compatible: bool  # True if compatible with the session vehicle (or no vehicle)
+    color: str  # CSS color literal, e.g. "#16a34a"
 
 
 # Tailwind-aligned palette. Matches the legend rendered in the template so
 # changing colors in one place is enough.
 _TIER_COLORS = {
-    "fast":    "#2563eb",   # blue-600 — DC fast
-    "medium":  "#16a34a",   # green-600 — useful daily
-    "slow":    "#ca8a04",   # yellow-600 — overnight only
-    "unknown": "#6b7280",   # gray-500 — no power data
+    "fast": "#2563eb",  # blue-600 — DC fast
+    "medium": "#16a34a",  # green-600 — useful daily
+    "slow": "#ca8a04",  # yellow-600 — overnight only
+    "unknown": "#6b7280",  # gray-500 — no power data
 }
 _INCOMPATIBLE_COLOR = "#9ca3af"  # gray-400, regardless of power
 
 
 def _style_for(power_tier: str, compatible: bool) -> ChargerStyle:
     if not compatible:
-        return ChargerStyle(tier=power_tier, compatible=False, color=_INCOMPATIBLE_COLOR)
+        return ChargerStyle(
+            tier=power_tier, compatible=False, color=_INCOMPATIBLE_COLOR
+        )
     return ChargerStyle(
         tier=power_tier,
         compatible=True,
@@ -149,9 +155,9 @@ def _style_for(power_tier: str, compatible: bool) -> ChargerStyle:
 
 def chargers_geojson(
     *,
-    vehicle_id: Optional[int] = None,
-    sources: Optional[Iterable[str]] = None,
-    scope: str = 'eh',
+    vehicle_id: int | None = None,
+    sources: Iterable[str] | None = None,
+    scope: str = "eh",
 ) -> dict:
     """Return all charging stations as a GeoJSON FeatureCollection.
 
@@ -169,16 +175,23 @@ def chargers_geojson(
     """
     vehicle = None
     if vehicle_id is not None:
-        vehicle = Vehicle.objects.filter(pk=vehicle_id).only(
-            "id", "propulsion", "make", "model",
-        ).first()
+        vehicle = (
+            Vehicle.objects.filter(pk=vehicle_id)
+            .only(
+                "id",
+                "propulsion",
+                "make",
+                "model",
+            )
+            .first()
+        )
 
     # Only honour the vehicle filter when it actually plugs in. A diesel in
     # the session shouldn't grey out the entire infrastructure layer.
     apply_compat = vehicle is not None and _vehicle_takes_ev_charge(vehicle)
 
     qs = ChargingStation.objects.exclude(geom__isnull=True)
-    if scope == 'eh':
+    if scope == "eh":
         # Spatial filter; uses the same GIST-indexed bbox the ingest writes to.
         qs = qs.filter(geom__within=_eh_polygon())
     if sources:
@@ -187,38 +200,46 @@ def chargers_geojson(
         x=ST_X("geom"),
         y=ST_Y("geom"),
     ).values(
-        "id", "source", "operator", "address",
-        "power_kw", "connectors", "last_seen_at",
-        "x", "y"
+        "id",
+        "source",
+        "operator",
+        "address",
+        "power_kw",
+        "connectors",
+        "last_seen_at",
+        "x",
+        "y",
     )
 
-    features: List[dict] = []
+    features: list[dict] = []
     for s in qs:
         power_kw = float(s["power_kw"]) if s["power_kw"] is not None else None
         tier = _power_tier(power_kw)
-        compatible = (
-            _connector_is_compatible(s["connectors"]) if apply_compat else True
-        )
+        compatible = _connector_is_compatible(s["connectors"]) if apply_compat else True
         style = _style_for(tier, compatible)
-        features.append({
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [s["x"], s["y"]],
-            },
-            "properties": {
-                "id": s["id"],
-                "source": s["source"],
-                "operator": s["operator"],
-                "address": s["address"],
-                "power_kw": power_kw,
-                "tier": style.tier,
-                "color": style.color,
-                "compatible": style.compatible,
-                "connectors": s["connectors"] or [],
-                "last_seen_at": s["last_seen_at"].isoformat() if s["last_seen_at"] else None,
-            },
-        })
+        features.append(
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [s["x"], s["y"]],
+                },
+                "properties": {
+                    "id": s["id"],
+                    "source": s["source"],
+                    "operator": s["operator"],
+                    "address": s["address"],
+                    "power_kw": power_kw,
+                    "tier": style.tier,
+                    "color": style.color,
+                    "compatible": style.compatible,
+                    "connectors": s["connectors"] or [],
+                    "last_seen_at": s["last_seen_at"].isoformat()
+                    if s["last_seen_at"]
+                    else None,
+                },
+            }
+        )
 
     return {
         "type": "FeatureCollection",
@@ -226,9 +247,7 @@ def chargers_geojson(
         "meta": {
             "count": len(features),
             "vehicle_id": vehicle.id if vehicle else None,
-            "vehicle_label": (
-                f"{vehicle.make} {vehicle.model}" if vehicle else None
-            ),
+            "vehicle_label": (f"{vehicle.make} {vehicle.model}" if vehicle else None),
             "compatibility_applied": apply_compat,
         },
     }
@@ -250,7 +269,7 @@ def fast_charger_grid(
     step_deg: float = DEFAULT_STEP_DEG,
     sw: tuple = EH_BBOX_SW,
     ne: tuple = EH_BBOX_NE,
-) -> List[dict]:
+) -> list[dict]:
     """Build a square-grid coverage layer over EH.
 
     For each cell centroid, count fast (≥50 kW) chargers within ``radius_km``.
@@ -274,12 +293,12 @@ def fast_charger_grid(
 
     # Pre-compute lat / lon ranges. Float drift is fine — we want roughly
     # uniform cells, not metric precision.
-    lats: List[float] = []
+    lats: list[float] = []
     lat = sw_lat
     while lat <= ne_lat + 1e-9:
         lats.append(round(lat, 4))
         lat += step_deg
-    lons: List[float] = []
+    lons: list[float] = []
     lon = sw_lon
     while lon <= ne_lon + 1e-9:
         lons.append(round(lon, 4))
@@ -297,26 +316,26 @@ def fast_charger_grid(
     # as :meth:`ChargingStationQuerySet.along_route`.
     radius_deg = float(radius_km) / 111.0
 
-    cells: List[dict] = []
+    cells: list[dict] = []
     for lat in lats:
         for lon in lons:
             centroid = Point(lon, lat, srid=4326)
-            fast_count = fast_qs.filter(
-                geom__dwithin=(centroid, radius_deg)
-            ).count()
+            fast_count = fast_qs.filter(geom__dwithin=(centroid, radius_deg)).count()
             # Score saturates at `saturation` so 1 charger ≠ same as 20.
             score = min(fast_count, saturation) / saturation
-            cells.append({
-                "lat": lat,
-                "lon": lon,
-                "fast_count": fast_count,
-                "score": round(score, 3),
-            })
+            cells.append(
+                {
+                    "lat": lat,
+                    "lon": lon,
+                    "fast_count": fast_count,
+                    "score": round(score, 3),
+                }
+            )
 
     return cells
 
 
-def fuel_stations_geojson(*, scope: str = 'eh') -> dict:
+def fuel_stations_geojson(*, scope: str = "eh") -> dict:
     """Return fuel stations as a GeoJSON FeatureCollection.
 
     ``scope='eh'`` (default) restricts to the Euskal Herria bbox so the Mapa
@@ -328,36 +347,47 @@ def fuel_stations_geojson(*, scope: str = 'eh') -> dict:
     full Django model instantiation and WKB parsing.
     """
     qs = FuelStation.objects.exclude(geom__isnull=True)
-    if scope == 'eh':
+    if scope == "eh":
         qs = qs.filter(geom__within=_eh_polygon())
     qs = qs.annotate(
         x=ST_X("geom"),
         y=ST_Y("geom"),
     ).values(
-        "id", "brand", "address", "municipality_name",
-        "prices", "schedule", "sale_type", "last_seen_at",
-        "x", "y"
+        "id",
+        "brand",
+        "address",
+        "municipality_name",
+        "prices",
+        "schedule",
+        "sale_type",
+        "last_seen_at",
+        "x",
+        "y",
     )
 
     features = []
     for s in qs:
-        features.append({
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [s["x"], s["y"]],
-            },
-            "properties": {
-                "id": s["id"],
-                "brand": s["brand"],
-                "address": s["address"],
-                "municipality_name": s["municipality_name"],
-                "prices": s["prices"] or {},
-                "schedule": s["schedule"],
-                "sale_type": s["sale_type"],
-                "last_seen_at": s["last_seen_at"].isoformat() if s["last_seen_at"] else None,
+        features.append(
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [s["x"], s["y"]],
+                },
+                "properties": {
+                    "id": s["id"],
+                    "brand": s["brand"],
+                    "address": s["address"],
+                    "municipality_name": s["municipality_name"],
+                    "prices": s["prices"] or {},
+                    "schedule": s["schedule"],
+                    "sale_type": s["sale_type"],
+                    "last_seen_at": s["last_seen_at"].isoformat()
+                    if s["last_seen_at"]
+                    else None,
+                },
             }
-        })
+        )
 
     return {
         "type": "FeatureCollection",

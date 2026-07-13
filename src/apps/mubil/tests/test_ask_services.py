@@ -30,12 +30,20 @@ class ComposePromptTests(TestCase):
     def test_with_docs_includes_citation_markers(self):
         docs = [
             services.RetrievedDoc(
-                id=1, title="MOVES III", source_url="https://x.com/m3",
-                source_type="dataset", score=0.9, content="ayudas MOVES III hasta 7000€",
+                id=1,
+                title="MOVES III",
+                source_url="https://x.com/m3",
+                source_type="dataset",
+                score=0.9,
+                content="ayudas MOVES III hasta 7000€",
             ),
             services.RetrievedDoc(
-                id=2, title="PVPC ESIOS", source_url="https://x.com/pvpc",
-                source_type="dataset", score=0.6, content="precios horarios PVPC",
+                id=2,
+                title="PVPC ESIOS",
+                source_url="https://x.com/pvpc",
+                source_type="dataset",
+                score=0.6,
+                content="precios horarios PVPC",
             ),
         ]
         prompt = services.compose_prompt("¿ayudas EV?", docs)
@@ -73,6 +81,7 @@ class RetrieveTests(TestCase):
                 for d in qs:
                     ids_in_order.append(d.id)
                 return qs.order_by("id")
+
             # Skip annotate complexity in this test — just call the function:
             with mock.patch.object(MobilityDocument.objects, "exclude") as exc:
                 exc.return_value = MobilityDocument.objects.filter(
@@ -90,8 +99,11 @@ class AnswerPipelineTests(TestCase):
         embed_mock.return_value = [0.1] * 768
         retrieve_mock.return_value = [
             services.RetrievedDoc(
-                id=1, title="MOVES III", source_url="https://x.com/m3",
-                source_type="dataset", score=0.85,
+                id=1,
+                title="MOVES III",
+                source_url="https://x.com/m3",
+                source_type="dataset",
+                score=0.85,
                 content="ayudas MOVES III hasta 7000€ para BEV",
             ),
         ]
@@ -116,12 +128,20 @@ class AnswerPipelineTests(TestCase):
         embed_mock.return_value = [0.1] * 768
         retrieve_mock.return_value = [
             services.RetrievedDoc(
-                id=1, title="strong", source_url="u1",
-                source_type="dataset", score=0.9, content="...",
+                id=1,
+                title="strong",
+                source_url="u1",
+                source_type="dataset",
+                score=0.9,
+                content="...",
             ),
             services.RetrievedDoc(
-                id=2, title="weak", source_url="u2",
-                source_type="dataset", score=0.10, content="...",
+                id=2,
+                title="weak",
+                source_url="u2",
+                source_type="dataset",
+                score=0.10,
+                content="...",
             ),
         ]
         gen_mock.return_value = "ok"

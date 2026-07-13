@@ -7,12 +7,12 @@ from django.http import HttpResponseBadRequest
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
-from .advisor import services as advisor_services
+from .advisor import assistant as advisor_assistant, services as advisor_services
 from .advisor.api import _quote_to_out
-from .advisor import assistant as advisor_assistant
 from .ask import services as ask_services
 from .models import (
     ChargingStation,
+    ContactLead,
     DemandHex,
     EnergyPricePVPC,
     EVRegistration,
@@ -21,7 +21,6 @@ from .models import (
     MobilityDocument,
     NewsArticle,
     Vehicle,
-    ContactLead,
 )
 from .news import services as news_services
 from .news.tasks import refresh_news
@@ -37,7 +36,9 @@ def _eh_polygon():
     the Mapa page renders.
     """
     from django.contrib.gis.geos import Polygon
+
     from apps.mubil.data.openchargemap_client import EH_BBOX_NE, EH_BBOX_SW
+
     sw_lat, sw_lon = EH_BBOX_SW
     ne_lat, ne_lon = EH_BBOX_NE
     poly = Polygon.from_bbox((sw_lon, sw_lat, ne_lon, ne_lat))
@@ -65,34 +66,34 @@ def index(request):
     # that makes it "weigh" for the jury: EV vs combustion split + enrichment %.
     _ev = Q(propulsion__in=(Vehicle.Propulsion.BEV, Vehicle.Propulsion.PHEV))
     veh = Vehicle.objects.aggregate(
-        total=Count('id'),
-        ev=Count('id', filter=_ev),
-        with_price=Count('id', filter=Q(price_eur__isnull=False)),
+        total=Count("id"),
+        ev=Count("id", filter=_ev),
+        with_price=Count("id", filter=Q(price_eur__isnull=False)),
         # Range/battery only make sense for EVs, so coverage is EV-scoped and
         # labelled as such in the template — honest denominator, not cherry-picked.
-        ev_range=Count('id', filter=_ev & Q(range_wltp_km__isnull=False)),
-        ev_label=Count('id', filter=_ev & ~Q(dgt_label='')),
+        ev_range=Count("id", filter=_ev & Q(range_wltp_km__isnull=False)),
+        ev_label=Count("id", filter=_ev & ~Q(dgt_label="")),
     )
-    v_total = veh['total'] or 0
-    v_ev = veh['ev'] or 0
+    v_total = veh["total"] or 0
+    v_ev = veh["ev"] or 0
 
     vehicles_meta = {
-        'total': v_total,
-        'ev': v_ev,
-        'combustion': v_total - v_ev,
-        'pct_price': round(100 * veh['with_price'] / v_total) if v_total else 0,
-        'ev_pct_range': round(100 * veh['ev_range'] / v_ev) if v_ev else 0,
-        'ev_pct_label': round(100 * veh['ev_label'] / v_ev) if v_ev else 0,
+        "total": v_total,
+        "ev": v_ev,
+        "combustion": v_total - v_ev,
+        "pct_price": round(100 * veh["with_price"] / v_total) if v_total else 0,
+        "ev_pct_range": round(100 * veh["ev_range"] / v_ev) if v_ev else 0,
+        "ev_pct_label": round(100 * veh["ev_label"] / v_ev) if v_ev else 0,
     }
 
     stats = {
-        'vehicles': v_total,
-        'charging_stations': ChargingStation.objects.filter(geom__within=eh).count(),
-        'fuel_stations': FuelStation.objects.filter(geom__within=eh).count(),
-        'docs_indexed': MobilityDocument.objects.count(),
-        'docs_embedded': embedded_docs,
-        'demand_hexes': DemandHex.objects.count(),
-        'route_demos': EVRoutePlan.objects.count(),
+        "vehicles": v_total,
+        "charging_stations": ChargingStation.objects.filter(geom__within=eh).count(),
+        "fuel_stations": FuelStation.objects.filter(geom__within=eh).count(),
+        "docs_indexed": MobilityDocument.objects.count(),
+        "docs_embedded": embedded_docs,
+        "demand_hexes": DemandHex.objects.count(),
+        "route_demos": EVRoutePlan.objects.count(),
     }
 
     # Live PVPC for the hero card. Falls back to the static constant if the
@@ -101,39 +102,55 @@ def index(request):
     pvpc_valley = pvpc_ingest.current_price_eur_kwh(night_charging=True)
 
     # Highest-scoring DemandHex — backs the third hero card.
-    top_hex = DemandHex.objects.order_by('-score_now').first()
+    top_hex = DemandHex.objects.order_by("-score_now").first()
 
     hero_live = {
-        'pvpc_eur_kwh': float(pvpc_blended),
-        'pvpc_valley_eur_kwh': float(pvpc_valley),
-        'top_hex_slug': top_hex.h3_index if top_hex else None,
-        'top_hex_score': float(top_hex.score_now) if top_hex else None,
+        "pvpc_eur_kwh": float(pvpc_blended),
+        "pvpc_valley_eur_kwh": float(pvpc_valley),
+        "top_hex_slug": top_hex.h3_index if top_hex else None,
+        "top_hex_score": float(top_hex.score_now) if top_hex else None,
     }
 
     # Per-source freshness — converts the "en vivo" claim into proof. Each value
     # is the most recent ingest/observation timestamp for that source, read live
     # from the DB. Templates render these via humanize `naturaltime`.
     freshness = {
-        'pvpc': EnergyPricePVPC.objects.aggregate(t=Max('timestamp'))['t'],
-        'fuel': FuelStation.objects.aggregate(t=Max('last_seen_at'))['t'],
-        'charging': ChargingStation.objects.aggregate(t=Max('last_seen_at'))['t'],
-        'docs': MobilityDocument.objects.aggregate(t=Max('ingested_at'))['t'],
-        'vehicles': Vehicle.objects.aggregate(t=Max('updated_at'))['t'],
+        "pvpc": EnergyPricePVPC.objects.aggregate(t=Max("timestamp"))["t"],
+        "fuel": FuelStation.objects.aggregate(t=Max("last_seen_at"))["t"],
+        "charging": ChargingStation.objects.aggregate(t=Max("last_seen_at"))["t"],
+        "docs": MobilityDocument.objects.aggregate(t=Max("ingested_at"))["t"],
+        "vehicles": Vehicle.objects.aggregate(t=Max("updated_at"))["t"],
     }
 
     tech_tags = [
-        'Django 6', 'PostGIS', 'pgvector', 'TimescaleDB', 'Django Ninja',
-        'HTMX', 'Alpine.js', 'Tailwind', 'Cotton', 'Leaflet', 'ECharts',
-        'Gemini', 'Celery', 'Docker', 'Coolify',
+        "Django 6",
+        "PostGIS",
+        "pgvector",
+        "TimescaleDB",
+        "Django Ninja",
+        "HTMX",
+        "Alpine.js",
+        "Tailwind",
+        "Cotton",
+        "Leaflet",
+        "ECharts",
+        "Gemini",
+        "Celery",
+        "Docker",
+        "Coolify",
     ]
-    return render(request, 'mubil/index.html', {
-        'stats': stats,
-        'vehicles_meta': vehicles_meta,
-        'hero_live': hero_live,
-        'freshness': freshness,
-        'adoption': _adoption_snapshot(),
-        'tech_tags': tech_tags,
-    })
+    return render(
+        request,
+        "mubil/index.html",
+        {
+            "stats": stats,
+            "vehicles_meta": vehicles_meta,
+            "hero_live": hero_live,
+            "freshness": freshness,
+            "adoption": _adoption_snapshot(),
+            "tech_tags": tech_tags,
+        },
+    )
 
 
 # Electric propulsions counted toward the "EV adoption" share.
@@ -149,7 +166,11 @@ def _adoption_snapshot():
     propulsions present for the latest (year, month), aggregated across the
     three Basque territories.
     """
-    latest = EVRegistration.objects.order_by('-year', '-month').values('year', 'month').first()
+    latest = (
+        EVRegistration.objects.order_by("-year", "-month")
+        .values("year", "month")
+        .first()
+    )
     if not latest:
         return None
 
@@ -161,44 +182,65 @@ def _adoption_snapshot():
         ev = sum(r.count for r in rows if r.propulsion in _EV_PROPULSIONS)
         return ev / total, ev
 
-    year, month = latest['year'], latest['month']
+    year, month = latest["year"], latest["month"]
     share, ev_count = _share(year, month)
     if share is None:
         return None
     prev_share, _ = _share(year - 1, month)
 
     return {
-        'year': year,
-        'month': month,
-        'ev_count': ev_count,
-        'share_pct': round(share * 100, 1),
-        'yoy_pp': round((share - prev_share) * 100, 1) if prev_share is not None else None,
+        "year": year,
+        "month": month,
+        "ev_count": ev_count,
+        "share_pct": round(share * 100, 1),
+        "yoy_pp": round((share - prev_share) * 100, 1)
+        if prev_share is not None
+        else None,
     }
 
 
 def advisor_page(request):
     """TCO advisor form (MUST). PROPUESTA.md §3.1."""
-    vehicles = list(Vehicle.objects.all().order_by('propulsion', 'make', 'model'))
-    ice_vehicles = [v for v in vehicles if v.propulsion in (
-        Vehicle.Propulsion.ICE, Vehicle.Propulsion.DIESEL, Vehicle.Propulsion.HEV,
-    )]
-    ev_vehicles = [v for v in vehicles if v.propulsion in (
-        Vehicle.Propulsion.BEV, Vehicle.Propulsion.PHEV,
-    )]
+    vehicles = list(Vehicle.objects.all().order_by("propulsion", "make", "model"))
+    ice_vehicles = [
+        v
+        for v in vehicles
+        if v.propulsion
+        in (
+            Vehicle.Propulsion.ICE,
+            Vehicle.Propulsion.DIESEL,
+            Vehicle.Propulsion.HEV,
+        )
+    ]
+    ev_vehicles = [
+        v
+        for v in vehicles
+        if v.propulsion
+        in (
+            Vehicle.Propulsion.BEV,
+            Vehicle.Propulsion.PHEV,
+        )
+    ]
     # Defaults to drive the live demo: Golf TDI → Kia Niro EV
     default_current = next(
-        (v for v in ice_vehicles if 'Golf' in v.model), ice_vehicles[0] if ice_vehicles else None
+        (v for v in ice_vehicles if "Golf" in v.model),
+        ice_vehicles[0] if ice_vehicles else None,
     )
     default_target = next(
-        (v for v in ev_vehicles if 'Niro' in v.model), ev_vehicles[0] if ev_vehicles else None
+        (v for v in ev_vehicles if "Niro" in v.model),
+        ev_vehicles[0] if ev_vehicles else None,
     )
-    return render(request, 'mubil/advisor.html', {
-        'ice_vehicles': ice_vehicles,
-        'ev_vehicles': ev_vehicles,
-        'default_current_id': default_current.id if default_current else None,
-        'default_target_id': default_target.id if default_target else None,
-        'recent_alerts': news_services.recent_affecting_plan(),
-    })
+    return render(
+        request,
+        "mubil/advisor.html",
+        {
+            "ice_vehicles": ice_vehicles,
+            "ev_vehicles": ev_vehicles,
+            "default_current_id": default_current.id if default_current else None,
+            "default_target_id": default_target.id if default_target else None,
+            "recent_alerts": news_services.recent_affecting_plan(),
+        },
+    )
 
 
 @require_http_methods(["POST"])
@@ -224,12 +266,12 @@ def advisor_quote(request):
     # Phase 2 bridge: stash the chosen EV + CP for the route planner so the
     # user lands in /mubil/route/ with the same vehicle and origin already
     # selected. Set-and-forget — overwritten on each new quote, never popped.
-    request.session['mubil_route_prefill'] = {
-        'vehicle_target_id': payload['vehicle_target_id'],
-        'cp': payload['cp'],
+    request.session["mubil_route_prefill"] = {
+        "vehicle_target_id": payload["vehicle_target_id"],
+        "cp": payload["cp"],
     }
 
-    target = out['vehicle_target']
+    target = out["vehicle_target"]
     news_query = (
         f"Subvenciones, fiscalidad y PVPC para {target['make']} {target['model']} "
         f"en código postal {payload['cp']}, {payload['km_year']} km/año."
@@ -237,12 +279,12 @@ def advisor_quote(request):
     news_alerts = news_services.ranked_for_user(query_text=news_query)
 
     context = {
-        'q': out,
-        'q_json': json.dumps(out, default=str),
-        'night_charging': payload['night_charging'],
-        'news_alerts': news_alerts,
+        "q": out,
+        "q_json": json.dumps(out, default=str),
+        "night_charging": payload["night_charging"],
+        "news_alerts": news_alerts,
     }
-    return render(request, 'mubil/_advisor_result.html', context)
+    return render(request, "mubil/_advisor_result.html", context)
 
 
 def _parse_advisor_payload(src):
@@ -252,7 +294,7 @@ def _parse_advisor_payload(src):
         raw = src.get(key)
         if raw is None or not str(raw).strip():
             return None
-        return float(str(raw).replace(',', '.'))
+        return float(str(raw).replace(",", "."))
 
     def _opt_int(key):
         raw = src.get(key)
@@ -260,37 +302,40 @@ def _parse_advisor_payload(src):
             return None
         return int(raw)
 
-    night = src.get('night_charging')
+    night = src.get("night_charging")
     night_charging = (
-        night in ('on', '1', 'true', 'True', True)
-        if night is not None
-        else False
+        night in ("on", "1", "true", "True", True) if night is not None else False
     )
 
     return {
-        'cp': src['cp'].strip(),
-        'km_year': int(src['km_year']),
-        'vehicle_current_id': int(src['vehicle_current_id']),
-        'vehicle_target_id': int(src['vehicle_target_id']),
-        'years_horizon': int(src.get('years_horizon', 10)),
-        'night_charging': night_charging,
-        'subvencion_eur': int(src.get('subvencion_eur', 0) or 0),
-        'motorway_pct': _opt_float('motorway_pct'),
-        'nacional_pct': _opt_float('nacional_pct'),
-        'profile': (src.get('profile') or 'particular').strip(),
-        'scrapping': src.get('scrapping') in ('on', '1', 'true', 'True'),
-        'wallbox_state': (src.get('wallbox_state') or 'installed').strip(),
-        'home_pct': _opt_int('home_pct'),
-        'work_pct': _opt_int('work_pct'),
-        'public_ac_pct': _opt_int('public_ac_pct'),
-        'public_dc_pct': _opt_int('public_dc_pct'),
-        'subvencion_override_eur': _opt_int('subvencion_override_eur'),
-        'vehicle_current_price_override_eur': _opt_int('vehicle_current_price_override_eur'),
-        'vehicle_target_price_override_eur': _opt_int('vehicle_target_price_override_eur'),
-        'purchase_mode': (src.get('purchase_mode') or 'switch').strip(),
-        'current_age_years': _opt_int('current_age_years'),
-        'assembled_in_eu': src.get('assembled_in_eu') in ('on', '1', 'true', 'True'),
-        'battery_made_in_eu': src.get('battery_made_in_eu') in ('on', '1', 'true', 'True'),
+        "cp": src["cp"].strip(),
+        "km_year": int(src["km_year"]),
+        "vehicle_current_id": int(src["vehicle_current_id"]),
+        "vehicle_target_id": int(src["vehicle_target_id"]),
+        "years_horizon": int(src.get("years_horizon", 10)),
+        "night_charging": night_charging,
+        "subvencion_eur": int(src.get("subvencion_eur", 0) or 0),
+        "motorway_pct": _opt_float("motorway_pct"),
+        "nacional_pct": _opt_float("nacional_pct"),
+        "profile": (src.get("profile") or "particular").strip(),
+        "scrapping": src.get("scrapping") in ("on", "1", "true", "True"),
+        "wallbox_state": (src.get("wallbox_state") or "installed").strip(),
+        "home_pct": _opt_int("home_pct"),
+        "work_pct": _opt_int("work_pct"),
+        "public_ac_pct": _opt_int("public_ac_pct"),
+        "public_dc_pct": _opt_int("public_dc_pct"),
+        "subvencion_override_eur": _opt_int("subvencion_override_eur"),
+        "vehicle_current_price_override_eur": _opt_int(
+            "vehicle_current_price_override_eur"
+        ),
+        "vehicle_target_price_override_eur": _opt_int(
+            "vehicle_target_price_override_eur"
+        ),
+        "purchase_mode": (src.get("purchase_mode") or "switch").strip(),
+        "current_age_years": _opt_int("current_age_years"),
+        "assembled_in_eu": src.get("assembled_in_eu") in ("on", "1", "true", "True"),
+        "battery_made_in_eu": src.get("battery_made_in_eu")
+        in ("on", "1", "true", "True"),
     }
 
 
@@ -313,43 +358,55 @@ def advisor_pdf(request):
         return HttpResponseBadRequest(str(e))
 
     out = _quote_to_out(quote)
-    savings_total = out['total_cost_current'] - out['total_cost_target']
-    return render(request, 'mubil/advisor_pdf.html', {
-        'q': out,
-        'q_json': json.dumps(out, default=str),
-        'savings_total': savings_total,
-        'savings_per_month': savings_total / (out['years_horizon'] * 12),
-    })
+    savings_total = out["total_cost_current"] - out["total_cost_target"]
+    return render(
+        request,
+        "mubil/advisor_pdf.html",
+        {
+            "q": out,
+            "q_json": json.dumps(out, default=str),
+            "savings_total": savings_total,
+            "savings_per_month": savings_total / (out["years_horizon"] * 12),
+        },
+    )
 
 
 def ask_page(request):
     """Q&A console with Gemini + RAG (MUST). PROPUESTA.md §3.2."""
-    return render(request, 'mubil/ask.html', {
-        'suggested': ask_services.SUGGESTED_PROMPTS,
-    })
+    return render(
+        request,
+        "mubil/ask.html",
+        {
+            "suggested": ask_services.SUGGESTED_PROMPTS,
+        },
+    )
 
 
 @require_http_methods(["POST"])
 def ask_query(request):
     """HTMX endpoint — returns the answer + sources partial."""
-    query = (request.POST.get('q') or '').strip()
+    query = (request.POST.get("q") or "").strip()
     if not query:
         return HttpResponseBadRequest("Falta la pregunta.")
     try:
-        k = int(request.POST.get('k', 8))
+        k = int(request.POST.get("k", 8))
     except ValueError:
         k = 8
-    municipality = (request.POST.get('municipality_naia') or '').strip() or None
+    municipality = (request.POST.get("municipality_naia") or "").strip() or None
 
     try:
         result = ask_services.answer(query=query, k=k, municipality_naia=municipality)
     except ValueError as e:
         return HttpResponseBadRequest(str(e))
 
-    return render(request, 'mubil/_ask_result.html', {
-        'query': query,
-        'answer': result.to_out(),
-    })
+    return render(
+        request,
+        "mubil/_ask_result.html",
+        {
+            "query": query,
+            "answer": result.to_out(),
+        },
+    )
 
 
 def news_page(request):
@@ -359,10 +416,10 @@ def news_page(request):
 
     Optional GET filters: ?relevance=EUSKADI|ESPANA|GLOBAL  ?tag=subvencion
     """
-    relevance = (request.GET.get('relevance') or '').strip().upper() or None
+    relevance = (request.GET.get("relevance") or "").strip().upper() or None
     if relevance and relevance not in dict(NewsArticle.Relevance.choices):
         relevance = None
-    tag = (request.GET.get('tag') or '').strip().lower() or None
+    tag = (request.GET.get("tag") or "").strip().lower() or None
 
     articles = news_services.list_articles(limit=60, relevance=relevance, tag=tag)
 
@@ -371,30 +428,34 @@ def news_page(request):
         try:
             refresh_news.delay()
             refresh_dispatched = True
-        except Exception:  # noqa: BLE001 — broker down must not 500 the page
+        except Exception:
             refresh_dispatched = False
     else:
         refresh_dispatched = False
 
-    return render(request, 'mubil/news.html', {
-        'articles': articles,
-        'active_relevance': relevance,
-        'active_tag': tag,
-        'cache_age_hours': age_hours,
-        'refresh_dispatched': refresh_dispatched,
-        'relevances': NewsArticle.Relevance.choices,
-    })
+    return render(
+        request,
+        "mubil/news.html",
+        {
+            "articles": articles,
+            "active_relevance": relevance,
+            "active_tag": tag,
+            "cache_age_hours": age_hours,
+            "refresh_dispatched": refresh_dispatched,
+            "relevances": NewsArticle.Relevance.choices,
+        },
+    )
 
 
 # Permitidos para el campo "Soy…" del formulario "Hablemos" — alineado con los
 # segmentos B2B/B2B2C de la Memoria (B.6 / B.7).
 _CONTACT_PROFILES = {
-    'concesionario': 'Concesionario o grupo de automoción',
-    'flota':         'Empresa con flota o autónomo',
-    'energetica':    'Energética, operador de recarga o renting',
-    'admin':         'Administración pública o agencia de movilidad',
-    'particular':    'Particular interesado',
-    'otro':          'Otro',
+    "concesionario": "Concesionario o grupo de automoción",
+    "flota": "Empresa con flota o autónomo",
+    "energetica": "Energética, operador de recarga o renting",
+    "admin": "Administración pública o agencia de movilidad",
+    "particular": "Particular interesado",
+    "otro": "Otro",
 }
 
 
@@ -414,22 +475,26 @@ def contact_submit(request):
 
     # Normalizar inputs. Truncamos defensivamente para evitar payloads abusivos.
     def _clean(field, max_len=500):
-        return strip_tags((request.POST.get(field) or '').strip())[:max_len]
+        return strip_tags((request.POST.get(field) or "").strip())[:max_len]
 
-    name = _clean('name', 120)
-    entity = _clean('entity', 200)
-    email = _clean('email', 200)
-    profile_key = _clean('profile', 40).lower()
-    message = _clean('message', 2000)
+    name = _clean("name", 120)
+    entity = _clean("entity", 200)
+    email = _clean("email", 200)
+    profile_key = _clean("profile", 40).lower()
+    message = _clean("message", 2000)
 
-    profile_label = _CONTACT_PROFILES.get(profile_key, _CONTACT_PROFILES['otro'])
+    profile_label = _CONTACT_PROFILES.get(profile_key, _CONTACT_PROFILES["otro"])
 
     if not name or not email or len(message) < 5:
-        response = render(request, 'mubil/_contact_error.html', {
-            'msg': 'Necesitamos al menos nombre, email y un mensaje breve.',
-        })
-        response['HX-Retarget'] = '#contact-feedback'
-        response['HX-Reswap'] = 'innerHTML'
+        response = render(
+            request,
+            "mubil/_contact_error.html",
+            {
+                "msg": "Necesitamos al menos nombre, email y un mensaje breve.",
+            },
+        )
+        response["HX-Retarget"] = "#contact-feedback"
+        response["HX-Reswap"] = "innerHTML"
         return response
 
     # Guardar en base de datos
@@ -443,16 +508,17 @@ def contact_submit(request):
         )
     except Exception:
         import logging
-        logging.getLogger(__name__).exception('contact_submit: database save failed')
 
-    subject = f'[eStrata · landing] {profile_label} — {entity or name}'
+        logging.getLogger(__name__).exception("contact_submit: database save failed")
+
+    subject = f"[eStrata · landing] {profile_label} — {entity or name}"
     body = (
-        f'Nombre: {name}\n'
-        f'Email: {email}\n'
-        f'Entidad: {entity or "—"}\n'
-        f'Perfil: {profile_label}\n'
-        '\n'
-        f'{message}\n'
+        f"Nombre: {name}\n"
+        f"Email: {email}\n"
+        f"Entidad: {entity or '—'}\n"
+        f"Perfil: {profile_label}\n"
+        "\n"
+        f"{message}\n"
     )
 
     try:
@@ -460,15 +526,16 @@ def contact_submit(request):
             subject=subject,
             body=body,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to=['iareizagau@gmail.com'],
+            to=["iareizagau@gmail.com"],
             reply_to=[email] if email else None,
         )
         msg.send(fail_silently=False)
-    except Exception:  # noqa: BLE001 — broker fail no debe romper la UX
+    except Exception:
         import logging
-        logging.getLogger(__name__).exception('contact_submit: email send failed')
 
-    return render(request, 'mubil/_contact_thanks.html', {'name': name})
+        logging.getLogger(__name__).exception("contact_submit: email send failed")
+
+    return render(request, "mubil/_contact_thanks.html", {"name": name})
 
 
 def route_page(request):
@@ -484,13 +551,15 @@ def route_page(request):
 
     from apps.mubil.data import cp_centroids
 
-    ev_vehicles = list(Vehicle.objects.filter(
-        propulsion__in=(Vehicle.Propulsion.BEV, Vehicle.Propulsion.PHEV),
-    ).order_by('make', 'model'))
+    ev_vehicles = list(
+        Vehicle.objects.filter(
+            propulsion__in=(Vehicle.Propulsion.BEV, Vehicle.Propulsion.PHEV),
+        ).order_by("make", "model")
+    )
 
-    prefill = request.session.get('mubil_route_prefill') or {}
-    prefill_vehicle_id = prefill.get('vehicle_target_id')
-    prefill_cp = prefill.get('cp')
+    prefill = request.session.get("mubil_route_prefill") or {}
+    prefill_vehicle_id = prefill.get("vehicle_target_id")
+    prefill_cp = prefill.get("cp")
 
     # Only honour the prefill vehicle if it's still in the EV catalog —
     # protects against deleted rows pointing the UI at a missing select option.
@@ -499,7 +568,7 @@ def route_page(request):
         default_vehicle_id = prefill_vehicle_id
     else:
         fallback = next(
-            (v for v in ev_vehicles if 'Niro' in v.model),
+            (v for v in ev_vehicles if "Niro" in v.model),
             ev_vehicles[0] if ev_vehicles else None,
         )
         default_vehicle_id = fallback.id if fallback else None
@@ -509,44 +578,48 @@ def route_page(request):
         hit = cp_centroids.lookup(prefill_cp)
         if hit is not None:
             lat, lon, name = hit
-            default_origin = {'cp': prefill_cp, 'lat': lat, 'lon': lon, 'name': name}
+            default_origin = {"cp": prefill_cp, "lat": lat, "lon": lon, "name": name}
 
     # Demos serialised for the Alpine "ruta rápida" chips above the map.
     demos_payload = [
         {
-            'slug': d['slug'],
-            'label': d['label'],
-            'origin': list(d['origin']),   # [lat, lon]
-            'dest': list(d['dest']),
-            'distance_km': float(d['distance_km']),
+            "slug": d["slug"],
+            "label": d["label"],
+            "origin": list(d["origin"]),  # [lat, lon]
+            "dest": list(d["dest"]),
+            "distance_km": float(d["distance_km"]),
         }
         for d in route_services.ROUTE_DEMOS
     ]
 
     # Default departure hour = current Madrid-local hour. Pre-selects the
     # right slot on the 24h cost-by-hour chart in the result partial.
-    default_departure_hour = datetime.now(tz=ZoneInfo('Europe/Madrid')).hour
+    default_departure_hour = datetime.now(tz=ZoneInfo("Europe/Madrid")).hour
 
     # Single JSON blob consumed by Alpine via ``x-data``. Inlined with
     # ``|escape`` in the template so embedded ``"`` survive the HTML attribute
     # parser — same trick the advisor uses for its q_json payload.
     init_payload = {
-        'demos': demos_payload,
-        'defaultOrigin': default_origin,
-        'defaultSlug': route_services.ROUTE_DEMOS[0]['slug'],
-        'defaultVehicleId': default_vehicle_id or '',
-        'defaultDepartureHour': default_departure_hour,
+        "demos": demos_payload,
+        "defaultOrigin": default_origin,
+        "defaultSlug": route_services.ROUTE_DEMOS[0]["slug"],
+        "defaultVehicleId": default_vehicle_id or "",
+        "defaultDepartureHour": default_departure_hour,
     }
 
-    return render(request, 'mubil/route.html', {
-        'demos': route_services.list_demos(),
-        'init_json': json.dumps(init_payload),
-        'default_slug': route_services.ROUTE_DEMOS[0]['slug'],
-        'ev_vehicles': ev_vehicles,
-        'default_vehicle_id': default_vehicle_id,
-        'default_origin': default_origin,
-        'default_departure_hour': default_departure_hour,
-    })
+    return render(
+        request,
+        "mubil/route.html",
+        {
+            "demos": route_services.list_demos(),
+            "init_json": json.dumps(init_payload),
+            "default_slug": route_services.ROUTE_DEMOS[0]["slug"],
+            "ev_vehicles": ev_vehicles,
+            "default_vehicle_id": default_vehicle_id,
+            "default_origin": default_origin,
+            "default_departure_hour": default_departure_hour,
+        },
+    )
 
 
 @require_http_methods(["GET", "POST"])
@@ -569,28 +642,28 @@ def route_plan(request):
         if raw is None or not str(raw).strip():
             return None
         try:
-            return float(str(raw).replace(',', '.'))
+            return float(str(raw).replace(",", "."))
         except ValueError:
             return None
 
-    slug = (src.get('slug') or '').strip()
-    origin_lng = _opt_float('origin_lng')
-    origin_lat = _opt_float('origin_lat')
-    dest_lng = _opt_float('dest_lng')
-    dest_lat = _opt_float('dest_lat')
+    slug = (src.get("slug") or "").strip()
+    origin_lng = _opt_float("origin_lng")
+    origin_lat = _opt_float("origin_lat")
+    dest_lng = _opt_float("dest_lng")
+    dest_lat = _opt_float("dest_lat")
     free_coords = (origin_lng, origin_lat, dest_lng, dest_lat)
     has_free_od = all(c is not None for c in free_coords)
 
     try:
-        vehicle_id_raw = src.get('vehicle_id') or ''
+        vehicle_id_raw = src.get("vehicle_id") or ""
         vehicle_id = int(vehicle_id_raw) if vehicle_id_raw else None
-        soc_start = float(src.get('soc_start', 80))
-        dep_raw = src.get('departure_hour')
-        departure_hour = int(dep_raw) if dep_raw not in (None, '') else None
+        soc_start = float(src.get("soc_start", 80))
+        dep_raw = src.get("departure_hour")
+        departure_hour = int(dep_raw) if dep_raw not in (None, "") else None
     except ValueError as e:
         return HttpResponseBadRequest(f"Datos del formulario inválidos: {e}")
 
-    postal_code = (src.get('cp') or '').strip() or None
+    postal_code = (src.get("cp") or "").strip() or None
 
     plan_kwargs = dict(
         vehicle_id=vehicle_id,
@@ -604,40 +677,48 @@ def route_plan(request):
             result = route_services.plan(slug=slug, **plan_kwargs)
         elif has_free_od:
             result = route_services.plan(
-                origin_lng=origin_lng, origin_lat=origin_lat,
-                dest_lng=dest_lng, dest_lat=dest_lat, **plan_kwargs,
+                origin_lng=origin_lng,
+                origin_lat=origin_lat,
+                dest_lng=dest_lng,
+                dest_lat=dest_lat,
+                **plan_kwargs,
             )
         else:
             # Initial preload — show the first demo by default
             result = route_services.plan(
-                slug=route_services.ROUTE_DEMOS[0]['slug'], **plan_kwargs,
+                slug=route_services.ROUTE_DEMOS[0]["slug"],
+                **plan_kwargs,
             )
     except ValueError as e:
         return HttpResponseBadRequest(str(e))
 
     out = result.to_dict()
-    return render(request, 'mubil/_route_result.html', {
-        'r': out,
-        'r_json': json.dumps(out),
-    })
+    return render(
+        request,
+        "mubil/_route_result.html",
+        {
+            "r": out,
+            "r_json": json.dumps(out),
+        },
+    )
 
 
 @require_http_methods(["POST"])
 def route_optimize(request):
     """HTMX endpoint — returns the multi-stop route optimization result."""
-    locations_json = request.POST.get('locations_json', '[]')
+    locations_json = request.POST.get("locations_json", "[]")
     try:
         locations = json.loads(locations_json)
     except json.JSONDecodeError:
         return HttpResponseBadRequest("Ubicaciones inválidas.")
 
     try:
-        vehicle_id_raw = request.POST.get('vehicle_id') or ''
+        vehicle_id_raw = request.POST.get("vehicle_id") or ""
         vehicle_id = int(vehicle_id_raw) if vehicle_id_raw else None
-        soc_start = float(request.POST.get('soc_start', 85))
-        dep_raw = request.POST.get('departure_hour')
-        departure_hour = int(dep_raw) if dep_raw not in (None, '') else None
-        return_to_depot = request.POST.get('return_to_depot') in ('true', 'on', '1')
+        soc_start = float(request.POST.get("soc_start", 85))
+        dep_raw = request.POST.get("departure_hour")
+        departure_hour = int(dep_raw) if dep_raw not in (None, "") else None
+        return_to_depot = request.POST.get("return_to_depot") in ("true", "on", "1")
     except ValueError as e:
         return HttpResponseBadRequest(f"Datos del formulario inválidos: {e}")
 
@@ -650,15 +731,22 @@ def route_optimize(request):
             return_to_depot=return_to_depot,
         )
     except ValueError as e:
-        return render(request, 'mubil/_route_optimize_error.html', {'error': str(e)})
+        return render(request, "mubil/_route_optimize_error.html", {"error": str(e)})
     except Exception as e:
-        return render(request, 'mubil/_route_optimize_error.html', {'error': f"Error inesperado: {e}"})
+        return render(
+            request,
+            "mubil/_route_optimize_error.html",
+            {"error": f"Error inesperado: {e}"},
+        )
 
-    return render(request, 'mubil/_route_optimize_result.html', {
-        'r': result,
-        'r_json': json.dumps(result),
-    })
-
+    return render(
+        request,
+        "mubil/_route_optimize_result.html",
+        {
+            "r": result,
+            "r_json": json.dumps(result),
+        },
+    )
 
 
 def infrastructure_page(request):
@@ -671,18 +759,29 @@ def infrastructure_page(request):
     written by the advisor) makes the page land already coloured for the
     user's chosen EV — same bridge pattern as ``route_page``.
     """
-    prefill = request.session.get('mubil_route_prefill') or {}
-    vehicle_id = prefill.get('vehicle_target_id')
+    prefill = request.session.get("mubil_route_prefill") or {}
+    vehicle_id = prefill.get("vehicle_target_id")
 
     vehicle = None
     if vehicle_id:
-        vehicle = Vehicle.objects.filter(pk=vehicle_id).only(
-            'id', 'make', 'model', 'propulsion',
-        ).first()
+        vehicle = (
+            Vehicle.objects.filter(pk=vehicle_id)
+            .only(
+                "id",
+                "make",
+                "model",
+                "propulsion",
+            )
+            .first()
+        )
 
-    ev_vehicles = list(Vehicle.objects.filter(
-        propulsion__in=(Vehicle.Propulsion.BEV, Vehicle.Propulsion.PHEV),
-    ).only('id', 'make', 'model').order_by('make', 'model'))
+    ev_vehicles = list(
+        Vehicle.objects.filter(
+            propulsion__in=(Vehicle.Propulsion.BEV, Vehicle.Propulsion.PHEV),
+        )
+        .only("id", "make", "model")
+        .order_by("make", "model")
+    )
 
     eh = _eh_polygon()
     eh_chargers = ChargingStation.objects.filter(geom__within=eh).count()
@@ -691,44 +790,52 @@ def infrastructure_page(request):
     spain_fuel = FuelStation.objects.count()
 
     init_payload = {
-        'vehicleId': vehicle.id if vehicle else None,
-        'vehicleLabel': f"{vehicle.make} {vehicle.model}" if vehicle else None,
-        'chargersUrl': '/api/mubil/v1/infrastructure/chargers.geojson',
-        'fuelStationsUrl': '/api/mubil/v1/infrastructure/fuel_stations.geojson',
-        'desertUrl': '/api/mubil/v1/infrastructure/desert.json',
+        "vehicleId": vehicle.id if vehicle else None,
+        "vehicleLabel": f"{vehicle.make} {vehicle.model}" if vehicle else None,
+        "chargersUrl": "/api/mubil/v1/infrastructure/chargers.geojson",
+        "fuelStationsUrl": "/api/mubil/v1/infrastructure/fuel_stations.geojson",
+        "desertUrl": "/api/mubil/v1/infrastructure/desert.json",
         # Default scope = 'eh': matches the product premise. User can widen
         # to 'spain' via the segmented control in the Resumen panel.
-        'defaultScope': 'eh',
-        'totals': {
-            'eh':    {'chargers': eh_chargers,    'fuel': eh_fuel},
-            'spain': {'chargers': spain_chargers, 'fuel': spain_fuel},
+        "defaultScope": "eh",
+        "totals": {
+            "eh": {"chargers": eh_chargers, "fuel": eh_fuel},
+            "spain": {"chargers": spain_chargers, "fuel": spain_fuel},
         },
     }
 
-    return render(request, 'mubil/infrastructure.html', {
-        'init_json': json.dumps(init_payload),
-        'selected_vehicle': vehicle,
-        'ev_vehicles': ev_vehicles,
-        # Kept for backwards-compat with any template path that still reads
-        # them directly; same EH numbers as the init_payload.
-        'total_chargers': eh_chargers,
-        'total_fuel_stations': eh_fuel,
-    })
+    return render(
+        request,
+        "mubil/infrastructure.html",
+        {
+            "init_json": json.dumps(init_payload),
+            "selected_vehicle": vehicle,
+            "ev_vehicles": ev_vehicles,
+            # Kept for backwards-compat with any template path that still reads
+            # them directly; same EH numbers as the init_payload.
+            "total_chargers": eh_chargers,
+            "total_fuel_stations": eh_fuel,
+        },
+    )
 
 
 def plan_page(request):
     """Demand heatmap (MOCK). PROPUESTA.md §3.4."""
     try:
-        horizon = int(request.GET.get('horizon', 3))
+        horizon = int(request.GET.get("horizon", 3))
     except ValueError:
         horizon = 3
     if horizon not in (1, 3, 5):
         horizon = 3
-    return render(request, 'mubil/plan.html', {
-        'horizon': horizon,
-        'top_locations': plan_services.top_locations(horizon=horizon, limit=10),
-        'hex_count': DemandHex.objects.count(),
-    })
+    return render(
+        request,
+        "mubil/plan.html",
+        {
+            "horizon": horizon,
+            "top_locations": plan_services.top_locations(horizon=horizon, limit=10),
+            "hex_count": DemandHex.objects.count(),
+        },
+    )
 
 
 @require_http_methods(["POST"])
@@ -751,8 +858,11 @@ def advisor_assist(request):
 
     result = advisor_assistant.get_hint(ctx, user_message=user_message)
 
-    return render(request, "mubil/_advisor_assist.html", {
-        "result": result,
-        "user_message": user_message,
-    })
-
+    return render(
+        request,
+        "mubil/_advisor_assist.html",
+        {
+            "result": result,
+            "user_message": user_message,
+        },
+    )

@@ -1,6 +1,6 @@
 """Schemas for `plan`. PROPUESTA.md §3.4."""
 
-from typing import List, Literal
+from typing import Literal
 
 from ninja import Schema
 

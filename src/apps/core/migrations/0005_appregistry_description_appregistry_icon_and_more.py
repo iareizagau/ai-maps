@@ -4,30 +4,31 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0004_appregistry'),
+        ("core", "0004_appregistry"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='appregistry',
-            name='description',
+            model_name="appregistry",
+            name="description",
             field=models.TextField(blank=True),
         ),
         migrations.AddField(
-            model_name='appregistry',
-            name='icon',
-            field=models.CharField(default='map-pin', help_text='Lucide icon name', max_length=50),
+            model_name="appregistry",
+            name="icon",
+            field=models.CharField(
+                default="map-pin", help_text="Lucide icon name", max_length=50
+            ),
         ),
         migrations.AddField(
-            model_name='appregistry',
-            name='social_image',
-            field=models.ImageField(blank=True, null=True, upload_to='apps/social/'),
+            model_name="appregistry",
+            name="social_image",
+            field=models.ImageField(blank=True, null=True, upload_to="apps/social/"),
         ),
         migrations.AddField(
-            model_name='appregistry',
-            name='tagline',
+            model_name="appregistry",
+            name="tagline",
             field=models.CharField(blank=True, max_length=255),
         ),
     ]

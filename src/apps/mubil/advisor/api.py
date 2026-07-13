@@ -7,7 +7,6 @@ Endpoints (PROPUESTA.md §3.1):
   POST /route-commute            → RouteCommuteIn → RouteCommuteOut
 """
 
-from typing import List, Optional
 
 from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models import Case, FloatField, Q, Value, When
@@ -23,12 +22,10 @@ from .grouping import extract_model_base, group_by_model_base
 from .schemas import (
     AdvisorQuoteIn,
     AdvisorQuoteOut,
-    ChargerOut,
-    CostBreakdownOut,
     RecommendOut,
-    VehicleSummary,
     RouteCommuteIn,
     RouteCommuteOut,
+    VehicleSummary,
 )
 
 # Sentinel para el seed `ICE genérico medio` (migración 0012). Path C lo usa
@@ -47,17 +44,17 @@ ICE_GENERIC_LOOKUP = dict(
 # así que `SUV` vs `berlina` queda fuera del MVP.
 SIZE_FILTERS = {
     "small": dict(category="M1", mtma_kg__lte=2000),
-    "mid":   dict(category="M1", mtma_kg__gt=2000, mtma_kg__lte=2400),
+    "mid": dict(category="M1", mtma_kg__gt=2000, mtma_kg__lte=2400),
     "large": dict(category="M1", mtma_kg__gt=2400),
-    "van":   dict(category="N1"),
+    "van": dict(category="N1"),
 }
 
 # Cubos de autonomía pedidos por el usuario en sesión de diseño:
 # baja <350 / media 350-450 / alta >=450. La distribución actual del
 # catálogo es 64 % / 14 % / 22 % — suficiente densidad en los 3 buckets.
 RANGE_FILTERS = {
-    "low":  dict(range_wltp_km__lt=350),
-    "mid":  dict(range_wltp_km__gte=350, range_wltp_km__lt=450),
+    "low": dict(range_wltp_km__lt=350),
+    "mid": dict(range_wltp_km__gte=350, range_wltp_km__lt=450),
     "high": dict(range_wltp_km__gte=450),
 }
 
@@ -159,7 +156,9 @@ def _quote_to_out(quote: services.TCOQuote) -> dict:
         "wallbox_capex_eur": quote.wallbox_capex_eur,
         "purchase_mode": getattr(quote, "purchase_mode", "switch"),
         "current_age_years": getattr(quote, "current_age_years", None),
-        "current_residual_value_eur": getattr(quote, "current_residual_value_eur", None),
+        "current_residual_value_eur": getattr(
+            quote, "current_residual_value_eur", None
+        ),
         "operational_savings_eur": getattr(quote, "operational_savings_eur", None),
         "purchase_savings_eur": getattr(quote, "purchase_savings_eur", None),
         "total_net_savings_eur": getattr(quote, "total_net_savings_eur", None),
@@ -174,11 +173,11 @@ def health(request):
     return {"status": "ok", "module": "advisor"}
 
 
-@router.get("/vehicles", response=List[VehicleSummary])
+@router.get("/vehicles", response=list[VehicleSummary])
 def list_vehicles(
     request,
-    q: Optional[str] = Query(None),
-    propulsion: Optional[str] = Query(None),
+    q: str | None = Query(None),
+    propulsion: str | None = Query(None),
     limit: int = Query(50),
 ):
     """Catálogo Vehicle. Filtra por texto libre `q` (tolerante a typos vía
@@ -202,17 +201,24 @@ def list_vehicles(
         # el usuario casi siempre escribe el principio del nombre, no el
         # medio. Sin esto, "gol" rankea GoldenLion antes que Golf, "mer"
         # rankea Mercury antes que Mercedes — pierdes el caso común.
-        qs = qs.annotate(
-            sim=Greatest(
-                TrigramSimilarity("make", q),
-                TrigramSimilarity("model", q),
-            ),
-            prefix_boost=Case(
-                When(Q(make__istartswith=q) | Q(model__istartswith=q), then=Value(1.0)),
-                default=Value(0.0),
-                output_field=FloatField(),
-            ),
-        ).filter(sim__gt=0.08).order_by("-prefix_boost", "-sim", "make", "model")
+        qs = (
+            qs.annotate(
+                sim=Greatest(
+                    TrigramSimilarity("make", q),
+                    TrigramSimilarity("model", q),
+                ),
+                prefix_boost=Case(
+                    When(
+                        Q(make__istartswith=q) | Q(model__istartswith=q),
+                        then=Value(1.0),
+                    ),
+                    default=Value(0.0),
+                    output_field=FloatField(),
+                ),
+            )
+            .filter(sim__gt=0.08)
+            .order_by("-prefix_boost", "-sim", "make", "model")
+        )
     else:
         qs = qs.order_by("make", "model")
 
@@ -228,10 +234,10 @@ def list_vehicles(
 @router.get("/recommend", response={200: RecommendOut, 404: dict})
 def recommend_vehicles(
     request,
-    size: Optional[str] = Query(None, description="small | mid | large | van"),
-    range_bucket: Optional[str] = Query(None, description="low | mid | high"),
-    price_min: Optional[int] = Query(None, ge=0),
-    price_max: Optional[int] = Query(None, ge=0),
+    size: str | None = Query(None, description="small | mid | large | van"),
+    range_bucket: str | None = Query(None, description="low | mid | high"),
+    price_min: int | None = Query(None, ge=0),
+    price_max: int | None = Query(None, ge=0),
     limit: int = Query(6, ge=1, le=20),
 ):
     """Path C del Step 1 del advisor: el usuario filtra por tamaño / autonomía
@@ -246,18 +252,25 @@ def recommend_vehicles(
     try:
         ice_generic_id = Vehicle.objects.get(**ICE_GENERIC_LOOKUP).id
     except Vehicle.DoesNotExist:
-        return 404, {"message": "Seed 'ICE genérico medio' no existe. Aplica migración mubil 0012."}
+        return 404, {
+            "message": "Seed 'ICE genérico medio' no existe. Aplica migración mubil 0012."
+        }
 
     qs = Vehicle.objects.filter(propulsion="BEV")
     if size:
         flt = SIZE_FILTERS.get(size.lower())
         if flt is None:
-            raise HttpError(400, f"size inválido: {size}. Opciones: {list(SIZE_FILTERS)}")
+            raise HttpError(
+                400, f"size inválido: {size}. Opciones: {list(SIZE_FILTERS)}"
+            )
         qs = qs.filter(**flt)
     if range_bucket:
         flt = RANGE_FILTERS.get(range_bucket.lower())
         if flt is None:
-            raise HttpError(400, f"range_bucket inválido: {range_bucket}. Opciones: {list(RANGE_FILTERS)}")
+            raise HttpError(
+                400,
+                f"range_bucket inválido: {range_bucket}. Opciones: {list(RANGE_FILTERS)}",
+            )
         qs = qs.filter(**flt)
     if price_min is not None:
         qs = qs.filter(price_eur__gte=price_min)
@@ -265,14 +278,16 @@ def recommend_vehicles(
         qs = qs.filter(price_eur__lte=price_max)
 
     # Más range gana; a igualdad, precio asc.
-    qs = qs.exclude(range_wltp_km__isnull=True).order_by("-range_wltp_km", "price_eur", "make", "model")
+    qs = qs.exclude(range_wltp_km__isnull=True).order_by(
+        "-range_wltp_km", "price_eur", "make", "model"
+    )
     raw = list(qs[: limit * 8])
     grouped = group_by_model_base(raw, propulsion_hint="BEV")
     candidates = [_grouped_summary(g) for g in grouped[:limit]]
     return 200, {"ice_generic_id": ice_generic_id, "candidates": candidates}
 
 
-@router.get("/vehicles/alternatives", response=List[VehicleSummary])
+@router.get("/vehicles/alternatives", response=list[VehicleSummary])
 def list_alternatives(
     request,
     vehicle_id: int = Query(..., description="ID del Vehicle de referencia"),
@@ -369,7 +384,7 @@ def post_route_commute(request, payload: RouteCommuteIn):
             start_lng=payload.start_lng,
             start_lat=payload.start_lat,
             end_lng=payload.end_lng,
-            end_lat=payload.end_lat
+            end_lat=payload.end_lat,
         )
         return 200, res
     except Exception as e:

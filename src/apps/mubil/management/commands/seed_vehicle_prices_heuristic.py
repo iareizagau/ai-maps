@@ -12,7 +12,7 @@ Uso:
     docker exec maps_web python manage.py seed_vehicle_prices_heuristic --propulsion BEV
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -25,25 +25,37 @@ class Command(BaseCommand):
     help = "Capa 2: rellena `price_eur` con heurística calibrada sobre anclas manuales."
 
     def add_arguments(self, parser):
-        parser.add_argument("--dry-run", action="store_true",
-                            help="Reporta sin escribir.")
-        parser.add_argument("--propulsion", type=str, default=None,
-                            help="Limitar a una propulsion (BEV/PHEV/HEV/ICE/DIESEL...).")
-        parser.add_argument("--limit", type=int, default=None,
-                            help="Limitar nº de filas a actualizar (debug).")
+        parser.add_argument(
+            "--dry-run", action="store_true", help="Reporta sin escribir."
+        )
+        parser.add_argument(
+            "--propulsion",
+            type=str,
+            default=None,
+            help="Limitar a una propulsion (BEV/PHEV/HEV/ICE/DIESEL...).",
+        )
+        parser.add_argument(
+            "--limit",
+            type=int,
+            default=None,
+            help="Limitar nº de filas a actualizar (debug).",
+        )
 
     @transaction.atomic
     def handle(self, *args, **opts):
         # 1. Calibrar contra anclas manuales
         anchors = list(
-            Vehicle.objects
-            .filter(price_source=Vehicle.PriceSource.MANUAL, price_eur__isnull=False)
+            Vehicle.objects.filter(
+                price_source=Vehicle.PriceSource.MANUAL, price_eur__isnull=False
+            )
         )
         if len(anchors) < 5:
-            self.stderr.write(self.style.ERROR(
-                f"Sólo {len(anchors)} anclas manuales — corre primero "
-                "`seed_vehicle_prices_manual`."
-            ))
+            self.stderr.write(
+                self.style.ERROR(
+                    f"Sólo {len(anchors)} anclas manuales — corre primero "
+                    "`seed_vehicle_prices_manual`."
+                )
+            )
             return
 
         table = price_heuristic.calibrate(anchors)
@@ -51,10 +63,12 @@ class Command(BaseCommand):
         mean_price = sum(v.price_eur for v in anchors) / len(anchors)
         rel_err = mae / mean_price * 100
 
-        self.stdout.write(self.style.NOTICE(
-            f"Calibración: {len(anchors)} anclas · MAE in-sample {mae:.0f} € "
-            f"({rel_err:.1f}% del precio medio {mean_price:.0f} €)"
-        ))
+        self.stdout.write(
+            self.style.NOTICE(
+                f"Calibración: {len(anchors)} anclas · MAE in-sample {mae:.0f} € "
+                f"({rel_err:.1f}% del precio medio {mean_price:.0f} €)"
+            )
+        )
         self._print_calibration(table)
 
         # 2. Seleccionar candidatos a rellenar/sobrescribir
@@ -67,13 +81,13 @@ class Command(BaseCommand):
         if opts["propulsion"]:
             qs = qs.filter(propulsion=opts["propulsion"].upper())
         if opts["limit"]:
-            qs = qs[:opts["limit"]]
+            qs = qs[: opts["limit"]]
 
         total = qs.count()
         self.stdout.write(f"Candidatos a rellenar: {total}")
 
         # 3. Iterar y aplicar
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         applied = 0
         per_propulsion: dict[str, int] = {}
 
@@ -82,7 +96,9 @@ class Command(BaseCommand):
         buf: list[Vehicle] = []
         for v in qs.iterator(chunk_size=CHUNK):
             pred = table.estimate(
-                propulsion=v.propulsion, make=v.make, battery_kwh=v.battery_kwh,
+                propulsion=v.propulsion,
+                make=v.make,
+                battery_kwh=v.battery_kwh,
             )
             v.price_eur = pred
             v.price_source = Vehicle.PriceSource.HEURISTIC

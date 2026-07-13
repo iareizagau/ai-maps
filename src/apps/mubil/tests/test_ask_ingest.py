@@ -13,7 +13,6 @@ from django.test import TestCase
 from apps.mubil.ask import ingest
 from apps.mubil.models import MobilityDocument
 
-
 # A realistic-ish CKAN datos.gob.es payload shape (JSON-LD `_value/_lang`).
 SAMPLE_PAYLOAD = {
     "result": {
@@ -25,7 +24,10 @@ SAMPLE_PAYLOAD = {
                     {"_value": "A Coruña traffic data", "_lang": "en"},
                 ],
                 "description": [
-                    {"_value": "Aforos por viario. Actualización diaria.", "_lang": "es"},
+                    {
+                        "_value": "Aforos por viario. Actualización diaria.",
+                        "_lang": "es",
+                    },
                 ],
                 "keyword": ["tráfico", "aforos", "movilidad"],
             },
@@ -128,6 +130,7 @@ class CKANIngestTests(TestCase):
         )
         # Simulate an embedding having been generated.
         from pgvector.django import VectorField  # noqa: F401
+
         doc.embedding = [0.1] * 768
         doc.save(update_fields=["embedding"])
 
@@ -137,9 +140,14 @@ class CKANIngestTests(TestCase):
                 "items": [
                     {
                         "_about": "https://datos.gob.es/catalogo/a-coruna-trafico-1",
-                        "title": [{"_value": "Datos de tráfico A Coruña", "_lang": "es"}],
+                        "title": [
+                            {"_value": "Datos de tráfico A Coruña", "_lang": "es"}
+                        ],
                         "description": [
-                            {"_value": "Aforos por viario. ACTUALIZADO 2026.", "_lang": "es"}
+                            {
+                                "_value": "Aforos por viario. ACTUALIZADO 2026.",
+                                "_lang": "es",
+                            }
                         ],
                         "keyword": ["tráfico"],
                     }

@@ -7,28 +7,48 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('adventure', '0006_route_location_city_route_location_province'),
+        ("adventure", "0006_route_location_city_route_location_province"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ExplorationRecord',
+            name="ExplorationRecord",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('sector_key', models.CharField(db_index=True, max_length=50)),
-                ('geom', django.contrib.gis.db.models.fields.PolygonField(srid=4326)),
-                ('is_pioneer', models.BooleanField(default=False, help_text='¿Fue el primero en el mundo en descubrirlo?')),
-                ('discovered_at', models.DateTimeField(auto_now_add=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='discovered_sectors', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("sector_key", models.CharField(db_index=True, max_length=50)),
+                ("geom", django.contrib.gis.db.models.fields.PolygonField(srid=4326)),
+                (
+                    "is_pioneer",
+                    models.BooleanField(
+                        default=False,
+                        help_text="¿Fue el primero en el mundo en descubrirlo?",
+                    ),
+                ),
+                ("discovered_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="discovered_sectors",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Sector Descubierto',
-                'verbose_name_plural': 'Sectores Descubiertos',
-                'db_table': 'adventure_exploration',
-                'unique_together': {('user', 'sector_key')},
+                "verbose_name": "Sector Descubierto",
+                "verbose_name_plural": "Sectores Descubiertos",
+                "db_table": "adventure_exploration",
+                "unique_together": {("user", "sector_key")},
             },
         ),
     ]

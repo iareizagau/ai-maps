@@ -5,20 +5,25 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('pintxos', '0003_dishrating_price'),
+        ("pintxos", "0003_dishrating_price"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='restaurant',
-            name='avg_rating',
-            field=models.FloatField(default=0, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(5)]),
+            model_name="restaurant",
+            name="avg_rating",
+            field=models.FloatField(
+                default=0,
+                validators=[
+                    django.core.validators.MinValueValidator(0),
+                    django.core.validators.MaxValueValidator(5),
+                ],
+            ),
         ),
         migrations.AddField(
-            model_name='restaurant',
-            name='rating_count',
+            model_name="restaurant",
+            name="rating_count",
             field=models.IntegerField(default=0),
         ),
     ]

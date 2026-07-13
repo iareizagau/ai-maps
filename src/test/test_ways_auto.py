@@ -1,5 +1,7 @@
-import django
 import os
+
+import django
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.base")
 django.setup()
 
@@ -16,7 +18,7 @@ with connection.cursor() as cursor:
     print("Nearest edges in Donostia:")
     for row in cursor.fetchall():
         print(" -", row[:5])
-        
+
     cursor.execute("""
         SELECT gid, source, target, name, tag_id, ST_AsText(the_geom)
         FROM ways

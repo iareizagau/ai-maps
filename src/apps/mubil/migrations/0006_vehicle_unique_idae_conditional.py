@@ -4,18 +4,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('mubil', '0005_vehicle_idae_schema'),
+        ("mubil", "0005_vehicle_idae_schema"),
     ]
 
     operations = [
         migrations.RemoveConstraint(
-            model_name='vehicle',
-            name='vehicle_make_model_variant_year_unique',
+            model_name="vehicle",
+            name="vehicle_make_model_variant_year_unique",
         ),
         migrations.AddConstraint(
-            model_name='vehicle',
-            constraint=models.UniqueConstraint(condition=models.Q(('idae_id__isnull', True)), fields=('make', 'model', 'variant', 'year'), name='vehicle_manual_natural_unique'),
+            model_name="vehicle",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("idae_id__isnull", True)),
+                fields=("make", "model", "variant", "year"),
+                name="vehicle_manual_natural_unique",
+            ),
         ),
     ]

@@ -5,26 +5,46 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('adventure', '0003_route'),
+        ("adventure", "0003_route"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PointOfInterest',
+            name="PointOfInterest",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('osm_id', models.BigIntegerField(unique=True)),
-                ('poi_type', models.CharField(choices=[('water', 'Agua / Fuente'), ('shelter', 'Refugio / Cabaña'), ('cafe', 'Cafetería / Bar'), ('station', 'Estación de Transporte'), ('other', 'Otro')], db_index=True, max_length=50)),
-                ('name', models.CharField(blank=True, max_length=255)),
-                ('location', django.contrib.gis.db.models.fields.PointField(srid=4326)),
-                ('tags', models.JSONField(blank=True, default=dict)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("osm_id", models.BigIntegerField(unique=True)),
+                (
+                    "poi_type",
+                    models.CharField(
+                        choices=[
+                            ("water", "Agua / Fuente"),
+                            ("shelter", "Refugio / Cabaña"),
+                            ("cafe", "Cafetería / Bar"),
+                            ("station", "Estación de Transporte"),
+                            ("other", "Otro"),
+                        ],
+                        db_index=True,
+                        max_length=50,
+                    ),
+                ),
+                ("name", models.CharField(blank=True, max_length=255)),
+                ("location", django.contrib.gis.db.models.fields.PointField(srid=4326)),
+                ("tags", models.JSONField(blank=True, default=dict)),
             ],
             options={
-                'verbose_name': 'Punto de Interés',
-                'verbose_name_plural': 'Puntos de Interés',
-                'db_table': 'adventure_pois',
+                "verbose_name": "Punto de Interés",
+                "verbose_name_plural": "Puntos de Interés",
+                "db_table": "adventure_pois",
             },
         ),
     ]

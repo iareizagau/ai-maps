@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from ninja import Router
 
 from apps.mubil.news import services
@@ -18,9 +16,10 @@ def health(request):
     return {"status": "ok", "module": "news"}
 
 
-@router.get("/", response=List[NewsArticleOut])
-def list_news(request, relevance: Optional[str] = None, tag: Optional[str] = None,
-              limit: int = 60):
+@router.get("/", response=list[NewsArticleOut])
+def list_news(
+    request, relevance: str | None = None, tag: str | None = None, limit: int = 60
+):
     return list(services.list_articles(limit=limit, relevance=relevance, tag=tag))
 
 
@@ -30,4 +29,8 @@ def trigger_refresh(request):
     if not stale:
         return {"dispatched": False, "reason": "cache_fresh", "latest_age_hours": age}
     refresh_news.delay()
-    return {"dispatched": True, "reason": "cache_stale_or_empty", "latest_age_hours": age}
+    return {
+        "dispatched": True,
+        "reason": "cache_stale_or_empty",
+        "latest_age_hours": age,
+    }

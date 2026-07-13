@@ -14,8 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
 
 import requests
 
@@ -97,9 +96,9 @@ def _upsert(
     source_url = source_url[:200] if source_url else ""
 
     existing = (
-        MobilityDocument.objects
-        .filter(source_type=source_type, source_url=source_url)
-        .first()
+        MobilityDocument.objects.filter(
+            source_type=source_type, source_url=source_url
+        ).first()
         if source_url
         else MobilityDocument.objects.filter(content_hash=new_hash).first()
     )
@@ -125,10 +124,16 @@ def _upsert(
     existing.content_hash = new_hash
     existing.municipality_naia = municipality_naia or existing.municipality_naia
     existing.embedding = None  # force re-embedding on next embed run
-    existing.save(update_fields=[
-        "title", "content", "content_hash", "municipality_naia",
-        "embedding", "updated_at",
-    ])
+    existing.save(
+        update_fields=[
+            "title",
+            "content",
+            "content_hash",
+            "municipality_naia",
+            "embedding",
+            "updated_at",
+        ]
+    )
     stats.updated += 1
 
 
@@ -148,7 +153,7 @@ def _fetch_ckan_page(page: int, page_size: int, theme_slug: str) -> dict:
     return r.json()
 
 
-def _ckan_to_doc_payload(item: dict) -> Optional[dict]:
+def _ckan_to_doc_payload(item: dict) -> dict | None:
     """Map a CKAN dataset record to a MobilityDocument payload (or None)."""
     title = _pick_lang(item.get("title"), "es")
     desc = _pick_lang(item.get("description"), "es")
@@ -210,11 +215,7 @@ def ingest_ckan(
             stats.errors += 1
             break
 
-        items = (
-            payload.get("result", {}).get("items")
-            or payload.get("items")
-            or []
-        )
+        items = payload.get("result", {}).get("items") or payload.get("items") or []
         if not items:
             log.info("CKAN page %d empty — stopping", page)
             break
@@ -237,13 +238,18 @@ def ingest_ckan(
                     content=doc["content"],
                     stats=stats,
                 )
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 log.warning("CKAN upsert failed for %r: %s", doc["title"][:60], e)
                 stats.errors += 1
 
         log.info(
             "CKAN page %d → fetched=%d created=%d updated=%d skipped=%d errors=%d",
-            page, stats.fetched, stats.created, stats.updated, stats.skipped, stats.errors,
+            page,
+            stats.fetched,
+            stats.created,
+            stats.updated,
+            stats.skipped,
+            stats.errors,
         )
 
     return stats

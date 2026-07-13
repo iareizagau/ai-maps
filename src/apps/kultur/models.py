@@ -13,17 +13,19 @@ class Venue(models.Model):
     caso `location` contiene el centroide del municipio como fallback.
     """
 
-    SOURCE_NOMINATIM = 'nominatim'
-    SOURCE_MUNICIPALITY = 'municipality_centroid'
-    SOURCE_MANUAL = 'manual'
+    SOURCE_NOMINATIM = "nominatim"
+    SOURCE_MUNICIPALITY = "municipality_centroid"
+    SOURCE_MANUAL = "manual"
 
     name_es = models.CharField(_("Nombre (ES)"), max_length=500)
-    name_eu = models.CharField(_("Nombre (EU)"), max_length=500, blank=True, default='')
+    name_eu = models.CharField(_("Nombre (EU)"), max_length=500, blank=True, default="")
     municipality = models.CharField(_("Municipio"), max_length=255, db_index=True)
-    province = models.CharField(_("Provincia"), max_length=255, blank=True, default='')
+    province = models.CharField(_("Provincia"), max_length=255, blank=True, default="")
     location = models.PointField(_("Ubicación"), srid=4326, spatial_index=True)
     geocoding_source = models.CharField(
-        _("Origen geocoding"), max_length=32, default=SOURCE_MUNICIPALITY,
+        _("Origen geocoding"),
+        max_length=32,
+        default=SOURCE_MUNICIPALITY,
     )
     geocoded_at = models.DateTimeField(_("Geocodificado en"), null=True, blank=True)
 
@@ -35,8 +37,8 @@ class Venue(models.Model):
         verbose_name_plural = _("Lugares")
         constraints = [
             models.UniqueConstraint(
-                fields=['name_es', 'municipality'],
-                name='uniq_venue_name_municipality',
+                fields=["name_es", "municipality"],
+                name="uniq_venue_name_municipality",
             ),
         ]
 
@@ -45,35 +47,64 @@ class Venue(models.Model):
 
 
 class CulturalEvent(models.Model):
-    source_id = models.CharField(_("ID Origen"), max_length=255, unique=True, help_text=_("ID from the Euskadi API"))
+    source_id = models.CharField(
+        _("ID Origen"),
+        max_length=255,
+        unique=True,
+        help_text=_("ID from the Euskadi API"),
+    )
     title_es = models.CharField(_("Título (ES)"), max_length=500, blank=True, null=True)
     title_eu = models.CharField(_("Título (EU)"), max_length=500, blank=True, null=True)
     description_es = models.TextField(_("Descripción (ES)"), blank=True, null=True)
     description_eu = models.TextField(_("Descripción (EU)"), blank=True, null=True)
-    
-    start_date = models.DateTimeField(_("Fecha Inicio"), blank=True, null=True, db_index=True)
-    end_date = models.DateTimeField(_("Fecha Fin"), blank=True, null=True, db_index=True)
-    
-    venue_name_es = models.CharField(_("Lugar (ES)"), max_length=500, blank=True, null=True)
-    venue_name_eu = models.CharField(_("Lugar (EU)"), max_length=500, blank=True, null=True)
-    municipality_es = models.CharField(_("Municipio (ES)"), max_length=255, blank=True, null=True)
-    municipality_eu = models.CharField(_("Municipio (EU)"), max_length=255, blank=True, null=True)
+
+    start_date = models.DateTimeField(
+        _("Fecha Inicio"), blank=True, null=True, db_index=True
+    )
+    end_date = models.DateTimeField(
+        _("Fecha Fin"), blank=True, null=True, db_index=True
+    )
+
+    venue_name_es = models.CharField(
+        _("Lugar (ES)"), max_length=500, blank=True, null=True
+    )
+    venue_name_eu = models.CharField(
+        _("Lugar (EU)"), max_length=500, blank=True, null=True
+    )
+    municipality_es = models.CharField(
+        _("Municipio (ES)"), max_length=255, blank=True, null=True
+    )
+    municipality_eu = models.CharField(
+        _("Municipio (EU)"), max_length=255, blank=True, null=True
+    )
     province = models.CharField(_("Provincia"), max_length=255, blank=True, null=True)
-    event_type_es = models.CharField(_("Tipo/Categoría (ES)"), max_length=255, blank=True, null=True)
-    event_type_eu = models.CharField(_("Tipo/Categoría (EU)"), max_length=255, blank=True, null=True)
-    
-    opening_hours_es = models.CharField(_("Horario (ES)"), max_length=500, blank=True, null=True)
-    opening_hours_eu = models.CharField(_("Horario (EU)"), max_length=500, blank=True, null=True)
+    event_type_es = models.CharField(
+        _("Tipo/Categoría (ES)"), max_length=255, blank=True, null=True
+    )
+    event_type_eu = models.CharField(
+        _("Tipo/Categoría (EU)"), max_length=255, blank=True, null=True
+    )
+
+    opening_hours_es = models.CharField(
+        _("Horario (ES)"), max_length=500, blank=True, null=True
+    )
+    opening_hours_eu = models.CharField(
+        _("Horario (EU)"), max_length=500, blank=True, null=True
+    )
     price_es = models.CharField(_("Precio (ES)"), max_length=500, blank=True, null=True)
     price_eu = models.CharField(_("Precio (EU)"), max_length=500, blank=True, null=True)
-    
+
     # URL to the event page
     url_es = models.URLField(_("URL (ES)"), max_length=1000, blank=True, null=True)
     url_eu = models.URLField(_("URL (EU)"), max_length=1000, blank=True, null=True)
-    
-    purchase_url_es = models.URLField(_("URL Compra (ES)"), max_length=1000, blank=True, null=True)
-    purchase_url_eu = models.URLField(_("URL Compra (EU)"), max_length=1000, blank=True, null=True)
-    
+
+    purchase_url_es = models.URLField(
+        _("URL Compra (ES)"), max_length=1000, blank=True, null=True
+    )
+    purchase_url_eu = models.URLField(
+        _("URL Compra (EU)"), max_length=1000, blank=True, null=True
+    )
+
     # Image URL
     image_url = models.URLField(_("Imagen"), max_length=1000, blank=True, null=True)
 
@@ -85,7 +116,7 @@ class CulturalEvent(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='events',
+        related_name="events",
         verbose_name=_("Lugar"),
     )
 
@@ -95,7 +126,7 @@ class CulturalEvent(models.Model):
     class Meta:
         verbose_name = _("Evento Cultural")
         verbose_name_plural = _("Eventos Culturales")
-        ordering = ['start_date']
+        ordering = ["start_date"]
 
     def __str__(self):
         return self.title_es or self.title_eu or self.source_id
@@ -111,23 +142,26 @@ class CulturalEvent(models.Model):
 
 class EventFavorite(models.Model):
     """A user's saved cultural event. Powers retention loops (digest, reminders, panel)."""
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='kultur_favs',
+        related_name="kultur_favs",
     )
     event = models.ForeignKey(
         CulturalEvent,
         on_delete=models.CASCADE,
-        related_name='favorited_by',
+        related_name="favorited_by",
     )
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['user', 'event'], name='uniq_user_event_fav'),
+            models.UniqueConstraint(
+                fields=["user", "event"], name="uniq_user_event_fav"
+            ),
         ]
-        indexes = [models.Index(fields=['user', '-created_at'])]
+        indexes = [models.Index(fields=["user", "-created_at"])]
         verbose_name = _("Cultural event favorite")
         verbose_name_plural = _("Cultural event favorites")
 
@@ -137,16 +171,19 @@ class EventFavorite(models.Model):
 
 class KulturPrefs(models.Model):
     """Implicit preferences learnt from user activity. Used as defaults when no URL state."""
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='kultur_prefs',
+        related_name="kultur_prefs",
     )
     default_categories = models.JSONField(default=list, blank=True)
     default_moods = models.JSONField(default=list, blank=True)
-    default_municipality = models.CharField(max_length=255, blank=True, default='')
+    default_municipality = models.CharField(max_length=255, blank=True, default="")
     digest_enabled = models.BooleanField(default=True)
-    digest_day_of_week = models.SmallIntegerField(default=3)  # 0=Mon..6=Sun, default Thursday
+    digest_day_of_week = models.SmallIntegerField(
+        default=3
+    )  # 0=Mon..6=Sun, default Thursday
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

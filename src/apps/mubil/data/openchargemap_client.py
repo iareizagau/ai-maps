@@ -26,10 +26,11 @@ PROPUESTA.md §3.1.
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
-from typing import Any, Iterable, List, Optional, Tuple
+from typing import Any
 
 import requests
 
@@ -43,8 +44,8 @@ USER_AGENT = "mubil/0.1 (iareizagau@gmail.com)"
 # Default Euskal Herria bounding box (SW corner, NE corner). Wide enough to
 # cover Araba + Bizkaia + Gipuzkoa + Navarra + Iparralde, tight enough that
 # OCM returns under ~1k POIs per call.
-EH_BBOX_SW: Tuple[float, float] = (42.30, -3.45)
-EH_BBOX_NE: Tuple[float, float] = (43.55, -1.30)
+EH_BBOX_SW: tuple[float, float] = (42.30, -3.45)
+EH_BBOX_NE: tuple[float, float] = (43.55, -1.30)
 
 DEFAULT_MAX_RESULTS = 1000
 
@@ -62,17 +63,17 @@ class ChargingPOIRecord:
     address: str = ""
     municipality_name: str = ""
     postal_code: str = ""
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    power_kw: Optional[Decimal] = None
-    connectors: List[dict] = field(default_factory=list)
-    last_verified_at: Optional[datetime] = None
+    latitude: float | None = None
+    longitude: float | None = None
+    power_kw: Decimal | None = None
+    connectors: list[dict] = field(default_factory=list)
+    last_verified_at: datetime | None = None
 
 
 # ─────────────────────────────────────────────── parsing helpers
 
 
-def _to_decimal_kw(value: Any) -> Optional[Decimal]:
+def _to_decimal_kw(value: Any) -> Decimal | None:
     if value is None:
         return None
     try:
@@ -81,7 +82,7 @@ def _to_decimal_kw(value: Any) -> Optional[Decimal]:
         return None
 
 
-def _to_float(value: Any) -> Optional[float]:
+def _to_float(value: Any) -> float | None:
     if value is None:
         return None
     try:
@@ -90,7 +91,7 @@ def _to_float(value: Any) -> Optional[float]:
         return None
 
 
-def _parse_iso8601(value: Any) -> Optional[datetime]:
+def _parse_iso8601(value: Any) -> datetime | None:
     """Parse OCM's ISO-8601 timestamps. Returns timezone-aware UTC or None."""
     if not value:
         return None
@@ -103,18 +104,18 @@ def _parse_iso8601(value: Any) -> Optional[datetime]:
     except ValueError:
         return None
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.replace(tzinfo=UTC)
     return dt
 
 
-def _parse_connectors(raw_connections: Any) -> Tuple[List[dict], Optional[Decimal]]:
+def _parse_connectors(raw_connections: Any) -> tuple[list[dict], Decimal | None]:
     """Flatten OCM's ``Connections`` array into our compact form.
 
     Returns ``(connectors, max_power_kw)`` — the second value is what the
     advisor's "fast charging" filter ultimately runs on.
     """
-    connectors: List[dict] = []
-    max_kw: Optional[Decimal] = None
+    connectors: list[dict] = []
+    max_kw: Decimal | None = None
     if not isinstance(raw_connections, list):
         return connectors, None
     for c in raw_connections:
@@ -131,7 +132,7 @@ def _parse_connectors(raw_connections: Any) -> Tuple[List[dict], Optional[Decima
     return connectors, max_kw
 
 
-def _parse_poi(raw: dict) -> Optional[ChargingPOIRecord]:
+def _parse_poi(raw: dict) -> ChargingPOIRecord | None:
     """Map one OCM POI dict to :class:`ChargingPOIRecord`. ``None`` if unusable.
 
     A POI is unusable if it has no ID or no coordinates — both of those break
@@ -189,11 +190,11 @@ def _parse_poi(raw: dict) -> Optional[ChargingPOIRecord]:
 def fetch_bbox(
     *,
     api_key: str,
-    sw: Tuple[float, float] = EH_BBOX_SW,
-    ne: Tuple[float, float] = EH_BBOX_NE,
+    sw: tuple[float, float] = EH_BBOX_SW,
+    ne: tuple[float, float] = EH_BBOX_NE,
     country_code: str = "ES",
     max_results: int = DEFAULT_MAX_RESULTS,
-) -> List[ChargingPOIRecord]:
+) -> list[ChargingPOIRecord]:
     """Fetch every charging POI inside the bounding box and parse it.
 
     Args:
@@ -233,9 +234,7 @@ def fetch_bbox(
         raise OpenChargeMapError(f"OCM request failed: {e}") from e
 
     if r.status_code >= 400:
-        raise OpenChargeMapError(
-            f"OCM returned HTTP {r.status_code}: {r.text[:200]}"
-        )
+        raise OpenChargeMapError(f"OCM returned HTTP {r.status_code}: {r.text[:200]}")
     try:
         payload = r.json()
     except ValueError as e:
@@ -246,7 +245,7 @@ def fetch_bbox(
             f"OCM payload was not a JSON array (got {type(payload).__name__})."
         )
 
-    records: List[ChargingPOIRecord] = []
+    records: list[ChargingPOIRecord] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue
@@ -256,9 +255,9 @@ def fetch_bbox(
     return records
 
 
-def parse_payload(payload: Iterable[dict]) -> List[ChargingPOIRecord]:
+def parse_payload(payload: Iterable[dict]) -> list[ChargingPOIRecord]:
     """Public wrapper around :func:`_parse_poi` for tests / offline fixtures."""
-    records: List[ChargingPOIRecord] = []
+    records: list[ChargingPOIRecord] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue

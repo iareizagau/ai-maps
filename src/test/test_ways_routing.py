@@ -1,14 +1,18 @@
-import django
 import os
+
+import django
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.base")
 django.setup()
 
+
 from django.db import connection
-import json
+
 
 def find_nearest_node_ways(lon, lat):
     with connection.cursor() as cursor:
-        cursor.execute("""
+        cursor.execute(
+            """
             WITH nearest_edge AS (
                 SELECT source, target 
                 FROM ways
@@ -20,12 +24,15 @@ def find_nearest_node_ways(lon, lat):
             JOIN nearest_edge e ON v.id = e.source OR v.id = e.target
             ORDER BY v.the_geom <-> ST_SetSRID(ST_Point(%s, %s), 4326)
             LIMIT 1
-        """, [lon, lat, lon, lat])
+        """,
+            [lon, lat, lon, lat],
+        )
         row = cursor.fetchone()
         return row[0] if row else None
 
-start_node = find_nearest_node_ways(-1.9812, 43.3183) # Donostia
-end_node = find_nearest_node_ways(-2.0722, 43.1369) # Tolosa
+
+start_node = find_nearest_node_ways(-1.9812, 43.3183)  # Donostia
+end_node = find_nearest_node_ways(-2.0722, 43.1369)  # Tolosa
 print("Nearest nodes:", start_node, end_node)
 
 if start_node and end_node:
@@ -46,7 +53,7 @@ if start_node and end_node:
     with connection.cursor() as cursor:
         cursor.execute(query, [start_node, end_node])
         rows = cursor.fetchall()
-    
+
     print("Segments found:", len(rows))
     if rows:
         print("Total cost (length/time):", rows[-1][3])

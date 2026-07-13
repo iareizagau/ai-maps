@@ -20,7 +20,6 @@ from django.test import TestCase, override_settings
 from apps.mubil.data import charging_ingest, dgt_nap_client, openchargemap_client
 from apps.mubil.models import ChargingStation
 
-
 # ─────────────────────────────────────────────── MITECO CSV fixture
 
 
@@ -132,6 +131,7 @@ class IngestMitecoCsvTests(TestCase):
     def setUp(self):
         # Each test writes its own tmp CSV — keeps the bundled file untouched.
         import tempfile
+
         self._tmpdir = tempfile.TemporaryDirectory()
         self.addCleanup(self._tmpdir.cleanup)
         self.csv_path = _write_csv(Path(self._tmpdir.name))
@@ -166,7 +166,9 @@ class IngestMitecoCsvTests(TestCase):
         self.assertEqual(ChargingStation.objects.filter(source="miteco").count(), 5)
 
     def test_missing_file_marks_error(self):
-        stats = charging_ingest.ingest_miteco_csv(csv_path=Path("/tmp/does-not-exist.csv"))
+        stats = charging_ingest.ingest_miteco_csv(
+            csv_path=Path("/tmp/does-not-exist.csv")
+        )
         self.assertEqual(stats.errors, 1)
         self.assertEqual(stats.fetched, 0)
 
@@ -407,8 +409,9 @@ class DGTNAPParseTests(TestCase):
     def test_filters_to_eh_provinces(self):
         recs = dgt_nap_client.parse_stream(_fixture_stream(), eh_only=True)
         # SITE-OUT (Barcelona) dropped, SITE-NOCOORD dropped (no lat/lon).
-        self.assertEqual({r.external_id for r in recs},
-                         {"dgt_nap-SITE-EH-1", "dgt_nap-SITE-EH-2"})
+        self.assertEqual(
+            {r.external_id for r in recs}, {"dgt_nap-SITE-EH-1", "dgt_nap-SITE-EH-2"}
+        )
 
     def test_araba_alava_hyphenated_form_matches(self):
         """DGT publishes Araba as "Araba/Álava" — the only EH province with
@@ -416,8 +419,9 @@ class DGTNAPParseTests(TestCase):
         xml = DGT_NAP_FIXTURE_XML.replace(
             "Provincia: Bizkaia", "Provincia: Araba/Álava"
         )
-        recs = dgt_nap_client.parse_stream(io.BytesIO(xml.encode("utf-8")),
-                                           eh_only=True)
+        recs = dgt_nap_client.parse_stream(
+            io.BytesIO(xml.encode("utf-8")), eh_only=True
+        )
         self.assertIn("dgt_nap-SITE-EH-1", {r.external_id for r in recs})
 
     def test_eh_only_false_keeps_non_eh(self):

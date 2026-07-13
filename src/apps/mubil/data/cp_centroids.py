@@ -8,8 +8,6 @@ vez tengamos un servicio interno estable. Mantener este fichero como
 fallback offline para la defensa.
 """
 
-from typing import Optional
-
 
 CP_CENTROIDS: dict[str, tuple[float, float, str]] = {
     # Gipuzkoa — núcleos principales
@@ -30,6 +28,6 @@ CP_CENTROIDS: dict[str, tuple[float, float, str]] = {
 }
 
 
-def lookup(cp: str) -> Optional[tuple[float, float, str]]:
+def lookup(cp: str) -> tuple[float, float, str] | None:
     """Return (lat, lon, name) for a known CP, or None if unknown."""
     return CP_CENTROIDS.get(cp.strip())

@@ -21,7 +21,6 @@ when extra recall is worth the latency cost.
 
 from django.db import migrations
 
-
 CREATE_HNSW = """
     CREATE INDEX IF NOT EXISTS mubil_mobdoc_emb_hnsw
       ON mubil_mobilitydocument
@@ -42,9 +41,8 @@ DROP_IVFFLAT = "DROP INDEX IF EXISTS mubil_mobdoc_emb_ivf;"
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('mubil', '0007_vehicle_widen_model_variant'),
+        ("mubil", "0007_vehicle_widen_model_variant"),
     ]
 
     operations = [

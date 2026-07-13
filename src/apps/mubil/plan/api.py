@@ -12,8 +12,6 @@ Scores are precomputed by ``manage.py compute_demand_scores`` (cron monthly)
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from ninja import Router
 
 from apps.mubil.models import DemandHex
@@ -22,21 +20,21 @@ from apps.mubil.plan import services
 router = Router()
 
 
-@router.get('/health')
+@router.get("/health")
 def health(request):
     return {
-        'status': 'ok',
-        'module': 'plan',
-        'hexes': DemandHex.objects.count(),
+        "status": "ok",
+        "module": "plan",
+        "hexes": DemandHex.objects.count(),
     }
 
 
-@router.get('/heatmap')
+@router.get("/heatmap")
 def heatmap(
     request,
     horizon: int = 3,
     min_score: float = 0.0,
-    limit: Optional[int] = None,
+    limit: int | None = None,
 ):
     """GeoJSON FeatureCollection of demand cells.
 
@@ -46,7 +44,7 @@ def heatmap(
     return services.heatmap_geojson(horizon=horizon, min_score=min_score, limit=limit)
 
 
-@router.get('/top-locations')
-def top_locations(request, horizon: int = 3, limit: int = 10) -> List[dict]:
+@router.get("/top-locations")
+def top_locations(request, horizon: int = 3, limit: int = 10) -> list[dict]:
     """Best ``limit`` cells by score at the chosen horizon."""
     return services.top_locations(horizon=horizon, limit=limit)

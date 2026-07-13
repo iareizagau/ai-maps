@@ -25,15 +25,14 @@ slug and uses ``update_or_create``. Cells outside Gipuzkoa get pruned.
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Iterable, List, Optional, Tuple
 
 from django.contrib.gis.geos import Polygon
 from django.db import transaction
 
 from apps.mubil.models import ChargingStation, DemandHex
-
 
 # ─────────────────────────────────────────────── grid definition
 
@@ -55,7 +54,7 @@ LON_STEP = 0.030
 # Reference centres for the population proxy. Donostia centre + Bilbao
 # centre dominate Gipuzkoa demand because that's where commuting and EV
 # uptake actually concentrate today.
-POP_CENTRES: List[Tuple[float, float, float]] = [
+POP_CENTRES: list[tuple[float, float, float]] = [
     (43.318, -1.985, 1.00),  # Donostia
     (43.263, -2.935, 0.55),  # Bilbao (just outside Gipuzkoa, still pulls demand)
     (43.184, -2.471, 0.30),  # Eibar
@@ -65,7 +64,7 @@ POP_CENTRES: List[Tuple[float, float, float]] = [
 # Two corridors approximated as straight segments — distance from the cell
 # centre to the segment proxies "trips per day on this axis". Real MITMA
 # O-D would replace this.
-CORRIDORS: List[Tuple[Tuple[float, float], Tuple[float, float]]] = [
+CORRIDORS: list[tuple[tuple[float, float], tuple[float, float]]] = [
     ((43.318, -1.985), (43.263, -2.935)),  # AP-8 Donostia → Bilbao
     ((43.318, -1.985), (42.846, -2.673)),  # AP-1 Donostia → Vitoria
     ((43.318, -1.985), (42.815, -1.644)),  # AP-15 Donostia → Iruñea
@@ -86,20 +85,23 @@ GROWTH_Y5 = Decimal("1.60")
 # ─────────────────────────────────────────────── geometry helpers
 
 
-def _haversine_km(p1: Tuple[float, float], p2: Tuple[float, float]) -> float:
+def _haversine_km(p1: tuple[float, float], p2: tuple[float, float]) -> float:
     """Great-circle distance, km. Sufficient for the heatmap (~m error)."""
     lat1, lon1 = map(math.radians, p1)
     lat2, lon2 = map(math.radians, p2)
     dlat = lat2 - lat1
     dlon = lon2 - lon1
-    a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    )
     return 2 * 6371 * math.asin(math.sqrt(a))
 
 
 def _point_segment_distance_km(
-    p: Tuple[float, float],
-    a: Tuple[float, float],
-    b: Tuple[float, float],
+    p: tuple[float, float],
+    a: tuple[float, float],
+    b: tuple[float, float],
 ) -> float:
     """Perpendicular distance from ``p`` to segment ``ab`` (km, flat-earth)."""
     # Project to a local equirectangular approximation around the segment.
@@ -124,11 +126,11 @@ def _point_segment_distance_km(
 
 @dataclass(frozen=True)
 class GridCell:
-    slug: str            # ≤ 15 chars (PK constraint on DemandHex.h3_index)
+    slug: str  # ≤ 15 chars (PK constraint on DemandHex.h3_index)
     row: int
     col: int
-    centre: Tuple[float, float]  # (lat, lon)
-    bounds: Tuple[float, float, float, float]  # (min_lat, min_lon, max_lat, max_lon)
+    centre: tuple[float, float]  # (lat, lon)
+    bounds: tuple[float, float, float, float]  # (min_lat, min_lon, max_lat, max_lon)
 
 
 def iter_grid(bbox: dict = GIPUZKOA_BBOX) -> Iterable[GridCell]:
@@ -173,17 +175,17 @@ def cell_polygon(cell: GridCell) -> Polygon:
 # ─────────────────────────────────────────────── scoring components
 
 
-def _population_component(centre: Tuple[float, float]) -> float:
+def _population_component(centre: tuple[float, float]) -> float:
     """0..1 score, Gaussian-summed contribution from each population centre."""
     total = 0.0
-    for (lat, lon, weight) in POP_CENTRES:
+    for lat, lon, weight in POP_CENTRES:
         d_km = _haversine_km(centre, (lat, lon))
         # σ = 8 km → cells within ~10 km of a centre get most of the weight.
-        total += weight * math.exp(-(d_km ** 2) / (2 * 8.0 ** 2))
+        total += weight * math.exp(-(d_km**2) / (2 * 8.0**2))
     return min(total, 1.0)
 
 
-def _corridor_component(centre: Tuple[float, float]) -> float:
+def _corridor_component(centre: tuple[float, float]) -> float:
     """0..1 score from proximity to commuter corridors (O-D proxy)."""
     best = float("inf")
     for a, b in CORRIDORS:
@@ -191,19 +193,21 @@ def _corridor_component(centre: Tuple[float, float]) -> float:
         if d < best:
             best = d
     # σ = 5 km → cells within ~6 km of an axis get >0.5; >15 km decays to ~0.
-    return math.exp(-(best ** 2) / (2 * 5.0 ** 2))
+    return math.exp(-(best**2) / (2 * 5.0**2))
 
 
-def _supply_component(centre: Tuple[float, float]) -> int:
+def _supply_component(centre: tuple[float, float]) -> int:
     """Count of existing chargers within :data:`SUPPLY_RADIUS_KM` of the centre."""
     # Cheap version: ChargingStation.objects.nearby() (uses GIST). The MOCK
     # values are small enough (~600 chargers EH-wide) that this is sub-ms.
     return ChargingStation.objects.nearby(
-        longitude=centre[1], latitude=centre[0], radius_km=SUPPLY_RADIUS_KM,
+        longitude=centre[1],
+        latitude=centre[0],
+        radius_km=SUPPLY_RADIUS_KM,
     ).count()
 
 
-def score_cell(centre: Tuple[float, float]) -> dict:
+def score_cell(centre: tuple[float, float]) -> dict:
     """Composite score + per-component breakdown for one cell.
 
     Weights mirror PROPUESTA.md §3.4 (pop 0.4 + od 0.4 − supply 0.2), with
@@ -259,7 +263,7 @@ def compute_demand_scores(
         :class:`DemandComputeStats` with per-step counters.
     """
     stats = DemandComputeStats()
-    fresh_slugs: List[str] = []
+    fresh_slugs: list[str] = []
 
     for cell in iter_grid(bbox):
         scored = score_cell(cell.centre)
@@ -279,7 +283,8 @@ def compute_demand_scores(
         }
         with transaction.atomic():
             _obj, created = DemandHex.objects.update_or_create(
-                h3_index=cell.slug, defaults=defaults,
+                h3_index=cell.slug,
+                defaults=defaults,
             )
         if created:
             stats.created += 1
@@ -300,7 +305,7 @@ def heatmap_geojson(
     *,
     horizon: int = 3,
     min_score: float = 0.0,
-    limit: Optional[int] = None,
+    limit: int | None = None,
 ) -> dict:
     """Build a GeoJSON FeatureCollection of stored cells.
 
@@ -317,33 +322,37 @@ def heatmap_geojson(
     features = []
     for hex_row in qs:
         coords = list(hex_row.geom.coords[0])  # outer ring
-        features.append({
-            "type": "Feature",
-            "geometry": {"type": "Polygon", "coordinates": [coords]},
-            "properties": {
-                "h3_index": hex_row.h3_index,
-                "score": float(getattr(hex_row, field)),
-                "score_now": float(hex_row.score_now),
-                "score_y3": float(hex_row.score_y3),
-                "score_y5": float(hex_row.score_y5),
-                "components": hex_row.components,
-            },
-        })
+        features.append(
+            {
+                "type": "Feature",
+                "geometry": {"type": "Polygon", "coordinates": [coords]},
+                "properties": {
+                    "h3_index": hex_row.h3_index,
+                    "score": float(getattr(hex_row, field)),
+                    "score_now": float(hex_row.score_now),
+                    "score_y3": float(hex_row.score_y3),
+                    "score_y5": float(hex_row.score_y5),
+                    "components": hex_row.components,
+                },
+            }
+        )
     return {"type": "FeatureCollection", "features": features}
 
 
-def top_locations(*, horizon: int = 3, limit: int = 10) -> List[dict]:
+def top_locations(*, horizon: int = 3, limit: int = 10) -> list[dict]:
     """Ranked list of best cells. Used by the dashboard sidebar."""
     field = {1: "score_now", 3: "score_y3", 5: "score_y5"}.get(horizon, "score_now")
     out = []
     for hex_row in DemandHex.objects.order_by(f"-{field}")[:limit]:
         centre = hex_row.geom.centroid
-        out.append({
-            "h3_index": hex_row.h3_index,
-            "score": float(getattr(hex_row, field)),
-            "centroid_lat": centre.y,
-            "centroid_lon": centre.x,
-            "components": hex_row.components,
-            "municipality_naia": hex_row.municipality_naia,
-        })
+        out.append(
+            {
+                "h3_index": hex_row.h3_index,
+                "score": float(getattr(hex_row, field)),
+                "centroid_lat": centre.y,
+                "centroid_lon": centre.x,
+                "components": hex_row.components,
+                "municipality_naia": hex_row.municipality_naia,
+            }
+        )
     return out

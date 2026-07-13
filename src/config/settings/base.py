@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+
 import environ
 
 # Initialize environment variables
@@ -10,203 +11,203 @@ env = environ.Env(DEBUG=(bool, False))
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Load .env file (try multiple locations for local vs docker)
-ENV_FILE = os.path.join(BASE_DIR.parent, '.env') # Local
+ENV_FILE = os.path.join(BASE_DIR.parent, ".env")  # Local
 if not os.path.exists(ENV_FILE):
-    ENV_FILE = os.path.join(BASE_DIR, '.env') # Docker / Alternative
+    ENV_FILE = os.path.join(BASE_DIR, ".env")  # Docker / Alternative
 
 if os.path.exists(ENV_FILE):
     environ.Env.read_env(ENV_FILE)
 
-SECRET_KEY = env('SECRET_KEY')
-DEBUG = env('DEBUG')
-ENV = env('ENV', default='mubil')
+SECRET_KEY = env("SECRET_KEY")
+DEBUG = env("DEBUG")
+ENV = env("ENV", default="mubil")
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['.maps.eus', 'localhost', '127.0.0.1'])
+ALLOWED_HOSTS = env.list(
+    "ALLOWED_HOSTS", default=[".maps.eus", "localhost", "127.0.0.1"]
+)
 
 # Application definition
 INSTALLED_APPS = [
-    'django_hosts',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.postgres',
-    'django.contrib.gis',
-    'django.contrib.sites',
-    'django.contrib.humanize',
-    
+    "django_hosts",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.postgres",
+    "django.contrib.gis",
+    "django.contrib.sites",
+    "django.contrib.humanize",
     # 3rd party
-    'django_cotton',
-    'django_extensions',
-    'ninja',
-    'django_celery_beat',
-    'anymail',
-    
+    "django_cotton",
+    "django_extensions",
+    "ninja",
+    "django_celery_beat",
+    "anymail",
     # Allauth
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.instagram',
-    'allauth.socialaccount.providers.facebook',
-
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.instagram",
+    "allauth.socialaccount.providers.facebook",
     # Local apps
-    'apps.core',
-    'apps.pintxos',
-    'apps.kultur',
-    'apps.sbk',
-    'apps.inguru',
-    'apps.gailur',
-    'apps.zbe',
-    'apps.adventure',
-    'apps.solar',
-    'apps.oceania',
-    'apps.mubil',
+    "apps.core",
+    "apps.pintxos",
+    "apps.kultur",
+    "apps.sbk",
+    "apps.inguru",
+    "apps.gailur",
+    "apps.zbe",
+    "apps.adventure",
+    "apps.solar",
+    "apps.oceania",
+    "apps.mubil",
+    "apps.blog",
 ]
 
 MIDDLEWARE = [
-    'django_hosts.middleware.HostsRequestMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'django.middleware.gzip.GZipMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django_hosts.middleware.HostsResponseMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
+    "django_hosts.middleware.HostsRequestMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.middleware.gzip.GZipMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_hosts.middleware.HostsResponseMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
-ROOT_URLCONF = 'config.urls'
-ROOT_HOSTCONF = 'config.hosts'
+ROOT_URLCONF = "config.urls"
+ROOT_HOSTCONF = "config.hosts"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.csrf',
-                'django.template.context_processors.i18n',
-                'apps.core.context_processors.app_config',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.csrf",
+                "django.template.context_processors.i18n",
+                "apps.core.context_processors.app_config",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
-ASGI_APPLICATION = 'config.asgi.application'
+WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.asgi.application"
 
 # Database
-DATABASES = {
-    'default': env.db('DATABASE_URL')
-}
-DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
+DATABASES = {"default": env.db("DATABASE_URL")}
+DATABASES["default"]["ENGINE"] = "django.contrib.gis.db.backends.postgis"
 
 # Auth
-AUTH_USER_MODEL = 'core.User'
+AUTH_USER_MODEL = "core.User"
 SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
 # Allauth settings
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
-ACCOUNT_EMAIL_VERIFICATION = 'none'  # Adjust as needed
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
+ACCOUNT_EMAIL_VERIFICATION = "none"  # Adjust as needed
 
 SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': [
-            'profile',
-            'email',
+    "google": {
+        "SCOPE": [
+            "profile",
+            "email",
         ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
+        "AUTH_PARAMS": {
+            "access_type": "online",
         },
-        'OAUTH_PKCE_ENABLED': True,
+        "OAUTH_PKCE_ENABLED": True,
     },
-    'instagram': {
-        'SCOPE': ['user_profile'],
+    "instagram": {
+        "SCOPE": ["user_profile"],
     },
-    'facebook': {
-        'METHOD': 'oauth2',
-        'SCOPE': ['email', 'public_profile'],
-        'AUTH_PARAMS': {'auth_type': 'reauthenticate'},
-        'INIT_PARAMS': {'cookie': True},
-        'FIELDS': [
-            'id',
-            'first_name',
-            'last_name',
-            'name',
-            'email',
-            'picture',
-            'short_name',
+    "facebook": {
+        "METHOD": "oauth2",
+        "SCOPE": ["email", "public_profile"],
+        "AUTH_PARAMS": {"auth_type": "reauthenticate"},
+        "INIT_PARAMS": {"cookie": True},
+        "FIELDS": [
+            "id",
+            "first_name",
+            "last_name",
+            "name",
+            "email",
+            "picture",
+            "short_name",
         ],
-        'VERIFIED_EMAIL': False,
-        'VERSION': 'v19.0',
-        'OAUTH_PKCE_ENABLED': True,
+        "VERIFIED_EMAIL": False,
+        "VERSION": "v19.0",
+        "OAUTH_PKCE_ENABLED": True,
     },
 }
 
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 # Internationalization
-LANGUAGE_CODE = 'eu'
-TIME_ZONE = 'Europe/Madrid'
+LANGUAGE_CODE = "eu"
+TIME_ZONE = "Europe/Madrid"
 USE_I18N = True
 USE_TZ = True
 
 LANGUAGES = [
-    ('eu', 'Euskara'),
-    ('es', 'Español'),
-    ('en', 'English'),
+    ("eu", "Euskara"),
+    ("es", "Español"),
+    ("en", "English"),
 ]
 
 LOCALE_PATHS = [
-    BASE_DIR / 'locale',
+    BASE_DIR / "locale",
 ]
 
 # Static files
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR.parent / 'staticfiles'
+STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR.parent / "staticfiles"
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',
+    BASE_DIR / "static",
 ]
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Media files
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR.parent / 'media'
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR.parent / "media"
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Login
-LOGIN_URL = 'account_login'
-LOGIN_REDIRECT_URL = 'home'
+LOGIN_URL = "account_login"
+LOGIN_REDIRECT_URL = "home"
 
 # Weather APIs
-EUSKALMET_API_KEY = env('EUSKALMET_API_KEY', default='')
-OPENWEATHERMAP_API_KEY = env('OPENWEATHERMAP_API_KEY', default='')
+EUSKALMET_API_KEY = env("EUSKALMET_API_KEY", default="")
+OPENWEATHERMAP_API_KEY = env("OPENWEATHERMAP_API_KEY", default="")
 
-GOOGLE_ANALYTICS_ID = env('GOOGLE_ANALYTICS_ID', default='')
+GOOGLE_ANALYTICS_ID = env("GOOGLE_ANALYTICS_ID", default="")
 
 # Mubil — Gemini (embeddings gemini-embedding-001 @768d + generation gemini-3.5-flash).
 # Obtener gratis en https://aistudio.google.com/app/apikey
@@ -215,9 +216,9 @@ GOOGLE_ANALYTICS_ID = env('GOOGLE_ANALYTICS_ID', default='')
 # via the google-genai SDK to keep the existing VectorField(dimensions=768) schema.
 # Generation uses gemini-3.5-flash (newest Flash GA as of 2026-05); previous
 # default gemini-2.5-flash was free-tier-throttled to 20 RPD, useless for demos.
-GEMINI_API_KEY = env('GEMINI_API_KEY', default='')
-GEMINI_EMBEDDING_MODEL = env('GEMINI_EMBEDDING_MODEL', default='gemini-embedding-001')
-GEMINI_GENERATION_MODEL = env('GEMINI_GENERATION_MODEL', default='gemini-3.5-flash')
+GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
+GEMINI_EMBEDDING_MODEL = env("GEMINI_EMBEDDING_MODEL", default="gemini-embedding-001")
+GEMINI_GENERATION_MODEL = env("GEMINI_GENERATION_MODEL", default="gemini-3.5-flash")
 
 # Ordered fallback ladder for generation. The advisor RAG iterates this list
 # on quota / temp-unavailable / not-found / empty-completion so a depleted
@@ -240,46 +241,46 @@ GEMINI_GENERATION_MODEL = env('GEMINI_GENERATION_MODEL', default='gemini-3.5-fla
 # Names verified against client.models.list() on 2026-05-29.
 # Override via env to pin a single model end-to-end.
 GEMINI_GENERATION_FALLBACK_MODELS = env.list(
-    'GEMINI_GENERATION_FALLBACK_MODELS',
+    "GEMINI_GENERATION_FALLBACK_MODELS",
     default=[
-        'gemini-3.1-flash-lite',
-        'gemini-2.5-flash-lite',
-        'gemini-3-flash',
-        'gemini-3.5-flash',
-        'gemini-2.5-flash',
-        'gemma-4-26b-a4b-it',
-        'gemma-4-31b-it',
+        "gemini-3.1-flash-lite",
+        "gemini-2.5-flash-lite",
+        "gemini-3-flash",
+        "gemini-3.5-flash",
+        "gemini-2.5-flash",
+        "gemma-4-26b-a4b-it",
+        "gemma-4-31b-it",
     ],
 )
 
 # Mubil — ESIOS (Red Eléctrica) for PVPC hourly prices, indicator 1001.
 # Token obtained via email to consultasios@ree.es; sent in `x-api-key` header.
-ESIOS_TOKEN = env('ESIOS_TOKEN', default='')
+ESIOS_TOKEN = env("ESIOS_TOKEN", default="")
 
 # Mubil — OpenChargeMap, weekly refresh of EV charging POIs for the EH bbox.
 # Free key, instant signup at https://openchargemap.org/site/develop/api .
 # Sent in the `X-API-Key` header. Empty → weekly cron logs a warning and noops
 # so a missing key never crashes the demo.
-OPENCHARGEMAP_API_KEY = env('OPENCHARGEMAP_API_KEY', default='')
+OPENCHARGEMAP_API_KEY = env("OPENCHARGEMAP_API_KEY", default="")
 
 # Mubil — NewsAPI for the `news` aggregator (dev tier, free, 100 req/day).
 # Empty → only RSS sources are pulled; the page still renders.
-NEWS_API_KEY = env('NEWS_API_KEY', default='')
+NEWS_API_KEY = env("NEWS_API_KEY", default="")
 
 # Mubil — `news` cache TTL. Opening /estrata/news/ when the most recent
 # article is older than this dispatches a Celery refresh; no beat schedule.
-NEWS_CACHE_HOURS = env.int('NEWS_CACHE_HOURS', default=6)
+NEWS_CACHE_HOURS = env.int("NEWS_CACHE_HOURS", default=6)
 
 # Celery
-CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://redis:6379/0')
-CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://redis:6379/1')
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/0")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://redis:6379/1")
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 60 * 30  # 30 min hard limit
 CELERY_TASK_SOFT_TIME_LIMIT = 60 * 25
 CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # Email & Anymail (Brevo)
 ANYMAIL = {

@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Literal, Optional
+from typing import Literal
 
 from apps.mubil.data.price_defaults import (
     AUTO_PLUS_CONCESSIONAIRE_DISCOUNT,
@@ -96,14 +96,14 @@ class IncentivesBreakdown:
 
 
 def _auto_plus_vehicle(
-    vehicle_price_eur: Optional[int],
+    vehicle_price_eur: int | None,
     propulsion: str,
     category: str,
     assembled_in_eu: bool,
     battery_made_in_eu: bool,
     profile: Profile = "particular",
     scrapping: bool = False,
-) -> Optional[Incentive]:
+) -> Incentive | None:
     if not vehicle_price_eur:
         return None
 
@@ -143,14 +143,16 @@ def _auto_plus_vehicle(
     factor_eu_assembly = Decimal("0.15") if assembled_in_eu else Decimal("0")
     factor_eu_battery = Decimal("0.10") if battery_made_in_eu else Decimal("0")
 
-    total_pct = factor_electric + factor_economic + factor_eu_assembly + factor_eu_battery
+    total_pct = (
+        factor_electric + factor_economic + factor_eu_assembly + factor_eu_battery
+    )
     amount = (max_aid * total_pct).quantize(Decimal("0.01"))
 
     factors_label = []
     if factor_electric > 0:
-        factors_label.append(f"Eléctrico {int(factor_electric*100)}%")
+        factors_label.append(f"Eléctrico {int(factor_electric * 100)}%")
     if factor_economic > 0:
-        factors_label.append(f"Económico {int(factor_economic*100)}%")
+        factors_label.append(f"Económico {int(factor_economic * 100)}%")
     if factor_eu_assembly > 0:
         factors_label.append("Montaje UE")
     if factor_eu_battery > 0:
@@ -162,7 +164,7 @@ def _auto_plus_vehicle(
     return Incentive(code="auto_plus_vehicle", name=label, amount_eur=amount)
 
 
-def _auto_plus_concessionaire(profile: Profile) -> Optional[Incentive]:
+def _auto_plus_concessionaire(profile: Profile) -> Incentive | None:
     # Descuento obligatorio concesionario (1.000 €)
     return Incentive(
         code="auto_plus_concessionaire",
@@ -173,9 +175,9 @@ def _auto_plus_concessionaire(profile: Profile) -> Optional[Incentive]:
 
 def _irpf_deduction(
     profile: Profile,
-    vehicle_price_eur: Optional[int],
+    vehicle_price_eur: int | None,
     auto_plus_aid: Decimal = Decimal("0"),
-) -> Optional[Incentive]:
+) -> Incentive | None:
     """RD-ley 5/2023: 15 % sobre base máxima 20.000 €, sólo personas físicas.
     Aplicado sobre el coste de compra neto de ayudas estatales."""
     if profile != "particular" or not vehicle_price_eur:
@@ -192,7 +194,7 @@ def _irpf_deduction(
     )
 
 
-def _ivtm_exemption(cp: str) -> Optional[Incentive]:
+def _ivtm_exemption(cp: str) -> Incentive | None:
     province = cp_to_province(cp)
     bonif = IVTM_BONIF_PCT_BY_PROVINCE.get(province, Decimal("0"))
     if bonif <= 0:
@@ -202,16 +204,24 @@ def _ivtm_exemption(cp: str) -> Optional[Incentive]:
     return Incentive(code="ivtm_bonif", name=label, amount_eur=annual, recurring=True)
 
 
-def _iva_deducible(profile: Profile, vehicle_price_eur: Optional[int]) -> Optional[Incentive]:
+def _iva_deducible(
+    profile: Profile, vehicle_price_eur: int | None
+) -> Incentive | None:
     """IVA deducible para autónomos/empresas. Precio asumido CON IVA."""
     if profile not in ("autonomo", "empresa") or not vehicle_price_eur:
         return None
     price = Decimal(vehicle_price_eur)
     iva_total = price * (IVA_RATE / (Decimal("1") + IVA_RATE))
-    pct = IVA_DEDUCIBLE_EMPRESA_PCT if profile == "empresa" else IVA_DEDUCIBLE_AUTONOMO_PCT
+    pct = (
+        IVA_DEDUCIBLE_EMPRESA_PCT
+        if profile == "empresa"
+        else IVA_DEDUCIBLE_AUTONOMO_PCT
+    )
     amount = (iva_total * pct).quantize(Decimal("0.01"))
     pct_label = "100 %" if profile == "empresa" else "50 %"
-    return Incentive(code="iva_deducible", name=f"IVA deducible ({pct_label})", amount_eur=amount)
+    return Incentive(
+        code="iva_deducible", name=f"IVA deducible ({pct_label})", amount_eur=amount
+    )
 
 
 # ---------------------------------------------------------------- public API
@@ -221,13 +231,13 @@ def compute_incentives(
     *,
     profile: Profile,
     cp: str,
-    vehicle_price_eur: Optional[int],
+    vehicle_price_eur: int | None,
     scrapping: bool,
     needs_wallbox: bool,
     years_horizon: int,
-    vehicle: Optional[Vehicle] = None,
-    assembled_in_eu: Optional[bool] = None,
-    battery_made_in_eu: Optional[bool] = None,
+    vehicle: Vehicle | None = None,
+    assembled_in_eu: bool | None = None,
+    battery_made_in_eu: bool | None = None,
 ) -> IncentivesBreakdown:
     """Devuelve el desglose completo de incentivos aplicables."""
     # Resolve EEE inputs, with defaults if vehicle is missing
@@ -243,8 +253,12 @@ def compute_incentives(
         target_category = vehicle.category or "M1"
 
     # Manual overrides from form
-    final_assembled = assembled_in_eu if assembled_in_eu is not None else target_assembled
-    final_battery = battery_made_in_eu if battery_made_in_eu is not None else target_battery
+    final_assembled = (
+        assembled_in_eu if assembled_in_eu is not None else target_assembled
+    )
+    final_battery = (
+        battery_made_in_eu if battery_made_in_eu is not None else target_battery
+    )
 
     auto_plus_veh = _auto_plus_vehicle(
         vehicle_price_eur=vehicle_price_eur,

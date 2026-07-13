@@ -11,8 +11,6 @@ KPI: latency <3s. Model: gemini-2.0-flash. Cache pre-warmed gold prompts.
 
 from __future__ import annotations
 
-from typing import List
-
 from ninja import Router
 
 from apps.mubil.ask import services
@@ -32,7 +30,7 @@ def health(request):
     return {"status": "ok", "module": "ask"}
 
 
-@router.get("/suggested", response=List[SuggestedPromptOut])
+@router.get("/suggested", response=list[SuggestedPromptOut])
 def suggested(request):
     """Curated prompts pre-warmed for the demo (safety net)."""
     return services.list_suggested()

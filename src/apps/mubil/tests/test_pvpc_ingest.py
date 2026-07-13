@@ -6,7 +6,7 @@ the live endpoint:  `python manage.py ingest_pvpc --hours 24 --dry-run`.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from unittest import mock
 
@@ -15,7 +15,6 @@ from django.test import TestCase, override_settings
 from apps.mubil.data import esios_client, pvpc_ingest
 from apps.mubil.models import EnergyPricePVPC
 
-
 # Realistic ESIOS payload shape — `indicator.values[]` with ISO datetimes.
 SAMPLE_PAYLOAD = {
     "indicator": {
@@ -23,17 +22,33 @@ SAMPLE_PAYLOAD = {
         "name": "Precio voluntario para el pequeño consumidor (PVPC) 2.0TD",
         "values": [
             # Madrid 2026-05-01 02:00 → P3 (valle), weekday but pre-08:00
-            {"datetime": "2026-05-01T02:00:00.000+02:00", "value": 80.5,
-             "geo_id": 8741, "geo_name": "España"},
+            {
+                "datetime": "2026-05-01T02:00:00.000+02:00",
+                "value": 80.5,
+                "geo_id": 8741,
+                "geo_name": "España",
+            },
             # Madrid 2026-05-01 11:00 → P1 (punta)
-            {"datetime": "2026-05-01T11:00:00.000+02:00", "value": 145.2,
-             "geo_id": 8741, "geo_name": "España"},
+            {
+                "datetime": "2026-05-01T11:00:00.000+02:00",
+                "value": 145.2,
+                "geo_id": 8741,
+                "geo_name": "España",
+            },
             # Madrid 2026-05-01 15:00 → P2 (llano)
-            {"datetime": "2026-05-01T15:00:00.000+02:00", "value": 110.8,
-             "geo_id": 8741, "geo_name": "España"},
+            {
+                "datetime": "2026-05-01T15:00:00.000+02:00",
+                "value": 110.8,
+                "geo_id": 8741,
+                "geo_name": "España",
+            },
             # Madrid 2026-05-02 11:00 → Saturday → P3 (weekend)
-            {"datetime": "2026-05-02T11:00:00.000+02:00", "value": 70.0,
-             "geo_id": 8741, "geo_name": "España"},
+            {
+                "datetime": "2026-05-02T11:00:00.000+02:00",
+                "value": 70.0,
+                "geo_id": 8741,
+                "geo_name": "España",
+            },
             # Malformed row — should be skipped, not crash
             {"datetime": None, "value": 99.9},
         ],
@@ -55,22 +70,24 @@ def _mock_response(payload=None, status=200):
 class ClassifyTariffTests(TestCase):
     def test_weekday_morning_peak(self):
         # Madrid 11:00 on a Friday → P1
-        ts = datetime(2026, 5, 1, 9, 0, tzinfo=timezone.utc)  # UTC 09:00 = Madrid 11:00 (CEST)
+        ts = datetime(
+            2026, 5, 1, 9, 0, tzinfo=UTC
+        )  # UTC 09:00 = Madrid 11:00 (CEST)
         self.assertEqual(pvpc_ingest.classify_tariff(ts), EnergyPricePVPC.Tariff.P1)
 
     def test_weekday_afternoon_flat(self):
         # Madrid 15:00 on a Friday → P2
-        ts = datetime(2026, 5, 1, 13, 0, tzinfo=timezone.utc)
+        ts = datetime(2026, 5, 1, 13, 0, tzinfo=UTC)
         self.assertEqual(pvpc_ingest.classify_tariff(ts), EnergyPricePVPC.Tariff.P2)
 
     def test_weekday_night_valley(self):
         # Madrid 02:00 on a Friday → P3
-        ts = datetime(2026, 5, 1, 0, 0, tzinfo=timezone.utc)
+        ts = datetime(2026, 5, 1, 0, 0, tzinfo=UTC)
         self.assertEqual(pvpc_ingest.classify_tariff(ts), EnergyPricePVPC.Tariff.P3)
 
     def test_weekend_always_valley(self):
         # Madrid 11:00 on a Saturday → P3 even though it would be P1 on a weekday
-        ts = datetime(2026, 5, 2, 9, 0, tzinfo=timezone.utc)
+        ts = datetime(2026, 5, 2, 9, 0, tzinfo=UTC)
         self.assertEqual(pvpc_ingest.classify_tariff(ts), EnergyPricePVPC.Tariff.P3)
 
 
@@ -85,8 +102,8 @@ class FetchIndicatorTests(TestCase):
 
         values = esios_client.fetch_indicator(
             esios_client.INDICATOR_PVPC,
-            start=datetime(2026, 5, 1, tzinfo=timezone.utc),
-            end=datetime(2026, 5, 2, tzinfo=timezone.utc),
+            start=datetime(2026, 5, 1, tzinfo=UTC),
+            end=datetime(2026, 5, 2, tzinfo=UTC),
         )
 
         # Malformed row was dropped → 4 valid datapoints.
@@ -106,8 +123,8 @@ class FetchIndicatorTests(TestCase):
 
         esios_client.fetch_indicator(
             1001,
-            start=datetime(2026, 5, 1, tzinfo=timezone.utc),
-            end=datetime(2026, 5, 2, tzinfo=timezone.utc),
+            start=datetime(2026, 5, 1, tzinfo=UTC),
+            end=datetime(2026, 5, 2, tzinfo=UTC),
         )
         _, kwargs = get_mock.call_args
         self.assertEqual(kwargs["headers"]["x-api-key"], "fake-token-for-tests")
@@ -119,8 +136,8 @@ class FetchIndicatorTests(TestCase):
         with self.assertRaises(esios_client.ESIOSError) as ctx:
             esios_client.fetch_indicator(
                 1001,
-                start=datetime(2026, 5, 1, tzinfo=timezone.utc),
-                end=datetime(2026, 5, 2, tzinfo=timezone.utc),
+                start=datetime(2026, 5, 1, tzinfo=UTC),
+                end=datetime(2026, 5, 2, tzinfo=UTC),
             )
         self.assertIn("token", str(ctx.exception).lower())
 
@@ -139,8 +156,8 @@ class FetchIndicatorNoTokenTests(TestCase):
         with self.assertRaises(esios_client.ESIOSError) as ctx:
             esios_client.fetch_indicator(
                 1001,
-                start=datetime(2026, 5, 1, tzinfo=timezone.utc),
-                end=datetime(2026, 5, 2, tzinfo=timezone.utc),
+                start=datetime(2026, 5, 1, tzinfo=UTC),
+                end=datetime(2026, 5, 2, tzinfo=UTC),
             )
         self.assertIn("ESIOS_TOKEN", str(ctx.exception))
 
@@ -155,8 +172,8 @@ class IngestWindowTests(TestCase):
         get_mock.return_value = _mock_response()
 
         stats = pvpc_ingest.ingest_window(
-            start=datetime(2026, 5, 1, tzinfo=timezone.utc),
-            end=datetime(2026, 5, 3, tzinfo=timezone.utc),
+            start=datetime(2026, 5, 1, tzinfo=UTC),
+            end=datetime(2026, 5, 3, tzinfo=UTC),
         )
 
         self.assertEqual(stats.fetched, 4)
@@ -165,7 +182,7 @@ class IngestWindowTests(TestCase):
 
         # Spot-check: weekend row is classified as P3 even at 11:00 local.
         sat = EnergyPricePVPC.objects.get(
-            timestamp=datetime(2026, 5, 2, 9, 0, tzinfo=timezone.utc),
+            timestamp=datetime(2026, 5, 2, 9, 0, tzinfo=UTC),
         )
         self.assertEqual(sat.tariff, EnergyPricePVPC.Tariff.P3)
         self.assertEqual(sat.price_eur_mwh, Decimal("70.000"))
@@ -174,14 +191,14 @@ class IngestWindowTests(TestCase):
     def test_idempotent_rerun_updates_existing(self, get_mock):
         get_mock.return_value = _mock_response()
         pvpc_ingest.ingest_window(
-            start=datetime(2026, 5, 1, tzinfo=timezone.utc),
-            end=datetime(2026, 5, 3, tzinfo=timezone.utc),
+            start=datetime(2026, 5, 1, tzinfo=UTC),
+            end=datetime(2026, 5, 3, tzinfo=UTC),
         )
 
         # Second run — same payload → 4 updates, 0 creates.
         stats = pvpc_ingest.ingest_window(
-            start=datetime(2026, 5, 1, tzinfo=timezone.utc),
-            end=datetime(2026, 5, 3, tzinfo=timezone.utc),
+            start=datetime(2026, 5, 1, tzinfo=UTC),
+            end=datetime(2026, 5, 3, tzinfo=UTC),
         )
         self.assertEqual(stats.created, 0)
         self.assertEqual(stats.updated, 4)
@@ -192,8 +209,8 @@ class IngestWindowTests(TestCase):
         get_mock.return_value = _mock_response()
 
         stats = pvpc_ingest.ingest_window(
-            start=datetime(2026, 5, 1, tzinfo=timezone.utc),
-            end=datetime(2026, 5, 3, tzinfo=timezone.utc),
+            start=datetime(2026, 5, 1, tzinfo=UTC),
+            end=datetime(2026, 5, 3, tzinfo=UTC),
             dry_run=True,
         )
 
@@ -206,8 +223,8 @@ class IngestWindowTests(TestCase):
         get_mock.return_value = _mock_response(status=401)
 
         stats = pvpc_ingest.ingest_window(
-            start=datetime(2026, 5, 1, tzinfo=timezone.utc),
-            end=datetime(2026, 5, 3, tzinfo=timezone.utc),
+            start=datetime(2026, 5, 1, tzinfo=UTC),
+            end=datetime(2026, 5, 3, tzinfo=UTC),
         )
         self.assertEqual(stats.fetched, 0)
         self.assertEqual(stats.errors, 1)
@@ -220,7 +237,8 @@ class IngestWindowTests(TestCase):
 def _seed_recent(*, tariff: str, prices_eur_mwh: list, hours_ago_each: list):
     """Helper: insert one EnergyPricePVPC row per (price, hours_ago) pair."""
     from datetime import datetime as _dt
-    now = _dt.now(tz=timezone.utc).replace(minute=0, second=0, microsecond=0)
+
+    now = _dt.now(tz=UTC).replace(minute=0, second=0, microsecond=0)
     for price, h in zip(prices_eur_mwh, hours_ago_each):
         EnergyPricePVPC.objects.create(
             timestamp=now - timedelta(hours=h),
@@ -267,7 +285,7 @@ class PVPCQueryTests(TestCase):
         _seed_recent(
             tariff=EnergyPricePVPC.Tariff.P1,
             prices_eur_mwh=[200, 1000],
-            hours_ago_each=[1, 24 * 60],   # second row is 60 days old
+            hours_ago_each=[1, 24 * 60],  # second row is 60 days old
         )
         # Default 30-day window → only the 1-hour-old row counts.
         avg = pvpc_ingest.recent_avg_eur_kwh(tariff=EnergyPricePVPC.Tariff.P1)
@@ -276,7 +294,7 @@ class PVPCQueryTests(TestCase):
     def test_current_price_night_charging_uses_valle(self):
         _seed_recent(
             tariff=EnergyPricePVPC.Tariff.P3,
-            prices_eur_mwh=[100],          # → 0.10 €/kWh
+            prices_eur_mwh=[100],  # → 0.10 €/kWh
             hours_ago_each=[1],
         )
         _seed_recent(
@@ -311,6 +329,7 @@ class PVPCQueryTests(TestCase):
             DEFAULT_PVPC_EUR_KWH,
             DEFAULT_PVPC_VALLE_EUR_KWH,
         )
+
         # No rows inserted at all.
         self.assertEqual(
             pvpc_ingest.current_price_eur_kwh(night_charging=True),

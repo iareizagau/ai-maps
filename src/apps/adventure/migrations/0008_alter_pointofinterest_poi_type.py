@@ -4,15 +4,26 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('adventure', '0007_explorationrecord'),
+        ("adventure", "0007_explorationrecord"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='pointofinterest',
-            name='poi_type',
-            field=models.CharField(choices=[('water', 'Agua / Fuente'), ('shelter', 'Refugio / Cabaña'), ('cafe', 'Cafetería / Bar'), ('station', 'Estación de Transporte'), ('camp_paid', '⛺ Camping (Pago)'), ('camp_free', '🚐 Zona Camper / Pernocta (Gratis)'), ('other', 'Otro')], db_index=True, max_length=50),
+            model_name="pointofinterest",
+            name="poi_type",
+            field=models.CharField(
+                choices=[
+                    ("water", "Agua / Fuente"),
+                    ("shelter", "Refugio / Cabaña"),
+                    ("cafe", "Cafetería / Bar"),
+                    ("station", "Estación de Transporte"),
+                    ("camp_paid", "⛺ Camping (Pago)"),
+                    ("camp_free", "🚐 Zona Camper / Pernocta (Gratis)"),
+                    ("other", "Otro"),
+                ],
+                db_index=True,
+                max_length=50,
+            ),
         ),
     ]

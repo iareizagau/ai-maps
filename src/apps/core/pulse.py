@@ -5,7 +5,9 @@ Cada provider retorna un dict (o None) con la forma:
 
 Fallos por provider son silenciosos (logged) — la home nunca rompe por datos.
 """
+
 import logging
+
 from django.core.cache import cache
 from django.utils import timezone
 from django.utils.translation import get_language, gettext as _
@@ -22,13 +24,14 @@ def get_pulse_items():
         return cached
 
     from apps.core.models import AppRegistry
+
     apps_by_slug = {a.slug: a for a in AppRegistry.objects.filter(is_active=True)}
 
     providers = [
-        ('inguru', _inguru_pulse),
-        ('kultur', _kultur_pulse),
-        ('sbk', _sbk_pulse),
-        ('pintxos', _pintxos_pulse),
+        ("inguru", _inguru_pulse),
+        ("kultur", _kultur_pulse),
+        ("sbk", _sbk_pulse),
+        ("pintxos", _pintxos_pulse),
     ]
 
     items = []
@@ -56,20 +59,20 @@ def get_pulse_items():
 
 def invalidate():
     """Call after data ingestion to refresh the pulse before TTL."""
-    for lang in ('es', 'eu', 'en'):
+    for lang in ("es", "eu", "en"):
         cache.delete(f"home:pulse_items:{lang}")
 
 
 def _base(app):
     return {
-        'url': app.get_absolute_url,
-        'app_name': app.name,
-        'app_slug': app.slug,
-        'icon': app.icon,
-        'accent': app.primary_color,
-        'is_live': False,
-        'lat': None,
-        'lon': None,
+        "url": app.get_absolute_url,
+        "app_name": app.name,
+        "app_slug": app.slug,
+        "icon": app.icon,
+        "accent": app.primary_color,
+        "is_live": False,
+        "lat": None,
+        "lon": None,
     }
 
 
@@ -87,27 +90,27 @@ def _coords_from_point(point):
 # coordenadas para eventos fuera (e.g. SBK en Francia se queda fuera del mapa,
 # que es lo honesto: la card de pulse igualmente aparece en texto).
 _EH_CITY_COORDS = {
-    'bilbao': (43.263, -2.935),
-    'bilbo': (43.263, -2.935),
-    'donostia': (43.318, -1.981),
-    'donostia / san sebastián': (43.318, -1.981),
-    'san sebastián': (43.318, -1.981),
-    'san sebastian': (43.318, -1.981),
-    'vitoria': (42.846, -2.672),
-    'vitoria-gasteiz': (42.846, -2.672),
-    'gasteiz': (42.846, -2.672),
-    'iruñea': (42.812, -1.645),
-    'iruña': (42.812, -1.645),
-    'pamplona': (42.812, -1.645),
-    'pamplona/iruña': (42.812, -1.645),
-    'bizkaia': (43.263, -2.935),
-    'vizcaya': (43.263, -2.935),
-    'gipuzkoa': (43.318, -1.981),
-    'guipúzcoa': (43.318, -1.981),
-    'álava': (42.846, -2.672),
-    'araba': (42.846, -2.672),
-    'navarra': (42.812, -1.645),
-    'nafarroa': (42.812, -1.645),
+    "bilbao": (43.263, -2.935),
+    "bilbo": (43.263, -2.935),
+    "donostia": (43.318, -1.981),
+    "donostia / san sebastián": (43.318, -1.981),
+    "san sebastián": (43.318, -1.981),
+    "san sebastian": (43.318, -1.981),
+    "vitoria": (42.846, -2.672),
+    "vitoria-gasteiz": (42.846, -2.672),
+    "gasteiz": (42.846, -2.672),
+    "iruñea": (42.812, -1.645),
+    "iruña": (42.812, -1.645),
+    "pamplona": (42.812, -1.645),
+    "pamplona/iruña": (42.812, -1.645),
+    "bizkaia": (43.263, -2.935),
+    "vizcaya": (43.263, -2.935),
+    "gipuzkoa": (43.318, -1.981),
+    "guipúzcoa": (43.318, -1.981),
+    "álava": (42.846, -2.672),
+    "araba": (42.846, -2.672),
+    "navarra": (42.812, -1.645),
+    "nafarroa": (42.812, -1.645),
 }
 
 
@@ -128,16 +131,16 @@ def _coords_or_city_fallback(point, *cities):
 def _inguru_pulse(app):
     from apps.inguru.models import Measurement
 
-    latest = (Measurement.objects
-        .filter(station__municipality__icontains='Bilbao')
-        .select_related('station')
-        .order_by('-timestamp')
-        .first())
+    latest = (
+        Measurement.objects.filter(station__municipality__icontains="Bilbao")
+        .select_related("station")
+        .order_by("-timestamp")
+        .first()
+    )
     if not latest:
-        latest = (Measurement.objects
-            .select_related('station')
-            .order_by('-timestamp')
-            .first())
+        latest = (
+            Measurement.objects.select_related("station").order_by("-timestamp").first()
+        )
     if not latest:
         return None
 
@@ -152,15 +155,17 @@ def _inguru_pulse(app):
         label = _("Baja")
 
     city = latest.station.municipality or latest.station.name
-    lat, lon = _coords_or_city_fallback(latest.station.location, city, latest.station.province)
+    lat, lon = _coords_or_city_fallback(
+        latest.station.location, city, latest.station.province
+    )
     return {
         **_base(app),
-        'headline': _("Aire en %(city)s: %(label)s") % {'city': city, 'label': label},
-        'subline': _("Eco-score %(s)s/100") % {'s': score} if score else None,
-        'meta': _humanize_age(latest.timestamp),
-        'is_live': True,
-        'lat': lat,
-        'lon': lon,
+        "headline": _("Aire en %(city)s: %(label)s") % {"city": city, "label": label},
+        "subline": _("Eco-score %(s)s/100") % {"s": score} if score else None,
+        "meta": _humanize_age(latest.timestamp),
+        "is_live": True,
+        "lat": lat,
+        "lon": lon,
     }
 
 
@@ -168,17 +173,17 @@ def _kultur_pulse(app):
     from apps.kultur.models import CulturalEvent
 
     today = timezone.localdate()
-    today_qs = (CulturalEvent.objects
-        .filter(start_date__date=today)
-        .order_by('start_date'))
+    today_qs = CulturalEvent.objects.filter(start_date__date=today).order_by(
+        "start_date"
+    )
     count = today_qs.count()
 
     if count >= 1:
         first = today_qs.first()
         title = first.title_es or first.title_eu or _("Evento")
-        venue = first.venue_name_es or first.venue_name_eu or ''
+        venue = first.venue_name_es or first.venue_name_eu or ""
         if count > 1:
-            headline = _("%(n)s eventos hoy") % {'n': count}
+            headline = _("%(n)s eventos hoy") % {"n": count}
             subline = title
         else:
             headline = title
@@ -188,31 +193,35 @@ def _kultur_pulse(app):
         )
         return {
             **_base(app),
-            'headline': headline,
-            'subline': subline,
-            'meta': _("Esta noche"),
-            'lat': lat,
-            'lon': lon,
+            "headline": headline,
+            "subline": subline,
+            "meta": _("Esta noche"),
+            "lat": lat,
+            "lon": lon,
         }
 
-    upcoming = (CulturalEvent.objects
-        .filter(start_date__date__gt=today)
-        .order_by('start_date')
-        .first())
+    upcoming = (
+        CulturalEvent.objects.filter(start_date__date__gt=today)
+        .order_by("start_date")
+        .first()
+    )
     if not upcoming:
         return None
 
     title = upcoming.title_es or upcoming.title_eu or _("Evento")
     lat, lon = _coords_or_city_fallback(
-        upcoming.location, upcoming.municipality_es, upcoming.municipality_eu, upcoming.province
+        upcoming.location,
+        upcoming.municipality_es,
+        upcoming.municipality_eu,
+        upcoming.province,
     )
     return {
         **_base(app),
-        'headline': title,
-        'subline': upcoming.venue_name_es or upcoming.venue_name_eu or None,
-        'meta': upcoming.start_date.strftime('%d %b'),
-        'lat': lat,
-        'lon': lon,
+        "headline": title,
+        "subline": upcoming.venue_name_es or upcoming.venue_name_eu or None,
+        "meta": upcoming.start_date.strftime("%d %b"),
+        "lat": lat,
+        "lon": lon,
     }
 
 
@@ -220,10 +229,13 @@ def _sbk_pulse(app):
     from apps.sbk.models import Event
 
     now = timezone.now()
-    next_event = (Event.objects
-        .filter(start_date__gte=now, moderation_status__in=['verified', 'pending'])
-        .order_by('start_date')
-        .first())
+    next_event = (
+        Event.objects.filter(
+            start_date__gte=now, moderation_status__in=["verified", "pending"]
+        )
+        .order_by("start_date")
+        .first()
+    )
     if not next_event:
         return None
 
@@ -231,165 +243,192 @@ def _sbk_pulse(app):
     if delta.total_seconds() < 12 * 3600:
         meta = _("Esta noche") + f" · {next_event.start_date.strftime('%H:%M')}"
     elif delta.days < 7:
-        meta = next_event.start_date.strftime('%a %H:%M').capitalize()
+        meta = next_event.start_date.strftime("%a %H:%M").capitalize()
     else:
-        meta = next_event.start_date.strftime('%d %b')
+        meta = next_event.start_date.strftime("%d %b")
 
-    style = (next_event.get_primary_style_display()
-             if hasattr(next_event, 'get_primary_style_display')
-             else next_event.primary_style)
+    style = (
+        next_event.get_primary_style_display()
+        if hasattr(next_event, "get_primary_style_display")
+        else next_event.primary_style
+    )
 
-    lat, lon = _coords_or_city_fallback(getattr(next_event, 'location', None), next_event.city)
+    lat, lon = _coords_or_city_fallback(
+        getattr(next_event, "location", None), next_event.city
+    )
     return {
         **_base(app),
-        'headline': _("Próxima social: %(s)s") % {'s': style},
-        'subline': next_event.city or None,
-        'meta': meta,
-        'lat': lat,
-        'lon': lon,
+        "headline": _("Próxima social: %(s)s") % {"s": style},
+        "subline": next_event.city or None,
+        "meta": meta,
+        "lat": lat,
+        "lon": lon,
     }
 
 
 def _pintxos_pulse(app):
     from apps.pintxos.models import Dish
 
-    top = (Dish.objects
-        .filter(rating_count__gte=1)
-        .select_related('restaurant')
-        .order_by('-avg_rating', '-rating_count')
-        .first())
+    top = (
+        Dish.objects.filter(rating_count__gte=1)
+        .select_related("restaurant")
+        .order_by("-avg_rating", "-rating_count")
+        .first()
+    )
     if not top:
         return None
 
     lat, lon = (None, None)
     if top.restaurant_id:
-        lat, lon = _coords_or_city_fallback(top.restaurant.location, top.restaurant.address)
+        lat, lon = _coords_or_city_fallback(
+            top.restaurant.location, top.restaurant.address
+        )
     return {
         **_base(app),
-        'headline': top.name,
-        'subline': _("en %(r)s") % {'r': top.restaurant.name} if top.restaurant_id else None,
-        'meta': f"★ {top.avg_rating:.1f} · {top.rating_count}",
-        'lat': lat,
-        'lon': lon,
+        "headline": top.name,
+        "subline": _("en %(r)s") % {"r": top.restaurant.name}
+        if top.restaurant_id
+        else None,
+        "meta": f"★ {top.avg_rating:.1f} · {top.rating_count}",
+        "lat": lat,
+        "lon": lon,
     }
 
 
 def _humanize_age(ts):
     if not ts:
-        return ''
+        return ""
     secs = int((timezone.now() - ts).total_seconds())
     if secs < 60:
         return _("ahora")
     if secs < 3600:
-        return _("hace %(m)smin") % {'m': secs // 60}
+        return _("hace %(m)smin") % {"m": secs // 60}
     if secs < 86400:
-        return _("hace %(h)sh") % {'h': secs // 3600}
-    return _("hace %(d)sd") % {'d': secs // 86400}
+        return _("hace %(h)sh") % {"h": secs // 3600}
+    return _("hace %(d)sd") % {"d": secs // 86400}
 
 
 def get_dashboard_points():
+    from django.urls import reverse
+    from django.utils import timezone
+
     from apps.core.models import AppRegistry
+    from apps.inguru.models import Measurement
     from apps.kultur.models import CulturalEvent
     from apps.pintxos.models import Restaurant
     from apps.sbk.models import Event
-    from apps.inguru.models import Measurement
-    from django.utils import timezone
-    from django.urls import reverse
 
     points = []
-    
+
     # Get active apps for slugs, names, accent colors, icons
     apps_by_slug = {a.slug: a for a in AppRegistry.objects.filter(is_active=True)}
-    
+
     # 1. PINTXOS LAYER
-    pintxos_app = apps_by_slug.get('pintxos')
+    pintxos_app = apps_by_slug.get("pintxos")
     if pintxos_app:
         # Get top 15 approved restaurants
-        restaurants = (Restaurant.objects.approved()
-                       .order_by('-avg_rating', '-rating_count')[:15])
+        restaurants = Restaurant.objects.approved().order_by(
+            "-avg_rating", "-rating_count"
+        )[:15]
         for r in restaurants:
             lat, lon = _coords_or_city_fallback(r.location, r.address)
             if lat is not None and lon is not None:
-                points.append({
-                    'lat': lat,
-                    'lon': lon,
-                    'app_name': pintxos_app.name,
-                    'app_slug': pintxos_app.slug,
-                    'accent': pintxos_app.primary_color or '#f97316',
-                    'icon': 'utensils',
-                    'headline': r.name,
-                    'subline': f"★ {r.avg_rating:.1f} ({r.rating_count} valoraciones) · {r.address}",
-                    'url': reverse('pintxos:restaurant_detail', args=[r.id]),
-                    'category': 'pintxos',
-                })
-                
+                points.append(
+                    {
+                        "lat": lat,
+                        "lon": lon,
+                        "app_name": pintxos_app.name,
+                        "app_slug": pintxos_app.slug,
+                        "accent": pintxos_app.primary_color or "#f97316",
+                        "icon": "utensils",
+                        "headline": r.name,
+                        "subline": f"★ {r.avg_rating:.1f} ({r.rating_count} valoraciones) · {r.address}",
+                        "url": reverse("pintxos:restaurant_detail", args=[r.id]),
+                        "category": "pintxos",
+                    }
+                )
+
     # 2. KULTUR LAYER
-    kultur_app = apps_by_slug.get('kultur')
+    kultur_app = apps_by_slug.get("kultur")
     if kultur_app:
         today = timezone.localdate()
         # Today's and upcoming 15 events
-        events = (CulturalEvent.objects.filter(start_date__date__gte=today)
-                  .order_by('start_date')[:15])
+        events = CulturalEvent.objects.filter(start_date__date__gte=today).order_by(
+            "start_date"
+        )[:15]
         for e in events:
             lat, lon = _coords_or_city_fallback(
                 e.location, e.municipality_es, e.municipality_eu, e.province
             )
             if lat is not None and lon is not None:
                 title = e.title_es or e.title_eu or _("Evento")
-                venue = e.venue_name_es or e.venue_name_eu or ''
-                date_str = e.start_date.strftime('%d %b') if e.start_date else ''
-                points.append({
-                    'lat': lat,
-                    'lon': lon,
-                    'app_name': kultur_app.name,
-                    'app_slug': kultur_app.slug,
-                    'accent': kultur_app.primary_color or '#ef4444',
-                    'icon': 'music',
-                    'headline': title,
-                    'subline': f"{date_str} @ {venue}",
-                    'url': f"/kultur/?z=14&lat={lat}&lng={lon}",
-                    'category': 'kultur',
-                })
-                
+                venue = e.venue_name_es or e.venue_name_eu or ""
+                date_str = e.start_date.strftime("%d %b") if e.start_date else ""
+                points.append(
+                    {
+                        "lat": lat,
+                        "lon": lon,
+                        "app_name": kultur_app.name,
+                        "app_slug": kultur_app.slug,
+                        "accent": kultur_app.primary_color or "#ef4444",
+                        "icon": "music",
+                        "headline": title,
+                        "subline": f"{date_str} @ {venue}",
+                        "url": f"/kultur/?z=14&lat={lat}&lng={lon}",
+                        "category": "kultur",
+                    }
+                )
+
     # 3. SBK LAYER
-    sbk_app = apps_by_slug.get('sbk')
+    sbk_app = apps_by_slug.get("sbk")
     if sbk_app:
         now = timezone.now()
         # Upcoming 10 socials
-        socials = (Event.objects.filter(start_date__gte=now)
-                   .exclude(moderation_status='rejected')
-                   .order_by('start_date')[:10])
+        socials = (
+            Event.objects.filter(start_date__gte=now)
+            .exclude(moderation_status="rejected")
+            .order_by("start_date")[:10]
+        )
         for s in socials:
-            lat, lon = _coords_or_city_fallback(getattr(s, 'location', None), s.city)
+            lat, lon = _coords_or_city_fallback(getattr(s, "location", None), s.city)
             if lat is not None and lon is not None:
-                style = s.get_primary_style_display() if hasattr(s, 'get_primary_style_display') else s.primary_style
-                date_str = s.start_date.strftime('%d %b %H:%M') if s.start_date else ''
-                points.append({
-                    'lat': lat,
-                    'lon': lon,
-                    'app_name': sbk_app.name,
-                    'app_slug': sbk_app.slug,
-                    'accent': sbk_app.primary_color or '#10b981',
-                    'icon': 'dribbble',
-                    'headline': s.name,
-                    'subline': f"{style} - {date_str} @ {s.city or ''}",
-                    'url': f"/sbk/?z=14&lat={lat}&lng={lon}",
-                    'category': 'sbk',
-                })
-                
+                style = (
+                    s.get_primary_style_display()
+                    if hasattr(s, "get_primary_style_display")
+                    else s.primary_style
+                )
+                date_str = s.start_date.strftime("%d %b %H:%M") if s.start_date else ""
+                points.append(
+                    {
+                        "lat": lat,
+                        "lon": lon,
+                        "app_name": sbk_app.name,
+                        "app_slug": sbk_app.slug,
+                        "accent": sbk_app.primary_color or "#10b981",
+                        "icon": "dribbble",
+                        "headline": s.name,
+                        "subline": f"{style} - {date_str} @ {s.city or ''}",
+                        "url": f"/sbk/?z=14&lat={lat}&lng={lon}",
+                        "category": "sbk",
+                    }
+                )
+
     # 4. INGURU LAYER
-    inguru_app = apps_by_slug.get('inguru')
+    inguru_app = apps_by_slug.get("inguru")
     if inguru_app:
         # Latest measurements
-        measurements = (Measurement.objects.select_related('station')
-                        .order_by('-timestamp')[:15])
+        measurements = Measurement.objects.select_related("station").order_by(
+            "-timestamp"
+        )[:15]
         seen_stations = set()
         for m in measurements:
             if m.station_id in seen_stations:
                 continue
             seen_stations.add(m.station_id)
-            
-            lat, lon = _coords_or_city_fallback(m.station.location, m.station.municipality, m.station.province)
+
+            lat, lon = _coords_or_city_fallback(
+                m.station.location, m.station.municipality, m.station.province
+            )
             if lat is not None and lon is not None:
                 score = m.eco_score or 0
                 if score >= 80:
@@ -400,43 +439,48 @@ def get_dashboard_points():
                     label = _("Moderada")
                 else:
                     label = _("Baja")
-                points.append({
-                    'lat': lat,
-                    'lon': lon,
-                    'app_name': inguru_app.name,
-                    'app_slug': inguru_app.slug,
-                    'accent': inguru_app.primary_color or '#06b6d4',
-                    'icon': 'wind',
-                    'headline': _("Calidad del aire: %(label)s") % {'label': label},
-                    'subline': f"{m.station.name} · Eco-score {score}/100",
-                    'url': inguru_app.get_absolute_url,
-                    'category': 'inguru',
-                })
-                
+                points.append(
+                    {
+                        "lat": lat,
+                        "lon": lon,
+                        "app_name": inguru_app.name,
+                        "app_slug": inguru_app.slug,
+                        "accent": inguru_app.primary_color or "#06b6d4",
+                        "icon": "wind",
+                        "headline": _("Calidad del aire: %(label)s") % {"label": label},
+                        "subline": f"{m.station.name} · Eco-score {score}/100",
+                        "url": inguru_app.get_absolute_url,
+                        "category": "inguru",
+                    }
+                )
+
     # 5. ZBE LAYER (Low Emission Zones)
-    zbe_app = apps_by_slug.get('zbe')
+    zbe_app = apps_by_slug.get("zbe")
     if zbe_app:
-        from apps.zbe.models import LowEmissionZone
         import json
-        
+
+        from apps.zbe.models import LowEmissionZone
+
         # Get all zones, filter those with centroid in Euskadi
         zones = LowEmissionZone.objects.all()
         for z in zones:
             if z.geom:
                 centroid = z.geom.centroid
                 if 42.4 <= centroid.y <= 43.6 and -3.5 <= centroid.x <= -1.4:
-                    points.append({
-                        'lat': centroid.y,
-                        'lon': centroid.x,
-                        'app_name': zbe_app.name,
-                        'app_slug': zbe_app.slug,
-                        'accent': zbe_app.primary_color or '#f43f5e',
-                        'icon': 'ban',
-                        'headline': z.name,
-                        'subline': _("Zona de Bajas Emisiones (ZBE) en Euskadi"),
-                        'url': reverse('zbe:home'),
-                        'category': 'zbe',
-                        'geojson': json.loads(z.geom.geojson),
-                    })
-                
+                    points.append(
+                        {
+                            "lat": centroid.y,
+                            "lon": centroid.x,
+                            "app_name": zbe_app.name,
+                            "app_slug": zbe_app.slug,
+                            "accent": zbe_app.primary_color or "#f43f5e",
+                            "icon": "ban",
+                            "headline": z.name,
+                            "subline": _("Zona de Bajas Emisiones (ZBE) en Euskadi"),
+                            "url": reverse("zbe:home"),
+                            "category": "zbe",
+                            "geojson": json.loads(z.geom.geojson),
+                        }
+                    )
+
     return points

@@ -3,7 +3,9 @@ from django.db import connection
 
 
 class Command(BaseCommand):
-    help = 'Pobla la tabla adventure_trails desde pgr_ways aplicando mapeos de superficie'
+    help = (
+        "Pobla la tabla adventure_trails desde pgr_ways aplicando mapeos de superficie"
+    )
 
     def handle(self, *args, **options):
         # 1. Verificar si pgr_ways existe
@@ -17,9 +19,11 @@ class Command(BaseCommand):
             pgr_exists = cursor.fetchone()[0]
 
         if not pgr_exists:
-            self.stderr.write(self.style.ERROR(
-                '✗ La tabla pgr_ways no existe. Ejecuta el importador de OSM primero.'
-            ))
+            self.stderr.write(
+                self.style.ERROR(
+                    "✗ La tabla pgr_ways no existe. Ejecuta el importador de OSM primero."
+                )
+            )
             return
 
         # 2. Verificar si adventure_trails existe
@@ -33,17 +37,19 @@ class Command(BaseCommand):
             trails_exists = cursor.fetchone()[0]
 
         if not trails_exists:
-            self.stderr.write(self.style.ERROR(
-                '✗ La tabla adventure_trails no existe. Ejecuta las migraciones de Django primero.'
-            ))
+            self.stderr.write(
+                self.style.ERROR(
+                    "✗ La tabla adventure_trails no existe. Ejecuta las migraciones de Django primero."
+                )
+            )
             return
 
-        self.stdout.write('Limpiando y poblando la tabla adventure_trails...')
+        self.stdout.write("Limpiando y poblando la tabla adventure_trails...")
 
         with connection.cursor() as cursor:
             # Limpiamos para evitar duplicados si se vuelve a ejecutar
             cursor.execute("TRUNCATE TABLE adventure_trails RESTART IDENTITY;")
-            
+
             # Insertar con mapeo inteligente de superficies
             query = """
                 INSERT INTO adventure_trails (
@@ -73,6 +79,8 @@ class Command(BaseCommand):
             cursor.execute(query)
             rows_inserted = cursor.rowcount
 
-        self.stdout.write(self.style.SUCCESS(
-            f'✓ Completado. Se han insertado {rows_inserted} tramos en la tabla adventure_trails con clasificación de superficie.'
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"✓ Completado. Se han insertado {rows_inserted} tramos en la tabla adventure_trails con clasificación de superficie."
+            )
+        )

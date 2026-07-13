@@ -4,28 +4,33 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('kultur', '0009_kulturprefs_eventfavorite'),
+        ("kultur", "0009_kulturprefs_eventfavorite"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='eventfavorite',
-            options={'verbose_name': 'Cultural event favorite', 'verbose_name_plural': 'Cultural event favorites'},
+            name="eventfavorite",
+            options={
+                "verbose_name": "Cultural event favorite",
+                "verbose_name_plural": "Cultural event favorites",
+            },
         ),
         migrations.AlterModelOptions(
-            name='kulturprefs',
-            options={'verbose_name': 'Kultur preferences', 'verbose_name_plural': 'Kultur preferences'},
+            name="kulturprefs",
+            options={
+                "verbose_name": "Kultur preferences",
+                "verbose_name_plural": "Kultur preferences",
+            },
         ),
         migrations.AddField(
-            model_name='kulturprefs',
-            name='digest_day_of_week',
+            model_name="kulturprefs",
+            name="digest_day_of_week",
             field=models.SmallIntegerField(default=3),
         ),
         migrations.AddField(
-            model_name='kulturprefs',
-            name='digest_enabled',
+            model_name="kulturprefs",
+            name="digest_enabled",
             field=models.BooleanField(default=True),
         ),
     ]

@@ -19,15 +19,14 @@ URLs that 404 now have NOT been silently kept — they would inflate the
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List
 
 
 @dataclass(frozen=True)
 class NormativaSource:
     url: str
-    title_override: str = ""        # if set, overrides the page's <title>.
-    region_naia: str = ""           # NAIA code for "filter by my municipality".
-    note: str = ""                  # human-readable tag, e.g. "MOVES III RD".
+    title_override: str = ""  # if set, overrides the page's <title>.
+    region_naia: str = ""  # NAIA code for "filter by my municipality".
+    note: str = ""  # human-readable tag, e.g. "MOVES III RD".
 
 
 # ────────────────────────── MOVES III + ayudas vehículos eléctricos
@@ -35,7 +34,7 @@ class NormativaSource:
 # per-programme content (presupuesto, cuantías, beneficiarios). Better than
 # Wikipedia, which has no MOVES III article.
 
-MOVES_III: List[NormativaSource] = [
+MOVES_III: list[NormativaSource] = [
     NormativaSource(
         url="https://ayudasenergiaidae.es/moves-iii/",
         title_override="MOVES III — IDAE oficial",
@@ -56,7 +55,7 @@ MOVES_III: List[NormativaSource] = [
 
 # ────────────────────────── PVPC / mercado eléctrico
 
-PVPC: List[NormativaSource] = [
+PVPC: list[NormativaSource] = [
     NormativaSource(
         url="https://es.wikipedia.org/wiki/PVPC",
         note="PVPC — Precio Voluntario para el Pequeño Consumidor",
@@ -70,7 +69,7 @@ PVPC: List[NormativaSource] = [
 
 # ────────────────────────── transporte público EH
 
-TRANSPORTE_EH: List[NormativaSource] = [
+TRANSPORTE_EH: list[NormativaSource] = [
     NormativaSource(
         url="https://es.wikipedia.org/wiki/Bizkaibus",
         region_naia="48",
@@ -105,7 +104,7 @@ TRANSPORTE_EH: List[NormativaSource] = [
 
 # ────────────────────────── ZBE (Zonas de Bajas Emisiones)
 
-ZBE: List[NormativaSource] = [
+ZBE: list[NormativaSource] = [
     NormativaSource(
         url="https://es.wikipedia.org/wiki/Zona_de_bajas_emisiones",
         note="ZBE — Zona de Bajas Emisiones (Ley 7/2021)",
@@ -115,7 +114,7 @@ ZBE: List[NormativaSource] = [
 
 # ────────────────────────── vehículo eléctrico / mercado
 
-VEHICULO_ELECTRICO: List[NormativaSource] = [
+VEHICULO_ELECTRICO: list[NormativaSource] = [
     NormativaSource(
         url="https://es.wikipedia.org/wiki/Veh%C3%ADculo_el%C3%A9ctrico",
         note="Vehículo eléctrico — general",
@@ -141,7 +140,7 @@ VEHICULO_ELECTRICO: List[NormativaSource] = [
 
 # ────────────────────────── movilidad sostenible / red ciclista
 
-MOVILIDAD: List[NormativaSource] = [
+MOVILIDAD: list[NormativaSource] = [
     NormativaSource(
         url="https://es.wikipedia.org/wiki/Movilidad_sostenible",
         note="Movilidad sostenible — concepto + políticas",
@@ -177,7 +176,7 @@ MOVILIDAD: List[NormativaSource] = [
 #   - Incompatible con MOVES FLOTAS PLUS.
 #   - Gestionado en coordinación con las CC.AA.
 
-PROGRAMA_AUTO_PLUS: List[NormativaSource] = [
+PROGRAMA_AUTO_PLUS: list[NormativaSource] = [
     NormativaSource(
         url="https://www.mintur.gob.es/es-es/programa-auto/Paginas/default.aspx",
         title_override="Programa Auto+ — MINTUR oficial",
@@ -224,7 +223,7 @@ PROGRAMA_AUTO_PLUS: List[NormativaSource] = [
 
 # ────────────────────────── full registry
 
-ALL_SOURCES: List[NormativaSource] = (
+ALL_SOURCES: list[NormativaSource] = (
     MOVES_III
     + PROGRAMA_AUTO_PLUS
     + PVPC

@@ -5,51 +5,132 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='CycloneEvent',
+            name="CycloneEvent",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=50, verbose_name='Nombre del Ciclón')),
-                ('year', models.IntegerField(verbose_name='Año')),
-                ('category', models.IntegerField(default=1, verbose_name='Categoría (Saffir-Simpson)')),
-                ('max_wind_speed', models.FloatField(default=0.0, verbose_name='Velocidad de Viento Máx (km/h)')),
-                ('damage_usd', models.DecimalField(blank=True, decimal_places=2, max_digits=15, null=True, verbose_name='Daños Estimados (USD)')),
-                ('route_geom', django.contrib.gis.db.models.fields.LineStringField(srid=4326, verbose_name='Trayectoria del Ciclón')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(max_length=50, verbose_name="Nombre del Ciclón"),
+                ),
+                ("year", models.IntegerField(verbose_name="Año")),
+                (
+                    "category",
+                    models.IntegerField(
+                        default=1, verbose_name="Categoría (Saffir-Simpson)"
+                    ),
+                ),
+                (
+                    "max_wind_speed",
+                    models.FloatField(
+                        default=0.0, verbose_name="Velocidad de Viento Máx (km/h)"
+                    ),
+                ),
+                (
+                    "damage_usd",
+                    models.DecimalField(
+                        blank=True,
+                        decimal_places=2,
+                        max_digits=15,
+                        null=True,
+                        verbose_name="Daños Estimados (USD)",
+                    ),
+                ),
+                (
+                    "route_geom",
+                    django.contrib.gis.db.models.fields.LineStringField(
+                        srid=4326, verbose_name="Trayectoria del Ciclón"
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
-                'verbose_name': 'Ciclón',
-                'verbose_name_plural': 'Ciclones',
-                'ordering': ['-year', 'name'],
+                "verbose_name": "Ciclón",
+                "verbose_name_plural": "Ciclones",
+                "ordering": ["-year", "name"],
             },
         ),
         migrations.CreateModel(
-            name='PacificCountry',
+            name="PacificCountry",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100, verbose_name='Nombre del País')),
-                ('code', models.CharField(max_length=3, unique=True, verbose_name='Código ISO')),
-                ('population', models.IntegerField(default=0, verbose_name='Población')),
-                ('co2_emissions', models.FloatField(default=0.0, verbose_name='Emisiones de CO2 per cápita (toneladas)')),
-                ('nd_gain_vulnerability', models.FloatField(default=0.0, verbose_name='Índice de Vulnerabilidad ND-GAIN')),
-                ('nd_gain_readiness', models.FloatField(default=0.0, verbose_name='Índice de Preparación ND-GAIN')),
-                ('geom', django.contrib.gis.db.models.fields.MultiPolygonField(blank=True, null=True, srid=4326, verbose_name='Geometría')),
-                ('capital_coords', django.contrib.gis.db.models.fields.PointField(blank=True, null=True, srid=4326, verbose_name='Coordenadas de la Capital')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(max_length=100, verbose_name="Nombre del País"),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        max_length=3, unique=True, verbose_name="Código ISO"
+                    ),
+                ),
+                (
+                    "population",
+                    models.IntegerField(default=0, verbose_name="Población"),
+                ),
+                (
+                    "co2_emissions",
+                    models.FloatField(
+                        default=0.0,
+                        verbose_name="Emisiones de CO2 per cápita (toneladas)",
+                    ),
+                ),
+                (
+                    "nd_gain_vulnerability",
+                    models.FloatField(
+                        default=0.0, verbose_name="Índice de Vulnerabilidad ND-GAIN"
+                    ),
+                ),
+                (
+                    "nd_gain_readiness",
+                    models.FloatField(
+                        default=0.0, verbose_name="Índice de Preparación ND-GAIN"
+                    ),
+                ),
+                (
+                    "geom",
+                    django.contrib.gis.db.models.fields.MultiPolygonField(
+                        blank=True, null=True, srid=4326, verbose_name="Geometría"
+                    ),
+                ),
+                (
+                    "capital_coords",
+                    django.contrib.gis.db.models.fields.PointField(
+                        blank=True,
+                        null=True,
+                        srid=4326,
+                        verbose_name="Coordenadas de la Capital",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
-                'verbose_name': 'País del Pacífico',
-                'verbose_name_plural': 'Países del Pacífico',
-                'ordering': ['name'],
+                "verbose_name": "País del Pacífico",
+                "verbose_name_plural": "Países del Pacífico",
+                "ordering": ["name"],
             },
         ),
     ]

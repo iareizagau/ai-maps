@@ -12,8 +12,6 @@ follow-up; here we serve the cached 5-route grid that backs the demo card.
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from ninja import Router
 
 from apps.mubil.route import services
@@ -22,18 +20,18 @@ from apps.mubil.route.schemas import EVPlanIn, EVPlanOut, RouteSegment
 router = Router()
 
 
-@router.get('/health')
+@router.get("/health")
 def health(request):
-    return {'status': 'ok', 'module': 'route', 'demos': len(services.ROUTE_DEMOS)}
+    return {"status": "ok", "module": "route", "demos": len(services.ROUTE_DEMOS)}
 
 
-@router.get('/demos')
-def demos(request) -> List[dict]:
+@router.get("/demos")
+def demos(request) -> list[dict]:
     """Lightweight metadata for the 5 precomputed routes."""
     return services.list_demos()
 
 
-@router.get('/demos/{slug}')
+@router.get("/demos/{slug}")
 def demo_detail(request, slug: str):
     """Full :class:`RoutePlanResult` for one demo slug.
 
@@ -47,7 +45,7 @@ def demo_detail(request, slug: str):
     return result.to_dict()
 
 
-@router.post('/plan', response=EVPlanOut)
+@router.post("/plan", response=EVPlanOut)
 def plan(request, payload: EVPlanIn):
     """Plan one demo with a specific vehicle + SOC.
 
@@ -55,8 +53,9 @@ def plan(request, payload: EVPlanIn):
     in MOCK mode we snap the request to whichever demo has the closest
     origin-destination pair so the visual stays consistent.
     """
-    demo = _nearest_demo(payload.origin_lat, payload.origin_lon,
-                         payload.dest_lat, payload.dest_lon)
+    demo = _nearest_demo(
+        payload.origin_lat, payload.origin_lon, payload.dest_lat, payload.dest_lon
+    )
     result = services.plan(
         slug=demo["slug"],
         vehicle_id=payload.vehicle_id,
@@ -88,12 +87,14 @@ def _nearest_demo(o_lat: float, o_lon: float, d_lat: float, d_lon: float) -> dic
     Strictly visual: as long as the user picks a pair within Euskal Herria
     they get a plausible cached route. Real routing is §6.
     """
-    best: Optional[dict] = None
+    best: dict | None = None
     best_score = float("inf")
     for d in services.ROUTE_DEMOS:
         score = (
-            abs(d["origin"][0] - o_lat) + abs(d["origin"][1] - o_lon)
-            + abs(d["dest"][0] - d_lat) + abs(d["dest"][1] - d_lon)
+            abs(d["origin"][0] - o_lat)
+            + abs(d["origin"][1] - o_lon)
+            + abs(d["dest"][0] - d_lat)
+            + abs(d["dest"][1] - d_lon)
         )
         if score < best_score:
             best = d
@@ -117,7 +118,7 @@ from apps.mubil.route.optimizer import geocode_address_full, reverse_geocode
 _GEOCODE_TTL_S = 60 * 60 * 24
 
 
-@router.get('/geocode')
+@router.get("/geocode")
 def geocode(request, q: str):
     """Forward geocode — returns ``{lat, lng, display_name}`` or 404.
 
@@ -125,29 +126,39 @@ def geocode(request, q: str):
     user adds a stop, so they can verify the geocoder's pick before
     paying for the OSRM optimisation round-trip.
     """
-    q = (q or '').strip()
+    q = (q or "").strip()
     if not q:
         return router.api.create_response(
-            request, {"detail": "Falta el parámetro q."}, status=400,
+            request,
+            {"detail": "Falta el parámetro q."},
+            status=400,
         )
-    key = f'mubil:geocode:{q.lower()}'
+    key = f"mubil:geocode:{q.lower()}"
     cached = cache.get(key)
     if cached is not None:
-        return cached if cached else router.api.create_response(
-            request, {"detail": "No encontrado."}, status=404,
+        return (
+            cached
+            if cached
+            else router.api.create_response(
+                request,
+                {"detail": "No encontrado."},
+                status=404,
+            )
         )
     found = geocode_address_full(q)
     if found is None:
         cache.set(key, {}, _GEOCODE_TTL_S)  # negative cache — short-circuit retries
         return router.api.create_response(
-            request, {"detail": "No encontrado."}, status=404,
+            request,
+            {"detail": "No encontrado."},
+            status=404,
         )
     payload = {"lat": found[0], "lng": found[1], "display_name": found[2]}
     cache.set(key, payload, _GEOCODE_TTL_S)
     return payload
 
 
-@router.get('/geocode/reverse')
+@router.get("/geocode/reverse")
 def geocode_reverse(request, lat: float, lng: float):
     """Reverse geocode — returns ``{display_name}`` for a clicked point.
 
@@ -156,17 +167,25 @@ def geocode_reverse(request, lat: float, lng: float):
     """
     bucket_lat = round(lat, 4)
     bucket_lng = round(lng, 4)
-    key = f'mubil:rgeocode:{bucket_lat}:{bucket_lng}'
+    key = f"mubil:rgeocode:{bucket_lat}:{bucket_lng}"
     cached = cache.get(key)
     if cached is not None:
-        return cached if cached else router.api.create_response(
-            request, {"detail": "No encontrado."}, status=404,
+        return (
+            cached
+            if cached
+            else router.api.create_response(
+                request,
+                {"detail": "No encontrado."},
+                status=404,
+            )
         )
     name = reverse_geocode(lat, lng)
     if name is None:
         cache.set(key, {}, _GEOCODE_TTL_S)
         return router.api.create_response(
-            request, {"detail": "No encontrado."}, status=404,
+            request,
+            {"detail": "No encontrado."},
+            status=404,
         )
     payload = {"display_name": name}
     cache.set(key, payload, _GEOCODE_TTL_S)
@@ -181,21 +200,21 @@ from ninja import Schema
 
 class OptimizeLocationIn(Schema):
     name: str = ""
-    lat: Optional[float] = None
-    lng: Optional[float] = None
+    lat: float | None = None
+    lng: float | None = None
     address: str = ""
     is_depot: bool = False
 
 
 class OptimizeIn(Schema):
-    locations: List[OptimizeLocationIn]
-    vehicle_id: Optional[int] = None
+    locations: list[OptimizeLocationIn]
+    vehicle_id: int | None = None
     soc_start: float = 85.0
-    departure_hour: Optional[int] = None
+    departure_hour: int | None = None
     return_to_depot: bool = True
 
 
-@router.post('/optimize')
+@router.post("/optimize")
 def optimize(request, payload: OptimizeIn):
     """Optimise a multi-stop route for an electric vehicle.
 
@@ -217,10 +236,13 @@ def optimize(request, payload: OptimizeIn):
         return result
     except ValueError as e:
         return router.api.create_response(
-            request, {"detail": str(e)}, status=422,
+            request,
+            {"detail": str(e)},
+            status=422,
         )
     except Exception as e:
         return router.api.create_response(
-            request, {"detail": f"Error interno: {e}"}, status=500,
+            request,
+            {"detail": f"Error interno: {e}"},
+            status=500,
         )
-

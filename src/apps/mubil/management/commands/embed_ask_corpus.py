@@ -53,4 +53,6 @@ class Command(BaseCommand):
         )
         self.stdout.write(self.style.SUCCESS(json.dumps(stats.as_dict(), indent=2)))
         if options["dry_run"]:
-            self.stdout.write(self.style.WARNING("Dry run — no API calls, no DB writes."))
+            self.stdout.write(
+                self.style.WARNING("Dry run — no API calls, no DB writes.")
+            )

@@ -15,22 +15,20 @@ NOTE: Eventbrite blocks datacenter IPs (DigitalOcean, AWS, GCP, etc.) with 405.
       a residential/SOCKS proxy.
       Example: SCRAPER_PROXY=socks5://user:pass@host:1080
 """
+
+import json
 import os
 import re
 import time
-import json
 import urllib.parse
-from datetime import datetime, timezone as dt_tz, timedelta
+from datetime import UTC, datetime, timedelta
 
 import requests
 from bs4 import BeautifulSoup
-
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 from django.utils.text import slugify
 
-from apps.sbk.models import Event, EventOccurrence, DanceStyle, EventType
-
+from apps.sbk.models import DanceStyle, Event, EventOccurrence, EventType
 
 # ---------------------------------------------------------------------------
 # Defaults
@@ -61,8 +59,18 @@ HEADERS = {
 }
 
 MONTHS = {
-    'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
-    'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "may": 5,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "sep": 9,
+    "oct": 10,
+    "nov": 11,
+    "dec": 12,
 }
 
 
@@ -113,6 +121,7 @@ def _fetch(url: str, proxy: str | None = None) -> str:
 # JSON-LD extraction (schema.org/Event objects embedded in <script> tags)
 # ---------------------------------------------------------------------------
 
+
 def _extract_ld_json_events(soup: BeautifulSoup) -> list[dict]:
     events = []
     for script in soup.find_all("script", type="application/ld+json"):
@@ -126,7 +135,9 @@ def _extract_ld_json_events(soup: BeautifulSoup) -> list[dict]:
             candidates = data
         elif isinstance(data, dict):
             if data.get("@type") == "ItemList":
-                candidates = [el.get("item", {}) for el in data.get("itemListElement", [])]
+                candidates = [
+                    el.get("item", {}) for el in data.get("itemListElement", [])
+                ]
             else:
                 candidates = [data]
 
@@ -143,6 +154,7 @@ def _extract_ld_json_events(soup: BeautifulSoup) -> list[dict]:
 # or similar. We also look for the visible text structure as a fallback.
 # ---------------------------------------------------------------------------
 
+
 def _extract_card_events(soup: BeautifulSoup) -> list[dict]:
     """
     Parse event cards from the Eventbrite listing page HTML.
@@ -157,7 +169,7 @@ def _extract_card_events(soup: BeautifulSoup) -> list[dict]:
 
     # Collect all event links (deduplicated by URL slug)
     event_links = []
-    for a in soup.find_all("a", href=re.compile(r'/e/.+-tickets-\d+')):
+    for a in soup.find_all("a", href=re.compile(r"/e/.+-tickets-\d+")):
         href = a.get("href", "").split("?")[0]
         if href in seen:
             continue
@@ -180,18 +192,20 @@ def _extract_card_events(soup: BeautifulSoup) -> list[dict]:
             text = card.get_text(separator="\n", strip=True)
             # Look for date pattern within the card
             date_m = re.search(
-                r'(\w{3},\s+\w{3}\s+\d+,\s+\d+:\d+\s+[AP]M)',
+                r"(\w{3},\s+\w{3}\s+\d+,\s+\d+:\d+\s+[AP]M)",
                 text,
                 re.IGNORECASE,
             )
-            venue_m = re.search(r'([^\n]+\s*·\s*[^\n]+)', text)
+            venue_m = re.search(r"([^\n]+\s*·\s*[^\n]+)", text)
             if date_m:
-                results.append({
-                    "name": a.get_text(separator=" ", strip=True),
-                    "date_str": date_m.group(1),
-                    "venue_str": venue_m.group(1) if venue_m else "",
-                    "url": a.get("href", "").split("?")[0],
-                })
+                results.append(
+                    {
+                        "name": a.get_text(separator=" ", strip=True),
+                        "date_str": date_m.group(1),
+                        "venue_str": venue_m.group(1) if venue_m else "",
+                        "url": a.get("href", "").split("?")[0],
+                    }
+                )
                 break
 
     return results
@@ -201,11 +215,14 @@ def _extract_card_events(soup: BeautifulSoup) -> list[dict]:
 # Date parsing
 # ---------------------------------------------------------------------------
 
+
 def _parse_date(date_str: str) -> datetime | None:
     """Parse 'Wed, Jun 10, 7:00 PM' → UTC-aware datetime (assumes BST = UTC+1)."""
-    date_str = re.sub(r'\s*\+\s*\d+\s*more.*', '', date_str, flags=re.IGNORECASE).strip()
+    date_str = re.sub(
+        r"\s*\+\s*\d+\s*more.*", "", date_str, flags=re.IGNORECASE
+    ).strip()
     m = re.search(
-        r'(\w{3})\s+(\d+),\s+(\d+):(\d+)\s+([AP]M)',
+        r"(\w{3})\s+(\d+),\s+(\d+):(\d+)\s+([AP]M)",
         date_str,
         re.IGNORECASE,
     )
@@ -218,22 +235,23 @@ def _parse_date(date_str: str) -> datetime | None:
         return None
 
     hour, minute = int(hour_s), int(min_s)
-    if ampm.upper() == 'PM' and hour != 12:
+    if ampm.upper() == "PM" and hour != 12:
         hour += 12
-    elif ampm.upper() == 'AM' and hour == 12:
+    elif ampm.upper() == "AM" and hour == 12:
         hour = 0
 
     now = datetime.now()
     year = now.year if month >= now.month else now.year + 1
 
     # London is BST (UTC+1) in June — store as UTC
-    bst = datetime(year, month, int(day), hour, minute, tzinfo=dt_tz.utc)
+    bst = datetime(year, month, int(day), hour, minute, tzinfo=UTC)
     return bst - timedelta(hours=1)
 
 
 # ---------------------------------------------------------------------------
 # Geocoding (Nominatim, rate-limited to 1 req/s)
 # ---------------------------------------------------------------------------
+
 
 def _geocode(query: str) -> tuple[float | None, float | None]:
     params = {"q": query, "format": "json", "limit": 1, "countrycodes": "gb"}
@@ -258,34 +276,36 @@ def _geocode(query: str) -> tuple[float | None, float | None]:
 # Classification helpers
 # ---------------------------------------------------------------------------
 
+
 def _event_type(name: str) -> str:
     n = name.lower()
-    if any(w in n for w in ('workshop', 'class', 'bootcamp', 'lesson', 'course')):
+    if any(w in n for w in ("workshop", "class", "bootcamp", "lesson", "course")):
         return EventType.WORKSHOP
-    if any(w in n for w in ('festival', 'congress')):
+    if any(w in n for w in ("festival", "congress")):
         return EventType.FESTIVAL
     return EventType.PARTY
 
 
 def _dance_style(name: str) -> str:
     n = name.lower()
-    if 'bachata' in n and 'salsa' not in n and 'kizomba' not in n:
+    if "bachata" in n and "salsa" not in n and "kizomba" not in n:
         return DanceStyle.BACHATA
-    if 'kizomba' in n:
+    if "kizomba" in n:
         return DanceStyle.KIZOMBA
-    if 'zouk' in n:
+    if "zouk" in n:
         return DanceStyle.ZOUK
     return DanceStyle.MIXED
 
 
 def _price_info(name: str) -> str:
-    return 'Free' if re.search(r'\bfree\b', name, re.IGNORECASE) else ''
+    return "Free" if re.search(r"\bfree\b", name, re.IGNORECASE) else ""
 
 
 # ---------------------------------------------------------------------------
 # Normalise a scraped event dict (from either JSON-LD or card parsing)
 # into the standard shape used for DB insertion.
 # ---------------------------------------------------------------------------
+
 
 def _normalise_ld(ev: dict, stdout, style) -> dict | None:
     """Normalise a schema.org/Event dict."""
@@ -382,15 +402,20 @@ def _normalise_card(ev: dict, stdout, style) -> dict | None:
 # Top-level scraper
 # ---------------------------------------------------------------------------
 
-def scrape_eventbrite(base_url: str, max_pages: int, stdout, style, proxy: str | None = None) -> list[dict]:
+
+def scrape_eventbrite(
+    base_url: str, max_pages: int, stdout, style, proxy: str | None = None
+) -> list[dict]:
     all_events: list[dict] = []
     seen_names: set[str] = set()
 
     for page in range(1, max_pages + 1):
         parsed = urllib.parse.urlparse(base_url)
         qs = urllib.parse.parse_qs(parsed.query)
-        qs['page'] = [str(page)]
-        page_url = parsed._replace(query=urllib.parse.urlencode(qs, doseq=True)).geturl()
+        qs["page"] = [str(page)]
+        page_url = parsed._replace(
+            query=urllib.parse.urlencode(qs, doseq=True)
+        ).geturl()
 
         stdout.write(f"\n  📄 Page {page}: {page_url}")
         try:
@@ -439,44 +464,59 @@ def scrape_eventbrite(base_url: str, max_pages: int, stdout, style, proxy: str |
 # Django management command
 # ---------------------------------------------------------------------------
 
+
 class Command(BaseCommand):
-    help = 'Scrapes Eventbrite for bachata events (with BeautifulSoup) and seeds them into the DB'
+    help = "Scrapes Eventbrite for bachata events (with BeautifulSoup) and seeds them into the DB"
 
     def add_arguments(self, parser):
-        parser.add_argument('--url', default=DEFAULT_URL,
-                            help='Eventbrite search URL to scrape')
-        parser.add_argument('--pages', type=int, default=4,
-                            help='Max result pages to scrape (default: 4)')
-        parser.add_argument('--clear', action='store_true',
-                            help='Delete matching events before re-scraping')
-        parser.add_argument('--dry-run', action='store_true',
-                            help='Scrape and print without writing to DB')
         parser.add_argument(
-            '--proxy', default=None,
+            "--url", default=DEFAULT_URL, help="Eventbrite search URL to scrape"
+        )
+        parser.add_argument(
+            "--pages",
+            type=int,
+            default=4,
+            help="Max result pages to scrape (default: 4)",
+        )
+        parser.add_argument(
+            "--clear",
+            action="store_true",
+            help="Delete matching events before re-scraping",
+        )
+        parser.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Scrape and print without writing to DB",
+        )
+        parser.add_argument(
+            "--proxy",
+            default=None,
             help=(
-                'HTTP/SOCKS proxy URL (e.g. http://user:pass@host:3128 or '
-                'socks5://user:pass@host:1080). Overrides SCRAPER_PROXY env var. '
-                'Required when running from cloud servers (DigitalOcean, AWS, etc.) '
-                'because Eventbrite blocks datacenter IPs.'
+                "HTTP/SOCKS proxy URL (e.g. http://user:pass@host:3128 or "
+                "socks5://user:pass@host:1080). Overrides SCRAPER_PROXY env var. "
+                "Required when running from cloud servers (DigitalOcean, AWS, etc.) "
+                "because Eventbrite blocks datacenter IPs."
             ),
         )
 
     def handle(self, *args, **options):
-        proxy = options.get('proxy') or os.environ.get('SCRAPER_PROXY')
+        proxy = options.get("proxy") or os.environ.get("SCRAPER_PROXY")
         if proxy:
             self.stdout.write(self.style.WARNING(f"  🔀 Using proxy: {proxy}"))
         else:
-            self.stdout.write(self.style.WARNING(
-                "  ⚠️  No proxy set. Will fail on cloud servers (Eventbrite blocks datacenter IPs).\n"
-                "     Set SCRAPER_PROXY env var or use --proxy flag."
-            ))
+            self.stdout.write(
+                self.style.WARNING(
+                    "  ⚠️  No proxy set. Will fail on cloud servers (Eventbrite blocks datacenter IPs).\n"
+                    "     Set SCRAPER_PROXY env var or use --proxy flag."
+                )
+            )
 
-        self.stdout.write(self.style.MIGRATE_HEADING(
-            f"\n🕷  Scraping Eventbrite — {options['url']}\n"
-        ))
+        self.stdout.write(
+            self.style.MIGRATE_HEADING(f"\n🕷  Scraping Eventbrite — {options['url']}\n")
+        )
 
         events = scrape_eventbrite(
-            options['url'], options['pages'], self.stdout, self.style, proxy=proxy
+            options["url"], options["pages"], self.stdout, self.style, proxy=proxy
         )
         self.stdout.write(f"\n  ✅ Total scraped: {len(events)}\n")
 
@@ -484,7 +524,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("Nothing scraped. Exiting."))
             return
 
-        if options['dry_run']:
+        if options["dry_run"]:
             self.stdout.write(self.style.SUCCESS("--- DRY RUN — not saving ---"))
             for ev in events:
                 self.stdout.write(
@@ -494,61 +534,70 @@ class Command(BaseCommand):
                 )
             return
 
-        if options['clear']:
-            names = [ev['name'] for ev in events]
+        if options["clear"]:
+            names = [ev["name"] for ev in events]
             deleted, _ = Event.objects.filter(name__in=names).delete()
-            self.stdout.write(self.style.WARNING(f"  Cleared {deleted} existing events."))
+            self.stdout.write(
+                self.style.WARNING(f"  Cleared {deleted} existing events.")
+            )
 
         created = skipped = errors = 0
 
         for data in events:
-            if not data.get('start_date'):
-                self.stdout.write(self.style.WARNING(f"  SKIP (no date): {data['name']}"))
+            if not data.get("start_date"):
+                self.stdout.write(
+                    self.style.WARNING(f"  SKIP (no date): {data['name']}")
+                )
                 skipped += 1
                 continue
 
-            start = data['start_date']
-            slug = slugify(data['name'])[:180] + '-' + start.strftime('%Y-%m-%d')
+            start = data["start_date"]
+            slug = slugify(data["name"])[:180] + "-" + start.strftime("%Y-%m-%d")
 
             if Event.objects.filter(slug=slug).exists():
                 self.stdout.write(f"  SKIP (exists): {data['name']}")
                 skipped += 1
                 continue
 
-            end = data['end_date'] or (start + timedelta(hours=4))
+            end = data["end_date"] or (start + timedelta(hours=4))
 
             try:
                 event = Event.objects.create(
                     slug=slug,
-                    name=data['name'],
-                    description=data.get('description', ''),
-                    city=data['city'],
-                    address=data.get('address', ''),
-                    country=data.get('country', 'United Kingdom'),
-                    lat=data.get('lat'),
-                    lng=data.get('lng'),
+                    name=data["name"],
+                    description=data.get("description", ""),
+                    city=data["city"],
+                    address=data.get("address", ""),
+                    country=data.get("country", "United Kingdom"),
+                    lat=data.get("lat"),
+                    lng=data.get("lng"),
                     start_date=start,
                     end_date=end,
-                    primary_style=data['primary_style'],
-                    event_type=data['event_type'],
-                    price_info=data.get('price_info') or '',
-                    ticket_url=data.get('ticket_url') or '',
-                    image_url=data.get('image_url') or '',
+                    primary_style=data["primary_style"],
+                    event_type=data["event_type"],
+                    price_info=data.get("price_info") or "",
+                    ticket_url=data.get("ticket_url") or "",
+                    image_url=data.get("image_url") or "",
                     is_verified=True,
-                    moderation_status='verified',
+                    moderation_status="verified",
                 )
                 EventOccurrence.objects.get_or_create(
-                    event=event, start_date=start,
-                    defaults={'end_date': end},
+                    event=event,
+                    start_date=start,
+                    defaults={"end_date": end},
                 )
-                self.stdout.write(self.style.SUCCESS(
-                    f"  CREATED: {event.name}  ({data['city']}, {start.strftime('%a %d %b %H:%M UTC')})"
-                ))
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f"  CREATED: {event.name}  ({data['city']}, {start.strftime('%a %d %b %H:%M UTC')})"
+                    )
+                )
                 created += 1
             except Exception as exc:
                 self.stdout.write(self.style.ERROR(f"  ERROR {data['name']!r}: {exc}"))
                 errors += 1
 
-        self.stdout.write(self.style.SUCCESS(
-            f"\n✅  Done — {created} created, {skipped} skipped, {errors} errors."
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"\n✅  Done — {created} created, {skipped} skipped, {errors} errors."
+            )
+        )

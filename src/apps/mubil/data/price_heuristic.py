@@ -23,10 +23,8 @@ from __future__ import annotations
 import statistics
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Optional
 
 from apps.mubil.models import Vehicle
-
 
 # ───────────────────── Tier por marca (hardcoded) ─────────────────────
 # Clasificación pragmática para el mercado español 2026. La marca canónica
@@ -35,50 +33,50 @@ from apps.mubil.models import Vehicle
 
 TIER_BY_MAKE = {
     # Budget
-    "Dacia":   "budget",
-    "Lada":    "budget",
-    "MG":      "budget",
+    "Dacia": "budget",
+    "Lada": "budget",
+    "MG": "budget",
     "SsangYong": "budget",
-    "Suzuki":  "budget",
+    "Suzuki": "budget",
     # Mid mass-market
-    "Citroën":   "mid",
-    "Citroen":   "mid",
-    "Cupra":     "mid",
-    "Fiat":      "mid",
-    "Ford":      "mid",
-    "Honda":     "mid",
-    "Hyundai":   "mid",
-    "Jeep":      "mid",
-    "Kia":       "mid",
-    "Mazda":     "mid",
-    "Mitsubishi":"mid",
-    "Nissan":    "mid",
-    "Opel":      "mid",
-    "Peugeot":   "mid",
-    "Renault":   "mid",
-    "SEAT":      "mid",
-    "Seat":      "mid",
-    "Skoda":     "mid",
-    "Subaru":    "mid",
-    "Toyota":    "mid",
-    "Volkswagen":"mid",
+    "Citroën": "mid",
+    "Citroen": "mid",
+    "Cupra": "mid",
+    "Fiat": "mid",
+    "Ford": "mid",
+    "Honda": "mid",
+    "Hyundai": "mid",
+    "Jeep": "mid",
+    "Kia": "mid",
+    "Mazda": "mid",
+    "Mitsubishi": "mid",
+    "Nissan": "mid",
+    "Opel": "mid",
+    "Peugeot": "mid",
+    "Renault": "mid",
+    "SEAT": "mid",
+    "Seat": "mid",
+    "Skoda": "mid",
+    "Subaru": "mid",
+    "Toyota": "mid",
+    "Volkswagen": "mid",
     # Premium / luxury
-    "Alfa":       "premium",
-    "Audi":       "premium",
-    "BMW":        "premium",
-    "DS":         "premium",
-    "Genesis":    "premium",
-    "Jaguar":     "premium",
-    "Land":       "premium",  # Land Rover
-    "Lexus":      "premium",
-    "Maserati":   "premium",
+    "Alfa": "premium",
+    "Audi": "premium",
+    "BMW": "premium",
+    "DS": "premium",
+    "Genesis": "premium",
+    "Jaguar": "premium",
+    "Land": "premium",  # Land Rover
+    "Lexus": "premium",
+    "Maserati": "premium",
     "Mercedes-Benz": "premium",
-    "Mercedes":   "premium",
-    "Mini":       "premium",
-    "Polestar":   "premium",
-    "Porsche":    "premium",
-    "Tesla":      "premium",
-    "Volvo":      "premium",
+    "Mercedes": "premium",
+    "Mini": "premium",
+    "Polestar": "premium",
+    "Porsche": "premium",
+    "Tesla": "premium",
+    "Volvo": "premium",
 }
 DEFAULT_TIER = "mid"
 VALID_PROPULSIONS = ("BEV", "PHEV", "HEV", "ICE", "DIESEL", "CNG", "LPG")
@@ -89,12 +87,14 @@ BATTERY_MARGINAL_EUR_PER_KWH = Decimal("250")  # marginal €/kWh sobre la media
 class CalibrationTable:
     """Resultado de calibrar la heurística sobre los anchors manuales."""
 
-    cluster_median_price: dict[tuple[str, str], int]   # (propulsion, tier) → mediana
+    cluster_median_price: dict[tuple[str, str], int]  # (propulsion, tier) → mediana
     cluster_median_battery: dict[tuple[str, str], Decimal]  # idem para battery_kwh
-    propulsion_fallback_price: dict[str, int]          # propulsion → mediana global
+    propulsion_fallback_price: dict[str, int]  # propulsion → mediana global
     n_anchors: int
 
-    def estimate(self, *, propulsion: str, make: str, battery_kwh: Optional[Decimal]) -> int:
+    def estimate(
+        self, *, propulsion: str, make: str, battery_kwh: Decimal | None
+    ) -> int:
         """Predice PVP para una fila concreta."""
         tier = tier_for_make(make)
         base = self.cluster_median_price.get((propulsion, tier))
@@ -125,18 +125,18 @@ def tier_for_make(make: str) -> str:
     return TIER_BY_MAKE.get(head, DEFAULT_TIER)
 
 
-def _median_int(values: list[int]) -> Optional[int]:
+def _median_int(values: list[int]) -> int | None:
     return int(statistics.median(values)) if values else None
 
 
-def _median_decimal(values: list[Decimal]) -> Optional[Decimal]:
+def _median_decimal(values: list[Decimal]) -> Decimal | None:
     if not values:
         return None
     # statistics.median funciona con Decimal
     return statistics.median(values)
 
 
-def calibrate(anchors: Optional[list[Vehicle]] = None) -> CalibrationTable:
+def calibrate(anchors: list[Vehicle] | None = None) -> CalibrationTable:
     """Lee anclas `price_source='manual'` y construye la tabla de predicción.
 
     Pasar `anchors` explícitamente solo para tests; en producción se
@@ -144,8 +144,9 @@ def calibrate(anchors: Optional[list[Vehicle]] = None) -> CalibrationTable:
     """
     if anchors is None:
         anchors = list(
-            Vehicle.objects
-            .filter(price_source=Vehicle.PriceSource.MANUAL, price_eur__isnull=False)
+            Vehicle.objects.filter(
+                price_source=Vehicle.PriceSource.MANUAL, price_eur__isnull=False
+            )
         )
 
     price_buckets: dict[tuple[str, str], list[int]] = {}
@@ -164,7 +165,9 @@ def calibrate(anchors: Optional[list[Vehicle]] = None) -> CalibrationTable:
 
     return CalibrationTable(
         cluster_median_price={k: _median_int(v) for k, v in price_buckets.items()},
-        cluster_median_battery={k: _median_decimal(v) for k, v in bat_buckets.items() if v},
+        cluster_median_battery={
+            k: _median_decimal(v) for k, v in bat_buckets.items() if v
+        },
         propulsion_fallback_price={k: _median_int(v) for k, v in by_propulsion.items()},
         n_anchors=len(anchors),
     )
@@ -182,7 +185,9 @@ def mean_abs_error(table: CalibrationTable, anchors: list[Vehicle]) -> float:
         if not v.price_eur:
             continue
         pred = table.estimate(
-            propulsion=v.propulsion, make=v.make, battery_kwh=v.battery_kwh,
+            propulsion=v.propulsion,
+            make=v.make,
+            battery_kwh=v.battery_kwh,
         )
         errs.append(abs(pred - v.price_eur))
     return sum(errs) / len(errs) if errs else 0.0

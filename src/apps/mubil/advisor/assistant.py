@@ -11,11 +11,11 @@ to the user's current simulation. It does NOT answer generic questions
 (those go to /ask/). Its job is to help the user fill the form correctly
 and understand the TCO implications of their choices.
 """
+
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 from django.conf import settings
 
@@ -80,6 +80,7 @@ _STEP_HINTS = {
 @dataclass
 class FormContext:
     """Snapshot of the advisor wizard state sent from the frontend."""
+
     step: str = "1a"
     cp: str = ""
     current_make: str = ""
@@ -101,7 +102,7 @@ class FormContext:
     battery_made_in_eu: bool = False
 
     @classmethod
-    def from_dict(cls, d: dict) -> "FormContext":
+    def from_dict(cls, d: dict) -> FormContext:
         return cls(
             step=d.get("step", "1a"),
             cp=d.get("cp", ""),
@@ -130,7 +131,9 @@ class FormContext:
         if self.cp:
             lines.append(f"Código postal: {self.cp}")
         if self.current_make or self.current_model:
-            lines.append(f"Coche actual: {self.current_make} {self.current_model} ({self.current_propulsion})")
+            lines.append(
+                f"Coche actual: {self.current_make} {self.current_model} ({self.current_propulsion})"
+            )
         if self.current_consumption:
             lines.append(f"Consumo actual: {self.current_consumption} L/100")
         if self.target_make or self.target_model:
@@ -149,15 +152,17 @@ class FormContext:
             lines.append("Achatarramiento: Sí")
         lines.append(f"Modo de compra: {self.purchase_mode}")
         lines.append(f"Montado en la UE: {'Sí' if self.assembled_in_eu else 'No'}")
-        lines.append(f"Batería fabricada en la UE: {'Sí' if self.battery_made_in_eu else 'No'}")
+        lines.append(
+            f"Batería fabricada en la UE: {'Sí' if self.battery_made_in_eu else 'No'}"
+        )
         return "\n".join(lines)
 
 
 @dataclass
 class AssistantResponse:
     message: str
-    hint_type: str = "info"   # "info" | "tip" | "warning" | "action"
-    error: Optional[str] = None
+    hint_type: str = "info"  # "info" | "tip" | "warning" | "action"
+    error: str | None = None
 
 
 # ── Core service ──────────────────────────────────────────────────────────────
@@ -165,7 +170,7 @@ class AssistantResponse:
 
 def _build_prompt(
     ctx: FormContext,
-    user_message: Optional[str],
+    user_message: str | None,
     rag_docs: str,
 ) -> str:
     step_instruction = _STEP_HINTS.get(ctx.step, "")
@@ -188,15 +193,10 @@ def _build_prompt(
             "comenta las implicaciones concretas de esas elecciones."
         )
 
-    return (
-        f"{_ROLE}\n\n"
-        f"{context_block}\n\n"
-        f"{rag_docs}\n\n"
-        f"=== Tu tarea ===\n{task}"
-    )
+    return f"{_ROLE}\n\n{context_block}\n\n{rag_docs}\n\n=== Tu tarea ===\n{task}"
 
 
-def get_hint(ctx: FormContext, user_message: Optional[str] = None) -> AssistantResponse:
+def get_hint(ctx: FormContext, user_message: str | None = None) -> AssistantResponse:
     """Main entry point — returns a contextual hint or answers a user question."""
     if not getattr(settings, "GEMINI_API_KEY", None):
         return AssistantResponse(
@@ -212,7 +212,9 @@ def get_hint(ctx: FormContext, user_message: Optional[str] = None) -> AssistantR
     if ctx.current_make or ctx.current_model:
         rag_query_parts.append(f"{ctx.current_make} {ctx.current_model}")
     if ctx.target_make or ctx.target_model:
-        rag_query_parts.append(f"{ctx.target_make} {ctx.target_model} eléctrico autonomía")
+        rag_query_parts.append(
+            f"{ctx.target_make} {ctx.target_model} eléctrico autonomía"
+        )
     if ctx.step == "3":
         rag_query_parts.append("incentivos ayudas programa auto+ moves wallbox irpf")
     if ctx.step == "2":
@@ -232,7 +234,7 @@ def get_hint(ctx: FormContext, user_message: Optional[str] = None) -> AssistantR
                     f"[{i}] {d.title} ({d.source_type})\n{d.content[:600].strip()}"
                 )
             rag_block = "=== Documentos de apoyo ===\n" + "\n\n".join(snippets)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         log.warning("Assistant RAG retrieval failed: %s", e)
         rag_block = ""
 
@@ -243,12 +245,16 @@ def get_hint(ctx: FormContext, user_message: Optional[str] = None) -> AssistantR
         hint_type = "info"
         # Heuristic: warnings if key issues detected
         low = text.lower()
-        if any(w in low for w in ("ojo", "atención", "cuidado", "riesgo", "incompatible")):
+        if any(
+            w in low for w in ("ojo", "atención", "cuidado", "riesgo", "incompatible")
+        ):
             hint_type = "warning"
-        elif any(w in low for w in ("recomiendo", "te sugiero", "podrías", "considera")):
+        elif any(
+            w in low for w in ("recomiendo", "te sugiero", "podrías", "considera")
+        ):
             hint_type = "tip"
         return AssistantResponse(message=text, hint_type=hint_type)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         log.exception("Advisor assistant generation failed: %s", e)
         return AssistantResponse(
             message="El asistente no está disponible temporalmente. Inténtalo de nuevo.",

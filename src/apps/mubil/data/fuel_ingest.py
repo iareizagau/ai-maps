@@ -27,12 +27,12 @@ PROPUESTA.md §3.1, §5.1.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from threading import Lock
-from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 from django.contrib.gis.geos import Point
 from django.db import transaction
@@ -63,7 +63,7 @@ DEFAULT_WORKERS = 8
 # matching the MINCOTUR API's «FiltroProvincia/{code}» path segment.
 # Source: INE Clasificación de Provincias 2023.
 
-ALL_SPAIN_PROVINCES: Tuple[str, ...] = (
+ALL_SPAIN_PROVINCES: tuple[str, ...] = (
     "01",  # Álava / Araba
     "02",  # Albacete
     "03",  # Alicante / Alacant
@@ -119,20 +119,59 @@ ALL_SPAIN_PROVINCES: Tuple[str, ...] = (
 )
 
 # Human-readable names for logging / progress output.
-_PROVINCE_NAMES: Dict[str, str] = {
-    "01": "Álava", "02": "Albacete", "03": "Alicante", "04": "Almería",
-    "05": "Ávila", "06": "Badajoz", "07": "Illes Balears", "08": "Barcelona",
-    "09": "Burgos", "10": "Cáceres", "11": "Cádiz", "12": "Castellón",
-    "13": "Ciudad Real", "14": "Córdoba", "15": "A Coruña", "16": "Cuenca",
-    "17": "Girona", "18": "Granada", "19": "Guadalajara", "20": "Gipuzkoa",
-    "21": "Huelva", "22": "Huesca", "23": "Jaén", "24": "León",
-    "25": "Lleida", "26": "La Rioja", "27": "Lugo", "28": "Madrid",
-    "29": "Málaga", "30": "Murcia", "31": "Navarra", "32": "Ourense",
-    "33": "Asturias", "34": "Palencia", "35": "Las Palmas", "36": "Pontevedra",
-    "37": "Salamanca", "38": "Tenerife", "39": "Cantabria", "40": "Segovia",
-    "41": "Sevilla", "42": "Soria", "43": "Tarragona", "44": "Teruel",
-    "45": "Toledo", "46": "Valencia", "47": "Valladolid", "48": "Bizkaia",
-    "49": "Zamora", "50": "Zaragoza", "51": "Ceuta", "52": "Melilla",
+_PROVINCE_NAMES: dict[str, str] = {
+    "01": "Álava",
+    "02": "Albacete",
+    "03": "Alicante",
+    "04": "Almería",
+    "05": "Ávila",
+    "06": "Badajoz",
+    "07": "Illes Balears",
+    "08": "Barcelona",
+    "09": "Burgos",
+    "10": "Cáceres",
+    "11": "Cádiz",
+    "12": "Castellón",
+    "13": "Ciudad Real",
+    "14": "Córdoba",
+    "15": "A Coruña",
+    "16": "Cuenca",
+    "17": "Girona",
+    "18": "Granada",
+    "19": "Guadalajara",
+    "20": "Gipuzkoa",
+    "21": "Huelva",
+    "22": "Huesca",
+    "23": "Jaén",
+    "24": "León",
+    "25": "Lleida",
+    "26": "La Rioja",
+    "27": "Lugo",
+    "28": "Madrid",
+    "29": "Málaga",
+    "30": "Murcia",
+    "31": "Navarra",
+    "32": "Ourense",
+    "33": "Asturias",
+    "34": "Palencia",
+    "35": "Las Palmas",
+    "36": "Pontevedra",
+    "37": "Salamanca",
+    "38": "Tenerife",
+    "39": "Cantabria",
+    "40": "Segovia",
+    "41": "Sevilla",
+    "42": "Soria",
+    "43": "Tarragona",
+    "44": "Teruel",
+    "45": "Toledo",
+    "46": "Valencia",
+    "47": "Valladolid",
+    "48": "Bizkaia",
+    "49": "Zamora",
+    "50": "Zaragoza",
+    "51": "Ceuta",
+    "52": "Melilla",
 }
 
 
@@ -145,10 +184,10 @@ class FuelIngestStats:
     errors: int = 0
     provinces: int = 0
     # Per-province breakdown: {code: {"fetched": N, "created": M, ...}}
-    by_province: Dict[str, dict] = field(default_factory=dict)
+    by_province: dict[str, dict] = field(default_factory=dict)
     _lock: Lock = field(default_factory=Lock, repr=False, compare=False)
 
-    def merge(self, other: "FuelIngestStats", province_code: str) -> None:
+    def merge(self, other: FuelIngestStats, province_code: str) -> None:
         """Thread-safe merge of a per-province result into the global stats."""
         with self._lock:
             self.fetched += other.fetched
@@ -217,8 +256,8 @@ def _ingest_one_province(
     code: str,
     now: datetime,
     dry_run: bool,
-    progress_cb: Optional[Callable[[str, int, int, int], None]],
-) -> Tuple[str, FuelIngestStats]:
+    progress_cb: Callable[[str, int, int, int], None] | None,
+) -> tuple[str, FuelIngestStats]:
     """Fetch + upsert a single province.  Designed to run inside a thread.
 
     Args:
@@ -246,16 +285,23 @@ def _ingest_one_province(
             try:
                 with transaction.atomic():
                     _upsert_record(rec, now, pstats)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 log.warning(
                     "FuelStation upsert failed (ideess=%s, prov=%s): %s",
-                    rec.ideess, code, e,
+                    rec.ideess,
+                    code,
+                    e,
                 )
                 pstats.errors += 1
 
     log.info(
         "Province %s (%s): fetched=%d created=%d updated=%d errors=%d",
-        code, name, pstats.fetched, pstats.created, pstats.updated, pstats.errors,
+        code,
+        name,
+        pstats.fetched,
+        pstats.created,
+        pstats.updated,
+        pstats.errors,
     )
     if progress_cb is not None:
         progress_cb(code, pstats.fetched, pstats.created, pstats.errors)
@@ -267,7 +313,7 @@ def ingest_provinces(
     *,
     dry_run: bool = False,
     workers: int = DEFAULT_WORKERS,
-    progress_cb: Optional[Callable[[str, int, int, int], None]] = None,
+    progress_cb: Callable[[str, int, int, int], None] | None = None,
 ) -> FuelIngestStats:
     """Fetch each province in parallel and upsert into :class:`FuelStation`.
 
@@ -281,9 +327,9 @@ def ingest_provinces(
         progress_cb: optional callable ``(code, fetched, created, errors)``
             invoked (from a worker thread) after each province completes.
     """
-    codes: List[str] = [str(c).strip().zfill(2) for c in prov_codes]
+    codes: list[str] = [str(c).strip().zfill(2) for c in prov_codes]
     total = FuelIngestStats()
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     with ThreadPoolExecutor(max_workers=min(workers, len(codes) or 1)) as pool:
         futures = {
@@ -294,7 +340,7 @@ def ingest_provinces(
             code = futures[future]
             try:
                 _, pstats = future.result()
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 log.error("Unexpected error in province %s worker: %s", code, e)
                 pstats = FuelIngestStats(provinces=1, errors=1)
             total.merge(pstats, code)
@@ -306,7 +352,7 @@ def ingest_spain(
     *,
     dry_run: bool = False,
     workers: int = DEFAULT_WORKERS,
-    progress_cb: Optional[Callable[[str, int, int, int], None]] = None,
+    progress_cb: Callable[[str, int, int, int], None] | None = None,
 ) -> FuelIngestStats:
     """Ingest **all 52 INE provinces** (España completa) in parallel.
 
@@ -320,7 +366,9 @@ def ingest_spain(
     """
     log.info(
         "Starting Spain-wide fuel ingest: %d provinces, workers=%d, dry_run=%s",
-        len(ALL_SPAIN_PROVINCES), workers, dry_run,
+        len(ALL_SPAIN_PROVINCES),
+        workers,
+        dry_run,
     )
     stats = ingest_provinces(
         prov_codes=ALL_SPAIN_PROVINCES,
@@ -330,7 +378,11 @@ def ingest_spain(
     )
     log.info(
         "Spain ingest done — provinces=%d fetched=%d created=%d updated=%d errors=%d",
-        stats.provinces, stats.fetched, stats.created, stats.updated, stats.errors,
+        stats.provinces,
+        stats.fetched,
+        stats.created,
+        stats.updated,
+        stats.errors,
     )
     return stats
 
@@ -352,7 +404,7 @@ def ingest_default(*, dry_run: bool = False) -> FuelIngestStats:
 def _avg_price_eur_l(
     qs,
     fuel_key: str,
-) -> Optional[Decimal]:
+) -> Decimal | None:
     """Average ``prices[fuel_key]`` across a queryset, in €/L.
 
     JSON values are stored as strings (see :func:`_upsert_record`); we average
@@ -368,7 +420,7 @@ def _avg_price_eur_l(
             continue
         try:
             values.append(Decimal(str(raw)))
-        except Exception:  # noqa: BLE001
+        except Exception:
             continue
     if not values:
         return None
@@ -379,9 +431,9 @@ def recent_avg_eur_l(
     *,
     fuel_key: str,
     freshness_hours: int = DEFAULT_FRESHNESS_HOURS,
-    postal_code: Optional[str] = None,
-    municipality_name: Optional[str] = None,
-) -> Optional[Decimal]:
+    postal_code: str | None = None,
+    municipality_name: str | None = None,
+) -> Decimal | None:
     """Average €/L for ``fuel_key`` across stations seen in the last window.
 
     Args:
@@ -395,7 +447,7 @@ def recent_avg_eur_l(
         Decimal €/L rounded to 3 decimals, or ``None`` if no station has the
         fuel within the freshness window.
     """
-    cutoff = datetime.now(tz=timezone.utc) - timedelta(hours=freshness_hours)
+    cutoff = datetime.now(tz=UTC) - timedelta(hours=freshness_hours)
     qs = FuelStation.objects.filter(last_seen_at__gte=cutoff)
     if postal_code:
         qs = qs.filter(postal_code=postal_code)
@@ -407,7 +459,7 @@ def recent_avg_eur_l(
 def current_price_eur_l(
     *,
     fuel_key: str,
-    postal_code: Optional[str] = None,
+    postal_code: str | None = None,
 ) -> Decimal:
     """The €/L the advisor should use right now for ``fuel_key``.
 
@@ -431,7 +483,8 @@ def current_price_eur_l(
 
     log.warning(
         "Fuel %s has no fresh rows in the last %dh — falling back to default.",
-        fuel_key, DEFAULT_FRESHNESS_HOURS,
+        fuel_key,
+        DEFAULT_FRESHNESS_HOURS,
     )
     return _default_for(fuel_key)
 

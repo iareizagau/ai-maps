@@ -80,7 +80,9 @@ class Command(BaseCommand):
                 completed[0] += 1
                 pct = completed[0] * 100 // total_provinces
                 name = fuel_ingest._PROVINCE_NAMES.get(code, code)
-                status = self.style.SUCCESS("✓") if errors == 0 else self.style.ERROR("✗")
+                status = (
+                    self.style.SUCCESS("✓") if errors == 0 else self.style.ERROR("✗")
+                )
                 self.stdout.write(
                     f"  [{pct:3d}%] {status} {code} {name:<22} "
                     f"fetched={fetched} created={created} errors={errors}"

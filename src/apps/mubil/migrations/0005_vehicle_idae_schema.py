@@ -5,9 +5,8 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('mubil', '0004_seed_fuel_schedule'),
+        ("mubil", "0004_seed_fuel_schedule"),
     ]
 
     operations = [
@@ -18,87 +17,163 @@ class Migration(migrations.Migration):
             reverse_sql="-- pg_trgm intentionally left installed.",
         ),
         migrations.AlterUniqueTogether(
-            name='vehicle',
+            name="vehicle",
             unique_together=set(),
         ),
         migrations.AddField(
-            model_name='vehicle',
-            name='category',
-            field=models.CharField(blank=True, choices=[('M1', 'Turismo'), ('M2', 'Autobús ligero'), ('N1', 'Furgoneta ligera'), ('N2', 'Furgón pesado'), ('L3e', 'Motocicleta'), ('L6e', 'Cuadriciclo ligero'), ('L7e', 'Cuadriciclo pesado')], db_index=True, max_length=4),
+            model_name="vehicle",
+            name="category",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("M1", "Turismo"),
+                    ("M2", "Autobús ligero"),
+                    ("N1", "Furgoneta ligera"),
+                    ("N2", "Furgón pesado"),
+                    ("L3e", "Motocicleta"),
+                    ("L6e", "Cuadriciclo ligero"),
+                    ("L7e", "Cuadriciclo pesado"),
+                ],
+                db_index=True,
+                max_length=4,
+            ),
         ),
         migrations.AddField(
-            model_name='vehicle',
-            name='co2_g_km_max',
+            model_name="vehicle",
+            name="co2_g_km_max",
             field=models.PositiveSmallIntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='vehicle',
-            name='co2_g_km_min',
+            model_name="vehicle",
+            name="co2_g_km_min",
             field=models.PositiveSmallIntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='vehicle',
-            name='dgt_label',
-            field=models.CharField(blank=True, choices=[('0', 'Cero emisiones'), ('ECO', 'ECO'), ('C', 'C'), ('B', 'B'), ('SIN', 'Sin etiqueta')], db_index=True, max_length=4),
+            model_name="vehicle",
+            name="dgt_label",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("0", "Cero emisiones"),
+                    ("ECO", "ECO"),
+                    ("C", "C"),
+                    ("B", "B"),
+                    ("SIN", "Sin etiqueta"),
+                ],
+                db_index=True,
+                max_length=4,
+            ),
         ),
         migrations.AddField(
-            model_name='vehicle',
-            name='energy_class',
-            field=models.CharField(blank=True, choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D'), ('E', 'E'), ('F', 'F'), ('G', 'G'), ('S', 'Sin clasificar')], max_length=1),
+            model_name="vehicle",
+            name="energy_class",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("A", "A"),
+                    ("B", "B"),
+                    ("C", "C"),
+                    ("D", "D"),
+                    ("E", "E"),
+                    ("F", "F"),
+                    ("G", "G"),
+                    ("S", "Sin clasificar"),
+                ],
+                max_length=1,
+            ),
         ),
         migrations.AddField(
-            model_name='vehicle',
-            name='idae_id',
+            model_name="vehicle",
+            name="idae_id",
             field=models.PositiveIntegerField(blank=True, db_index=True, null=True),
         ),
         migrations.AddField(
-            model_name='vehicle',
-            name='mtma_kg',
+            model_name="vehicle",
+            name="mtma_kg",
             field=models.PositiveIntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='vehicle',
-            name='segment',
+            model_name="vehicle",
+            name="segment",
             field=models.CharField(blank=True, db_index=True, max_length=40),
         ),
         migrations.AddField(
-            model_name='vehicle',
-            name='variant',
-            field=models.CharField(blank=True, default='', max_length=160),
+            model_name="vehicle",
+            name="variant",
+            field=models.CharField(blank=True, default="", max_length=160),
         ),
         migrations.AlterField(
-            model_name='evregistration',
-            name='propulsion',
-            field=models.CharField(choices=[('BEV', 'Eléctrico (BEV)'), ('PHEV', 'Híbrido enchufable'), ('HEV', 'Híbrido'), ('ICE', 'Gasolina'), ('DIESEL', 'Diésel'), ('CNG', 'Gas Natural Comprimido'), ('LPG', 'GLP / Autogás')], max_length=8),
+            model_name="evregistration",
+            name="propulsion",
+            field=models.CharField(
+                choices=[
+                    ("BEV", "Eléctrico (BEV)"),
+                    ("PHEV", "Híbrido enchufable"),
+                    ("HEV", "Híbrido"),
+                    ("ICE", "Gasolina"),
+                    ("DIESEL", "Diésel"),
+                    ("CNG", "Gas Natural Comprimido"),
+                    ("LPG", "GLP / Autogás"),
+                ],
+                max_length=8,
+            ),
         ),
         migrations.AlterField(
-            model_name='vehicle',
-            name='make',
+            model_name="vehicle",
+            name="make",
             field=models.CharField(db_index=True, max_length=80),
         ),
         migrations.AlterField(
-            model_name='vehicle',
-            name='propulsion',
-            field=models.CharField(choices=[('BEV', 'Eléctrico (BEV)'), ('PHEV', 'Híbrido enchufable'), ('HEV', 'Híbrido'), ('ICE', 'Gasolina'), ('DIESEL', 'Diésel'), ('CNG', 'Gas Natural Comprimido'), ('LPG', 'GLP / Autogás')], db_index=True, max_length=8),
+            model_name="vehicle",
+            name="propulsion",
+            field=models.CharField(
+                choices=[
+                    ("BEV", "Eléctrico (BEV)"),
+                    ("PHEV", "Híbrido enchufable"),
+                    ("HEV", "Híbrido"),
+                    ("ICE", "Gasolina"),
+                    ("DIESEL", "Diésel"),
+                    ("CNG", "Gas Natural Comprimido"),
+                    ("LPG", "GLP / Autogás"),
+                ],
+                db_index=True,
+                max_length=8,
+            ),
         ),
         migrations.AddIndex(
-            model_name='vehicle',
-            index=models.Index(fields=['propulsion', 'dgt_label'], name='mubil_vehic_propuls_4dcf21_idx'),
+            model_name="vehicle",
+            index=models.Index(
+                fields=["propulsion", "dgt_label"],
+                name="mubil_vehic_propuls_4dcf21_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='vehicle',
-            index=models.Index(fields=['category', 'segment'], name='mubil_vehic_categor_736ec8_idx'),
+            model_name="vehicle",
+            index=models.Index(
+                fields=["category", "segment"], name="mubil_vehic_categor_736ec8_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='vehicle',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['make', 'model', 'variant'], name='vehicle_text_trgm', opclasses=['gin_trgm_ops', 'gin_trgm_ops', 'gin_trgm_ops']),
+            model_name="vehicle",
+            index=django.contrib.postgres.indexes.GinIndex(
+                fields=["make", "model", "variant"],
+                name="vehicle_text_trgm",
+                opclasses=["gin_trgm_ops", "gin_trgm_ops", "gin_trgm_ops"],
+            ),
         ),
         migrations.AddConstraint(
-            model_name='vehicle',
-            constraint=models.UniqueConstraint(condition=models.Q(('idae_id__isnull', False)), fields=('idae_id',), name='vehicle_idae_unique'),
+            model_name="vehicle",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("idae_id__isnull", False)),
+                fields=("idae_id",),
+                name="vehicle_idae_unique",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='vehicle',
-            constraint=models.UniqueConstraint(fields=('make', 'model', 'variant', 'year'), name='vehicle_make_model_variant_year_unique'),
+            model_name="vehicle",
+            constraint=models.UniqueConstraint(
+                fields=("make", "model", "variant", "year"),
+                name="vehicle_make_model_variant_year_unique",
+            ),
         ),
     ]

@@ -14,7 +14,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Optional
 
 from apps.mubil.data import cp_centroids, fuel_ingest, pvpc_ingest
 from apps.mubil.data.price_defaults import (
@@ -50,7 +49,7 @@ class CostBreakdown:
 @dataclass(frozen=True)
 class TCOQuote:
     cp: str
-    cp_name: Optional[str]
+    cp_name: str | None
     km_year: int
     years_horizon: int
     vehicle_current: Vehicle
@@ -59,33 +58,33 @@ class TCOQuote:
     breakdown_target: CostBreakdown
     co2_kg_year_current: Decimal
     co2_kg_year_target: Decimal
-    payback_years: Optional[Decimal]
+    payback_years: Decimal | None
     nearby_chargers: list[ChargingStation]
     subvencion_eur: Decimal = Decimal("0")
-    motorway_pct: Optional[float] = None
-    nacional_pct: Optional[float] = None
-    urban_pct: Optional[float] = None
-    charging_mix: Optional[ChargingMix] = None
-    weighted_charging_eur_kwh: Optional[Decimal] = None
-    incentives: Optional[IncentivesBreakdown] = None
+    motorway_pct: float | None = None
+    nacional_pct: float | None = None
+    urban_pct: float | None = None
+    charging_mix: ChargingMix | None = None
+    weighted_charging_eur_kwh: Decimal | None = None
+    incentives: IncentivesBreakdown | None = None
     wallbox_capex_eur: Decimal = Decimal("0")
     # Precios efectivos usados para el cálculo (puede diferir de
     # vehicle.price_eur si el usuario aplicó un override en el formulario).
-    vehicle_current_price_used_eur: Optional[int] = None
-    vehicle_target_price_used_eur: Optional[int] = None
+    vehicle_current_price_used_eur: int | None = None
+    vehicle_target_price_used_eur: int | None = None
     # Eco de la decisión "tengo el coche / lo voy a comprar" del Step 1a,
     # para que el resultado pueda renderizar el framing correcto.
-    purchase_mode: Optional[str] = "switch"
-    current_age_years: Optional[int] = None
-    current_residual_value_eur: Optional[int] = None
+    purchase_mode: str | None = "switch"
+    current_age_years: int | None = None
+    current_residual_value_eur: int | None = None
     # Composición del ahorro a 10 años. El hero del result usa
     # `total_net_savings_eur` (el número honesto: operativo + delta compra +
     # incentivos − wallbox capex). El operativo solo es el delta de cost-of-
     # operation 10 años (lo que mostraba antes como "ahorro neto", que estaba
     # incompleto). El purchase delta = current_price_used − target_price.
-    operational_savings_eur: Optional[Decimal] = None
-    purchase_savings_eur: Optional[Decimal] = None
-    total_net_savings_eur: Optional[Decimal] = None
+    operational_savings_eur: Decimal | None = None
+    purchase_savings_eur: Decimal | None = None
+    total_net_savings_eur: Decimal | None = None
 
 
 # ------------------------------------------------------------------ helpers
@@ -104,11 +103,11 @@ def _annual_energy_cost(
     km_year: int,
     night_charging: bool,
     *,
-    postal_code: Optional[str] = None,
-    motorway_pct: Optional[float] = None,
-    nacional_pct: Optional[float] = None,
-    urban_pct: Optional[float] = None,
-    charging_mix: Optional[ChargingMix] = None,
+    postal_code: str | None = None,
+    motorway_pct: float | None = None,
+    nacional_pct: float | None = None,
+    urban_pct: float | None = None,
+    charging_mix: ChargingMix | None = None,
 ) -> Decimal:
     """Coste anual de energía (€) en función del vehículo, km, régimen y perfil de vía (3 vías).
 
@@ -133,9 +132,17 @@ def _annual_energy_cost(
             urb = Decimal("1") - mw - nac
 
         if _is_electric(vehicle):
-            efficiency_multiplier = (Decimal("0.80") * urb) + (Decimal("1.25") * mw) + (Decimal("0.95") * nac)
+            efficiency_multiplier = (
+                (Decimal("0.80") * urb)
+                + (Decimal("1.25") * mw)
+                + (Decimal("0.95") * nac)
+            )
         else:
-            efficiency_multiplier = (Decimal("1.25") * urb) + (Decimal("0.85") * mw) + (Decimal("0.95") * nac)
+            efficiency_multiplier = (
+                (Decimal("1.25") * urb)
+                + (Decimal("0.85") * mw)
+                + (Decimal("0.95") * nac)
+            )
     else:
         efficiency_multiplier = Decimal("1")
 
@@ -156,15 +163,15 @@ def _annual_energy_cost(
 
 
 def _annual_co2_kg(
-    vehicle: Vehicle, 
+    vehicle: Vehicle,
     km_year: int,
-    motorway_pct: Optional[float] = None,
-    nacional_pct: Optional[float] = None,
-    urban_pct: Optional[float] = None,
+    motorway_pct: float | None = None,
+    nacional_pct: float | None = None,
+    urban_pct: float | None = None,
 ) -> Decimal:
     """Emisiones tank-to-wheel + well-to-tank con factor de eficiencia por 3 tipos de vía."""
     km = Decimal(km_year)
-    
+
     if motorway_pct is not None or nacional_pct is not None:
         mw = Decimal(motorway_pct or 0) / Decimal("100")
         nac = Decimal(nacional_pct or 0) / Decimal("100")
@@ -172,11 +179,19 @@ def _annual_co2_kg(
             urb = Decimal(urban_pct) / Decimal("100")
         else:
             urb = Decimal("1") - mw - nac
-            
+
         if _is_electric(vehicle):
-            efficiency_multiplier = (Decimal("0.80") * urb) + (Decimal("1.25") * mw) + (Decimal("0.95") * nac)
+            efficiency_multiplier = (
+                (Decimal("0.80") * urb)
+                + (Decimal("1.25") * mw)
+                + (Decimal("0.95") * nac)
+            )
         else:
-            efficiency_multiplier = (Decimal("1.25") * urb) + (Decimal("0.85") * mw) + (Decimal("0.95") * nac)
+            efficiency_multiplier = (
+                (Decimal("1.25") * urb)
+                + (Decimal("0.85") * mw)
+                + (Decimal("0.95") * nac)
+            )
     else:
         efficiency_multiplier = Decimal("1")
 
@@ -184,10 +199,12 @@ def _annual_co2_kg(
         kwh_100 = vehicle.consumption_kwh_100km or Decimal("17.0")
         kwh = (kwh_100 * km * efficiency_multiplier) / Decimal("100")
         return (kwh * CO2_KG_PER_KWH_MIX_ES).quantize(Decimal("0.1"))
-        
+
     l_100 = vehicle.consumption_l_100km or Decimal("6.0")
     litres = (l_100 * km * efficiency_multiplier) / Decimal("100")
-    factor = CO2_KG_PER_LITRE_DIESEL if _is_diesel(vehicle) else CO2_KG_PER_LITRE_GASOLINA
+    factor = (
+        CO2_KG_PER_LITRE_DIESEL if _is_diesel(vehicle) else CO2_KG_PER_LITRE_GASOLINA
+    )
     return (litres * factor).quantize(Decimal("0.1"))
 
 
@@ -197,18 +214,26 @@ def _breakdown(
     years_horizon: int,
     night_charging: bool,
     *,
-    postal_code: Optional[str] = None,
-    motorway_pct: Optional[float] = None,
-    nacional_pct: Optional[float] = None,
-    urban_pct: Optional[float] = None,
-    charging_mix: Optional[ChargingMix] = None,
+    postal_code: str | None = None,
+    motorway_pct: float | None = None,
+    nacional_pct: float | None = None,
+    urban_pct: float | None = None,
+    charging_mix: ChargingMix | None = None,
 ) -> CostBreakdown:
     horizon = Decimal(years_horizon)
-    energy = _annual_energy_cost(
-        vehicle, km_year, night_charging, postal_code=postal_code,
-        motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct,
-        charging_mix=charging_mix,
-    ) * horizon
+    energy = (
+        _annual_energy_cost(
+            vehicle,
+            km_year,
+            night_charging,
+            postal_code=postal_code,
+            motorway_pct=motorway_pct,
+            nacional_pct=nacional_pct,
+            urban_pct=urban_pct,
+            charging_mix=charging_mix,
+        )
+        * horizon
+    )
     if _is_electric(vehicle):
         maint = DEFAULT_MAINTENANCE_EUR_YEAR_EV * horizon
         insur = DEFAULT_INSURANCE_EUR_YEAR_EV * horizon
@@ -232,9 +257,9 @@ def _payback_years(
     subvencion_eur: Decimal = Decimal("0"),
     wallbox_capex_eur: Decimal = Decimal("0"),
     *,
-    current_price_eur: Optional[int] = None,
-    target_price_eur: Optional[int] = None,
-) -> Optional[Decimal]:
+    current_price_eur: int | None = None,
+    target_price_eur: int | None = None,
+) -> Decimal | None:
     """current_price_eur / target_price_eur permiten override sin tocar BBDD."""
     cur_p = current_price_eur if current_price_eur is not None else current.price_eur
     tgt_p = target_price_eur if target_price_eur is not None else target.price_eur
@@ -246,12 +271,16 @@ def _payback_years(
     return (delta_price / annual_savings).quantize(Decimal("0.1"))
 
 
-def _nearby_chargers(cp: str, radius_km: float = 5.0, limit: int = 25) -> list[ChargingStation]:
+def _nearby_chargers(
+    cp: str, radius_km: float = 5.0, limit: int = 25
+) -> list[ChargingStation]:
     centroid = cp_centroids.lookup(cp)
     if centroid is None:
         return []
     lat, lon, _name = centroid
-    qs = ChargingStation.objects.nearby(longitude=lon, latitude=lat, radius_km=radius_km)
+    qs = ChargingStation.objects.nearby(
+        longitude=lon, latitude=lat, radius_km=radius_km
+    )
     return list(qs[:limit])
 
 
@@ -267,23 +296,23 @@ def calculate_tco_quote(
     years_horizon: int = 10,
     night_charging: bool = False,
     subvencion_eur: int = 0,
-    motorway_pct: Optional[float] = None,
-    nacional_pct: Optional[float] = None,
-    urban_pct: Optional[float] = None,
+    motorway_pct: float | None = None,
+    nacional_pct: float | None = None,
+    urban_pct: float | None = None,
     profile: str = "particular",
     scrapping: bool = False,
     wallbox_state: str = "installed",
-    home_pct: Optional[int] = None,
-    work_pct: Optional[int] = None,
-    public_ac_pct: Optional[int] = None,
-    public_dc_pct: Optional[int] = None,
-    subvencion_override_eur: Optional[int] = None,
-    vehicle_current_price_override_eur: Optional[int] = None,
-    vehicle_target_price_override_eur: Optional[int] = None,
-    purchase_mode: Optional[str] = "switch",
-    current_age_years: Optional[int] = None,
-    assembled_in_eu: Optional[bool] = None,
-    battery_made_in_eu: Optional[bool] = None,
+    home_pct: int | None = None,
+    work_pct: int | None = None,
+    public_ac_pct: int | None = None,
+    public_dc_pct: int | None = None,
+    subvencion_override_eur: int | None = None,
+    vehicle_current_price_override_eur: int | None = None,
+    vehicle_target_price_override_eur: int | None = None,
+    purchase_mode: str | None = "switch",
+    current_age_years: int | None = None,
+    assembled_in_eu: bool | None = None,
+    battery_made_in_eu: bool | None = None,
 ) -> TCOQuote:
     """Calcula la comparativa TCO para el `advisor`.
 
@@ -311,36 +340,90 @@ def calculate_tco_quote(
     target = Vehicle.objects.get(pk=vehicle_target_id)
 
     # ----- Mix de carga (sólo si se aportan los 4 porcentajes) -----
-    mix: Optional[ChargingMix] = None
-    if home_pct is not None and work_pct is not None \
-            and public_ac_pct is not None and public_dc_pct is not None:
+    mix: ChargingMix | None = None
+    if (
+        home_pct is not None
+        and work_pct is not None
+        and public_ac_pct is not None
+        and public_dc_pct is not None
+    ):
         mix = ChargingMix.normalized(home_pct, work_pct, public_ac_pct, public_dc_pct)
 
     # ----- Breakdowns -----
     bd_current = _breakdown(
-        current, km_year, years_horizon, night_charging, postal_code=cp,
-        motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct,
+        current,
+        km_year,
+        years_horizon,
+        night_charging,
+        postal_code=cp,
+        motorway_pct=motorway_pct,
+        nacional_pct=nacional_pct,
+        urban_pct=urban_pct,
     )
     bd_target = _breakdown(
-        target, km_year, years_horizon, night_charging, postal_code=cp,
-        motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct,
+        target,
+        km_year,
+        years_horizon,
+        night_charging,
+        postal_code=cp,
+        motorway_pct=motorway_pct,
+        nacional_pct=nacional_pct,
+        urban_pct=urban_pct,
         charging_mix=mix,
     )
 
     # ----- Ahorro anual (energía + opex constante) -----
     annual_savings = (
-        _annual_energy_cost(current, km_year, night_charging, postal_code=cp,
-                            motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct)
-        + (DEFAULT_MAINTENANCE_EUR_YEAR_ICE if not _is_electric(current) else DEFAULT_MAINTENANCE_EUR_YEAR_EV)
-        + (DEFAULT_INSURANCE_EUR_YEAR_ICE if not _is_electric(current) else DEFAULT_INSURANCE_EUR_YEAR_EV)
-        + (DEFAULT_TAX_EUR_YEAR_ICE if not _is_electric(current) else DEFAULT_TAX_EUR_YEAR_EV)
+        _annual_energy_cost(
+            current,
+            km_year,
+            night_charging,
+            postal_code=cp,
+            motorway_pct=motorway_pct,
+            nacional_pct=nacional_pct,
+            urban_pct=urban_pct,
+        )
+        + (
+            DEFAULT_MAINTENANCE_EUR_YEAR_ICE
+            if not _is_electric(current)
+            else DEFAULT_MAINTENANCE_EUR_YEAR_EV
+        )
+        + (
+            DEFAULT_INSURANCE_EUR_YEAR_ICE
+            if not _is_electric(current)
+            else DEFAULT_INSURANCE_EUR_YEAR_EV
+        )
+        + (
+            DEFAULT_TAX_EUR_YEAR_ICE
+            if not _is_electric(current)
+            else DEFAULT_TAX_EUR_YEAR_EV
+        )
     ) - (
-        _annual_energy_cost(target, km_year, night_charging, postal_code=cp,
-                            motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct,
-                            charging_mix=mix)
-        + (DEFAULT_MAINTENANCE_EUR_YEAR_ICE if not _is_electric(target) else DEFAULT_MAINTENANCE_EUR_YEAR_EV)
-        + (DEFAULT_INSURANCE_EUR_YEAR_ICE if not _is_electric(target) else DEFAULT_INSURANCE_EUR_YEAR_EV)
-        + (DEFAULT_TAX_EUR_YEAR_ICE if not _is_electric(target) else DEFAULT_TAX_EUR_YEAR_EV)
+        _annual_energy_cost(
+            target,
+            km_year,
+            night_charging,
+            postal_code=cp,
+            motorway_pct=motorway_pct,
+            nacional_pct=nacional_pct,
+            urban_pct=urban_pct,
+            charging_mix=mix,
+        )
+        + (
+            DEFAULT_MAINTENANCE_EUR_YEAR_ICE
+            if not _is_electric(target)
+            else DEFAULT_MAINTENANCE_EUR_YEAR_EV
+        )
+        + (
+            DEFAULT_INSURANCE_EUR_YEAR_ICE
+            if not _is_electric(target)
+            else DEFAULT_INSURANCE_EUR_YEAR_EV
+        )
+        + (
+            DEFAULT_TAX_EUR_YEAR_ICE
+            if not _is_electric(target)
+            else DEFAULT_TAX_EUR_YEAR_EV
+        )
     )
 
     # ----- Wallbox CAPEX (sólo si necesita instalar y target es BEV) -----
@@ -350,12 +433,17 @@ def calculate_tco_quote(
     # ----- Override de precios (sin escritura en BBDD) -----
     residual_val = None
     if purchase_mode in ("switch", "replace"):
-        if vehicle_current_price_override_eur is not None and vehicle_current_price_override_eur > 0:
+        if (
+            vehicle_current_price_override_eur is not None
+            and vehicle_current_price_override_eur > 0
+        ):
             residual_val = vehicle_current_price_override_eur
         else:
             age = current_age_years if current_age_years is not None else 5
             if current.price_eur:
-                residual_val = int(round(float(current.price_eur) * ((1 - 0.15) ** age)))
+                residual_val = int(
+                    round(float(current.price_eur) * ((1 - 0.15) ** age))
+                )
             else:
                 residual_val = 0
 
@@ -365,12 +453,14 @@ def calculate_tco_quote(
         # En new_vs_new y en replace, el baseline de compra es el PVP nuevo (current.price_eur)
         current_price_used = (
             vehicle_current_price_override_eur
-            if vehicle_current_price_override_eur is not None and vehicle_current_price_override_eur > 0
+            if vehicle_current_price_override_eur is not None
+            and vehicle_current_price_override_eur > 0
             else current.price_eur
         )
     target_price_used = (
         vehicle_target_price_override_eur
-        if vehicle_target_price_override_eur is not None and vehicle_target_price_override_eur > 0
+        if vehicle_target_price_override_eur is not None
+        and vehicle_target_price_override_eur > 0
         else target.price_eur
     )
 
@@ -425,10 +515,26 @@ def calculate_tco_quote(
         vehicle_target=target,
         breakdown_current=bd_current,
         breakdown_target=bd_target,
-        co2_kg_year_current=_annual_co2_kg(current, km_year, motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct),
-        co2_kg_year_target=_annual_co2_kg(target, km_year, motorway_pct=motorway_pct, nacional_pct=nacional_pct, urban_pct=urban_pct),
+        co2_kg_year_current=_annual_co2_kg(
+            current,
+            km_year,
+            motorway_pct=motorway_pct,
+            nacional_pct=nacional_pct,
+            urban_pct=urban_pct,
+        ),
+        co2_kg_year_target=_annual_co2_kg(
+            target,
+            km_year,
+            motorway_pct=motorway_pct,
+            nacional_pct=nacional_pct,
+            urban_pct=urban_pct,
+        ),
         payback_years=_payback_years(
-            current, target, annual_savings, total_subv, wallbox_capex,
+            current,
+            target,
+            annual_savings,
+            total_subv,
+            wallbox_capex,
             current_price_eur=current_price_used,
             target_price_eur=target_price_used,
         ),
@@ -455,71 +561,89 @@ def calculate_tco_quote(
 # ------------------------------------------------------------------ Commute Routing
 
 
-def get_commute_route(start_lng: float, start_lat: float, end_lng: float, end_lat: float) -> dict:
+def get_commute_route(
+    start_lng: float, start_lat: float, end_lng: float, end_lat: float
+) -> dict:
     """
     Calcula la ruta óptima entre origen y destino para el commute planner.
     Usa pgRouting sobre la tabla `ways` con los tags drivable.
     Si pgRouting falla o no encuentra nodos, aplica un fallback de OSRM en línea.
     Si OSRM falla, recurre a una estimación por línea recta con un factor de 1.27.
     """
-    from django.db import connection
     import json
-    import urllib.request
-    import urllib.error
     import re
-    
+    import urllib.error
+    import urllib.request
+
+    from django.db import connection
+
     # 1. Encontrar nodos más cercanos
     start_node = find_nearest_drivable_node(start_lng, start_lat)
     end_node = find_nearest_drivable_node(end_lng, end_lat)
-    
+
     def fallback_route(reason=""):
         # Intenta OSRM online primero para devolver el trazado de carreteras exacto con pasos detallados
         try:
             url = f"http://router.project-osrm.org/route/v1/driving/{start_lng},{start_lat};{end_lng},{end_lat}?overview=full&geometries=geojson&steps=true"
-            req = urllib.request.Request(url, headers={'User-Agent': 'MubilTCOAdvisor/1.0'})
+            req = urllib.request.Request(
+                url, headers={"User-Agent": "MubilTCOAdvisor/1.0"}
+            )
             with urllib.request.urlopen(req, timeout=3.5) as response:
-                res_data = json.loads(response.read().decode('utf-8'))
-            
+                res_data = json.loads(response.read().decode("utf-8"))
+
             if res_data.get("code") == "Ok" and res_data.get("routes"):
                 route = res_data["routes"][0]
                 distance_m = route["distance"]
                 distance_km = distance_m / 1000.0
-                
+
                 # Clasificar cada tramo (step) por nombre y velocidad
                 autopista_m = 0
                 nacional_m = 0
                 urbano_m = 0
-                
+
                 steps = route["legs"][0]["steps"]
                 for step in steps:
                     name = step.get("name", "")
                     dist = step.get("distance", 0)
                     dur = step.get("duration", 0)
-                    
+
                     speed_kmh = (dist / dur) * 3.6 if dur > 0 else 0
                     name_lower = name.lower()
-                    
+
                     is_autopista = (
-                        speed_kmh >= 85.0 or
-                        any(x in name_lower for x in ["autobia", "autobidea", "autovía", "autopista"]) or
-                        re.match(r'^(A-|AP-)\d+', name)
+                        speed_kmh >= 85.0
+                        or any(
+                            x in name_lower
+                            for x in ["autobia", "autobidea", "autovía", "autopista"]
+                        )
+                        or re.match(r"^(A-|AP-)\d+", name)
                     )
-                    
+
                     is_nacional = False
                     if not is_autopista:
                         is_nacional = (
-                            (speed_kmh >= 50.0 and speed_kmh < 85.0) or
-                            any(x in name_lower for x in ["variante", "saihesbidea", "enlace", "acceso", "korridorea", "corredor"]) or
-                            re.match(r'^(N-|GI-|BI-|VI-)\d+', name)
+                            (speed_kmh >= 50.0 and speed_kmh < 85.0)
+                            or any(
+                                x in name_lower
+                                for x in [
+                                    "variante",
+                                    "saihesbidea",
+                                    "enlace",
+                                    "acceso",
+                                    "korridorea",
+                                    "corredor",
+                                ]
+                            )
+                            or re.match(r"^(N-|GI-|BI-|VI-)\d+", name)
                         )
-                    
+
                     if is_autopista:
                         autopista_m += dist
                     elif is_nacional:
                         nacional_m += dist
                     else:
                         urbano_m += dist
-                
+
                 total_classified_m = autopista_m + nacional_m + urbano_m
                 if total_classified_m > 0:
                     motorway_pct = (autopista_m / total_classified_m) * 100.0
@@ -529,79 +653,88 @@ def get_commute_route(start_lng: float, start_lat: float, end_lng: float, end_la
                     motorway_pct = 50.0
                     nacional_pct = 25.0
                     urban_pct = 25.0
-                
+
                 route_geojson = {
                     "type": "FeatureCollection",
-                    "features": [{
-                        "type": "Feature",
-                        "geometry": route["geometry"],
-                        "properties": {
-                            "name": "Ruta por Carretera (OSRM)",
-                            "highway_type": "motorway" if motorway_pct > 50 else "residential",
-                            "length_m": distance_m
+                    "features": [
+                        {
+                            "type": "Feature",
+                            "geometry": route["geometry"],
+                            "properties": {
+                                "name": "Ruta por Carretera (OSRM)",
+                                "highway_type": "motorway"
+                                if motorway_pct > 50
+                                else "residential",
+                                "length_m": distance_m,
+                            },
                         }
-                    }],
+                    ],
                     "metadata": {
                         "total_distance_m": distance_m,
-                        "note": "OSRM Routing successful"
-                    }
+                        "note": "OSRM Routing successful",
+                    },
                 }
-                
+
                 return {
                     "distance_km": round(distance_km, 2),
                     "motorway_pct": round(motorway_pct, 1),
                     "nacional_pct": round(nacional_pct, 1),
                     "urban_pct": round(urban_pct, 1),
-                    "route_geojson": route_geojson
+                    "route_geojson": route_geojson,
                 }
         except Exception as osrm_err:
             # Si falla OSRM, usa el fallback geométrico local offline
-            reason = f"{reason} | OSRM failed: {str(osrm_err)}"
-            
+            reason = f"{reason} | OSRM failed: {osrm_err!s}"
+
         with connection.cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT ST_Distance(
                     ST_SetSRID(ST_Point(%s, %s), 4326)::geography,
                     ST_SetSRID(ST_Point(%s, %s), 4326)::geography
                 )
-            """, [start_lng, start_lat, end_lng, end_lat])
+            """,
+                [start_lng, start_lat, end_lng, end_lat],
+            )
             row = cursor.fetchone()
             distance_m = row[0] if (row and row[0] is not None) else 0.0
-        
+
         # Sinuosidad estándar 1.27
         distance_km = (distance_m * 1.27) / 1000.0
-        
+
         route_geojson = {
             "type": "FeatureCollection",
-            "features": [{
-                "type": "Feature",
-                "geometry": {
-                    "type": "LineString",
-                    "coordinates": [[start_lng, start_lat], [end_lng, end_lat]]
-                },
-                "properties": {
-                    "name": "Trayecto Estimado (Sinuosidad 1.27)",
-                    "highway_type": "motorway",
-                    "length_m": distance_m * 1.27
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [[start_lng, start_lat], [end_lng, end_lat]],
+                    },
+                    "properties": {
+                        "name": "Trayecto Estimado (Sinuosidad 1.27)",
+                        "highway_type": "motorway",
+                        "length_m": distance_m * 1.27,
+                    },
                 }
-            }],
+            ],
             "metadata": {
                 "total_distance_m": distance_m * 1.27,
-                "note": f"Fallback applied: {reason}"
-            }
+                "note": f"Fallback applied: {reason}",
+            },
         }
-        
+
         return {
             "distance_km": round(distance_km, 2),
             "motorway_pct": 60.0,
             "nacional_pct": 20.0,
             "urban_pct": 20.0,
-            "route_geojson": route_geojson
+            "route_geojson": route_geojson,
         }
 
     if not start_node or not end_node:
         return fallback_route("Nodos no encontrados en la red vial")
-        
+
     if start_node == end_node:
         return fallback_route("Puntos demasiado cercanos")
 
@@ -615,9 +748,7 @@ def get_commute_route(start_lng: float, start_lat: float, end_lng: float, end_la
     min_lat = min(start_lat, end_lat) - buffer
     max_lat = max(start_lat, end_lat) + buffer
 
-    bbox_filter = (
-        f"AND the_geom && ST_MakeEnvelope({min_lon}, {min_lat}, {max_lon}, {max_lat}, 4326)"
-    )
+    bbox_filter = f"AND the_geom && ST_MakeEnvelope({min_lon}, {min_lat}, {max_lon}, {max_lat}, 4326)"
 
     drivable_tags_sql = (
         "SELECT tag_id FROM configuration WHERE tag_value IN ("
@@ -652,41 +783,43 @@ def get_commute_route(start_lng: float, start_lat: float, end_lng: float, end_la
         with connection.cursor() as cursor:
             cursor.execute(query, [start_node, end_node])
             rows = cursor.fetchall()
-            
+
         if not rows:
             return fallback_route("No hay conexión topológica en la red OSM")
-            
+
         features = []
         total_distance_m = 0.0
         autopista_m = 0.0
         nacional_m = 0.0
         urbano_m = 0.0
-        
+
         high_speed_types = {"motorway", "trunk", "motorway_link", "trunk_link"}
         secondary_types = {"primary", "primary_link", "secondary", "secondary_link"}
-        
+
         for row in rows:
             length_m = row[5] or 0.0
             total_distance_m += length_m
             hw_type = row[4]
-            
+
             if hw_type in high_speed_types:
                 autopista_m += length_m
             elif hw_type in secondary_types:
                 nacional_m += length_m
             else:
                 urbano_m += length_m
-                
-            features.append({
-                "type": "Feature",
-                "geometry": json.loads(row[0]),
-                "properties": {
-                    "name": row[1],
-                    "highway_type": hw_type,
-                    "length_m": length_m
+
+            features.append(
+                {
+                    "type": "Feature",
+                    "geometry": json.loads(row[0]),
+                    "properties": {
+                        "name": row[1],
+                        "highway_type": hw_type,
+                        "length_m": length_m,
+                    },
                 }
-            })
-            
+            )
+
         if total_distance_m > 0:
             motorway_pct = (autopista_m / total_distance_m) * 100.0
             nacional_pct = (nacional_m / total_distance_m) * 100.0
@@ -695,31 +828,32 @@ def get_commute_route(start_lng: float, start_lat: float, end_lng: float, end_la
             motorway_pct = 50.0
             nacional_pct = 25.0
             urban_pct = 25.0
-            
+
         route_geojson = {
             "type": "FeatureCollection",
             "features": features,
             "metadata": {
                 "total_distance_m": total_distance_m,
                 "start_node": start_node,
-                "end_node": end_node
-            }
+                "end_node": end_node,
+            },
         }
-        
+
         return {
             "distance_km": round(total_distance_m / 1000.0, 2),
             "motorway_pct": round(motorway_pct, 1),
             "nacional_pct": round(nacional_pct, 1),
             "urban_pct": round(urban_pct, 1),
-            "route_geojson": route_geojson
+            "route_geojson": route_geojson,
         }
-        
+
     except Exception as e:
-        return fallback_route(f"Error en consulta pgRouting: {str(e)}")
+        return fallback_route(f"Error en consulta pgRouting: {e!s}")
 
 
-def find_nearest_drivable_node(lon: float, lat: float) -> Optional[int]:
+def find_nearest_drivable_node(lon: float, lat: float) -> int | None:
     from django.db import connection
+
     query = """
         WITH nearest_edge AS (
             SELECT source, target 
@@ -747,4 +881,3 @@ def find_nearest_drivable_node(lon: float, lat: float) -> Optional[int]:
             return row[0] if row else None
     except Exception:
         return None
-

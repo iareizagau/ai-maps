@@ -10,8 +10,8 @@ def mark_existing_prices_as_mock(apps, schema_editor):
     no devolviera payback None. La pipeline nueva (manual → heurística →
     Gemini) tratará 'mock' como sobrescribible mientras respeta 'manual'.
     """
-    Vehicle = apps.get_model('mubil', 'Vehicle')
-    Vehicle.objects.filter(price_eur__isnull=False).update(price_source='mock')
+    Vehicle = apps.get_model("mubil", "Vehicle")
+    Vehicle.objects.filter(price_eur__isnull=False).update(price_source="mock")
 
 
 def noop(apps, schema_editor):
@@ -20,20 +20,30 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('mubil', '0010_seed_demand_schedule'),
+        ("mubil", "0010_seed_demand_schedule"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='vehicle',
-            name='price_source',
-            field=models.CharField(choices=[('unknown', 'Desconocido'), ('mock', 'Mock (placeholder)'), ('manual', 'Verificado manual'), ('heuristic', 'Estimado heurístico'), ('gemini', 'Estimado Gemini')], db_index=True, default='unknown', max_length=16),
+            model_name="vehicle",
+            name="price_source",
+            field=models.CharField(
+                choices=[
+                    ("unknown", "Desconocido"),
+                    ("mock", "Mock (placeholder)"),
+                    ("manual", "Verificado manual"),
+                    ("heuristic", "Estimado heurístico"),
+                    ("gemini", "Estimado Gemini"),
+                ],
+                db_index=True,
+                default="unknown",
+                max_length=16,
+            ),
         ),
         migrations.AddField(
-            model_name='vehicle',
-            name='price_updated_at',
+            model_name="vehicle",
+            name="price_updated_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.RunPython(mark_existing_prices_as_mock, reverse_code=noop),

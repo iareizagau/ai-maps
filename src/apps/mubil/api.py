@@ -1,13 +1,12 @@
 """Root Ninja router for mubil. Mounts 4 sub-routers per PROPUESTA.md §3 / §17:
 
-  /estrata/api/v1/advisor/         — TCO eléctrico vs combustión (MUST)
-  /estrata/api/v1/ask/             — RAG Gemini sobre datasets movilidad (MUST)
-  /estrata/api/v1/route/           — EV-aware multimodal (MOCK)
-  /estrata/api/v1/plan/            — heatmap demanda carga (MOCK)
-  /estrata/api/v1/infrastructure/  — chargers + fast-charging desert (read-only)
+/estrata/api/v1/advisor/         — TCO eléctrico vs combustión (MUST)
+/estrata/api/v1/ask/             — RAG Gemini sobre datasets movilidad (MUST)
+/estrata/api/v1/route/           — EV-aware multimodal (MOCK)
+/estrata/api/v1/plan/            — heatmap demanda carga (MOCK)
+/estrata/api/v1/infrastructure/  — chargers + fast-charging desert (read-only)
 """
 
-from typing import Optional
 
 from ninja import Router
 
@@ -15,32 +14,31 @@ from .advisor.api import router as advisor_router
 from .ask.api import router as ask_router
 from .data import infrastructure as infrastructure_data
 from .news.api import router as news_router
-from .route.api import router as route_router
 from .plan.api import router as plan_router
-
+from .route.api import router as route_router
 
 router = Router()
-router.add_router('/advisor', advisor_router, tags=['advisor'])
-router.add_router('/ask', ask_router, tags=['ask'])
-router.add_router('/route', route_router, tags=['route'])
-router.add_router('/plan', plan_router, tags=['plan'])
-router.add_router('/news', news_router, tags=['news'])
+router.add_router("/advisor", advisor_router, tags=["advisor"])
+router.add_router("/ask", ask_router, tags=["ask"])
+router.add_router("/route", route_router, tags=["route"])
+router.add_router("/plan", plan_router, tags=["plan"])
+router.add_router("/news", news_router, tags=["news"])
 
 
-@router.get('/health')
+@router.get("/health")
 def health(request):
-    return {'status': 'ok', 'module': 'mubil', 'version': '0.1.0'}
+    return {"status": "ok", "module": "mubil", "version": "0.1.0"}
 
 
 # ─────────────────────────────────────────────── infrastructure endpoints
 
 
-@router.get('/infrastructure/chargers.geojson', tags=['infrastructure'])
+@router.get("/infrastructure/chargers.geojson", tags=["infrastructure"])
 def infrastructure_chargers(
     request,
-    vehicle_id: Optional[int] = None,
-    source: Optional[str] = None,
-    scope: str = 'eh',
+    vehicle_id: int | None = None,
+    source: str | None = None,
+    scope: str = "eh",
 ):
     """Chargers as GeoJSON, defaulting to Euskal Herria.
 
@@ -51,20 +49,22 @@ def infrastructure_chargers(
     ``'eh'`` (default — ~1.4k features) or ``'spain'`` (~12.8k features) for
     the explicit "ampliar a España" toggle on the Mapa page.
     """
-    sources = [s.strip() for s in source.split(',')] if source else None
+    sources = [s.strip() for s in source.split(",")] if source else None
     return infrastructure_data.chargers_geojson(
-        vehicle_id=vehicle_id, sources=sources, scope=scope,
+        vehicle_id=vehicle_id,
+        sources=sources,
+        scope=scope,
     )
 
 
-@router.get('/infrastructure/fuel_stations.geojson', tags=['infrastructure'])
-def infrastructure_fuel_stations(request, scope: str = 'eh'):
+@router.get("/infrastructure/fuel_stations.geojson", tags=["infrastructure"])
+def infrastructure_fuel_stations(request, scope: str = "eh"):
     """Fuel stations as GeoJSON with live fuel prices. Defaults to EH bbox;
     pass ``?scope=spain`` to widen to the national snapshot."""
     return infrastructure_data.fuel_stations_geojson(scope=scope)
 
 
-@router.get('/infrastructure/desert.json', tags=['infrastructure'])
+@router.get("/infrastructure/desert.json", tags=["infrastructure"])
 def infrastructure_desert(
     request,
     radius_km: float = infrastructure_data.DEFAULT_RADIUS_KM,
@@ -78,7 +78,8 @@ def infrastructure_desert(
     """
     return {
         "cells": infrastructure_data.fast_charger_grid(
-            radius_km=radius_km, step_deg=step_deg,
+            radius_km=radius_km,
+            step_deg=step_deg,
         ),
         "radius_km": radius_km,
         "step_deg": step_deg,

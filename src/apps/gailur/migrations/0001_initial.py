@@ -6,116 +6,219 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Club',
+            name="Club",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('name', models.CharField(max_length=255)),
-                ('slug', models.SlugField(unique=True)),
-                ('website', models.URLField(blank=True)),
-                ('description', models.TextField(blank=True)),
-                ('logo', models.ImageField(blank=True, null=True, upload_to='clubs/')),
-                ('location', django.contrib.gis.db.models.fields.PointField(blank=True, null=True, srid=4326)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("name", models.CharField(max_length=255)),
+                ("slug", models.SlugField(unique=True)),
+                ("website", models.URLField(blank=True)),
+                ("description", models.TextField(blank=True)),
+                ("logo", models.ImageField(blank=True, null=True, upload_to="clubs/")),
+                (
+                    "location",
+                    django.contrib.gis.db.models.fields.PointField(
+                        blank=True, null=True, srid=4326
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Crag',
+            name="Crag",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('name_es', models.CharField(blank=True, max_length=255)),
-                ('name_eu', models.CharField(blank=True, max_length=255)),
-                ('slug', models.SlugField(unique=True)),
-                ('location', django.contrib.gis.db.models.fields.PointField(srid=4326)),
-                ('description_es', models.TextField(blank=True)),
-                ('description_eu', models.TextField(blank=True)),
-                ('access_info_es', models.TextField(blank=True)),
-                ('access_info_eu', models.TextField(blank=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("name_es", models.CharField(blank=True, max_length=255)),
+                ("name_eu", models.CharField(blank=True, max_length=255)),
+                ("slug", models.SlugField(unique=True)),
+                ("location", django.contrib.gis.db.models.fields.PointField(srid=4326)),
+                ("description_es", models.TextField(blank=True)),
+                ("description_eu", models.TextField(blank=True)),
+                ("access_info_es", models.TextField(blank=True)),
+                ("access_info_eu", models.TextField(blank=True)),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Outing',
+            name="Outing",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('title', models.CharField(max_length=255)),
-                ('date', models.DateField()),
-                ('description', models.TextField(blank=True)),
-                ('location', django.contrib.gis.db.models.fields.PointField(blank=True, null=True, srid=4326)),
-                ('difficulty', models.CharField(blank=True, max_length=100)),
-                ('gpx_file', models.FileField(blank=True, null=True, upload_to='outings/gpx/')),
-                ('image', models.ImageField(blank=True, null=True, upload_to='outings/images/')),
-                ('club', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='outings', to='gailur.club')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("title", models.CharField(max_length=255)),
+                ("date", models.DateField()),
+                ("description", models.TextField(blank=True)),
+                (
+                    "location",
+                    django.contrib.gis.db.models.fields.PointField(
+                        blank=True, null=True, srid=4326
+                    ),
+                ),
+                ("difficulty", models.CharField(blank=True, max_length=100)),
+                (
+                    "gpx_file",
+                    models.FileField(blank=True, null=True, upload_to="outings/gpx/"),
+                ),
+                (
+                    "image",
+                    models.ImageField(
+                        blank=True, null=True, upload_to="outings/images/"
+                    ),
+                ),
+                (
+                    "club",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="outings",
+                        to="gailur.club",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['date'],
+                "ordering": ["date"],
             },
         ),
         migrations.CreateModel(
-            name='Sector',
+            name="Sector",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('name', models.CharField(max_length=255)),
-                ('description', models.TextField(blank=True)),
-                ('orientation', models.CharField(blank=True, max_length=50)),
-                ('crag', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sectors', to='gailur.crag')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("name", models.CharField(max_length=255)),
+                ("description", models.TextField(blank=True)),
+                ("orientation", models.CharField(blank=True, max_length=50)),
+                (
+                    "crag",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="sectors",
+                        to="gailur.crag",
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Route',
+            name="Route",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('name_es', models.CharField(blank=True, max_length=255)),
-                ('name_eu', models.CharField(blank=True, max_length=255)),
-                ('slug', models.SlugField(max_length=255, unique=True)),
-                ('grade', models.CharField(blank=True, max_length=20)),
-                ('description_es', models.TextField(blank=True)),
-                ('description_eu', models.TextField(blank=True)),
-                ('is_bolted', models.BooleanField(default=True)),
-                ('sector', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='routes', to='gailur.sector')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("name_es", models.CharField(blank=True, max_length=255)),
+                ("name_eu", models.CharField(blank=True, max_length=255)),
+                ("slug", models.SlugField(max_length=255, unique=True)),
+                ("grade", models.CharField(blank=True, max_length=20)),
+                ("description_es", models.TextField(blank=True)),
+                ("description_eu", models.TextField(blank=True)),
+                ("is_bolted", models.BooleanField(default=True)),
+                (
+                    "sector",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="routes",
+                        to="gailur.sector",
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Topo',
+            name="Topo",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('image', models.ImageField(upload_to='gailur/topos/')),
-                ('title', models.CharField(blank=True, max_length=255)),
-                ('description', models.TextField(blank=True)),
-                ('outing', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='images', to='gailur.outing')),
-                ('sector', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='topos', to='gailur.sector')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("image", models.ImageField(upload_to="gailur/topos/")),
+                ("title", models.CharField(blank=True, max_length=255)),
+                ("description", models.TextField(blank=True)),
+                (
+                    "outing",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="images",
+                        to="gailur.outing",
+                    ),
+                ),
+                (
+                    "sector",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="topos",
+                        to="gailur.sector",
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
     ]

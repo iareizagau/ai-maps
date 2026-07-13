@@ -26,69 +26,84 @@ class NominatimRateLimited(Exception):
     """Raised when Nominatim returns 429. Abort the run — continuing only
     prolongs the ban. The next cron pass picks up where we left off."""
 
-NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search'
-USER_AGENT = 'MapsEus/1.0 kultur (https://maps.eus)'
+
+NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+USER_AGENT = "MapsEus/1.0 kultur (https://maps.eus)"
 
 # Bbox covering Euskal Herria (Hegoalde + Iparralde) — viewbox is left,top,right,bottom
-EH_VIEWBOX = '-3.5,43.6,-1.0,42.4'
+EH_VIEWBOX = "-3.5,43.6,-1.0,42.4"
 
 REQUEST_DELAY_S = 1.1
 
 
 class Command(BaseCommand):
-    help = 'Geocodes pending Venues using Nominatim'
+    help = "Geocodes pending Venues using Nominatim"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--limit', type=int, default=None,
-            help='Max venues to process (default: all pending)',
+            "--limit",
+            type=int,
+            default=None,
+            help="Max venues to process (default: all pending)",
         )
         parser.add_argument(
-            '--retry-failed', action='store_true',
-            help='Also retry venues whose source is municipality_centroid',
+            "--retry-failed",
+            action="store_true",
+            help="Also retry venues whose source is municipality_centroid",
         )
 
     def handle(self, *args, **options):
         qs = Venue.objects.filter(geocoded_at__isnull=True)
-        if options['retry_failed']:
+        if options["retry_failed"]:
             qs = Venue.objects.filter(
                 geocoding_source=Venue.SOURCE_MUNICIPALITY,
             )
-        if options['limit']:
-            qs = qs[:options['limit']]
+        if options["limit"]:
+            qs = qs[: options["limit"]]
 
         venues = list(qs)
         total = len(venues)
-        self.stdout.write(self.style.SUCCESS(f'Found {total} venues to geocode.'))
+        self.stdout.write(self.style.SUCCESS(f"Found {total} venues to geocode."))
 
         session = requests.Session()
-        session.headers.update({'User-Agent': USER_AGENT})
+        session.headers.update({"User-Agent": USER_AGENT})
 
         resolved = 0
         try:
             for i, venue in enumerate(venues, 1):
-                label = f'{venue.name_es} / {venue.municipality}'
-                self.stdout.write(f'[{i}/{total}] {label}')
+                label = f"{venue.name_es} / {venue.municipality}"
+                self.stdout.write(f"[{i}/{total}] {label}")
 
                 point = self._geocode(session, venue.name_es, venue.municipality)
                 if point is not None:
                     venue.location = point
                     venue.geocoding_source = Venue.SOURCE_NOMINATIM
                     venue.geocoded_at = timezone.now()
-                    venue.save(update_fields=['location', 'geocoding_source', 'geocoded_at', 'updated_at'])
-                    self.stdout.write(self.style.SUCCESS(f'  ✓ {point.y:.5f}, {point.x:.5f}'))
+                    venue.save(
+                        update_fields=[
+                            "location",
+                            "geocoding_source",
+                            "geocoded_at",
+                            "updated_at",
+                        ]
+                    )
+                    self.stdout.write(
+                        self.style.SUCCESS(f"  ✓ {point.y:.5f}, {point.x:.5f}")
+                    )
                     resolved += 1
                 else:
-                    self.stdout.write(self.style.WARNING('  ✗ no match (kept municipality centroid)'))
+                    self.stdout.write(
+                        self.style.WARNING("  ✗ no match (kept municipality centroid)")
+                    )
         except NominatimRateLimited as exc:
             raise CommandError(
-                f'Aborted at {i}/{total} (resolved {resolved} so far): {exc}. '
-                f'Re-run later — the command is idempotent.'
+                f"Aborted at {i}/{total} (resolved {resolved} so far): {exc}. "
+                f"Re-run later — the command is idempotent."
             )
 
-        self.stdout.write(self.style.SUCCESS(
-            f'Done. Resolved {resolved}/{total} venues.'
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(f"Done. Resolved {resolved}/{total} venues.")
+        )
 
     def _geocode(self, session, name, municipality):
         # Multiple passes, narrowest first. Each later pass relaxes the query
@@ -99,8 +114,10 @@ class Command(BaseCommand):
 
         # 1. Full name + municipality, constrained to Euskal Herria bbox
         point = self._query(
-            session, f'{name}, {municipality}',
-            viewbox=EH_VIEWBOX, bounded=True,
+            session,
+            f"{name}, {municipality}",
+            viewbox=EH_VIEWBOX,
+            bounded=True,
         )
         if point is not None:
             return point
@@ -108,8 +125,10 @@ class Command(BaseCommand):
         # 2. Cleaned name + municipality, bbox
         if clean and clean != name:
             point = self._query(
-                session, f'{clean}, {municipality}',
-                viewbox=EH_VIEWBOX, bounded=True,
+                session,
+                f"{clean}, {municipality}",
+                viewbox=EH_VIEWBOX,
+                bounded=True,
             )
             if point is not None:
                 return point
@@ -118,8 +137,10 @@ class Command(BaseCommand):
         # entry doesn't include the municipality string. Bbox keeps us in EH.
         if clean:
             point = self._query(
-                session, clean,
-                viewbox=EH_VIEWBOX, bounded=True,
+                session,
+                clean,
+                viewbox=EH_VIEWBOX,
+                bounded=True,
             )
             if point is not None:
                 return point
@@ -127,7 +148,7 @@ class Command(BaseCommand):
         # 4. Last resort: relaxed, no bbox. Risk of false positives is real
         # (same venue name elsewhere in Spain), but at this point we'd
         # otherwise fall back to municipal centroid — usually worse.
-        return self._query(session, f'{name}, {municipality}')
+        return self._query(session, f"{name}, {municipality}")
 
     @staticmethod
     def _clean_name(name):
@@ -137,11 +158,11 @@ class Command(BaseCommand):
         Returns '' if nothing meaningful remains.
         """
         # Drop "Sagardoetxea. Museo de la Sidra Vasca" → "Sagardoetxea"
-        for sep in ('.', '('):
+        for sep in (".", "("):
             idx = name.find(sep)
             if idx > 0:
                 name = name[:idx]
-        return name.strip(' ,-')
+        return name.strip(" ,-")
 
     def _query(self, session, q, viewbox=None, bounded=False):
         # Throttle on every individual call. Nominatim's policy is 1 req/s and
@@ -149,31 +170,31 @@ class Command(BaseCommand):
         # blow the budget by 3-4x and trigger 429s.
         time.sleep(REQUEST_DELAY_S)
 
-        params = {'q': q, 'format': 'json', 'limit': 1}
+        params = {"q": q, "format": "json", "limit": 1}
         if viewbox:
-            params['viewbox'] = viewbox
+            params["viewbox"] = viewbox
         if bounded:
-            params['bounded'] = 1
+            params["bounded"] = 1
         try:
             r = session.get(NOMINATIM_URL, params=params, timeout=10)
         except requests.RequestException as exc:
-            self.stdout.write(self.style.ERROR(f'  ! {exc}'))
+            self.stdout.write(self.style.ERROR(f"  ! {exc}"))
             return None
 
         if r.status_code == 429:
             # Hard-stop. Continuing would push the ban window further out and
             # waste cycles on guaranteed failures. Surface Retry-After if set.
-            retry_after = r.headers.get('Retry-After', 'unknown')
+            retry_after = r.headers.get("Retry-After", "unknown")
             raise NominatimRateLimited(
-                f'Nominatim returned 429 (Retry-After: {retry_after})'
+                f"Nominatim returned 429 (Retry-After: {retry_after})"
             )
 
         try:
             r.raise_for_status()
             data = r.json()
         except (requests.RequestException, ValueError) as exc:
-            self.stdout.write(self.style.ERROR(f'  ! {exc}'))
+            self.stdout.write(self.style.ERROR(f"  ! {exc}"))
             return None
         if not data:
             return None
-        return Point(float(data[0]['lon']), float(data[0]['lat']), srid=4326)
+        return Point(float(data[0]["lon"]), float(data[0]["lat"]), srid=4326)

@@ -4,25 +4,32 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('sbk', '0003_event_atmosphere_event_poster_event_price_info'),
+        ("sbk", "0003_event_atmosphere_event_poster_event_price_info"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='event',
-            name='is_verified',
+            model_name="event",
+            name="is_verified",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='event',
-            name='moderation_status',
-            field=models.CharField(choices=[('pending', 'Pending'), ('verified', 'Verified'), ('rejected', 'Rejected')], default='pending', max_length=20),
+            model_name="event",
+            name="moderation_status",
+            field=models.CharField(
+                choices=[
+                    ("pending", "Pending"),
+                    ("verified", "Verified"),
+                    ("rejected", "Rejected"),
+                ],
+                default="pending",
+                max_length=20,
+            ),
         ),
         migrations.AddField(
-            model_name='event',
-            name='report_count',
+            model_name="event",
+            name="report_count",
             field=models.IntegerField(default=0),
         ),
     ]

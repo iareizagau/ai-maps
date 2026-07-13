@@ -6,7 +6,7 @@ exercise the live endpoint:  `python manage.py ingest_fuel --dry-run`.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from unittest import mock
 
@@ -15,7 +15,6 @@ from django.test import TestCase
 
 from apps.mubil.data import fuel_ingest, mincotur_client
 from apps.mubil.models import FuelStation
-
 
 # Two well-formed stations + one malformed row to exercise the parser's skip
 # branches (missing IDEESS, missing coordinates, empty fuel cells).
@@ -33,7 +32,7 @@ SAMPLE_PAYLOAD = {
             "Municipio": "DONOSTIA / SAN SEBASTIAN",
             "Precio Gasolina 95 E5": "1,569",
             "Precio Gasoleo A": "1,489",
-            "Precio Gasolina 98 E5": "",       # empty → dropped
+            "Precio Gasolina 98 E5": "",  # empty → dropped
             "Provincia": "GIPUZKOA",
             "Rótulo": "REPSOL",
             "Tipo Venta": "P",
@@ -93,7 +92,9 @@ class ParserTests(TestCase):
 
     def test_parse_record_drops_rows_without_id_or_coords(self):
         # Missing IDEESS
-        self.assertIsNone(mincotur_client._parse_record({"Latitud": "1,0", "Longitud (WGS84)": "1,0"}))
+        self.assertIsNone(
+            mincotur_client._parse_record({"Latitud": "1,0", "Longitud (WGS84)": "1,0"})
+        )
         # Missing coords
         self.assertIsNone(mincotur_client._parse_record({"IDEESS": "1"}))
 
@@ -218,7 +219,8 @@ def _make_station(
         postal_code=cp,
         geom=Point(lon, lat, srid=4326),
         prices=prices,
-        last_seen_at=datetime.now(tz=timezone.utc) - timedelta(hours=last_seen_hours_ago),
+        last_seen_at=datetime.now(tz=UTC)
+        - timedelta(hours=last_seen_hours_ago),
     )
 
 
@@ -227,59 +229,103 @@ class FuelQueryTests(TestCase):
         self.assertIsNone(fuel_ingest.recent_avg_eur_l(fuel_key="gasolina_95_e5"))
 
     def test_recent_avg_averages_across_stations(self):
-        _make_station(ideess=1, cp="20018", municipality="Donostia",
-                      prices={"gasolina_95_e5": "1.500"})
-        _make_station(ideess=2, cp="20018", municipality="Donostia",
-                      prices={"gasolina_95_e5": "1.600"})
+        _make_station(
+            ideess=1,
+            cp="20018",
+            municipality="Donostia",
+            prices={"gasolina_95_e5": "1.500"},
+        )
+        _make_station(
+            ideess=2,
+            cp="20018",
+            municipality="Donostia",
+            prices={"gasolina_95_e5": "1.600"},
+        )
         avg = fuel_ingest.recent_avg_eur_l(fuel_key="gasolina_95_e5")
         self.assertEqual(avg, Decimal("1.550"))
 
     def test_recent_avg_skips_stations_without_the_fuel(self):
-        _make_station(ideess=1, cp="20018", municipality="Donostia",
-                      prices={"gasolina_95_e5": "1.500"})
-        _make_station(ideess=2, cp="20018", municipality="Donostia",
-                      prices={"gasoleo_a": "1.400"})  # no gasolina
+        _make_station(
+            ideess=1,
+            cp="20018",
+            municipality="Donostia",
+            prices={"gasolina_95_e5": "1.500"},
+        )
+        _make_station(
+            ideess=2, cp="20018", municipality="Donostia", prices={"gasoleo_a": "1.400"}
+        )  # no gasolina
         avg = fuel_ingest.recent_avg_eur_l(fuel_key="gasolina_95_e5")
         self.assertEqual(avg, Decimal("1.500"))
 
     def test_recent_avg_filters_by_postal_code(self):
-        _make_station(ideess=1, cp="20018", municipality="Donostia",
-                      prices={"gasolina_95_e5": "1.500"})
-        _make_station(ideess=2, cp="48001", municipality="Bilbao",
-                      prices={"gasolina_95_e5": "1.700"})
+        _make_station(
+            ideess=1,
+            cp="20018",
+            municipality="Donostia",
+            prices={"gasolina_95_e5": "1.500"},
+        )
+        _make_station(
+            ideess=2,
+            cp="48001",
+            municipality="Bilbao",
+            prices={"gasolina_95_e5": "1.700"},
+        )
         avg = fuel_ingest.recent_avg_eur_l(
-            fuel_key="gasolina_95_e5", postal_code="48001",
+            fuel_key="gasolina_95_e5",
+            postal_code="48001",
         )
         self.assertEqual(avg, Decimal("1.700"))
 
     def test_recent_avg_excludes_stale_stations(self):
-        _make_station(ideess=1, cp="20018", municipality="Donostia",
-                      prices={"gasolina_95_e5": "1.500"},
-                      last_seen_hours_ago=24 * 30)  # 30 days old
+        _make_station(
+            ideess=1,
+            cp="20018",
+            municipality="Donostia",
+            prices={"gasolina_95_e5": "1.500"},
+            last_seen_hours_ago=24 * 30,
+        )  # 30 days old
         self.assertIsNone(fuel_ingest.recent_avg_eur_l(fuel_key="gasolina_95_e5"))
 
     def test_current_price_prefers_postal_code(self):
-        _make_station(ideess=1, cp="20018", municipality="Donostia",
-                      prices={"gasolina_95_e5": "1.500"})
-        _make_station(ideess=2, cp="48001", municipality="Bilbao",
-                      prices={"gasolina_95_e5": "1.700"})
+        _make_station(
+            ideess=1,
+            cp="20018",
+            municipality="Donostia",
+            prices={"gasolina_95_e5": "1.500"},
+        )
+        _make_station(
+            ideess=2,
+            cp="48001",
+            municipality="Bilbao",
+            prices={"gasolina_95_e5": "1.700"},
+        )
         # CP match wins over province-wide average.
         self.assertEqual(
             fuel_ingest.current_price_eur_l(
-                fuel_key="gasolina_95_e5", postal_code="20018",
+                fuel_key="gasolina_95_e5",
+                postal_code="20018",
             ),
             Decimal("1.500"),
         )
 
     def test_current_price_falls_back_to_province_avg(self):
-        _make_station(ideess=1, cp="20018", municipality="Donostia",
-                      prices={"gasolina_95_e5": "1.500"})
-        _make_station(ideess=2, cp="20300", municipality="Irun",
-                      prices={"gasolina_95_e5": "1.700"})
+        _make_station(
+            ideess=1,
+            cp="20018",
+            municipality="Donostia",
+            prices={"gasolina_95_e5": "1.500"},
+        )
+        _make_station(
+            ideess=2,
+            cp="20300",
+            municipality="Irun",
+            prices={"gasolina_95_e5": "1.700"},
+        )
         # CP 48001 has no rows → falls back to global avg = 1.6
         self.assertEqual(
             fuel_ingest.current_price_eur_l(
-                fuel_key="gasolina_95_e5", postal_code="48001",
+                fuel_key="gasolina_95_e5",
+                postal_code="48001",
             ),
             Decimal("1.600"),
         )
@@ -289,6 +335,7 @@ class FuelQueryTests(TestCase):
             DEFAULT_GASOLEO_A_EUR_L,
             DEFAULT_GASOLINA_95_EUR_L,
         )
+
         self.assertEqual(
             fuel_ingest.current_price_eur_l(fuel_key="gasolina_95_e5"),
             DEFAULT_GASOLINA_95_EUR_L,

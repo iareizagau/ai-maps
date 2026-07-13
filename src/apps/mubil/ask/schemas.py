@@ -1,6 +1,5 @@
 """Schemas for `ask`. PROPUESTA.md §3.2."""
 
-from typing import List, Optional
 
 from ninja import Schema
 
@@ -8,7 +7,7 @@ from ninja import Schema
 class AskQueryIn(Schema):
     q: str
     k: int = 8
-    municipality_naia: Optional[str] = None
+    municipality_naia: str | None = None
 
 
 class AskSource(Schema):
@@ -17,12 +16,12 @@ class AskSource(Schema):
     score: float
     source_type: str
     kind: str = "dataset"
-    date: Optional[str] = None
+    date: str | None = None
 
 
 class AskAnswerOut(Schema):
     answer_md: str
-    sources: List[AskSource]
+    sources: list[AskSource]
     latency_ms: int
 
 

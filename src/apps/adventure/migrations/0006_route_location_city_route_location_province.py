@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('adventure', '0005_inteldrop'),
+        ("adventure", "0005_inteldrop"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='route',
-            name='location_city',
+            model_name="route",
+            name="location_city",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AddField(
-            model_name='route',
-            name='location_province',
+            model_name="route",
+            name="location_province",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
     ]

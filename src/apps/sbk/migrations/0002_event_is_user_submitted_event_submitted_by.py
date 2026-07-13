@@ -6,21 +6,26 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('sbk', '0001_initial'),
+        ("sbk", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='event',
-            name='is_user_submitted',
+            model_name="event",
+            name="is_user_submitted",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='event',
-            name='submitted_by',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='submitted_sbk_events', to=settings.AUTH_USER_MODEL),
+            model_name="event",
+            name="submitted_by",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="submitted_sbk_events",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

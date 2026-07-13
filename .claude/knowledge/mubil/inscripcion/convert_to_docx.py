@@ -1,7 +1,7 @@
 import os
 import re
-import sys
 import subprocess
+import sys
 
 # Auto-instalar python-docx si no está presente
 try:
@@ -9,11 +9,10 @@ try:
 except ImportError:
     print("Instalando python-docx para la conversión...")
     subprocess.check_call([sys.executable, "-m", "pip", "install", "python-docx"])
-    import docx
 
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+
 
 def parse_markdown_to_docx(md_path, docx_path):
     if not os.path.exists(md_path):
@@ -30,20 +29,20 @@ def parse_markdown_to_docx(md_path, docx_path):
         section.right_margin = Inches(1)
 
     # Estilos básicos
-    style_normal = doc.styles['Normal']
+    style_normal = doc.styles["Normal"]
     font = style_normal.font
-    font.name = 'Calibri'
+    font.name = "Calibri"
     font.size = Pt(11)
-    font.color.rgb = RGBColor(0x33, 0x33, 0x33) # Gris oscuro para lectura premium
+    font.color.rgb = RGBColor(0x33, 0x33, 0x33)  # Gris oscuro para lectura premium
 
-    with open(md_path, 'r', encoding='utf-8') as f:
+    with open(md_path, encoding="utf-8") as f:
         lines = f.readlines()
 
     in_table = False
     table_rows = []
-    
+
     # Expresión regular para enlaces de Markdown
-    link_re = re.compile(r'\[([^\]]+)\]\(([^)]+)\)')
+    link_re = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 
     # Procesar línea a línea
     i = 0
@@ -80,7 +79,7 @@ def parse_markdown_to_docx(md_path, docx_path):
             p.paragraph_format.space_after = Pt(6)
             # Cambiar color del encabezado a azul oscuro
             for run in p.runs:
-                run.font.name = 'Calibri'
+                run.font.name = "Calibri"
                 run.font.color.rgb = RGBColor(0x00, 0x33, 0x66)
             i += 1
             continue
@@ -90,7 +89,7 @@ def parse_markdown_to_docx(md_path, docx_path):
             p.paragraph_format.space_before = Pt(14)
             p.paragraph_format.space_after = Pt(4)
             for run in p.runs:
-                run.font.name = 'Calibri'
+                run.font.name = "Calibri"
                 run.font.color.rgb = RGBColor(0x00, 0x55, 0x80)
             i += 1
             continue
@@ -100,7 +99,7 @@ def parse_markdown_to_docx(md_path, docx_path):
             p.paragraph_format.space_before = Pt(10)
             p.paragraph_format.space_after = Pt(4)
             for run in p.runs:
-                run.font.name = 'Calibri'
+                run.font.name = "Calibri"
                 run.font.color.rgb = RGBColor(0x33, 0x66, 0x99)
             i += 1
             continue
@@ -124,8 +123,8 @@ def parse_markdown_to_docx(md_path, docx_path):
             # Limpiar negritas de Markdown (**texto**)
             text_clean = text.replace("**", "")
             # Limpiar enlaces
-            text_clean = link_re.sub(r'\1 (\2)', text_clean)
-            p = doc.add_paragraph(text_clean, style='List Bullet')
+            text_clean = link_re.sub(r"\1 (\2)", text_clean)
+            p = doc.add_paragraph(text_clean, style="List Bullet")
             p.paragraph_format.space_after = Pt(3)
             i += 1
             continue
@@ -137,7 +136,7 @@ def parse_markdown_to_docx(md_path, docx_path):
         # Párrafo normal
         # Limpiar negritas y enlaces simples
         text_clean = line.replace("**", "")
-        text_clean = link_re.sub(r'\1', text_clean)
+        text_clean = link_re.sub(r"\1", text_clean)
         p = doc.add_paragraph(text_clean)
         p.paragraph_format.space_after = Pt(6)
         p.paragraph_format.line_spacing = 1.15
@@ -146,6 +145,7 @@ def parse_markdown_to_docx(md_path, docx_path):
     # Guardar
     doc.save(docx_path)
     print(f"Creado con éxito: {docx_path}")
+
 
 def render_docx_table(doc, raw_rows):
     # Parsear celdas de las filas
@@ -162,7 +162,7 @@ def render_docx_table(doc, raw_rows):
     final_rows = []
     for row in rows_data:
         # Si tiene guiones en todas las celdas, es la fila separadora de cabecera
-        if all(re.match(r'^[-:\s]+$', cell) for cell in row):
+        if all(re.match(r"^[-:\s]+$", cell) for cell in row):
             continue
         final_rows.append(row)
 
@@ -173,7 +173,7 @@ def render_docx_table(doc, raw_rows):
     num_rows = len(final_rows)
 
     table = doc.add_table(rows=num_rows, cols=num_cols)
-    table.style = 'Table Grid'
+    table.style = "Table Grid"
 
     # Rellenar
     for r_idx, row in enumerate(final_rows):
@@ -192,12 +192,19 @@ def render_docx_table(doc, raw_rows):
     p = doc.add_paragraph()
     p.paragraph_format.space_before = Pt(6)
 
+
 if __name__ == "__main__":
-    base_dir = r"c:\Users\imanol\projects\imanol\saas\maps\.claude\knowledge\mubil\inscripcion"
-    
+    base_dir = (
+        r"c:\Users\imanol\projects\imanol\saas\maps\.claude\knowledge\mubil\inscripcion"
+    )
+
     # 1. Resumen Ejecutivo
-    md_resumen = os.path.join(base_dir, "Resumen_ejecutivo_eStrata_MUBIL_2026_v2_PROPUESTA.md")
-    docx_resumen = os.path.join(base_dir, "Resumen_ejecutivo_eStrata_MUBIL_2026_v2_PROPUESTA.docx")
+    md_resumen = os.path.join(
+        base_dir, "Resumen_ejecutivo_eStrata_MUBIL_2026_v2_PROPUESTA.md"
+    )
+    docx_resumen = os.path.join(
+        base_dir, "Resumen_ejecutivo_eStrata_MUBIL_2026_v2_PROPUESTA.docx"
+    )
     print(f"Procesando resumen: {md_resumen}...")
     parse_markdown_to_docx(md_resumen, docx_resumen)
 

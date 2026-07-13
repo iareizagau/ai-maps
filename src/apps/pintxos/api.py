@@ -1,44 +1,49 @@
-from ninja import Router, Query
-from ninja.errors import HttpError
-from django.shortcuts import get_object_or_404
-from typing import List
 
-from .models import Restaurant, Dish, DishRating, DishFavorite
-from .schemas import (
-    RestaurantIn, RestaurantOut,
-    DishIn, DishOut,
-    DishRatingIn, DishRatingOut,
-)
+from django.shortcuts import get_object_or_404
+from ninja import Query, Router
+from ninja.errors import HttpError
+
 from . import services
+from .models import Dish, DishFavorite, DishRating, Restaurant
+from .schemas import (
+    DishIn,
+    DishOut,
+    DishRatingIn,
+    DishRatingOut,
+    RestaurantIn,
+    RestaurantOut,
+)
 
 router = Router()
 
 
 # ============ HELPERS ============
 
+
 def _restaurant_to_schema(restaurant: Restaurant) -> dict:
     """Convert Restaurant model to dict for schema (handles PointField)"""
     return {
-        'id': restaurant.id,
-        'name': restaurant.name,
-        'description': restaurant.description,
-        'address': restaurant.address,
-        'phone': restaurant.phone,
-        'website': restaurant.website,
-        'image_url': restaurant.image_url,
-        'category': restaurant.category,
-        'hours': restaurant.hours,
-        'approved': restaurant.approved,
-        'created_at': restaurant.created_at,
-        'created_by_id': restaurant.created_by_id,
-        'latitude': restaurant.location.y,
-        'longitude': restaurant.location.x,
+        "id": restaurant.id,
+        "name": restaurant.name,
+        "description": restaurant.description,
+        "address": restaurant.address,
+        "phone": restaurant.phone,
+        "website": restaurant.website,
+        "image_url": restaurant.image_url,
+        "category": restaurant.category,
+        "hours": restaurant.hours,
+        "approved": restaurant.approved,
+        "created_at": restaurant.created_at,
+        "created_by_id": restaurant.created_by_id,
+        "latitude": restaurant.location.y,
+        "longitude": restaurant.location.x,
     }
 
 
 # ============ RESTAURANTS ============
 
-@router.get("/restaurants/nearby/", response=List[RestaurantOut])
+
+@router.get("/restaurants/nearby/", response=list[RestaurantOut])
 def get_nearby_restaurants(
     request,
     latitude: float = Query(...),
@@ -50,7 +55,7 @@ def get_nearby_restaurants(
     return [_restaurant_to_schema(r) for r in nearby]
 
 
-@router.get("/restaurants/", response=List[RestaurantOut])
+@router.get("/restaurants/", response=list[RestaurantOut])
 def list_restaurants(request, skip: int = Query(0), limit: int = Query(20)):
     """List all approved restaurants"""
     restaurants = Restaurant.objects.approved()[skip : skip + limit]
@@ -82,7 +87,7 @@ def create_restaurant(request, payload: RestaurantIn):
             website=payload.website,
             image_url=payload.image_url,
             hours=payload.hours,
-            created_by=request.user
+            created_by=request.user,
         )
         return 200, _restaurant_to_schema(restaurant)
     except ValueError as e:
@@ -108,7 +113,7 @@ def update_restaurant(request, restaurant_id: int, payload: RestaurantIn):
             category=payload.category,
             hours=payload.hours,
             latitude=payload.latitude,
-            longitude=payload.longitude
+            longitude=payload.longitude,
         )
         return _restaurant_to_schema(restaurant)
     except PermissionError as e:
@@ -117,14 +122,15 @@ def update_restaurant(request, restaurant_id: int, payload: RestaurantIn):
 
 # ============ DISHES ============
 
-@router.get("/restaurants/{restaurant_id}/dishes/", response=List[DishOut])
+
+@router.get("/restaurants/{restaurant_id}/dishes/", response=list[DishOut])
 def list_dishes(request, restaurant_id: int):
     """List dishes for a restaurant"""
     restaurant = get_object_or_404(Restaurant, id=restaurant_id, approved=True)
     return restaurant.dishes.all()
 
 
-@router.get("/dishes/", response=List[DishOut])
+@router.get("/dishes/", response=list[DishOut])
 def list_all_dishes(
     request,
     skip: int = Query(0),
@@ -138,7 +144,7 @@ def list_all_dishes(
     if restaurant_id:
         queryset = queryset.filter(restaurant_id=restaurant_id)
 
-    return queryset.order_by('-avg_rating')[skip : skip + limit]
+    return queryset.order_by("-avg_rating")[skip : skip + limit]
 
 
 @router.get("/dishes/{dish_id}/", response=DishOut)
@@ -161,7 +167,7 @@ def create_dish(request, restaurant_id: int, payload: DishIn):
         description=payload.description,
         price=payload.price,
         image_url=payload.image_url,
-        created_by=request.user
+        created_by=request.user,
     )
     return dish
 
@@ -189,6 +195,7 @@ def update_dish(request, dish_id: int, payload: DishIn):
 
 # ============ RATINGS ============
 
+
 @router.post("/dishes/{dish_id}/rate/", response=DishRatingOut)
 def rate_dish(request, dish_id: int, payload: DishRatingIn):
     """Rate a dish using service layer"""
@@ -200,13 +207,15 @@ def rate_dish(request, dish_id: int, payload: DishRatingIn):
         user=request.user,
         rating_value=payload.rating,
         comment=payload.comment,
-        price=payload.price
+        price=payload.price,
     )
     return rating
 
 
-@router.get("/dishes/{dish_id}/ratings/", response=List[DishRatingOut])
-def list_dish_ratings(request, dish_id: int, skip: int = Query(0), limit: int = Query(20)):
+@router.get("/dishes/{dish_id}/ratings/", response=list[DishRatingOut])
+def list_dish_ratings(
+    request, dish_id: int, skip: int = Query(0), limit: int = Query(20)
+):
     """List ratings for a dish"""
     dish = get_object_or_404(Dish, id=dish_id)
     return dish.ratings.all()[skip : skip + limit]
@@ -229,7 +238,8 @@ def delete_rating(request, rating_id: int):
 
 # ============ SEARCH (Spatial + Semantic) ============
 
-@router.get("/navigator/", response=List[RestaurantOut])
+
+@router.get("/navigator/", response=list[RestaurantOut])
 def list_filtered_restaurants(
     request,
     q: str = Query(None),
@@ -245,7 +255,7 @@ def list_filtered_restaurants(
     if latitude is not None and longitude is not None:
         queryset = queryset.nearby(longitude, latitude, radius_km)
     else:
-        queryset = queryset.order_by('-created_at')
+        queryset = queryset.order_by("-created_at")
 
     return [_restaurant_to_schema(r) for r in queryset[:limit]]
 
@@ -259,25 +269,31 @@ def search_nearby(
     radius_km: float = Query(5),
 ):
     """Search nearby restaurants and dishes using QuerySet methods"""
-    restaurants = Restaurant.objects.approved().nearby(longitude, latitude, radius_km).filter(name__icontains=q)[:10]
+    restaurants = (
+        Restaurant.objects.approved()
+        .nearby(longitude, latitude, radius_km)
+        .filter(name__icontains=q)[:10]
+    )
 
-    dishes = Dish.objects.approved_restaurants().search(q).select_related('restaurant')
-    
+    dishes = Dish.objects.approved_restaurants().search(q).select_related("restaurant")
+
     # Custom spatial sort for dishes if needed
-    from django.contrib.gis.geos import Point
     from django.contrib.gis.db.models.functions import Distance
+    from django.contrib.gis.geos import Point
+
     user_point = Point(longitude, latitude)
     dishes = dishes.annotate(
-        distance=Distance('restaurant__location', user_point)
-    ).order_by('-avg_rating', 'distance')[:10]
+        distance=Distance("restaurant__location", user_point)
+    ).order_by("-avg_rating", "distance")[:10]
 
     return 200, {
-        'restaurants': [_restaurant_to_schema(r) for r in restaurants],
-        'dishes': [DishOut.from_orm(d) for d in dishes],
+        "restaurants": [_restaurant_to_schema(r) for r in restaurants],
+        "dishes": [DishOut.from_orm(d) for d in dishes],
     }
 
 
 # ============ FAVOURITES ============
+
 
 @router.post("/dishes/{dish_id}/favourite/")
 def toggle_favourite(request, dish_id: int):
@@ -296,7 +312,7 @@ def toggle_favourite(request, dish_id: int):
         favourited = True
 
     count = dish.favorites.count()
-    return 200, {'favourited': favourited, 'count': count}
+    return 200, {"favourited": favourited, "count": count}
 
 
 @router.get("/dishes/{dish_id}/favourite/")
@@ -304,11 +320,11 @@ def get_favourite_status(request, dish_id: int):
     """Get favourite status for current user and total count"""
     dish = get_object_or_404(Dish, id=dish_id)
     favourited = (
-        request.user.is_authenticated and
-        DishFavorite.objects.filter(dish=dish, user=request.user).exists()
+        request.user.is_authenticated
+        and DishFavorite.objects.filter(dish=dish, user=request.user).exists()
     )
     count = dish.favorites.count()
-    return 200, {'favourited': favourited, 'count': count}
+    return 200, {"favourited": favourited, "count": count}
 
 
 @router.get("/favourites/")
@@ -318,19 +334,19 @@ def list_my_favourites(request, skip: int = 0, limit: int = 20):
         raise HttpError(401, "Se requiere iniciar sesión.")
 
     favs = DishFavorite.objects.filter(user=request.user).select_related(
-        'dish', 'dish__restaurant'
-    )[skip:skip + limit]
+        "dish", "dish__restaurant"
+    )[skip : skip + limit]
 
     return 200, [
         {
-            'id': f.dish.id,
-            'name': f.dish.name,
-            'category': f.dish.category,
-            'restaurant': f.dish.restaurant.name,
-            'restaurant_id': f.dish.restaurant_id,
-            'avg_rating': f.dish.avg_rating,
-            'image_url': f.dish.image_url,
-            'favourited_at': f.created_at,
+            "id": f.dish.id,
+            "name": f.dish.name,
+            "category": f.dish.category,
+            "restaurant": f.dish.restaurant.name,
+            "restaurant_id": f.dish.restaurant_id,
+            "avg_rating": f.dish.avg_rating,
+            "image_url": f.dish.image_url,
+            "favourited_at": f.created_at,
         }
         for f in favs
     ]

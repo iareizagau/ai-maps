@@ -1,6 +1,7 @@
 """Quick smoke test for the /api/route/optimize endpoint."""
+
+
 import requests
-import json
 
 payload = {
     "locations": [
@@ -13,7 +14,9 @@ payload = {
     "soc_start": 90.0,
 }
 
-r = requests.post("http://localhost:9000/api/mubil/v1/route/optimize", json=payload, timeout=30)
+r = requests.post(
+    "http://localhost:9000/api/mubil/v1/route/optimize", json=payload, timeout=30
+)
 print(f"Status: {r.status_code}")
 data = r.json()
 

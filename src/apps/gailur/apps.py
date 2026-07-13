@@ -2,5 +2,5 @@ from django.apps import AppConfig
 
 
 class GailurConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'apps.gailur'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.gailur"

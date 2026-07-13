@@ -60,7 +60,8 @@ class Command(BaseCommand):
             help="Print the (id, name) marca catalog and exit.",
         )
         parser.add_argument(
-            "--quiet", action="store_true",
+            "--quiet",
+            action="store_true",
             help="Sin línea-por-marca; sólo cabecera y resumen final.",
         )
 
@@ -79,9 +80,11 @@ class Command(BaseCommand):
         scope = f"marcas={only_marcas}" if only_marcas else "FULL catalog"
         started_at = time.monotonic()
         wall_start = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.stdout.write(self.style.HTTP_INFO(
-            f"[{wall_start}] IDAE ingest — {scope} · throttle={throttle}s · dry_run={dry_run}"
-        ))
+        self.stdout.write(
+            self.style.HTTP_INFO(
+                f"[{wall_start}] IDAE ingest — {scope} · throttle={throttle}s · dry_run={dry_run}"
+            )
+        )
 
         # Callbacks que escriben progreso a stdout. Encapsulados aquí para
         # cerrar sobre `self` y `started_at` (logger Python no llega aquí
@@ -123,24 +126,28 @@ class Command(BaseCommand):
             )
         except KeyboardInterrupt:
             elapsed = time.monotonic() - started_at
-            self.stdout.write(self.style.WARNING(
-                f"\n[INT] Interrumpido tras {_fmt_eta(elapsed)} — los upserts "
-                "ya escritos quedan en BBDD (idempotente, puedes relanzar)."
-            ))
+            self.stdout.write(
+                self.style.WARNING(
+                    f"\n[INT] Interrumpido tras {_fmt_eta(elapsed)} — los upserts "
+                    "ya escritos quedan en BBDD (idempotente, puedes relanzar)."
+                )
+            )
             sys.exit(130)
 
         elapsed = time.monotonic() - started_at
         wall_end = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.stdout.write("")
-        self.stdout.write(self.style.SUCCESS(
-            f"[{wall_end}] Finalizado en {_fmt_eta(elapsed)}"
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(f"[{wall_end}] Finalizado en {_fmt_eta(elapsed)}")
+        )
         self.stdout.write(self.style.SUCCESS(json.dumps(stats.as_dict(), indent=2)))
         if dry_run:
             self.stdout.write(self.style.WARNING("Dry run — no DB writes."))
         if stats.errors:
-            self.stdout.write(self.style.WARNING(
-                f"{stats.errors} errores durante la ingesta — revisa logs Django "
-                "(logger `apps.mubil.data.idae_ingest`)."
-            ))
+            self.stdout.write(
+                self.style.WARNING(
+                    f"{stats.errors} errores durante la ingesta — revisa logs Django "
+                    "(logger `apps.mubil.data.idae_ingest`)."
+                )
+            )
             sys.exit(1)

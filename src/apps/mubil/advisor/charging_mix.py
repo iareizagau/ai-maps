@@ -38,20 +38,20 @@ Profile = Literal["particular", "autonomo", "empresa"]
 # (home, work, public_ac, public_dc) — siempre suman 100.
 PRESETS = {
     "particular": {
-        "home_always":   (100, 0, 0, 0),
-        "home_work":     (60, 35, 3, 2),
-        "mixed":         (50, 0, 35, 15),
-        "public_only":   (0, 0, 60, 40),
+        "home_always": (100, 0, 0, 0),
+        "home_work": (60, 35, 3, 2),
+        "mixed": (50, 0, 35, 15),
+        "public_only": (0, 0, 60, 40),
     },
     "autonomo": {
         "office_always": (0, 100, 0, 0),
         "office_public": (0, 70, 20, 10),
-        "fleet_mixed":   (30, 40, 20, 10),
+        "fleet_mixed": (30, 40, 20, 10),
     },
     "empresa": {
         "office_always": (0, 100, 0, 0),
         "office_public": (0, 70, 20, 10),
-        "fleet_mixed":   (30, 40, 20, 10),
+        "fleet_mixed": (30, 40, 20, 10),
     },
 }
 
@@ -74,7 +74,7 @@ class ChargingMix:
             raise ValueError(f"ChargingMix debe sumar ~100, suma {total}")
 
     @classmethod
-    def from_preset(cls, profile: Profile, preset_key: str) -> "ChargingMix":
+    def from_preset(cls, profile: Profile, preset_key: str) -> ChargingMix:
         try:
             home, work, ac, dc = PRESETS[profile][preset_key]
         except KeyError as exc:
@@ -82,7 +82,7 @@ class ChargingMix:
         return cls(home, work, ac, dc)
 
     @classmethod
-    def normalized(cls, home: int, work: int, ac: int, dc: int) -> "ChargingMix":
+    def normalized(cls, home: int, work: int, ac: int, dc: int) -> ChargingMix:
         """Construye y corrige el redondeo del slider (residuo va a home)."""
         total = home + work + ac + dc
         if total != 100:

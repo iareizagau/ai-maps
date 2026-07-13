@@ -53,8 +53,8 @@ class ScoringTests(TestCase):
         )
 
     def test_corridor_proxy_drops_off_axis(self):
-        on_ap8 = (43.290, -2.500)        # near the AP-8 segment
-        off_axis = (42.500, -2.500)      # well south of any corridor
+        on_ap8 = (43.290, -2.500)  # near the AP-8 segment
+        off_axis = (42.500, -2.500)  # well south of any corridor
         self.assertGreater(
             services._corridor_component(on_ap8),
             services._corridor_component(off_axis),

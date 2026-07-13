@@ -64,9 +64,11 @@ class Command(BaseCommand):
             results.append(stats.as_dict())
 
         if source in ("euskadi", "all"):
-            self.stdout.write(self.style.WARNING(
-                "OpenData Euskadi ingest not yet implemented — skipping."
-            ))
+            self.stdout.write(
+                self.style.WARNING(
+                    "OpenData Euskadi ingest not yet implemented — skipping."
+                )
+            )
 
         if not results:
             self.stdout.write(self.style.WARNING("Nothing ingested."))

@@ -14,7 +14,6 @@ from django.test import TestCase
 from apps.mubil.data import idae_client, idae_ingest
 from apps.mubil.models import Vehicle
 
-
 # Sample rows in the same shape that POST /ajax returns.
 SAMPLE_ELEC_PAYLOAD = {
     "draw": 1,
@@ -137,7 +136,8 @@ class ParserTests(TestCase):
         # and the model contains its own multi-space chunks.
         raw = "Volkswagen Turismos T-Roc Cabrio MY22 …  6 vel."
         make, model = idae_client._normalize_make_model(
-            raw, make_hint="Volkswagen Turismos",
+            raw,
+            make_hint="Volkswagen Turismos",
         )
         self.assertEqual(make, "Volkswagen Turismos")
         self.assertTrue(model.startswith("T-Roc Cabrio"))
@@ -228,7 +228,7 @@ class WLTPRowParsingTests(TestCase):
 def _envelope_responder(payloads_by_ciclo):
     """Build a ``fetch_listing`` side_effect that returns one page per ciclo
     and an empty page on the second call (ends pagination)."""
-    state = {ciclo: False for ciclo in payloads_by_ciclo}
+    state = dict.fromkeys(payloads_by_ciclo, False)
 
     def _side_effect(*, ciclo, marca_id=None, categoria_id=None, start=0, length=1000):
         if state[ciclo]:
@@ -246,10 +246,12 @@ class IngestMarcaTests(TestCase):
 
     @mock.patch.object(idae_client.IDAESession, "fetch_listing")
     def test_merges_elec_and_wltp_by_idae_id(self, fetch_mock):
-        fetch_mock.side_effect = _envelope_responder({
-            "elec": SAMPLE_ELEC_PAYLOAD,
-            "wltp": SAMPLE_WLTP_PAYLOAD,
-        })
+        fetch_mock.side_effect = _envelope_responder(
+            {
+                "elec": SAMPLE_ELEC_PAYLOAD,
+                "wltp": SAMPLE_WLTP_PAYLOAD,
+            }
+        )
         session = idae_client.IDAESession()
 
         stats = idae_ingest.ingest_marca(marca_id=134, session=session)
@@ -280,18 +282,22 @@ class IngestMarcaTests(TestCase):
 
     @mock.patch.object(idae_client.IDAESession, "fetch_listing")
     def test_idempotent_rerun_updates(self, fetch_mock):
-        fetch_mock.side_effect = _envelope_responder({
-            "elec": SAMPLE_ELEC_PAYLOAD,
-            "wltp": SAMPLE_WLTP_PAYLOAD,
-        })
+        fetch_mock.side_effect = _envelope_responder(
+            {
+                "elec": SAMPLE_ELEC_PAYLOAD,
+                "wltp": SAMPLE_WLTP_PAYLOAD,
+            }
+        )
         session = idae_client.IDAESession()
         idae_ingest.ingest_marca(marca_id=134, session=session)
 
         # Second run — same payloads → updates, not creates.
-        fetch_mock.side_effect = _envelope_responder({
-            "elec": SAMPLE_ELEC_PAYLOAD,
-            "wltp": SAMPLE_WLTP_PAYLOAD,
-        })
+        fetch_mock.side_effect = _envelope_responder(
+            {
+                "elec": SAMPLE_ELEC_PAYLOAD,
+                "wltp": SAMPLE_WLTP_PAYLOAD,
+            }
+        )
         stats = idae_ingest.ingest_marca(marca_id=134, session=session)
         self.assertEqual(stats.created, 0)
         self.assertEqual(stats.updated, 3)
@@ -299,10 +305,12 @@ class IngestMarcaTests(TestCase):
 
     @mock.patch.object(idae_client.IDAESession, "fetch_listing")
     def test_dry_run_makes_no_writes(self, fetch_mock):
-        fetch_mock.side_effect = _envelope_responder({
-            "elec": SAMPLE_ELEC_PAYLOAD,
-            "wltp": SAMPLE_WLTP_PAYLOAD,
-        })
+        fetch_mock.side_effect = _envelope_responder(
+            {
+                "elec": SAMPLE_ELEC_PAYLOAD,
+                "wltp": SAMPLE_WLTP_PAYLOAD,
+            }
+        )
         session = idae_client.IDAESession()
         stats = idae_ingest.ingest_marca(marca_id=134, session=session, dry_run=True)
         self.assertEqual(stats.merged, 3)

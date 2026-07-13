@@ -1,5 +1,7 @@
-import django
 import os
+
+import django
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.base")
 django.setup()
 
@@ -21,7 +23,7 @@ with connection.cursor() as cursor:
         WHERE ST_DWithin(the_geom, ST_SetSRID(ST_Point(-2.0722, 43.1369), 4326), 0.05)
     """)
     print("Ways in Tolosa (~5km):", cursor.fetchone()[0])
-    
+
     # Let's count how many ways are in Bilbao (-2.9349, 43.2630)
     cursor.execute("""
         SELECT COUNT(*) 

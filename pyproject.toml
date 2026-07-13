@@ -83,6 +83,10 @@ DJANGO_SETTINGS_MODULE = "config.settings.local"
 python_files = ["test_*.py", "*_test.py", "tests.py"]
 django_find_project = true
 pythonpath = ["src"]
+testpaths = [
+    "src/apps/mubil/tests",
+    "src/apps/pintxos/tests"
+]
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main"]

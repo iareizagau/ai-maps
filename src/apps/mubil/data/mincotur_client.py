@@ -31,7 +31,6 @@ import logging
 import ssl
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
-from typing import Dict, List, Optional
 
 import requests
 from urllib3.util.ssl_ import create_urllib3_context
@@ -87,6 +86,7 @@ def _session() -> requests.Session:
     s.mount("https://sedeaplicaciones.minetur.gob.es", _LegacyTLSAdapter())
     return s
 
+
 # Province IDs (INE) for Euskal Herria — default scope of the cron.
 PROVINCE_ARABA = "01"
 PROVINCE_GIPUZKOA = "20"
@@ -96,7 +96,7 @@ DEFAULT_EH_PROVINCES = (PROVINCE_ARABA, PROVINCE_GIPUZKOA, PROVINCE_BIZKAIA)
 
 # Internal short keys → MINCOTUR payload keys. Add a row here to start ingesting
 # a new fuel (Hidrogeno, GLP, …) — the rest of the pipeline picks it up.
-FUEL_KEY_MAP: Dict[str, str] = {
+FUEL_KEY_MAP: dict[str, str] = {
     "gasolina_95_e5": "Precio Gasolina 95 E5",
     "gasolina_98_e5": "Precio Gasolina 98 E5",
     "gasoleo_a": "Precio Gasoleo A",
@@ -117,9 +117,9 @@ class FuelStationRecord:
     address: str = ""
     municipality_name: str = ""
     postal_code: str = ""
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    prices: Dict[str, Decimal] = field(default_factory=dict)  # short_key → €/L
+    latitude: float | None = None
+    longitude: float | None = None
+    prices: dict[str, Decimal] = field(default_factory=dict)  # short_key → €/L
     schedule: str = ""
     sale_type: str = ""
 
@@ -127,7 +127,7 @@ class FuelStationRecord:
 # ─────────────────────────────────────────────── parsing helpers
 
 
-def _to_decimal_eur(value: object) -> Optional[Decimal]:
+def _to_decimal_eur(value: object) -> Decimal | None:
     """Parse ``"1,659"`` → Decimal("1.659"). Empty/invalid → None."""
     if value is None:
         return None
@@ -140,7 +140,7 @@ def _to_decimal_eur(value: object) -> Optional[Decimal]:
         return None
 
 
-def _to_float_coord(value: object) -> Optional[float]:
+def _to_float_coord(value: object) -> float | None:
     """Parse ``"43,318"`` → 43.318. Empty/invalid → None."""
     if value is None:
         return None
@@ -153,7 +153,7 @@ def _to_float_coord(value: object) -> Optional[float]:
         return None
 
 
-def _parse_record(row: dict) -> Optional[FuelStationRecord]:
+def _parse_record(row: dict) -> FuelStationRecord | None:
     """Map one raw MINCOTUR dict to a :class:`FuelStationRecord`.
 
     Returns ``None`` if the row lacks the minimum we need (id + coordinates) —
@@ -173,7 +173,7 @@ def _parse_record(row: dict) -> Optional[FuelStationRecord]:
     if lat is None or lon is None:
         return None
 
-    prices: Dict[str, Decimal] = {}
+    prices: dict[str, Decimal] = {}
     for short_key, payload_key in FUEL_KEY_MAP.items():
         price = _to_decimal_eur(row.get(payload_key))
         if price is not None:
@@ -196,7 +196,7 @@ def _parse_record(row: dict) -> Optional[FuelStationRecord]:
 # ─────────────────────────────────────────────── public API
 
 
-def fetch_province(prov_code: str) -> List[FuelStationRecord]:
+def fetch_province(prov_code: str) -> list[FuelStationRecord]:
     """Fetch every station in one INE province and return parsed records.
 
     Args:
@@ -223,7 +223,9 @@ def fetch_province(prov_code: str) -> List[FuelStationRecord]:
     try:
         payload = r.json()
     except ValueError as e:
-        raise MincoturError(f"MINCOTUR returned non-JSON for province {code}: {e}") from e
+        raise MincoturError(
+            f"MINCOTUR returned non-JSON for province {code}: {e}"
+        ) from e
 
     rows = payload.get("ListaEESSPrecio")
     if not isinstance(rows, list):
@@ -231,7 +233,7 @@ def fetch_province(prov_code: str) -> List[FuelStationRecord]:
             f"MINCOTUR payload missing 'ListaEESSPrecio' for province {code}."
         )
 
-    records: List[FuelStationRecord] = []
+    records: list[FuelStationRecord] = []
     for raw in rows:
         if not isinstance(raw, dict):
             continue

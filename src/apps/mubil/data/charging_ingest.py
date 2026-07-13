@@ -28,11 +28,11 @@ from __future__ import annotations
 
 import csv
 import logging
+from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
-from typing import Iterable, Optional
 
 from django.conf import settings
 from django.contrib.gis.geos import Point
@@ -80,7 +80,7 @@ class ChargingIngestStats:
 # ─────────────────────────────────────────────── MITECO CSV ingest
 
 
-def _to_decimal_kw(value: object) -> Optional[Decimal]:
+def _to_decimal_kw(value: object) -> Decimal | None:
     """Parse ``"50.00"`` / ``"50,00"`` → Decimal. Empty/invalid → None."""
     if value is None:
         return None
@@ -93,7 +93,7 @@ def _to_decimal_kw(value: object) -> Optional[Decimal]:
         return None
 
 
-def _to_float_coord(value: object) -> Optional[float]:
+def _to_float_coord(value: object) -> float | None:
     if value is None:
         return None
     s = str(value).strip().replace(",", ".")
@@ -109,13 +109,14 @@ def _strip_accents_upper(text: str) -> str:
     """ASCII-fold + uppercase, used to normalise provincia values from MITECO."""
     if not text:
         return ""
-    table = str.maketrans("ÁÉÍÓÚÀÈÌÒÙÄËÏÖÜÑáéíóúàèìòùäëïöüñ",
-                          "AEIOUAEIOUAEIOUNaeiouaeiouaeioun")
+    table = str.maketrans(
+        "ÁÉÍÓÚÀÈÌÒÙÄËÏÖÜÑáéíóúàèìòùäëïöüñ", "AEIOUAEIOUAEIOUNaeiouaeiouaeioun"
+    )
     return text.translate(table).upper().strip()
 
 
 def ingest_miteco_csv(
-    csv_path: Optional[Path] = None,
+    csv_path: Path | None = None,
     *,
     eh_only: bool = True,
     dry_run: bool = False,
@@ -134,7 +135,7 @@ def ingest_miteco_csv(
     """
     path = Path(csv_path) if csv_path is not None else DEFAULT_MITECO_CSV
     stats = ChargingIngestStats(source=SOURCE_MITECO)
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     if not path.is_file():
         log.error("MITECO CSV not found at %s", path)
@@ -210,10 +211,12 @@ def _ingest_miteco_row(
                 external_id=external_id,
                 defaults=defaults,
             )
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         log.warning(
             "ChargingStation upsert failed (source=%s external_id=%s): %s",
-            SOURCE_MITECO, external_id, e,
+            SOURCE_MITECO,
+            external_id,
+            e,
         )
         return "error"
     return "created" if created else "updated"
@@ -254,10 +257,12 @@ def _upsert_record(
                 external_id=rec.external_id,
                 defaults=defaults,
             )
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         log.warning(
             "ChargingStation upsert failed (source=%s external_id=%s): %s",
-            source, rec.external_id, e,
+            source,
+            rec.external_id,
+            e,
         )
         stats.errors += 1
         return
@@ -272,7 +277,7 @@ def _upsert_record(
 
 def ingest_openchargemap(
     *,
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
     sw=openchargemap_client.EH_BBOX_SW,
     ne=openchargemap_client.EH_BBOX_NE,
     country_code: str = "ES",
@@ -291,7 +296,11 @@ def ingest_openchargemap(
         dry_run: fetch + parse, no DB writes.
     """
     stats = ChargingIngestStats(source=SOURCE_OCM)
-    key = api_key if api_key is not None else getattr(settings, "OPENCHARGEMAP_API_KEY", "")
+    key = (
+        api_key
+        if api_key is not None
+        else getattr(settings, "OPENCHARGEMAP_API_KEY", "")
+    )
     if not key:
         log.warning(
             "OPENCHARGEMAP_API_KEY not configured — skipping OCM ingest. "
@@ -316,7 +325,7 @@ def ingest_openchargemap(
     if dry_run:
         return stats
 
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     for rec in records:
         _upsert_record(rec, source=SOURCE_OCM, now=now, stats=stats)
     return stats
@@ -358,7 +367,7 @@ def ingest_dgt_nap(
     if dry_run:
         return stats
 
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     for rec in records:
         _upsert_record(rec, source=SOURCE_DGT_NAP, now=now, stats=stats)
     return stats

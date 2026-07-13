@@ -1,8 +1,8 @@
 import os
-import django
-import uuid
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+import django
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 django.setup()
 
 from apps.sbk.models import Person
@@ -17,7 +17,7 @@ people_data = [
         "country": "Spain",
         "city": "Madrid",
         "roles": ["dj", "teacher"],
-        "is_verified": True
+        "is_verified": True,
     },
     {
         "name": "Sara Panero",
@@ -27,7 +27,7 @@ people_data = [
         "country": "Spain",
         "city": "Madrid",
         "roles": ["teacher", "dancer"],
-        "is_verified": True
+        "is_verified": True,
     },
     {
         "name": "DJ York",
@@ -37,7 +37,7 @@ people_data = [
         "country": "Germany",
         "city": "Munich",
         "roles": ["dj"],
-        "is_verified": True
+        "is_verified": True,
     },
     {
         "name": "Ataca & La Alemana",
@@ -47,22 +47,22 @@ people_data = [
         "country": "USA",
         "city": "Orlando",
         "roles": ["teacher", "dancer", "organizer"],
-        "is_verified": True
-    }
+        "is_verified": True,
+    },
 ]
 
 for p in people_data:
     person, created = Person.objects.get_or_create(
-        slug=p['slug'],
+        slug=p["slug"],
         defaults={
-            "name": p['name'],
-            "bio": p['bio'],
-            "instagram": p['instagram'],
-            "country": p['country'],
-            "city": p['city'],
-            "roles": p['roles'],
-            "is_verified": p['is_verified']
-        }
+            "name": p["name"],
+            "bio": p["bio"],
+            "instagram": p["instagram"],
+            "country": p["country"],
+            "city": p["city"],
+            "roles": p["roles"],
+            "is_verified": p["is_verified"],
+        },
     )
     if created:
         print(f"Created {person.name}")

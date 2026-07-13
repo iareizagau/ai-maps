@@ -1,9 +1,9 @@
 import codecs
 
-with codecs.open('src/templates/adventure/follow.html', 'r', 'utf-8') as f:
+with codecs.open("src/templates/adventure/follow.html", "r", "utf-8") as f:
     content = f.read()
 
-target = '''        <!-- Predictive ClimbPro Style Profile -->
+target = """        <!-- Predictive ClimbPro Style Profile -->
         <div id="predictive-profile-container" class="absolute left-4 right-20 z-40 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl p-2 transition-opacity duration-300 pointer-events-none opacity-100" style="top: -110px;">
             <div class="flex justify-between items-center mb-1 px-1">
                 <span class="text-[9px] font-black text-white/70 uppercase tracking-widest">Próximos 3 km</span>
@@ -63,9 +63,9 @@ target = '''        <!-- Predictive ClimbPro Style Profile -->
                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                 Pausar
             </button>
-        </div>'''
+        </div>"""
 
-replacement = '''        <!-- Predictive Chart as Header Background -->
+replacement = """        <!-- Predictive Chart as Header Background -->
         <div id="predictive-profile-container" class="relative w-full h-[60px] bg-gradient-to-b from-black/60 to-transparent transition-opacity duration-300 shrink-0">
             <div class="absolute top-2 left-4 right-4 flex justify-between items-center z-10 pointer-events-none">
                 <span class="text-[9px] font-black text-white/70 uppercase tracking-widest">{{ route.name }} (Próx 3km)</span>
@@ -114,15 +114,17 @@ replacement = '''        <!-- Predictive Chart as Header Background -->
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>
                 </button>
             </div>
-        </div>'''
+        </div>"""
 
-if target.replace('\\r\\n', '\\n') in content.replace('\\r\\n', '\\n'):
+if target.replace("\\r\\n", "\\n") in content.replace("\\r\\n", "\\n"):
     print("Found HTML! Replacing...")
-    content = content.replace('\\r\\n', '\\n').replace(target.replace('\\r\\n', '\\n'), replacement)
+    content = content.replace("\\r\\n", "\\n").replace(
+        target.replace("\\r\\n", "\\n"), replacement
+    )
 else:
     print("NOT FOUND HTML")
 
-target_js = '''    function toggleDashboard() {
+target_js = """    function toggleDashboard() {
         dashboardExpanded = !dashboardExpanded;
         if (dashboardExpanded) {
             dashboard.style.height = '100%'; // Fill the container, not 100vh which overflows
@@ -168,9 +170,9 @@ target_js = '''    function toggleDashboard() {
                 predProfile.style.opacity = '1';
             }
         }
-    }'''
+    }"""
 
-replacement_js = '''    function toggleDashboard() {
+replacement_js = """    function toggleDashboard() {
         dashboardExpanded = !dashboardExpanded;
         if (dashboardExpanded) {
             dashboard.style.height = '100%'; // Fill the container
@@ -210,13 +212,15 @@ replacement_js = '''    function toggleDashboard() {
             viewCompact.style.opacity = '1';
             viewCompact.style.pointerEvents = 'auto';
         }
-    }'''
+    }"""
 
-if target_js.replace('\\r\\n', '\\n') in content.replace('\\r\\n', '\\n'):
+if target_js.replace("\\r\\n", "\\n") in content.replace("\\r\\n", "\\n"):
     print("Found JS! Replacing...")
-    content = content.replace('\\r\\n', '\\n').replace(target_js.replace('\\r\\n', '\\n'), replacement_js)
+    content = content.replace("\\r\\n", "\\n").replace(
+        target_js.replace("\\r\\n", "\\n"), replacement_js
+    )
 else:
     print("NOT FOUND JS")
 
-with codecs.open('src/templates/adventure/follow.html', 'w', 'utf-8') as f:
+with codecs.open("src/templates/adventure/follow.html", "w", "utf-8") as f:
     f.write(content)

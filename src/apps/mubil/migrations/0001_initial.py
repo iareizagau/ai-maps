@@ -7,181 +7,413 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         # Ensure pgvector extension is available — idempotent on prod (already created
         # by scripts/init_db.sql) but required for test DBs created by `manage.py test`,
         # which start from template1 without our extensions.
         migrations.RunSQL(
-            sql='CREATE EXTENSION IF NOT EXISTS vector;',
+            sql="CREATE EXTENSION IF NOT EXISTS vector;",
             reverse_sql=migrations.RunSQL.noop,
         ),
         migrations.CreateModel(
-            name='DemandHex',
+            name="DemandHex",
             fields=[
-                ('h3_index', models.CharField(max_length=15, primary_key=True, serialize=False)),
-                ('geom', django.contrib.gis.db.models.fields.PolygonField(srid=4326)),
-                ('municipality_naia', models.CharField(blank=True, db_index=True, max_length=16)),
-                ('score_now', models.DecimalField(decimal_places=3, default=0, max_digits=6)),
-                ('score_y3', models.DecimalField(decimal_places=3, default=0, max_digits=6)),
-                ('score_y5', models.DecimalField(decimal_places=3, default=0, max_digits=6)),
-                ('components', models.JSONField(blank=True, default=dict)),
-                ('computed_at', models.DateTimeField(auto_now=True)),
+                (
+                    "h3_index",
+                    models.CharField(max_length=15, primary_key=True, serialize=False),
+                ),
+                ("geom", django.contrib.gis.db.models.fields.PolygonField(srid=4326)),
+                (
+                    "municipality_naia",
+                    models.CharField(blank=True, db_index=True, max_length=16),
+                ),
+                (
+                    "score_now",
+                    models.DecimalField(decimal_places=3, default=0, max_digits=6),
+                ),
+                (
+                    "score_y3",
+                    models.DecimalField(decimal_places=3, default=0, max_digits=6),
+                ),
+                (
+                    "score_y5",
+                    models.DecimalField(decimal_places=3, default=0, max_digits=6),
+                ),
+                ("components", models.JSONField(blank=True, default=dict)),
+                ("computed_at", models.DateTimeField(auto_now=True)),
             ],
             options={
-                'ordering': ['-score_now'],
+                "ordering": ["-score_now"],
             },
         ),
         migrations.CreateModel(
-            name='FuelStation',
+            name="FuelStation",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('ideess', models.IntegerField(unique=True)),
-                ('brand', models.CharField(blank=True, max_length=80)),
-                ('address', models.CharField(blank=True, max_length=300)),
-                ('municipality_name', models.CharField(blank=True, db_index=True, max_length=120)),
-                ('postal_code', models.CharField(blank=True, max_length=10)),
-                ('geom', django.contrib.gis.db.models.fields.PointField(srid=4326)),
-                ('prices', models.JSONField(blank=True, default=dict)),
-                ('schedule', models.CharField(blank=True, max_length=120)),
-                ('sale_type', models.CharField(blank=True, max_length=4)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('last_seen_at', models.DateTimeField(blank=True, null=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("ideess", models.IntegerField(unique=True)),
+                ("brand", models.CharField(blank=True, max_length=80)),
+                ("address", models.CharField(blank=True, max_length=300)),
+                (
+                    "municipality_name",
+                    models.CharField(blank=True, db_index=True, max_length=120),
+                ),
+                ("postal_code", models.CharField(blank=True, max_length=10)),
+                ("geom", django.contrib.gis.db.models.fields.PointField(srid=4326)),
+                ("prices", models.JSONField(blank=True, default=dict)),
+                ("schedule", models.CharField(blank=True, max_length=120)),
+                ("sale_type", models.CharField(blank=True, max_length=4)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("last_seen_at", models.DateTimeField(blank=True, null=True)),
             ],
             options={
-                'ordering': ['municipality_name', 'brand'],
+                "ordering": ["municipality_name", "brand"],
             },
         ),
         migrations.CreateModel(
-            name='MobilityDocument',
+            name="MobilityDocument",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=300)),
-                ('source_url', models.URLField(blank=True)),
-                ('source_type', models.CharField(choices=[('dataset', 'Dataset'), ('blog', 'Blog/article'), ('norma', 'Normativa'), ('gtfs_summary', 'GTFS resumen')], db_index=True, max_length=16)),
-                ('municipality_naia', models.CharField(blank=True, db_index=True, max_length=16)),
-                ('content', models.TextField()),
-                ('content_hash', models.CharField(db_index=True, max_length=64)),
-                ('embedding', pgvector.django.vector.VectorField(blank=True, dimensions=768, null=True)),
-                ('ingested_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=300)),
+                ("source_url", models.URLField(blank=True)),
+                (
+                    "source_type",
+                    models.CharField(
+                        choices=[
+                            ("dataset", "Dataset"),
+                            ("blog", "Blog/article"),
+                            ("norma", "Normativa"),
+                            ("gtfs_summary", "GTFS resumen"),
+                        ],
+                        db_index=True,
+                        max_length=16,
+                    ),
+                ),
+                (
+                    "municipality_naia",
+                    models.CharField(blank=True, db_index=True, max_length=16),
+                ),
+                ("content", models.TextField()),
+                ("content_hash", models.CharField(db_index=True, max_length=64)),
+                (
+                    "embedding",
+                    pgvector.django.vector.VectorField(
+                        blank=True, dimensions=768, null=True
+                    ),
+                ),
+                ("ingested_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
-                'ordering': ['-ingested_at'],
+                "ordering": ["-ingested_at"],
             },
         ),
         migrations.CreateModel(
-            name='ChargingStation',
+            name="ChargingStation",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('external_id', models.CharField(blank=True, max_length=80)),
-                ('source', models.CharField(blank=True, max_length=40)),
-                ('operator', models.CharField(blank=True, max_length=120)),
-                ('address', models.CharField(blank=True, max_length=300)),
-                ('geom', django.contrib.gis.db.models.fields.PointField(srid=4326)),
-                ('power_kw', models.DecimalField(blank=True, decimal_places=2, max_digits=6, null=True)),
-                ('connectors', models.JSONField(blank=True, default=list)),
-                ('last_seen_at', models.DateTimeField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("external_id", models.CharField(blank=True, max_length=80)),
+                ("source", models.CharField(blank=True, max_length=40)),
+                ("operator", models.CharField(blank=True, max_length=120)),
+                ("address", models.CharField(blank=True, max_length=300)),
+                ("geom", django.contrib.gis.db.models.fields.PointField(srid=4326)),
+                (
+                    "power_kw",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=6, null=True
+                    ),
+                ),
+                ("connectors", models.JSONField(blank=True, default=list)),
+                ("last_seen_at", models.DateTimeField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
-                'ordering': ['-power_kw', 'operator'],
-                'indexes': [models.Index(fields=['source', 'external_id'], name='mubil_charg_source_d67bde_idx')],
+                "ordering": ["-power_kw", "operator"],
+                "indexes": [
+                    models.Index(
+                        fields=["source", "external_id"],
+                        name="mubil_charg_source_d67bde_idx",
+                    )
+                ],
             },
         ),
         migrations.CreateModel(
-            name='EnergyPricePVPC',
+            name="EnergyPricePVPC",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('timestamp', models.DateTimeField(db_index=True)),
-                ('tariff', models.CharField(choices=[('2.0TD_P1', '2.0TD P1 (punta)'), ('2.0TD_P2', '2.0TD P2 (llano)'), ('2.0TD_P3', '2.0TD P3 (valle)')], default='2.0TD_P1', max_length=12)),
-                ('price_eur_mwh', models.DecimalField(decimal_places=3, max_digits=8)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("timestamp", models.DateTimeField(db_index=True)),
+                (
+                    "tariff",
+                    models.CharField(
+                        choices=[
+                            ("2.0TD_P1", "2.0TD P1 (punta)"),
+                            ("2.0TD_P2", "2.0TD P2 (llano)"),
+                            ("2.0TD_P3", "2.0TD P3 (valle)"),
+                        ],
+                        default="2.0TD_P1",
+                        max_length=12,
+                    ),
+                ),
+                ("price_eur_mwh", models.DecimalField(decimal_places=3, max_digits=8)),
             ],
             options={
-                'ordering': ['-timestamp'],
-                'unique_together': {('timestamp', 'tariff')},
+                "ordering": ["-timestamp"],
+                "unique_together": {("timestamp", "tariff")},
             },
         ),
         migrations.CreateModel(
-            name='EVRegistration',
+            name="EVRegistration",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('municipality_naia', models.CharField(db_index=True, max_length=12)),
-                ('municipality_name', models.CharField(blank=True, max_length=120)),
-                ('year', models.PositiveSmallIntegerField()),
-                ('month', models.PositiveSmallIntegerField()),
-                ('propulsion', models.CharField(choices=[('BEV', 'Eléctrico (BEV)'), ('PHEV', 'Híbrido enchufable'), ('HEV', 'Híbrido'), ('ICE', 'Gasolina'), ('DIESEL', 'Diésel')], max_length=8)),
-                ('count', models.PositiveIntegerField()),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("municipality_naia", models.CharField(db_index=True, max_length=12)),
+                ("municipality_name", models.CharField(blank=True, max_length=120)),
+                ("year", models.PositiveSmallIntegerField()),
+                ("month", models.PositiveSmallIntegerField()),
+                (
+                    "propulsion",
+                    models.CharField(
+                        choices=[
+                            ("BEV", "Eléctrico (BEV)"),
+                            ("PHEV", "Híbrido enchufable"),
+                            ("HEV", "Híbrido"),
+                            ("ICE", "Gasolina"),
+                            ("DIESEL", "Diésel"),
+                        ],
+                        max_length=8,
+                    ),
+                ),
+                ("count", models.PositiveIntegerField()),
             ],
             options={
-                'ordering': ['-year', '-month'],
-                'indexes': [models.Index(fields=['propulsion', 'year', 'month'], name='mubil_evreg_propuls_d1e5eb_idx')],
-                'unique_together': {('municipality_naia', 'year', 'month', 'propulsion')},
+                "ordering": ["-year", "-month"],
+                "indexes": [
+                    models.Index(
+                        fields=["propulsion", "year", "month"],
+                        name="mubil_evreg_propuls_d1e5eb_idx",
+                    )
+                ],
+                "unique_together": {
+                    ("municipality_naia", "year", "month", "propulsion")
+                },
             },
         ),
         migrations.CreateModel(
-            name='MobilityTrip',
+            name="MobilityTrip",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('origin_naia', models.CharField(db_index=True, max_length=16)),
-                ('dest_naia', models.CharField(db_index=True, max_length=16)),
-                ('date', models.DateField(db_index=True)),
-                ('hour', models.PositiveSmallIntegerField()),
-                ('mode', models.CharField(choices=[('walk', 'A pie'), ('bike', 'Bici'), ('car', 'Coche'), ('bus', 'Autobús'), ('train', 'Tren')], max_length=8)),
-                ('motive', models.CharField(blank=True, choices=[('home', 'Casa'), ('work', 'Trabajo'), ('study', 'Estudio'), ('other', 'Otros')], max_length=8)),
-                ('n_trips', models.PositiveIntegerField()),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("origin_naia", models.CharField(db_index=True, max_length=16)),
+                ("dest_naia", models.CharField(db_index=True, max_length=16)),
+                ("date", models.DateField(db_index=True)),
+                ("hour", models.PositiveSmallIntegerField()),
+                (
+                    "mode",
+                    models.CharField(
+                        choices=[
+                            ("walk", "A pie"),
+                            ("bike", "Bici"),
+                            ("car", "Coche"),
+                            ("bus", "Autobús"),
+                            ("train", "Tren"),
+                        ],
+                        max_length=8,
+                    ),
+                ),
+                (
+                    "motive",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("home", "Casa"),
+                            ("work", "Trabajo"),
+                            ("study", "Estudio"),
+                            ("other", "Otros"),
+                        ],
+                        max_length=8,
+                    ),
+                ),
+                ("n_trips", models.PositiveIntegerField()),
             ],
             options={
-                'ordering': ['-date', 'hour'],
-                'indexes': [models.Index(fields=['date', 'origin_naia', 'dest_naia'], name='mubil_mobil_date_6df50a_idx'), models.Index(fields=['date', 'mode'], name='mubil_mobil_date_6da7e7_idx')],
+                "ordering": ["-date", "hour"],
+                "indexes": [
+                    models.Index(
+                        fields=["date", "origin_naia", "dest_naia"],
+                        name="mubil_mobil_date_6df50a_idx",
+                    ),
+                    models.Index(
+                        fields=["date", "mode"], name="mubil_mobil_date_6da7e7_idx"
+                    ),
+                ],
             },
         ),
         migrations.CreateModel(
-            name='Vehicle',
+            name="Vehicle",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('make', models.CharField(max_length=80)),
-                ('model', models.CharField(max_length=120)),
-                ('year', models.PositiveSmallIntegerField()),
-                ('propulsion', models.CharField(choices=[('BEV', 'Eléctrico (BEV)'), ('PHEV', 'Híbrido enchufable'), ('HEV', 'Híbrido'), ('ICE', 'Gasolina'), ('DIESEL', 'Diésel')], db_index=True, max_length=8)),
-                ('battery_kwh', models.DecimalField(blank=True, decimal_places=2, max_digits=6, null=True)),
-                ('range_wltp_km', models.PositiveIntegerField(blank=True, null=True)),
-                ('consumption_kwh_100km', models.DecimalField(blank=True, decimal_places=2, max_digits=5, null=True)),
-                ('consumption_l_100km', models.DecimalField(blank=True, decimal_places=2, max_digits=5, null=True)),
-                ('price_eur', models.PositiveIntegerField(blank=True, null=True)),
-                ('source_url', models.URLField(blank=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("make", models.CharField(max_length=80)),
+                ("model", models.CharField(max_length=120)),
+                ("year", models.PositiveSmallIntegerField()),
+                (
+                    "propulsion",
+                    models.CharField(
+                        choices=[
+                            ("BEV", "Eléctrico (BEV)"),
+                            ("PHEV", "Híbrido enchufable"),
+                            ("HEV", "Híbrido"),
+                            ("ICE", "Gasolina"),
+                            ("DIESEL", "Diésel"),
+                        ],
+                        db_index=True,
+                        max_length=8,
+                    ),
+                ),
+                (
+                    "battery_kwh",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=6, null=True
+                    ),
+                ),
+                ("range_wltp_km", models.PositiveIntegerField(blank=True, null=True)),
+                (
+                    "consumption_kwh_100km",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=5, null=True
+                    ),
+                ),
+                (
+                    "consumption_l_100km",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=5, null=True
+                    ),
+                ),
+                ("price_eur", models.PositiveIntegerField(blank=True, null=True)),
+                ("source_url", models.URLField(blank=True)),
             ],
             options={
-                'ordering': ['make', 'model', '-year'],
-                'indexes': [models.Index(fields=['propulsion', 'year'], name='mubil_vehic_propuls_5b7f37_idx')],
-                'unique_together': {('make', 'model', 'year')},
+                "ordering": ["make", "model", "-year"],
+                "indexes": [
+                    models.Index(
+                        fields=["propulsion", "year"],
+                        name="mubil_vehic_propuls_5b7f37_idx",
+                    )
+                ],
+                "unique_together": {("make", "model", "year")},
             },
         ),
         migrations.CreateModel(
-            name='EVRoutePlan',
+            name="EVRoutePlan",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('origin', django.contrib.gis.db.models.fields.PointField(srid=4326)),
-                ('dest', django.contrib.gis.db.models.fields.PointField(srid=4326)),
-                ('soc_start', models.DecimalField(blank=True, decimal_places=2, max_digits=5, null=True)),
-                ('geojson', models.JSONField(default=dict)),
-                ('distance_km', models.DecimalField(blank=True, decimal_places=2, max_digits=7, null=True)),
-                ('duration_min', models.PositiveIntegerField(blank=True, null=True)),
-                ('energy_kwh', models.DecimalField(blank=True, decimal_places=2, max_digits=7, null=True)),
-                ('estimated_cost_eur', models.DecimalField(blank=True, decimal_places=2, max_digits=7, null=True)),
-                ('computed_at', models.DateTimeField(auto_now_add=True)),
-                ('vehicle', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='mubil.vehicle')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("origin", django.contrib.gis.db.models.fields.PointField(srid=4326)),
+                ("dest", django.contrib.gis.db.models.fields.PointField(srid=4326)),
+                (
+                    "soc_start",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=5, null=True
+                    ),
+                ),
+                ("geojson", models.JSONField(default=dict)),
+                (
+                    "distance_km",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=7, null=True
+                    ),
+                ),
+                ("duration_min", models.PositiveIntegerField(blank=True, null=True)),
+                (
+                    "energy_kwh",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=7, null=True
+                    ),
+                ),
+                (
+                    "estimated_cost_eur",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=7, null=True
+                    ),
+                ),
+                ("computed_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "vehicle",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="mubil.vehicle",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-computed_at'],
+                "ordering": ["-computed_at"],
             },
         ),
     ]

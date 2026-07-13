@@ -4,24 +4,33 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('kultur', '0002_culturalevent_event_type'),
+        ("kultur", "0002_culturalevent_event_type"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='culturalevent',
-            name='event_type',
+            model_name="culturalevent",
+            name="event_type",
         ),
         migrations.AddField(
-            model_name='culturalevent',
-            name='event_type_es',
-            field=models.CharField(blank=True, max_length=255, null=True, verbose_name='Tipo/Categoría (ES)'),
+            model_name="culturalevent",
+            name="event_type_es",
+            field=models.CharField(
+                blank=True,
+                max_length=255,
+                null=True,
+                verbose_name="Tipo/Categoría (ES)",
+            ),
         ),
         migrations.AddField(
-            model_name='culturalevent',
-            name='event_type_eu',
-            field=models.CharField(blank=True, max_length=255, null=True, verbose_name='Tipo/Categoría (EU)'),
+            model_name="culturalevent",
+            name="event_type_eu",
+            field=models.CharField(
+                blank=True,
+                max_length=255,
+                null=True,
+                verbose_name="Tipo/Categoría (EU)",
+            ),
         ),
     ]

@@ -7,30 +7,72 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('adventure', '0004_pointofinterest'),
+        ("adventure", "0004_pointofinterest"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='IntelDrop',
+            name="IntelDrop",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('intel_type', models.CharField(choices=[('warning', '⚠️ Peligro / Obstáculo'), ('water_dry', '🏜️ Fuente sin agua'), ('water_ok', '💧 Fuente funcionando'), ('shelter_ok', '⛺ Refugio perfecto'), ('shelter_bad', '🏚️ Refugio en mal estado'), ('surface_mud', '💩 Mucho barro'), ('surface_snow', '❄️ Nieve bloqueando'), ('photo_epic', '📸 Lugar Épico (Journal)')], max_length=50)),
-                ('location', django.contrib.gis.db.models.fields.PointField(srid=4326)),
-                ('description', models.TextField(blank=True)),
-                ('image', models.ImageField(blank=True, null=True, upload_to='adventure_intel/')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('route', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='intel_drops', to='adventure.route')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "intel_type",
+                    models.CharField(
+                        choices=[
+                            ("warning", "⚠️ Peligro / Obstáculo"),
+                            ("water_dry", "🏜️ Fuente sin agua"),
+                            ("water_ok", "💧 Fuente funcionando"),
+                            ("shelter_ok", "⛺ Refugio perfecto"),
+                            ("shelter_bad", "🏚️ Refugio en mal estado"),
+                            ("surface_mud", "💩 Mucho barro"),
+                            ("surface_snow", "❄️ Nieve bloqueando"),
+                            ("photo_epic", "📸 Lugar Épico (Journal)"),
+                        ],
+                        max_length=50,
+                    ),
+                ),
+                ("location", django.contrib.gis.db.models.fields.PointField(srid=4326)),
+                ("description", models.TextField(blank=True)),
+                (
+                    "image",
+                    models.ImageField(
+                        blank=True, null=True, upload_to="adventure_intel/"
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "route",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="intel_drops",
+                        to="adventure.route",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Intel Drop',
-                'verbose_name_plural': 'Intel Drops',
-                'db_table': 'adventure_intel',
-                'ordering': ['-created_at'],
+                "verbose_name": "Intel Drop",
+                "verbose_name_plural": "Intel Drops",
+                "db_table": "adventure_intel",
+                "ordering": ["-created_at"],
             },
         ),
     ]

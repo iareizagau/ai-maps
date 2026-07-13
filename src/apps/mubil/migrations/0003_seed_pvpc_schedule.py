@@ -11,44 +11,42 @@ around 20:00 Madrid — an hourly tick picks it up without cursor tracking.
 
 from django.db import migrations
 
-
-TASK_NAME = 'mubil-pvpc-hourly'
-TASK = 'mubil.ingest_pvpc_hourly'
+TASK_NAME = "mubil-pvpc-hourly"
+TASK = "mubil.ingest_pvpc_hourly"
 
 
 def create_schedule(apps, schema_editor):
-    CrontabSchedule = apps.get_model('django_celery_beat', 'CrontabSchedule')
-    PeriodicTask = apps.get_model('django_celery_beat', 'PeriodicTask')
+    CrontabSchedule = apps.get_model("django_celery_beat", "CrontabSchedule")
+    PeriodicTask = apps.get_model("django_celery_beat", "PeriodicTask")
 
     crontab, _ = CrontabSchedule.objects.get_or_create(
-        minute='15',
-        hour='*',
-        day_of_week='*',
-        day_of_month='*',
-        month_of_year='*',
-        timezone='Europe/Madrid',
+        minute="15",
+        hour="*",
+        day_of_week="*",
+        day_of_month="*",
+        month_of_year="*",
+        timezone="Europe/Madrid",
     )
     PeriodicTask.objects.update_or_create(
         name=TASK_NAME,
         defaults={
-            'task': TASK,
-            'crontab': crontab,
-            'interval': None,
-            'enabled': True,
+            "task": TASK,
+            "crontab": crontab,
+            "interval": None,
+            "enabled": True,
         },
     )
 
 
 def remove_schedule(apps, schema_editor):
-    PeriodicTask = apps.get_model('django_celery_beat', 'PeriodicTask')
+    PeriodicTask = apps.get_model("django_celery_beat", "PeriodicTask")
     PeriodicTask.objects.filter(name=TASK_NAME).delete()
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('mubil', '0002_timescale_pgvector'),
-        ('django_celery_beat', '0001_initial'),
+        ("mubil", "0002_timescale_pgvector"),
+        ("django_celery_beat", "0001_initial"),
     ]
 
     operations = [

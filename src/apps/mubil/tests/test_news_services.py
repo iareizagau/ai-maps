@@ -7,7 +7,7 @@ Gemini and the embedding SDK are mocked end-to-end. No live network calls
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime
 from unittest import mock
 
 from django.test import TestCase, override_settings
@@ -17,27 +17,32 @@ from apps.mubil.news import services
 from apps.mubil.news.sources import RawArticle
 
 
-def _raw(url: str, *, source: str = 'newsapi', title: str = 'Subvención MOVES III ampliada',
-         published_at=None) -> RawArticle:
+def _raw(
+    url: str,
+    *,
+    source: str = "newsapi",
+    title: str = "Subvención MOVES III ampliada",
+    published_at=None,
+) -> RawArticle:
     return RawArticle(
         source=source,
         source_url=url,
         title=title,
-        published_at=published_at or datetime(2026, 6, 1, 10, 0, tzinfo=timezone.utc),
-        snippet='El gobierno amplía las ayudas MOVES III hasta diciembre.',
-        image_url='',
+        published_at=published_at or datetime(2026, 6, 1, 10, 0, tzinfo=UTC),
+        snippet="El gobierno amplía las ayudas MOVES III hasta diciembre.",
+        image_url="",
     )
 
 
 def _gemini_payload(**overrides) -> str:
     data = {
-        'title_es': 'Subvención MOVES III ampliada',
-        'title_eu': 'MOVES III diru-laguntza luzatu egin da',
-        'summary_es': 'El gobierno amplía MOVES III hasta diciembre. Mantiene los importes actuales.',
-        'summary_eu': 'Gobernuak MOVES III abendura arte luzatu du. Egungo zenbatekoak mantentzen ditu.',
-        'tags': ['subvencion'],
-        'relevance': 'ESPANA',
-        'affects_user_plan': True,
+        "title_es": "Subvención MOVES III ampliada",
+        "title_eu": "MOVES III diru-laguntza luzatu egin da",
+        "summary_es": "El gobierno amplía MOVES III hasta diciembre. Mantiene los importes actuales.",
+        "summary_eu": "Gobernuak MOVES III abendura arte luzatu du. Egungo zenbatekoak mantentzen ditu.",
+        "tags": ["subvencion"],
+        "relevance": "ESPANA",
+        "affects_user_plan": True,
     }
     data.update(overrides)
     return json.dumps(data)
@@ -49,18 +54,24 @@ def _gemini_payload(**overrides) -> str:
 class DedupeTests(TestCase):
     """Idempotency: re-running refresh on the same URLs must not duplicate."""
 
-    @override_settings(GEMINI_API_KEY='fake')
+    @override_settings(GEMINI_API_KEY="fake")
     def test_existing_url_is_skipped(self):
         NewsArticle.objects.create(
-            source='newsapi', source_url='https://example.com/a',
-            title_orig='preexisting', published_at=datetime(2026, 5, 1, tzinfo=timezone.utc),
+            source="newsapi",
+            source_url="https://example.com/a",
+            title_orig="preexisting",
+            published_at=datetime(2026, 5, 1, tzinfo=UTC),
             relevance=NewsArticle.Relevance.ESPANA,
         )
-        raws = [_raw('https://example.com/a'), _raw('https://example.com/b')]
+        raws = [_raw("https://example.com/a"), _raw("https://example.com/b")]
 
-        with mock.patch('apps.mubil.news.services.sources.fetch_all', return_value=raws), \
-             mock.patch('apps.mubil.news.services.ask_services._call_gemini_generate',
-                        return_value=_gemini_payload()):
+        with (
+            mock.patch("apps.mubil.news.services.sources.fetch_all", return_value=raws),
+            mock.patch(
+                "apps.mubil.news.services.ask_services._call_gemini_generate",
+                return_value=_gemini_payload(),
+            ),
+        ):
             stats = services.refresh(embed=False)
 
         # Only the new URL gets classified + saved.
@@ -69,14 +80,21 @@ class DedupeTests(TestCase):
         self.assertEqual(stats.classified, 1)
         self.assertEqual(NewsArticle.objects.count(), 2)
 
-    @override_settings(GEMINI_API_KEY='fake')
+    @override_settings(GEMINI_API_KEY="fake")
     def test_intra_batch_duplicate_is_collapsed(self):
         """Same URL appearing twice in one fetch (NewsAPI + RSS) → one row."""
-        raws = [_raw('https://example.com/x'), _raw('https://example.com/x', source='forocoches_ev')]
+        raws = [
+            _raw("https://example.com/x"),
+            _raw("https://example.com/x", source="forocoches_ev"),
+        ]
 
-        with mock.patch('apps.mubil.news.services.sources.fetch_all', return_value=raws), \
-             mock.patch('apps.mubil.news.services.ask_services._call_gemini_generate',
-                        return_value=_gemini_payload()):
+        with (
+            mock.patch("apps.mubil.news.services.sources.fetch_all", return_value=raws),
+            mock.patch(
+                "apps.mubil.news.services.ask_services._call_gemini_generate",
+                return_value=_gemini_payload(),
+            ),
+        ):
             stats = services.refresh(embed=False)
 
         self.assertEqual(stats.new, 1)
@@ -87,28 +105,34 @@ class DedupeTests(TestCase):
 
 
 class ClassifyTests(TestCase):
-    @override_settings(GEMINI_API_KEY='fake')
+    @override_settings(GEMINI_API_KEY="fake")
     def test_fenced_json_is_parsed(self):
         """Gemini sometimes wraps JSON in ```json blocks despite the prompt."""
         fenced = "```json\n" + _gemini_payload() + "\n```"
-        with mock.patch('apps.mubil.news.services.ask_services._call_gemini_generate',
-                        return_value=fenced):
-            data = services.classify_article(_raw('https://example.com/c'))
+        with mock.patch(
+            "apps.mubil.news.services.ask_services._call_gemini_generate",
+            return_value=fenced,
+        ):
+            data = services.classify_article(_raw("https://example.com/c"))
         self.assertIsNotNone(data)
-        self.assertEqual(data['relevance'], 'ESPANA')
+        self.assertEqual(data["relevance"], "ESPANA")
 
-    @override_settings(GEMINI_API_KEY='fake')
+    @override_settings(GEMINI_API_KEY="fake")
     def test_invalid_relevance_falls_back_to_global(self):
-        with mock.patch('apps.mubil.news.services.ask_services._call_gemini_generate',
-                        return_value=_gemini_payload(relevance='MARTE')):
-            data = services.classify_article(_raw('https://example.com/d'))
-        self.assertEqual(data['relevance'], 'GLOBAL')
+        with mock.patch(
+            "apps.mubil.news.services.ask_services._call_gemini_generate",
+            return_value=_gemini_payload(relevance="MARTE"),
+        ):
+            data = services.classify_article(_raw("https://example.com/d"))
+        self.assertEqual(data["relevance"], "GLOBAL")
 
-    @override_settings(GEMINI_API_KEY='fake')
+    @override_settings(GEMINI_API_KEY="fake")
     def test_non_json_returns_none(self):
-        with mock.patch('apps.mubil.news.services.ask_services._call_gemini_generate',
-                        return_value='Lo siento, no puedo responder.'):
-            data = services.classify_article(_raw('https://example.com/e'))
+        with mock.patch(
+            "apps.mubil.news.services.ask_services._call_gemini_generate",
+            return_value="Lo siento, no puedo responder.",
+        ):
+            data = services.classify_article(_raw("https://example.com/e"))
         self.assertIsNone(data)
 
 
@@ -124,8 +148,10 @@ class StalenessTests(TestCase):
     @override_settings(NEWS_CACHE_HOURS=6)
     def test_fresh_row_is_not_stale(self):
         NewsArticle.objects.create(
-            source='newsapi', source_url='https://example.com/fresh',
-            title_orig='x', published_at=datetime(2026, 6, 1, tzinfo=timezone.utc),
+            source="newsapi",
+            source_url="https://example.com/fresh",
+            title_orig="x",
+            published_at=datetime(2026, 6, 1, tzinfo=UTC),
             relevance=NewsArticle.Relevance.GLOBAL,
         )
         stale, age = services.is_cache_stale()

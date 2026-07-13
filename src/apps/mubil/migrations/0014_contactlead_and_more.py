@@ -4,36 +4,45 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('mubil', '0013_newsarticle'),
+        ("mubil", "0013_newsarticle"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ContactLead',
+            name="ContactLead",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('name', models.CharField(max_length=120)),
-                ('entity', models.CharField(blank=True, max_length=200)),
-                ('email', models.EmailField(max_length=200)),
-                ('profile', models.CharField(db_index=True, max_length=40)),
-                ('message', models.TextField()),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("name", models.CharField(max_length=120)),
+                ("entity", models.CharField(blank=True, max_length=200)),
+                ("email", models.EmailField(max_length=200)),
+                ("profile", models.CharField(db_index=True, max_length=40)),
+                ("message", models.TextField()),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
         migrations.RenameIndex(
-            model_name='newsarticle',
-            new_name='mubil_newsa_publish_6de6b8_idx',
-            old_name='mubil_newsa_publish_rel_idx',
+            model_name="newsarticle",
+            new_name="mubil_newsa_publish_6de6b8_idx",
+            old_name="mubil_newsa_publish_rel_idx",
         ),
         migrations.AlterField(
-            model_name='newsarticle',
-            name='id',
-            field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            model_name="newsarticle",
+            name="id",
+            field=models.BigAutoField(
+                auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+            ),
         ),
     ]

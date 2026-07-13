@@ -253,26 +253,71 @@ def search_documents(query_vector, limit=5):
                 "slug_es": "pipelines-cicd-django-contenedores",
                 "slug_eu": "cicd-pipeline-django-edukiontzietan",
                 "slug_en": "cicd-pipelines-django-containers",
-                "summary_es": "Cómo estructurar el Dockerfile y las acciones de GitHub para lograr despliegues rápidos, seguros y deterministas utilizando uv.",
-                "summary_eu": "Nola egituratu Dockerfile eta GitHub Actions inplementazio azkar, seguru eta deterministak lortzeko uv erabiliz.",
-                "summary_en": "How to structure the Dockerfile and GitHub Actions to achieve fast, secure, and deterministic deployments using uv.",
+                "summary_es": "Cómo estructurar el pipeline de integración continua para auditar la calidad, seguridad y fiabilidad del código utilizando herramientas como Ruff, pip-audit, Bandit y pytest.",
+                "summary_eu": "Nola egituratu integrazio jarraituko pipeline-a kodearen kalitatea, segurtasuna eta fidagarritasuna ikuskatzeko, Ruff, pip-audit, Bandit eta pytest bezalako tresnak erabiliz.",
+                "summary_en": "How to structure the continuous integration pipeline to audit code quality, security, and reliability using tools like Ruff, pip-audit, Bandit, and pytest.",
                 "content_es": """
-<p>El despliegue continuo (CD) no tiene por qué ser lento. Al optimizar nuestras imágenes Docker y centralizar las comprobaciones en pipelines automáticos, reducimos la fricción en el desarrollo técnico diario.</p>
+<p>El despliegue continuo (CD) no tiene por qué ser solo un canal para llevar código a producción. Cuando incorporamos asistentes de Inteligencia Artificial al flujo de trabajo, el volumen de código producido se acelera de forma masiva. En este nuevo contexto, contar con un pipeline de integración continua (CI) robusto y automatizado se convierte en la única barrera de defensa para auditar y garantizar la calidad, seguridad y fiabilidad del código antes de que llegue a producción.</p>
 
-<h3>Optimización con uv</h3>
-<p>Sustituir <i>pip</i> por <strong>uv</strong> en el proceso de compilación de Docker acelera radicalmente la instalación de dependencias y asegura un entorno determinista mediante la validación estricta de lockfiles.</p>
+<h3>El rol de la IA en la evolución de CI/CD</h3>
+<p>La IA no solo nos ayuda a escribir vistas o modelos en Django; también actúa como un excelente ingeniero de DevOps. Utilizar la IA nos facilita la creación y el mantenimiento de flujos de trabajo de CI/CD complejos (como los archivos de configuración de GitHub Actions o GitLab CI). Podemos pedirle que añada nuevos pasos (jobs) específicos para revisar la calidad del código, aplicar formateadores automáticos, buscar vulnerabilidades o comprobar la compatibilidad de tipos sin necesidad de pasar horas depurando la sintaxis YAML de las acciones.</p>
+
+<h3>Herramientas clave para la auditoría automática en tu pipeline</h3>
+<p>Para construir un pipeline seguro y eficiente, es imprescindible integrar herramientas especializadas que analicen diferentes capas de nuestra aplicación de forma automática en cada Pull Request. Aquí explicamos las herramientas fundamentales y para qué sirve cada una:</p>
+
+<ul>
+    <li><strong>Ruff (Linter y Formateador):</strong> Tradicionalmente en Python utilizábamos una combinación de herramientas como Flake8, Black, isort y pyupgrade. Ruff unifica todas ellas en una sola herramienta escrita en Rust que es entre 10 y 100 veces más rápida. En la integración continua, Ruff comprueba en milisegundos que el código cumple con las guías de estilo (PEP 8), detecta variables no utilizadas, importaciones desordenadas y malas prácticas sintácticas, bloqueando la integración de código mal formateado o sucio.</li>
+    <li><strong>pip-audit (Auditoría de dependencias):</strong> El código generado por IA a menudo propone instalar nuevos paquetes de terceros o actualizar versiones existentes. <code>pip-audit</code> analiza nuestro entorno de ejecución y archivos de dependencias (como <code>requirements.txt</code> o el lockfile de <code>uv</code>) contrastándolos con la base de datos de vulnerabilidades conocidas (CVEs). Esto garantiza que no despleguemos librerías con fallos de seguridad críticos en producción de manera accidental.</li>
+    <li><strong>Bandit (Seguridad del código fuente):</strong> Mientras que pip-audit busca fallos en librerías externas, Bandit se enfoca en auditar nuestro propio código Python. Analiza el Árbol de Sintaxis Abstracta (AST) del código fuente para encontrar fallos de seguridad comunes, tales como el uso de contraseñas guardadas en texto plano, llamadas vulnerables al sistema operativo (shell injections), configuraciones de cifrado débiles o vulnerabilidades de inyección SQL.</li>
+    <li><strong>Tests con pytest / manage.py test (Validación funcional):</strong> Las auditorías estáticas son necesarias, pero no aseguran que la lógica de negocio funcione. La ejecución de las pruebas unitarias y de integración del proyecto (mediante <code>pytest</code> o el test runner de Django) es la comprobación definitiva. Garantiza de manera empírica que el nuevo código generado no rompe las funcionalidades existentes del sistema (evitando regresiones).</li>
+</ul>
+
+<h3>Estructura eficiente con Docker y uv</h3>
+<p>Para que estas comprobaciones no ralenticen nuestro desarrollo, es crucial optimizar la infraestructura de CI. Sustituir <i>pip</i> por <strong>uv</strong> en nuestros pipelines y Dockerfiles acelera radicalmente la instalación de dependencias y asegura un entorno determinista. Configurar la caché de Docker y de las dependencias de Python nos permite pasar de pipelines de 10 minutos a validaciones completas en menos de 2 minutos.</p>
 """,
                 "content_eu": """
-<p>Inplementazio jarraitua ez da zertan motela izan. Gure Docker irudiak optimizatuz, garapenaren marruskadura murrizten dugu.</p>
+<p>Etengabeko inplementazioa (CD) ez da kodea ekoizpenera eramateko bide soil bat bakarrik. Lan-fluxuan Adimen Artifizialeko laguntzaileak sartzen ditugunean, sortzen den kode bolumena izugarri bizkortzen da. Testuinguru berri honetan, integrazio jarraituko (CI) pipeline sendo eta automatizatu bat izatea da defentsa-hesi bakarra, kodearen kalitatea, segurtasuna eta fidagarritasuna ikuskatu eta bermatzeko ekoizpenera iritsi aurretik.</p>
+
+<h3>AIaren rola CI/CD pipelineen bilakaeran</h3>
+<p>AIak ez digu soilik Django modeloak edo ikuspegiak idazten laguntzen; DevOps ingeniari bikain gisa ere jokatzen du. AIa erabiltzeak CI/CD fluxu konplexuak (hala nola GitHub Actions edo GitLab CI konfigurazio fitxategiak) sortzea eta mantentzea errazten digu. Pipelineari kalitatea ikuskatzeko, formateatzaileak aplikatzeko, ahultasunak bilatzeko edo moten bateragarritasuna egiaztatzeko job berriak gehitzea eska diezaiokegu, YAML sintaxia arazten orduak eman beharrik gabe.</p>
+
+<h3>Gako-tresnak zure pipelineko auditoretza automatikorako</h3>
+<p>Pipeline seguru eta eraginkor bat eraikitzeko, ezinbestekoa da Pull Request bakoitzean gure aplikazioaren geruza desberdinak automatikoki aztertuko dituzten tresna espezializatuak integratzea. Hemen azaltzen ditugu oinarrizko tresnak eta zertarako balio duen bakoitzak:</p>
+
+<ul>
+    <li><strong>Ruff (Linter eta Formateatzailea):</strong> Pythonen tradizionalki Flake8, Black, isort eta pyupgrade bezalako tresnen konbinazioa erabiltzen genuen. Ruffek horiek guztiak Rust-en idatzitako tresna bakar batean bateratzen ditu, 10 eta 100 bider azkarragoa dena. Integrazio jarraituan, Ruffek milisegundotan egiaztatzen du kodeak estilo-gidak (PEP 8) betetzen dituela, eta gaizki formateatutako kodea blokeatzen du.</li>
+    <li><strong>pip-audit (Mendekotasunen auditoretza):</strong> AIak sortutako kodeak sarritan hirugarrenen pakete berriak instalatzea edo lehendik daudenak eguneratzea proposatzen du. <code>pip-audit</code>ek gure paketeak eta mendekotasun fitxategiak (adibidez <code>requirements.txt</code> o <code>uv</code> lockfilea) aztertzen ditu ahultasun datu-baseekin alderatuz, ekoizpenean akats kritikoak dituzten liburutegiak ez hedatzeko.</li>
+    <li><strong>Bandit (Iturburu-kodearen segurtasuna):</strong> pip-audit-ek kanpoko liburutegietan akatsak bilatzen dituen bitartean, Bandit gure Python kode propioa aztertzera bideratzen da. Sintaxi zuhaitza aztertzen du segurtasun akats arruntak aurkitzeko, hala nola testu lauan gordetako pasahitzak, injezio ahultasunak edo zifratze ahula.</li>
+    <li><strong>Testak pytest / manage.py test bidez (Balioztatze funtzionala):</strong> Ebaluazio estatikoak beharrezkoak dira, baina ez dute bermatzen negozioko logikak funtzionatzen duenik. Test unitarioak eta integraziokoak exekutatzea (<code>pytest</code> edo Djangoren test runner-aren bidez) behin-betiko egiaztapena da, AIak sortutako kode berriak lehendik dauden funtzionalitateak hausten ez dituela ziurtatzeko.</li>
+</ul>
+
+<h3>Egitura eraginkorra Docker eta uv-ekin</h3>
+<p>Egiaztapen horiek gure garapena ez moteltzeko, funtsezkoa da CI azpiegitura optimizatzea. Gure pipelineetan eta Dockerfileetan <i>pip</i>-en ordez <strong>uv</strong> erabiltzeak mendekotasunen instalazioa erabat azkartzen du eta ingurune determinista bermatzen du.</p>
 """,
                 "content_en": """
-<p>Continuous deployment doesn't have to be slow. By optimizing our Docker images, we reduce daily development friction.</p>
+<p>Continuous deployment (CD) is not just a delivery channel for shipping code. When incorporating Artificial Intelligence assistants into the workflow, the velocity of code production accelerates exponentially. In this new paradigm, maintaining a robust, automated continuous integration (CI) pipeline becomes the ultimate defense barrier to audit and guarantee code quality, security, and stability before it hits production.</p>
+
+<h3>The Role of AI in Evolving CI/CD Workflows</h3>
+<p>AI does not just help us write Django views or database schemas; it also acts as a highly capable DevOps collaborator. Leveraging AI makes configuring and maintaining complex CI/CD scripts (like GitHub Actions or GitLab CI YAML configurations) incredibly straightforward. We can ask the AI to generate new jobs for linting, formatting, vulnerability scanning, or type checking, freeing us from debugging workflow syntax manually.</p>
+
+<h3>Core Auditing Tools in Your CI Pipeline</h3>
+<p>To build a secure and fast pipeline, it is essential to run specialized security and quality tools automatically on every Pull Request. Here is a breakdown of the key tools and what they do:</p>
+
+<ul>
+    <li><strong>Ruff (Linter and Formatter):</strong> Traditionally, Python developers used a combination of separate tools like Flake8, Black, isort, and pyupgrade. Ruff unifies all of them into a single, lightning-fast linter and formatter written in Rust (10x to 100x faster than traditional tools). In CI, Ruff checks PEP 8 compliance, unused imports, and bad code patterns in milliseconds, blocking messy code from entering the repository.</li>
+    <li><strong>pip-audit (Dependency Scanning):</strong> AI-generated suggestions often propose installing new third-party packages or upgrading existing ones. <code>pip-audit</code> scans python packages and lockfiles (such as <code>requirements.txt</code> or the <code>uv</code> lockfile) against known vulnerability databases (CVEs), preventing us from accidentally deploying vulnerable dependencies to production.</li>
+    <li><strong>Bandit (Source Code Security):</strong> While pip-audit checks external packages, Bandit focuses on auditing our own Python source code. It analyzes the Abstract Syntax Tree (AST) to identify common security flaws, such as hardcoded credentials, vulnerable subprocess calls (shell injections), weak cryptographic usages, or SQL injections.</li>
+    <li><strong>Tests via pytest / manage.py test (Functional Validation):</strong> Static checks are necessary but they cannot guarantee that the business logic behaves as expected. Running automated unit and integration tests (using <code>pytest</code> or Django's default test runner) is the ultimate safeguard. It verifies empirically that the AI-generated code does not break existing application behavior (regression testing).</li>
+</ul>
+
+<h3>Speeding up CI/CD with Docker and uv</h3>
+<p>To prevent these checks from slowing down your developer feedback loop, optimizing the build infrastructure is key. Replacing <i>pip</i> with <strong>uv</strong> in your Docker builds and CI workflows radically accelerates package installations and guarantees reproducible, deterministic environments.</p>
 """,
                 "is_published": True,
                 "published_at": timezone.now(),
-                "read_time": 4,
-                "difficulty": "beginner",
-                "likes": 7,
+                "read_time": 7,
+                "difficulty": "intermediate",
+                "likes": 15,
                 "tag_slugs": ["django", "docker", "cicd"],
             },
             {

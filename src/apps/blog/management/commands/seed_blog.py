@@ -288,105 +288,98 @@ def search_documents(query_vector, limit=5):
                 "summary_eu": "maps.eus gunean kodea eskuz idaztetik ai.maps.eus gunean AI agenteekin orkestratzera izandako trantsizioari buruzko azterketa sakona, ingeniaritza diseinuaren, ikuskaritzaren eta integrazio-hodiaren sendotasunaren inguruan birdefinituz.",
                 "summary_en": "An in-depth analysis of transitioning from manual coding in maps.eus to orchestrating with AI agents in ai.maps.eus, redefining engineering around design, auditing, and pipeline robustness.",
                 "content_es": """
-<p>El rol del desarrollador de software, tal y como lo conocíamos, ha cambiado para siempre. Al menos el mío lo ha hecho en solo doce meses. Esta transformación no es una teoría sobre el futuro del trabajo; es una realidad tangible que he vivido al contrastar la construcción de dos de mis proyectos personales: <strong>maps.eus</strong> y <strong>ai.maps.eus</strong>.</p>
+<p>El rol de los que nos dedicamos a programar está cambiando a una velocidad increíble. Al menos a mí me ha dado un vuelco total en el último año. Y no hablo de teorías sobre el futuro del trabajo; hablo de algo real que he vivido en mis carnes al comparar cómo desarrollé mis proyectos personales: <strong>maps.eus</strong> y <strong>ai.maps.eus</strong>.</p>
 
-<h3>El punto de partida: maps.eus y la artesanía del código</h3>
-<p>Cuando comencé a desarrollar <strong>maps.eus</strong>, el objetivo inicial era humilde: quería crear la sección <i>Kulturmaps</i> para participar en el concurso de <strong>Open Data Euskadi</strong>. El desarrollo fue un proceso puramente artesanal. Cada vista de Django, cada modelo, y cada línea de lógica geoespacial en PostGIS fue picada a mano en mi teclado.</p>
+<h2>El punto de partida: de Kulturmaps a la infraestructura real</h2>
+<p>Cuando empecé con la primera versión de <strong>maps.eus</strong>, mi objetivo era modesto: quería montar <i>Kulturmaps</i> para presentar un proyecto al concurso de <strong>Open Data Euskadi</strong>. Por aquel entonces, yo no tenía ni idea de la existencia de <strong>PostGIS</strong> ni de bases de datos espaciales. Todo el desarrollo fue súper artesanal, picando cada vista y cada modelo a mano.</p>
 
-<p>En aquella época, mi uso de la Inteligencia Artificial se limitaba a asistentes externos ejecutándose en una pestaña del navegador. Realizaba consultas concretas sobre sintaxis o APIs, de la misma manera que antes recurría a StackOverflow. Yo era el creador de cada línea de código; conocía cada coma y cada función. La IA actuaba como un diccionario rápido, pero el verdadero cuello de botella de la productividad era físico: la velocidad de mis dedos sobre el teclado.</p>
+<p>En ese momento, la IA era poco más que un buscador rápido en una pestaña del navegador para consultar dudas puntuales de sintaxis, como quien busca en StackOverflow. Yo escribía cada línea y sabía exactamente dónde iba cada coma. Al final, lo que me limitaba era el tiempo físico de teclear cada línea de código.</p>
 
-<h3>El salto cualitativo: ai.maps.eus y los agentes en el IDE</h3>
-<p>El cambio radical llegó con el desarrollo de mi segundo laboratorio WebGIS, <strong>ai.maps.eus</strong>. Aquí decidí dar un paso adelante e integrar asistentes de IA autónomos y basados en agentes directamente dentro de mi entorno de desarrollo (IDE).</p>
+<h2>El salto de calidad: reconstruir desde cero con la IA en el IDE</h2>
+<p>El gran cambio empezó a finales del año pasado, cuando decidí reconstruir el proyecto desde cero utilizando Gemini directamente en mi entorno de desarrollo (IDE). La IA pasó de ser un simple buscador a convertirse en un compañero de aprendizaje activo. De hecho, fue la IA la que me propuso utilizar una mejor infraestructura para el proyecto (como PostGIS) y me ayudó paso a paso a implementarla.</p>
 
-<p>La IA dejó de ser una herramienta de consulta aislada para convertirse en un <strong>mentor y colaborador activo</strong>. Gracias a tener acceso al contexto completo del espacio de trabajo y a la capacidad de proponer cambios estructurados, la IA me ayudó a entender y desplegar tecnologías complejas que antes me daban un respeto enorme. Juntos pudimos:</p>
+<p>La IA me está ayudando a ampliar mis horizontes, a aprender nuevas herramientas y a entender cómo funcionan por dentro las aplicaciones que utilizo habitualmente en mis rutas de viaje en bici. Juntos pudimos:</p>
 <ul>
-    <li>Integrar bases de datos espaciales y dominar el uso de <strong>pgRouting</strong> para modelar redes viales.</li>
+    <li>Montar toda la base de datos espacial, descubriendo cómo modelar redes viales para calcular rutas.</li>
     <li>Procesar e importar datos complejos de <strong>OpenStreetMap</strong>.</li>
-    <li>Montar toda la infraestructura de contenedores necesaria, automatizando la configuración de <code>Dockerfile</code> y <code>docker-compose</code> para bases de datos, workers de Celery, y cachés de Redis.</li>
+    <li>Configurar toda la infraestructura con contenedores Docker (con Celery para tareas en segundo plano y Redis para la caché), algo que antes me habría llevado días de prueba y error.</li>
 </ul>
 <p>El resultado es que he levantado el motor completo de generación y visualización de rutas de bikepacking prácticamente sin teclear código a mano.</p>
 
-<h3>El nuevo cuello de botella: La Caja Negra y la Deuda Técnica</h3>
-<p>Este nivel de automatización nos sitúa ante un nuevo dilema. Si la IA es capaz de generar cientos de líneas de código válidas en segundos, la velocidad de escritura deja de ser una métrica útil. El riesgo real ahora es la pérdida de control técnico, creando sistemas que se conviertan en "cajas negras" incomprensibles e imposibles de mantener.</p>
-
-<p>Para evitarlo, mi día a día como ingeniero de software ha cambiado de enfoque:</p>
+<h2>El nuevo reto: que el código no se nos vaya de las manos</h2>
+<p>Generar código rápido está muy bien, pero el peligro real ahora es perder el control y acabar con una "caja negra" que nadie entienda ni pueda mantener. Por eso, mi forma de trabajar ha cambiado por completo:</p>
 <ol>
-    <li><strong>Diseño de Arquitectura a Alto Nivel:</strong> Dedico mucho más tiempo a planificar la estructura, la modularidad y las relaciones entre componentes antes de interactuar con la IA. Si el diseño general es sólido, la IA produce código mucho más limpio y acotado.</li>
-    <li><strong>El Arte de la Auditoría y Revisión:</strong> Antes revisábamos confirmaciones (commits) que contenían unos pocos archivos modificados a mano. Hoy, una sola iteración con un agente puede alterar docenas de archivos en segundos. Aprender a leer, evaluar y cuestionar críticamente este código masivo generado por la IA es la habilidad clave del desarrollador actual.</li>
-    <li><strong>Validación mediante CI/CD:</strong> Confiar ciegamente en el código de la IA es una receta para el desastre. La única forma de mantener la cordura es fortaleciendo nuestros procesos de integración continua. Contar con suites de tests automáticos robustas en el servidor es imprescindible para comprobar que ningún cambio de la IA rompe las funcionalidades existentes en cuestión de segundos.</li>
+    <li><strong>Diseñar y modularizar mejor la arquitectura:</strong> Para que la generación de código no se descontrole, es vital tener claro el diseño a alto nivel y cómo estructurar el proyecto en módulos antes de pedirle nada a la IA. No es una tarea fácil, sobre todo cuando la IA propone un montón de cambios en muchos archivos a la vez. Cada día nos topamos con dificultades nuevas y vamos buscando la forma de mejorar.</li>
+    <li><strong>El arte de revisar el código (Code Review):</strong> Si antes revisábamos pequeños cambios manuales, ahora un agente de IA puede modificar decenas de archivos en un instante. Estamos aprendiendo a hacer mejores revisiones de código, a leer de forma crítica todo lo que se genera y a no dar nada por bueno sin entenderlo.</li>
+    <li><strong>Automatizar tests y CI/CD:</strong> Confiar a ciegas en el código generado por una IA es jugar con fuego. Para mantener la calma, la clave es apoyar al máximo nuestro pipeline de integración continua (CI/CD). La IA también nos ayuda a mejorar en la generación de tests y en preparar scripts de auditoría automática que comprueben en segundos que nada se ha roto.</li>
 </ol>
 
-<h3>Side Projects vs. Entornos Corporativos</h3>
-<p>Los proyectos personales y los laboratorios son el sandbox ideal para probar el potencial de los nuevos modelos (como Claude, que en mi experiencia actual destaca por una solidez y coherencia técnica superior a Gemini en generación de código). Aquí, equivocarse es parte del juego.</p>
+<h2>Proyectos personales frente a entornos reales</h2>
+<p>Los proyectos personales y los laboratorios son el sitio ideal para trastear y ver qué pueden hacer estos modelos (como Claude, que ahora mismo me parece que da soluciones de código más sólidas y coherentes que Gemini). Ahí, meter la pata es parte del juego.</p>
 
-<p>Sin embargo, en el mundo real (trabajando en equipo, con datos sensibles, bajo estrictas regulaciones de seguridad y rendimiento), el desafío es mucho mayor. No se trata solo de construir rápido, sino de colaborar de forma confiable. La IA cambia la forma en que programamos, pero eleva la necesidad de tener ingenieros que entiendan la arquitectura, garanticen la seguridad y controlen la infraestructura.</p>
+<p>Pero en el mundo real, trabajando en equipo, con datos sensibles y con exigencias serias de rendimiento y seguridad, la película es muy distinta. No basta con hacer las cosas rápido; hay que hacerlas bien. La IA nos ayuda a programar, pero hace más falta que nunca tener ingenieros que entiendan la arquitectura, aseguren el código y controlen la infraestructura de verdad.</p>
 """,
                 "content_eu": """
-<p>Software garatzailearen rola, ezagutzen genuen bezala, betiko aldatu da. Nirea behintzat urte bakar batean aldatu da. Eraldaketa hau ez da lanaren etorkizunari buruzko teoria bat; nire bi proiektu pertsonalen eraikuntzan bizi izan dudan errealitate argia da: <strong>maps.eus</strong> eta <strong>ai.maps.eus</strong>.</p>
+<p>Garatzaileon rola abiadura sinestezinean aldatzen ari da. Niri behintzat, azken urtean bizitza aldatu dit nire lan egiteko moduak. Eta ez naiz lanaren etorkizunari buruzko teoria abstraktuez ari; nire haragian bizi izan dudan errealitate bat da, nire proiektu pertsonalak nola garatu nituen alderatzean: <strong>maps.eus</strong> eta <strong>ai.maps.eus</strong>.</p>
 
-<h3>Hasierako puntua: maps.eus eta kodearen artisautza</h3>
-<p><strong>maps.eus</strong> garatzen hasi nintzenean, helburua xumea zen: <i>Kulturmaps</i> atala sortu nahi nuen <strong>Open Data Euskadi</strong> lehiaketan parte hartzeko. Garapena artisau-prozesu bat izan zen. Django ikuspegi bakoitza, modelo bakoitza eta PostGISen logika geoespazialeko lerro bakoitza eskuz idatzi nuen nire teklatuan.</p>
+<h2>Hasierako puntua: Kulturmapsetik benetako azpiegiturara</h2>
+<p><strong>maps.eus</strong>-en lehen bertsioarekin hasi nintzenean, helburua xumea zen: <i>Kulturmaps</i> atala sortu nahi nuen <strong>Open Data Euskadi</strong> lehiaketara aurkezteko. Garai hartan, ez nekien <strong>PostGIS</strong> edo datu-base espazialak existitzen zirenik ere. Garapen guztia super artisaua izan zen, ikuspegi eta modelo bakoitza eskuz idatziz.</p>
 
-<p>Garai hartan, Adimen Artifiziala kanpotik erabiltzen nuen, arakatzaileko fitxa batean. Sintaxiari edo APIei buruzko kontsulta zehatzak egiten nituen, lehen StackOverflow-ra jotzen nuen modu berean. Ni nintzen kode lerro bakoitzaren sortzailea; koma bakoitza eta funtzio bakoitza ezagutzen nuen. AIak hiztegi azkar gisa funtzionatzen zuen, baina produktibitatearen botila-lepoa fisikoa zen: nire hatzen abiadura teklatuaren gainean.</p>
+<p>Une horretan, AIa bilatzaile azkar bat baino ez zen nabigatzaileko fitxa batean, sintaxi zalantza zehatzat argitzeko, StackOverflow-ra jotzea bezala. Nik idazten nuen lerro bakoitza eta banekien zehazki koma bakoitza nora zihoan. Azkenean, nire muga fisikoa kode lerro bakoitza idazteko abiadura zen.</p>
 
-<h3>Jauzi kualitatiboa: ai.maps.eus eta agenteak IDEan</h3>
-<p>Aldaketa sakona nire bigarren WebGIS laborategiaren garapenarekin etorri zen: <strong>ai.maps.eus</strong>. Hemen urrats bat gehiago ematea erabaki nuen, eta AI agente autonomoak zuzenean nire garapen ingurunean (IDE) integratu nituen.</p>
+<h2>Jauzi kualitatiboa: proiektua hutsetik berreraikitzea AIarekin IDEan</h2>
+<p>Aldaketa handia iazko urte amaieran hasi zen, proiektua hutsetik berreraikitzea erabaki nuenean, Gemini zuzenean nire garapen ingurunean (IDE) erabiliz. AIa bilatzaile soil bat izatetik ikaskuntza kide aktibo izatera igaro zen. Izan ere, AIak berak proposatu zidan azpiegitura hobe bat erabiltzea (PostGIS bezala) eta urratsez urrats inplementatzen lagundu zidan.</p>
 
-<p>AIak kontsulta-tresna izateari utzi zion, <strong>kolaboratzaile aktibo eta mentor</strong> bihurtzeko. Lan-eremuaren testuinguru osorako sarbidea izateari eta aldaketa egituratuak proposatzeko gaitasunari esker, AIak lehen beldur handia ematen zidaten teknologia konplexuak ulertzen eta hedatzen lagundu zidan:</p>
+<p>AIa nire mugak zabaltzen, tresna berriak ikasten eta nire bizikleta ibilaldietan erabiltzen ditudan aplikazioak barnetik nola funtzionatzen duten ulertzen laguntzen ari zait. Elkarrekin hau egiteko gai izan ginen:</p>
 <ul>
-    <li>Baza-datu espazialak integratzen eta errepide-sareak modelatzeko <strong>pgRouting</strong> erabiltzen.</li>
-    <li><strong>OpenStreetMap</strong>eko datu konplexuak prozesatzen eta inportatzen.</li>
-    <li>Edukiontzien azpiegitura osoa prestatzen, datu-baseetarako, Celery workerretarako eta Redis katxeetarako <code>Dockerfile</code> eta <code>docker-compose</code> konfigurazioak automatizatuz.</li>
+    <li>Datu-base espazial osoa muntatu, ibilbideak kalkulatzeko errepide-sareak nola modelatu daitezkeen ikasiz.</li>
+    <li><strong>OpenStreetMap</strong>eko datu konplexuak prozesatu eta inportatu.</li>
+    <li>Azpiegitura guztia Docker edukiontziekin konfiguratu (Celery atzeko lanetarako eta Redis katxerako), lehen saiakuntza-errore bidez egunak edo asteak eramango zizkidan zerbait.</li>
 </ul>
 <p>Ondorioz, bikepacking ibilbideak sortzeko eta bistaratzeko motor osoa altxatu dut, ia kode lerrorik eskuz idatzi gabe.</p>
 
-<h3>Botila-lepo berria: Kutxa Beltza eta Zor Teknikoa</h3>
-<p>Automatizazio maila honek dilema berri baten aurrean jartzen gaitu. AIak segundotan ehunka kode lerro sendo sor ditzakeenez, idazteko abiadura jada ez da baliozko neurria. Orain, benetako arriskua kontrol teknikoa galtzea da, ulertezinak eta mantentzen ezinezkoak diren "kutxa beltzak" sortuz.</p>
-
-<p>Hori saihesteko, software ingeniari bezala nire eguneroko lanak fokua aldatu du:</p>
+<h2>Erronka berria: kodea kontrolpetik ez ihes egitea</h2>
+<p>Kodea azkar sortzea oso ondo dago, pero benetako arriskua kontrola galtzea eta inork ulertzen edo mantentzen ez duen "kutxa beltz" batekin amaitzea da. Hori dela eta, nire lan egiteko modua erabat aldatu da:</p>
 <ol>
-    <li><strong>Goi Mailako Arkitektura Diseinua:</strong> Denbora askoz gehiago dedikatzen dut proiektuaren egitura, modulartasuna eta osagaien arteko harremanak planifikatzera AIari kodea eskatu aurretik. Diseinu orokorra sendoa bada, AIak kode garbiagoa eta zehatzagoa sortzen du.</li>
-    <li><strong>Ikuskaritza eta Berrikuspen Artea:</strong> Lehen, eskuz aldatutako fitxategi gutxi batzuk zituzten commiteak berrikusten genituen. Gaur egun, agente batekin egindako iterazio bakar batek dozenaka fitxategi alda ditzake segundotan. AIak sortutako kode masibo hori irakurtzen, ebaluatzen eta kritikatzen ikastea da egungo garatzailearen funtsezko trebetasuna.</li>
-    <li><strong>CI/CD Bidezko Balioztatzea:</strong> AIaren kodean itsu-itsuan fidatzea hondamendira joateko bidea da. Integrazio etengabeko prozesuak indartzea da kontrola mantentzeko modu bakarra. Zerbitzarian test automatizatuen suite sendoak izatea ezinbestekoa da AIaren aldaketek lehendik zeuden funtzionalitateak hausten ez dituztela ziurtatzeko.</li>
+    <li><strong>Arkitektura hobeto diseinatu eta modularizatu:</strong> Kode sorkuntza desantolatu ez dadin, funtsezkoa da goi-mailako diseinua eta proiektua modulutan nola egituratu argi izatea AIari ezer eskatu aurretik. Ez da lan erraza, batez ere AIak fitxategi askotan aldaketa pila bat proposatzen dituenean aldi berean. Egunero topatzen ditugu zailtasun berriak eta hobetzeko moduak bilatzen ari gara.</li>
+    <li><strong>Kodea berrikusteko artea (Code Review):</strong> Lehen eskuz egindako aldaketa txikiak berrikusten bagenituen, orain AI agente batek dozenaka fitxategi alda ditzake une batean. Kode berrikuspen hobeak egiten ikasten ari gara, sortzen den guztia modu kritikoan irakurtzen eta ezer ez ontzat ematen ulertu gabe.</li>
+    <li><strong>Testak eta CI/CD automatizatu:</strong> AIak sortutako kodean itsu-itsuan fidatzea suarekin jolastea da. Lasai egoteko, gakoa gure integrazio jarraituko (CI/CD) pipelinea ahalik ahalik eta gehien indartzea da. AIak testak sortzen laguntzen digu, baita segundotan ezer hautsi ez dela egiaztatuko duten auditoretza automatikoko gidoiak prestatzen ere.</li>
 </ol>
 
-<h3>Side Projects vs. Enpresa Inguruneak</h3>
-<p>Proiektu pertsonalak eremu bikainak dira eredu berrien potentziala probatzeko (adibidez Claude, nire esperientzian Gemini baino sendoagoa kode-sorkuntzan). Hemen, huts egitea jokoaren parte da.</p>
-<p>Hala ere, enpresa-munduan (taldean lanean, datu sentikorrekin, segurtasun eta errendimendu arau zorrotzpean), erronka askoz handiagoa da. Kontua ez da azkar eraikitzea soilik, konfiantzaz elkarlanean aritzea baizik. AIak programatzeko modua aldatzen du, baina arkitektura ulertzen duten, segurtasuna bermatzen duten eta azpiegitura kontrolatzen duten ingeniarien beharra areagotzen du.</p>
+<h2>Proiektu pertsonalak vs. benetako inguruneak</h2>
+<p>Proiektu pertsonalak eta laborategiak leku bikainak dira eredu hauekin jolasteko eta zer egiteko gai diren ikusteko (Claude adibidez, nire ustez Gemini baino kode irtenbide sendoagoak eta koherenteagoak ematen dituena). Hor, hanka sartzea jokoaren parte da.</p>
 """,
                 "content_en": """
-<p>The role of the software developer, as we knew it, has changed forever. At least mine has in just twelve months. This transformation is not a theory about the future of work; it is a tangible reality I experienced while building two of my personal projects: <strong>maps.eus</strong> and <strong>ai.maps.eus</strong>.</p>
+<p>The role of developers is changing at an incredible speed. At least for me, it has completely turned around in the past year. And I'm not talking about abstract theories about the future of work; I'm talking about a tangible reality I've experienced firsthand comparing how I built my personal projects: <strong>maps.eus</strong> and <strong>ai.maps.eus</strong>.</p>
 
-<h3>The Starting Point: maps.eus and Handcrafted Code</h3>
-<p>When I first started developing <strong>maps.eus</strong>, the initial goal was humble: I wanted to build the <i>Kulturmaps</i> section to participate in the <strong>Open Data Euskadi</strong> competition. The development was a purely manual, handcrafted process. Every Django view, every model, and every line of spatial logic in PostGIS was written by hand on my keyboard.</p>
+<h2>The Starting Point: From Kulturmaps to Real Infrastructure</h2>
+<p>When I first started developing <strong>maps.eus</strong>, my goal was modest: I wanted to build the <i>Kulturmaps</i> section for a competition by <strong>Open Data Euskadi</strong>. Back then, I had no idea PostGIS or spatial databases even existed. The whole development was super handcrafted, coding every view and model manually.</p>
 
-<p>Back then, my use of Artificial Intelligence was limited to external assistants running in a browser tab. I asked specific questions about syntax or APIs, much like I used to consult StackOverflow. I was the author of every single line of code; I knew every comma and every function. The AI acted as a quick reference, but the bottleneck of productivity was physical: the speed of my fingers on the keyboard.</p>
+<p>At that time, AI was little more than a quick search tool in a browser tab to resolve syntax doubts, similar to using StackOverflow. I wrote every line and knew exactly where every comma went. In the end, my main bottleneck was the physical limit of typing each line of code.</p>
 
-<h3>The Qualitative Leap: ai.maps.eus and IDE-integrated Agents</h3>
-<p>The radical shift occurred with the development of my second WebGIS lab, <strong>ai.maps.eus</strong>. Here, I decided to take a step forward and integrate autonomous agentic AI assistants directly into my development environment (IDE).</p>
+<h2>The Qualitative Leap: Rebuilding From Scratch with AI in the IDE</h2>
+<p>The big shift started late last year when I decided to rebuild the project from scratch using Gemini directly in my IDE (development environment). The AI evolved from a simple search tool into an active learning partner. In fact, it was the AI that suggested using a better infrastructure (like PostGIS) and helped me implement it step by step.</p>
 
-<p>The AI transitioned from an isolated search tool into a <strong>mentor and active collaborator</strong>. With access to the complete workspace context and the ability to propose structured file modifications, the AI helped me understand and implement complex technologies that previously felt intimidating:</p>
+<p>AI is helping me broaden my horizons, learn new tools, and understand how the applications I use on my bike trips actually work under the hood. Together we were able to:</p>
 <ul>
-    <li>Integrating spatial databases and mastering <strong>pgRouting</strong> to model road networks.</li>
-    <li>Processing and importing complex datasets from <strong>OpenStreetMap</strong>.</li>
-    <li>Setting up the entire containerized infrastructure, automating <code>Dockerfile</code> and <code>docker-compose</code> configurations for databases, Celery workers, and Redis caches.</li>
+    <li>Set up the entire spatial database, discovering how to model road networks for routing.</li>
+    <li>Process and import complex datasets from <strong>OpenStreetMap</strong>.</li>
+    <li>Configure the entire containerized infrastructure using Docker (with Celery for background tasks and Redis for caching), which previously would have taken me days of trial and error.</li>
 </ul>
-<p>The result is that I built a complete bikepacking route optimizer and visualizer almost without typing a single line of code manually.</p>
+<p>The result is that I built the complete engine for route generation and visualization for bikepacking without manually writing almost any code.</p>
 
-<h3>The New Bottleneck: The Black Box and Technical Debt</h3>
-<p>This level of automation presents a new dilemma. If AI can generate hundreds of lines of valid code in seconds, typing speed ceases to be a useful engineering metric. The real danger now is the loss of technical ownership, producing systems that turn into unmaintainable "black boxes."</p>
-
-<p>To prevent this, my daily routine as a software engineer has shifted focus:</p>
+<h2>The New Challenge: Keeping Code from Spinning Out of Control</h2>
+<p>Generating code quickly is great, but the real danger now is losing control and ending up with a "black box" that nobody understands or can maintain. Because of this, my way of working has completely changed:</p>
 <ol>
-    <li><strong>High-Level Architecture Design:</strong> I spend significantly more time planning the project structure, modularity, and interfaces between components before asking the AI for code. If the design is clean, the AI produces far better, targeted code.</li>
-    <li><strong>The Art of Auditing and Review:</strong> We used to review commits containing just a few manually edited files. Today, a single iteration with an agent can modify dozens of files in seconds. Learning to read, evaluate, and critically question this mass of AI-generated code is the developer's core skill.</li>
-    <li><strong>Validation via CI/CD:</strong> Blindly trusting AI output is a recipe for disaster. The only way to maintain control is by strengthening our continuous integration pipelines. Robust automated test suites are essential to verify in seconds that massive AI changes do not break existing logic.</li>
+    <li><strong>Designing and Modularizing Architecture Better:</strong> To keep code generation from getting out of hand, it is vital to have a clear high-level design and structure the project into modules before asking the AI for anything. It is not an easy task, especially when the AI proposes a lot of changes across many files at once. Every day we face new difficulties and implement new improvements.</li>
+    <li><strong>The Art of Code Reviews:</strong> If we previously reviewed small manual changes, now an AI agent can modify dozens of files in an instant. We are learning to do better code reviews, reading everything critically, and not taking anything for granted without understanding it.</li>
+    <li><strong>Automating Tests and CI/CD:</strong> Blindly trusting AI-generated code is playing with fire. To keep our sanity, the key is to strengthen our continuous integration (CI/CD) pipelines. AI also helps us improve test generation and set up automated audit scripts that verify in seconds that nothing is broken.</li>
 </ol>
 
-<h3>Side Projects vs. Enterprise Environments</h3>
-<p>Personal projects are the perfect sandbox to experiment with new models (like Claude, which in my experience currently stands out for its technical coherence and code generation quality compared to Gemini). Here, making mistakes is part of the learning process.</p>
+<h2>Side Projects vs. Real-World Environments</h2>
+<p>Personal projects and labs are the perfect sandbox to play around and see what these models can do (like Claude, which currently feels like it provides more robust and coherent code solutions than Gemini). Here, making mistakes is part of the game.</p>
 
-<p>However, in the real corporate world—working in teams, with sensitive data, under strict security and performance requirements—the stakes are much higher. It is not just about building fast; it is about building reliably. AI changes how we write code, but it heightens the need for engineers who understand architecture, ensure security, and control the infrastructure.</p>
+<p>However, in the real world—working in a team, with sensitive data, under strict security and performance requirements—it is a completely different story. It is not just about building fast; it is about building reliably. AI changes how we program, but it makes engineers who understand architecture, secure the code, and truly control the infrastructure more necessary than ever.</p>
 """,
                 "is_published": True,
                 "published_at": timezone.now(),
@@ -401,9 +394,31 @@ def search_documents(query_vector, limit=5):
             tag_slugs = pdata.pop("tag_slugs", ["django"])
             ptags = [tags[slug] for slug in tag_slugs if slug in tags]
 
-            post, created = Post.objects.update_or_create(
-                slug_es=pdata["slug_es"], defaults=pdata
-            )
+            slug_es = pdata["slug_es"]
+            title_es = pdata["title_es"]
+
+            # Try to find existing post by slug_es or title_es
+            post = Post.objects.filter(slug_es=slug_es).first()
+            if not post:
+                post = Post.objects.filter(title_es=title_es).first()
+
+            if post:
+                # Update existing post, preserving likes and original published_at if already set
+                original_published_at = post.published_at or pdata.get("published_at")
+                original_likes = max(post.likes, pdata.get("likes", 0))
+
+                for key, val in pdata.items():
+                    setattr(post, key, val)
+
+                post.published_at = original_published_at
+                post.likes = original_likes
+                post.save()
+                created = False
+            else:
+                # Create a new post
+                post = Post.objects.create(**pdata)
+                created = True
+
             post.tags.set(ptags)
             status = "Created" if created else "Updated"
             self.stdout.write(f"{status} Post: {post.title}")

@@ -1,4 +1,4 @@
-{% load i18n static %}
+{% load i18n l10n static %}
 <c-layouts.main title="{{ post.title }}">
     
     <c-slot name="extra_head">
@@ -237,9 +237,9 @@
         {% if post.map_geojson or post.map_center_lat %}
             <script>
                 document.addEventListener("DOMContentLoaded", function() {
-                    const lat = {{ post.map_center_lat|default:43.0 }};
-                    const lng = {{ post.map_center_lng|default:-2.5 }};
-                    const zoom = {{ post.map_zoom|default:9 }};
+                    const lat = {{ post.map_center_lat|unlocalize }};
+                    const lng = {{ post.map_center_lng|unlocalize }};
+                    const zoom = {{ post.map_zoom|unlocalize }};
                     
                     const map = L.map('post-map').setView([lat, lng], zoom);
                     

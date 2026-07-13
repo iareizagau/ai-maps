@@ -39,43 +39,47 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {% for post in posts %}
                             <article class="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/5 glass hover:-translate-y-1 hover:border-primary/50 transition-all duration-300">
-                                {# Image aspect-video #}
-                                <div class="relative aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
-                                    {% if post.featured_image %}
+                                {% if post.featured_image %}
+                                    {# Image aspect-video #}
+                                    <div class="relative aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
                                         <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500">
-                                    {% else %}
-                                        <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-850 dark:to-slate-900 text-slate-300 dark:text-slate-700">
-                                            <i data-lucide="code" class="w-12 h-12 stroke-[1.5]"></i>
-                                        </div>
-                                    {% endif %}
-                                    {# Category Badge #}
-                                    {% if post.category %}
-                                        <span class="absolute top-3 left-3 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md bg-primary/95 text-white shadow-sm">
-                                            {{ post.category.name }}
-                                        </span>
-                                    {% endif %}
-                                </div>
+                                        {# Category Badge #}
+                                        {% if post.category %}
+                                            <span class="absolute top-3 left-3 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md bg-primary/95 text-white shadow-sm">
+                                                {{ post.category.name }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
 
                                 {# Card Content #}
                                 <div class="flex flex-1 flex-col p-5">
-                                    <div class="flex items-center gap-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
-                                        <span class="inline-flex items-center gap-1">
-                                            <i data-lucide="clock" class="w-3.5 h-3.5"></i>
-                                            {{ post.read_time }} min {% trans "lectura" %}
-                                        </span>
-                                        <span>·</span>
-                                        <span class="inline-flex items-center gap-1 uppercase tracking-wider">
-                                            {% if post.difficulty == "beginner" %}
-                                                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                                                {% trans "Intro" %}
-                                            {% elif post.difficulty == "intermediate" %}
-                                                <span class="h-2 w-2 rounded-full bg-blue-500"></span>
-                                                {% trans "Intermedio" %}
-                                            {% else %}
-                                                <span class="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
-                                                {% trans "Avanzado" %}
-                                            {% endif %}
-                                        </span>
+                                    <div class="flex items-center justify-between gap-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                                        {% if not post.featured_image and post.category %}
+                                            <span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded bg-primary/10 text-primary">
+                                                {{ post.category.name }}
+                                            </span>
+                                        {% endif %}
+                                        
+                                        <div class="flex items-center gap-2">
+                                            <span class="inline-flex items-center gap-1">
+                                                <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                                                {{ post.read_time }} min {% trans "lectura" %}
+                                            </span>
+                                            <span>·</span>
+                                            <span class="inline-flex items-center gap-1 uppercase tracking-wider">
+                                                {% if post.difficulty == "beginner" %}
+                                                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                                    {% trans "Intro" %}
+                                                {% elif post.difficulty == "intermediate" %}
+                                                    <span class="h-2 w-2 rounded-full bg-blue-500"></span>
+                                                    {% trans "Intermedio" %}
+                                                {% else %}
+                                                    <span class="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                                                    {% trans "Avanzado" %}
+                                                {% endif %}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <h2 class="text-lg font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-snug line-clamp-2">

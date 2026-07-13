@@ -310,9 +310,6 @@ def get_relevant_context(query_vector, limit=5):
                 "published_at": timezone.now(),
                 "read_time": 6,
                 "difficulty": "intermediate",
-                "map_center_lat": 43.2630,
-                "map_center_lng": -2.9350,
-                "map_zoom": 12,
                 "likes": 24,
                 "tag_slugs": ["django", "pgvector", "gemini"],
             },
@@ -524,6 +521,16 @@ def get_relevant_context(query_vector, limit=5):
                 original_published_at = post.published_at or pdata.get("published_at")
                 original_likes = max(post.likes, pdata.get("likes", 0))
 
+                # Clear spatial fields if they are not defined in this post's seed data
+                if "map_center_lat" not in pdata:
+                    post.map_center_lat = None
+                if "map_center_lng" not in pdata:
+                    post.map_center_lng = None
+                if "map_zoom" not in pdata:
+                    post.map_zoom = None
+                if "map_geojson" not in pdata:
+                    post.map_geojson = None
+
                 for key, val in pdata.items():
                     setattr(post, key, val)
 
@@ -533,6 +540,15 @@ def get_relevant_context(query_vector, limit=5):
                 created = False
             else:
                 # Create a new post
+                if "map_center_lat" not in pdata:
+                    pdata["map_center_lat"] = None
+                if "map_center_lng" not in pdata:
+                    pdata["map_center_lng"] = None
+                if "map_zoom" not in pdata:
+                    pdata["map_zoom"] = None
+                if "map_geojson" not in pdata:
+                    pdata["map_geojson"] = None
+
                 post = Post.objects.create(**pdata)
                 created = True
 

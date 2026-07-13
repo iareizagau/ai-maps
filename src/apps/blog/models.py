@@ -126,16 +126,22 @@ class Post(models.Model):
     map_center_lat = models.DecimalField(
         max_digits=9,
         decimal_places=6,
-        default=43.0,
+        null=True,
+        blank=True,
         help_text="Latitude for Leaflet center",
     )
     map_center_lng = models.DecimalField(
         max_digits=9,
         decimal_places=6,
-        default=-2.5,
+        null=True,
+        blank=True,
         help_text="Longitude for Leaflet center",
     )
-    map_zoom = models.IntegerField(default=9, help_text="Zoom level for Leaflet map")
+    map_zoom = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Zoom level for Leaflet map",
+    )
 
     # Metrics
     likes = models.PositiveIntegerField(default=0)

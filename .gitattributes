@@ -1,0 +1,18 @@
+# Normalize all text files to LF in the repo; workingtree gets native EOL.
+* text=auto eol=lf
+
+# Binary blobs — never munged.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.mo binary

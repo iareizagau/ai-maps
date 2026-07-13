@@ -1,0 +1,6 @@
+# Revisions listed here are skipped by `git blame` when configured with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# Only add commits that are pure formatting / no semantic changes.
+
+# style: apply ruff format across repo
+e6d27f5

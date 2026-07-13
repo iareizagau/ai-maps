@@ -26,8 +26,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DJANGO_SETTINGS_MODULE=config.settings.prod \
     PATH="/app/.venv/bin:$PATH"
 
-# Copy uv binary from official image
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# Install uv via pip — avoids GHCR anonymous rate limits and the intermittent
+# "denied: fetch oauth token" from BuildKit's anonymous COPY --from=<registry>.
+# Build reproducibility comes from uv.lock, not the uv binary version itself.
+RUN pip install --no-cache-dir uv
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \

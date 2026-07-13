@@ -148,44 +148,78 @@ class Command(BaseCommand):
                 "slug_es": "optimizacion-geografica-postgis-pgrouting-django",
                 "slug_eu": "geografia-optimizazioa-postgis-pgrouting-django",
                 "slug_en": "geographical-optimization-postgis-pgrouting-django",
-                "summary_es": "Cómo resolver problemas de rutas óptimas (bikepacking, rutas ciclistas o de vehículos) utilizando las capacidades espaciales del motor PostgreSQL.",
-                "summary_eu": "Nola ebatzi ibilbide optimoen arazoak (bikepacking-a, txirrindularitza edo ibilgailuen ibilbideak) PostgreSQL motorraren gaitasun espazialak erabiliz.",
-                "summary_en": "How to solve optimal routing problems (bikepacking, cycling paths, or vehicle routing) utilizing the spatial capabilities of the PostgreSQL engine.",
+                "summary_es": "Cómo resolver problemas de rutas óptimas (bikepacking y aventura) en Euskadi utilizando pgRouting y PostGIS en la aplicación ai.maps.eus/adventure/.",
+                "summary_eu": "Nola ebatzi bikepacking eta abentura ibilbide optimoen arazoak Euskadin, pgRouting eta PostGIS erabiliz ai.maps.eus/adventure/ aplikazioan.",
+                "summary_en": "How to solve optimal bikepacking and adventure routing problems in Euskadi using pgRouting and PostGIS at ai.maps.eus/adventure/.",
                 "content_es": """
-<p>En el desarrollo de aplicaciones <strong>WebGIS</strong> avanzadas, a menudo nos enfrentamos al desafío de calcular rutas óptimas sobre una red de carreteras, senderos o carriles bici. Si bien servicios externos como OSRM o Google Maps son útiles, delegar esta lógica a la base de datos con <strong>pgRouting</strong> nos da control absoluto y velocidad.</p>
+<p>En el desarrollo de aplicaciones <strong>WebGIS</strong> avanzadas, a menudo nos enfrentamos al desafío de calcular rutas óptimas sobre una red de carreteras, senderos o carriles bici. Si bien servicios externos como OSRM, GraphHopper o Google Maps son útiles, delegar esta lógica a la base de datos con <strong>pgRouting</strong> nos proporciona un control absoluto de los costes de ruta y una velocidad de ejecución extraordinaria.</p>
 
 <h3>¿Qué es pgRouting?</h3>
-<p>pgRouting es una extensión de PostgreSQL y PostGIS que añade funcionalidades de teoría de grafos y cálculo de rutas. Utiliza algoritmos clásicos como <i>Dijkstra</i>, <i>A*</i> y <i>Shooting Star</i> directamente sobre geometrías vectoriales.</p>
+<p>pgRouting es una extensión para PostgreSQL y PostGIS que añade funciones de teoría de grafos y cálculo de rutas. Utiliza algoritmos clásicos como <i>Dijkstra</i>, <i>A*</i> o <i>TSP (Traveling Salesperson Problem)</i> directamente sobre geometrías vectoriales. Al ejecutarse en la propia base de datos, podemos modificar dinámicamente los factores de coste de las vías (pendientes, tipo de superficie, seguridad) mediante simples consultas SQL.</p>
 
-<h3>Un ejemplo práctico en Django</h3>
-<p>Para buscar la ruta más corta entre dos puntos en una red vial estructurada, podemos realizar una consulta directa SQL usando cursores nativos en Django:</p>
+<h3>Caso de éxito: El planificador de aventuras en ai.maps.eus</h3>
+<p>Hemos implementado esta tecnología de forma end-to-end en nuestro planificador de rutas de bikepacking y aventura en <a href="https://ai.maps.eus/adventure/" target="_blank">ai.maps.eus/adventure/</a>. Esta aplicación permite a los ciclistas calcular itinerarios a través de una red topológica compleja de caminos en Euskadi.</p>
+
+<p>Para buscar la ruta más corta o de menor esfuerzo entre dos puntos de nuestra red vial, realizamos consultas usando las funciones de pgRouting. Aquí tienes un ejemplo de cómo integramos la llamada a <code>pgr_dijkstra</code> en Django:</p>
 
 <pre><code>from django.db import connection
 
-def get_shortest_path(start_lon, start_lat, end_lon, end_lat):
+def get_shortest_path(start_node_id, end_node_id):
+    # La consulta SQL llama a pgr_dijkstra sobre la tabla 'ways'
     query = \"\"\"
-        SELECT seq, node, edge, cost, agg_cost, geom
+        SELECT seq, node, edge, cost, agg_cost, ST_AsGeoJSON(geom) as geojson
         FROM pgr_dijkstra(
-            'SELECT id, source, target, cost_s AS cost, reverse_cost_s AS reverse_cost FROM ways',
+            'SELECT id, source, target, length_m AS cost, reverse_cost_m AS reverse_cost FROM ways',
             %s, %s, false
         ) AS path
         JOIN ways ON path.edge = ways.id
+        ORDER BY seq;
     \"\"\"
     with connection.cursor() as cursor:
-        cursor.execute(query, [start_node, end_node])
+        cursor.execute(query, [start_node_id, end_node_id])
         return cursor.fetchall()
 </code></pre>
 
-<p>Esta integración nos permite combinar la lógica de bases de datos relacionales con cartografía interactiva en el navegador, logrando aplicaciones eficientes que no dependen de APIs de terceros.</p>
+<p>Esta aproximación no solo elimina dependencias externas costosas, sino que nos permite personalizar el trazado en base a filtros de usuario (como evitar carreteras principales o priorizar pistas forestales), calculando la ruta óptima directamente sobre nuestro dataset de OpenStreetMap y mostrándola interactivamente al usuario.</p>
 """,
                 "content_eu": """
 <p><strong>WebGIS</strong> aplikazio aurreratuen garapenean, sarritan errepide, bide edo bidegorri sare baten gainean ibilbide optimoak kalkulatzeko erronkari aurre egin behar diogu. Kanpoko zerbitzuak erabilgarriak badira ere, logika hori <strong>pgRouting</strong> bidez datu-baseari eskuordetzeak erabateko kontrola eta abiadura ematen digu.</p>
 
 <h3>Zer da pgRouting?</h3>
 <p>pgRouting PostgreSQL eta PostGISen luzapena da, grafoen teoria eta ibilbideen kalkulua gehitzen dituena. <i>Dijkstra</i> bezalako algoritmo klasikoak erabiltzen ditu zuzenean geometria bektorialen gainean.</p>
+
+<h3>Inplementazio erreal bat: ai.maps.eus/adventure/</h3>
+<p>Teknologia hau gure bikepacking eta abentura ibilbideen planifikatzailean inplementatu dugu: <a href="https://ai.maps.eus/adventure/" target="_blank">ai.maps.eus/adventure/</a>. Aplikazio honi esker, txirrindulariek ibilbide optimoak kalkula ditzakete Euskadiko bide-sare konplexu baten gainean, bideen ezaugarri zehatzak kontuan hartuta (zailtasuna, bide mota, etab.) eta emaitza interaktiboki Leaflet bidez bistaratuz.</p>
 """,
                 "content_en": """
-<p>In advanced <strong>WebGIS</strong> application development, we often face the challenge of calculating optimal routes over a road network. While external services are useful, delegating this logic to the database with <strong>pgRouting</strong> gives us absolute control and speed.</p>
+<p>In advanced <strong>WebGIS</strong> application development, we often face the challenge of calculating optimal routes over a road or trail network. While external routing services (like Google Maps or OSRM) are common, delegating routing computations directly to the database with <strong>pgRouting</strong> grants us absolute control over cost functions and exceptional response times.</p>
+
+<h3>What is pgRouting?</h3>
+<p>pgRouting is a PostgreSQL extension that extends PostGIS to provide graph-theory routing capabilities. It allows you to run algorithms like <i>Dijkstra</i>, <i>A*</i>, or <i>TSP (Traveling Salesperson Problem)</i> directly on spatial database tables. Since the network data is stored in the database, we can dynamically adjust edge costs based on slopes, surface types, or safety criteria using SQL.</p>
+
+<h3>Production Case: The Adventure Planner at ai.maps.eus</h3>
+<p>We put this technology into practice in our custom bikepacking and gravel route planner at <a href="https://ai.maps.eus/adventure/" target="_blank">ai.maps.eus/adventure/</a>. This application enables cyclists to calculate routes across a topological trail network in Euskadi.</p>
+
+<p>To find the path between two coordinate points, the backend finds the nearest network nodes and runs <code>pgr_dijkstra</code>. Here is how we execute the query using Django's raw connection cursor:</p>
+
+<pre><code>from django.db import connection
+
+def get_shortest_path(start_node_id, end_node_id):
+    query = \"\"\"
+        SELECT seq, node, edge, cost, agg_cost, ST_AsGeoJSON(geom) as geojson
+        FROM pgr_dijkstra(
+            'SELECT id, source, target, length_m AS cost, reverse_cost_m AS reverse_cost FROM ways',
+            %s, %s, false
+        ) AS path
+        JOIN ways ON path.edge = ways.id
+        ORDER BY seq;
+    \"\"\"
+    with connection.cursor() as cursor:
+        cursor.execute(query, [start_node_id, end_node_id])
+        return cursor.fetchall()
+</code></pre>
+
+<p>This approach completely eliminates dependencies on third-party APIs and allows us to perform real-time routing based on custom criteria (e.g. prioritizing dirt roads over highways) directly on OpenStreetMap datasets.</p>
 """,
                 "is_published": True,
                 "published_at": timezone.now(),
@@ -207,37 +241,75 @@ def get_shortest_path(start_lon, start_lat, end_lon, end_lat):
                 "slug_es": "busqueda-semantica-rag-pgvector-gemini",
                 "slug_eu": "rag-bilaketa-semantikoa-pgvector-gemini",
                 "slug_en": "semantic-rag-search-pgvector-gemini",
-                "summary_es": "Implementación de un sistema de generación aumentada por recuperación (RAG) en Django usando embeddings de Gemini y almacenamiento vectorial en Postgres.",
-                "summary_eu": "Berreskuratze bidez areagotutako belaunaldi (RAG) sistema baten inplementazioa Django-n, Gemini txertaketak (embeddings) eta Postgres-en bektore biltegiratzea erabiliz.",
-                "summary_en": "Implementing a Retrieval-Augmented Generation (RAG) system in Django using Gemini embeddings and vector storage in PostgreSQL.",
+                "summary_es": "Cómo construimos un asistente conversacional de movilidad utilizando pgvector y embeddings de Gemini en la aplicación Mubil.",
+                "summary_eu": "Nola eraikitzen dugun mugikortasuneko txat-laguntzaile adimenduna pgvector eta Gemini bektoreak erabiliz Mubil aplikazioan.",
+                "summary_en": "How we built a conversational mobility assistant using pgvector and Gemini embeddings in the Mubil application.",
                 "content_es": """
-<p>El auge de los modelos de lenguaje (LLM) ha popularizado la técnica <strong>RAG</strong> (Retrieval-Augmented Generation), que dota al modelo de contexto local actualizado para responder preguntas sin necesidad de reentrenarlo.</p>
+<p>El auge de los modelos de lenguaje (LLM) ha popularizado la técnica <strong>RAG</strong> (Retrieval-Augmented Generation), que dota al modelo de contexto local actualizado para responder preguntas sin necesidad de reentrenarlo. En lugar de confiar únicamente en el conocimiento general del modelo, buscamos en nuestra base de datos los textos más relevantes para la pregunta del usuario y se los enviamos al LLM como contexto de fondo.</p>
 
-<h3>¿Por qué pgvector?</h3>
-<p>PostgreSQL nos permite almacenar representaciones vectoriales (embeddings) de nuestros datos gracias a la extensión <strong>pgvector</strong>. Esto significa que podemos realizar búsquedas por similitud de coseno en la misma base de datos relacional donde guardamos los usuarios o mapas.</p>
+<h3>¿Por qué pgvector en PostgreSQL?</h3>
+<p>La extensión <strong>pgvector</strong> convierte a nuestra base de datos relacional de confianza en una base de datos vectorial de alto rendimiento. En lugar de mantener una base de datos vectorial externa (como Pinecone o Chroma) que añadiría complejidad y latencia a nuestra infraestructura, podemos almacenar los vectores de características (embeddings) directamente en tablas PostgreSQL y ejecutar búsquedas de similitud coseno o distancia euclídea mediante consultas SQL tradicionales.</p>
 
-<pre><code># Ejemplo de consulta con pgvector en Django
+<pre><code># Ejemplo de búsqueda de similitud coseno en Django con pgvector
 from pgvector.django import CosineDistance
-from .models import Document
+from .models import DocumentChunk
 
-def search_documents(query_vector, limit=5):
-    return Document.objects.annotate(
+def get_relevant_context(query_vector, limit=5):
+    return DocumentChunk.objects.annotate(
         distance=CosineDistance("embedding", query_vector)
     ).order_by("distance")[:limit]
 </code></pre>
 
-<p>Al pasar estos fragmentos recuperados a la API de Gemini, el modelo formula respuestas altamente precisas y fundamentadas en nuestros propios textos.</p>
+<h3>Caso de éxito real: El asistente "Ask" en la App Mubil</h3>
+<p>Hemos aplicado esta arquitectura de forma práctica en el desarrollo de la aplicación <strong>Mubil</strong> dentro de la plataforma. La sección <strong>Mubil Ask</strong> cuenta con un chat inteligente diseñado para resolver dudas sobre movilidad eléctrica, puntos de recarga, tarifas eléctricas (PVPC) y subvenciones gubernamentales (como el Plan Auto+ o MOVES III).</p>
+
+<p>El flujo del sistema funciona de la siguiente manera:</p>
+<ol>
+    <li><strong>Indexación:</strong> Procesamos documentos oficiales de movilidad y normativas, los dividimos en fragmentos manejables y generamos sus embeddings usando la API de Gemini (modelo <code>text-embedding-004</code>). Estos vectores se guardan en la base de datos PostgreSQL utilizando <code>pgvector</code>.</li>
+    <li><strong>Recuperación semántica:</strong> Cuando un usuario hace una pregunta en el chat, convertimos la consulta en un vector y buscamos los fragmentos con menor distancia de coseno en la base de datos.</li>
+    <li><strong>Generación:</strong> Enviamos los fragmentos recuperados como contexto a Gemini, que redacta una respuesta coherente, veraz y totalmente personalizada basada en los datos específicos de movilidad de Euskadi.</li>
+</ol>
+
+<p>Esta integración reduce a cero las alucinaciones del modelo y nos permite ofrecer respuestas confiables y actualizadas sin añadir costes de infraestructura significativos.</p>
 """,
                 "content_eu": """
-<p>LLM ereduen eztandak <strong>RAG</strong> (Retrieval-Augmented Generation) teknika ezagun egin du. Teknika honek testuinguru eguneratua eskaintzen dio ereduari galderak erantzuteko, berriro entrenatu beharrik gabe.</p>
+<p>Hizkuntza-eredu handien (LLM) eztandak <strong>RAG</strong> (Retrieval-Augmented Generation) teknika ezagun egin du. Teknika honek testuinguru eguneratua eskaintzen dio ereduari galderak erantzuteko, berriro entrenatu beharrik gabe. Ereduaren ezagutza orokorrean soilik fidatu beharrean, gure datu-basean erabiltzailearen galderarako testu garrantzitsuenak bilatzen ditugu eta LLMari bidaltzen dizkiogu testuinguru gisa.</p>
+
+<h3>Zergatik pgvector PostgreSQL-n?</h3>
+<p><strong>pgvector</strong> luzapenak gure PostgreSQL datu-basea errendimendu handiko datu-base bektorial bihurtzen du. Kanpoko datu-base bektorial bat mantendu beharrean (Pinecone edo Chroma adibidez), bektoreak (embeddings) zuzenean gorde ditzakegu PostgreSQL tauletan eta antzekotasun-bilaketak SQL kontsulta tradizionalen bidez exekutatu.</p>
+
+<h3>Adibide praktikoa: Mubil Aplikazioko "Ask" laguntzailea</h3>
+<p>Arkitektura hau modu praktikoan aplikatu dugu gure plataformako <strong>Mubil</strong> aplikazioaren garapenean. Zehazki, <strong>Mubil Ask</strong> atalak chat adimendun bat du, mugikortasun elektrikoari, karga-puntuei, argindar tarifei (PVPC) eta gobernuaren dirulaguntzei (Plan Auto+ edo MOVES III kasu) buruzko zalantzak argitzeko.</p>
+
+<p>Sistemaren lan-fluxua honako hau da:</p>
+<ol>
+    <li><strong>Indexazioa:</strong> Mugikortasuneko dokumentu ofizialak prozesatu, zati txikitan banatu eta haien bektoreak sortzen ditugu Gemini APIa erabiliz. Bektore horiek PostgreSQL-n gordetzen dira <code>pgvector</code> luzapenarekin.</li>
+    <li><strong>Bilaketa semantikoa:</strong> Erabiltzaileak galdera bat egiten duenean, galdera hori bektore bihurtu eta datu-basean antzekoen diren zatiak berreskuratzen ditugu.</li>
+    <li><strong>Belaunaldia:</strong> Berreskuratutako zatiak testuinguru gisa bidaltzen dizkiogu Geminiri, eta honek erantzun fidagarria sortzen du, Euskadiko mugikortasun datu zehatzetan oinarrituta.</li>
+</ol>
 """,
                 "content_en": """
-<p>The rise of LLMs has popularized the <strong>RAG</strong> technique, which provides the model with updated local context to answer questions without retraining.</p>
+<p>The rise of Large Language Models (LLMs) has popularized the <strong>RAG</strong> (Retrieval-Augmented Generation) pattern. RAG provides the model with domain-specific, real-time context to answer user queries without the need for model retraining. Instead of relying solely on the LLM's pre-trained knowledge, we fetch the most relevant text chunks from our database and inject them directly into the model's prompt.</p>
+
+<h3>Why pgvector in PostgreSQL?</h3>
+<p>The <strong>pgvector</strong> extension elevates our trusted relational database into a high-performance vector store. Instead of introducing external vector databases (such as Pinecone or Chroma) which would increase infrastructure cost and latency, we store vector embeddings directly in PostgreSQL tables and perform cosine similarity searches using clean, standard SQL queries.</p>
+
+<h3>Real-World Implementation: The "Ask" Assistant in Mubil</h3>
+<p>We successfully put this architecture into production within the <strong>Mubil</strong> application. The <strong>Mubil Ask</strong> section features a conversational assistant built to answer questions regarding electric vehicle adoption, charger compatibility, electricity rates (PVPC), and regional subsidies (such as Plan Auto+ or MOVES III).</p>
+
+<p>The system workflow is designed as follows:</p>
+<ol>
+    <li><strong>Ingestion:</strong> Official EV regulations, charging guidelines, and subsidy documents are parsed, chunked, and embedded using Gemini's <code>text-embedding-004</code> model. These embeddings are stored in PostgreSQL using <code>pgvector</code>.</li>
+    <li><strong>Semantic Retrieval:</strong> When a user submits a query, it is embedded on-the-fly. We then query PostgreSQL using cosine distance to retrieve the most contextually relevant chunks.</li>
+    <li><strong>Generation:</strong> The retrieved context is passed alongside the user's question to the Gemini API, which drafts a highly accurate, grounded response tailored to Basque mobility regulations.</li>
+</ol>
+
+<p>This implementation effectively eliminates model hallucinations and delivers reliable, localized answers without adding expensive database systems to our stack.</p>
 """,
                 "is_published": True,
                 "published_at": timezone.now(),
-                "read_time": 8,
-                "difficulty": "advanced",
+                "read_time": 6,
+                "difficulty": "intermediate",
                 "map_center_lat": 43.2630,
                 "map_center_lng": -2.9350,
                 "map_zoom": 12,

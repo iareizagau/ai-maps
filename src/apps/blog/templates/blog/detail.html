@@ -152,13 +152,6 @@
                 {# GIS Map Widget (If geojson or coords provided) #}
                 {% if post.map_geojson or post.map_center_lat %}
                     <div class="my-8 pt-8 border-t border-slate-200 dark:border-white/5">
-                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
-                            <i data-lucide="map-pin" class="w-4 h-4 text-primary"></i>
-                            {% trans "Visualización Geográfica Asociada" %}
-                        </h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
-                            {% trans "Este post incluye datos espaciales interactivos. Explora el mapa a continuación." %}
-                        </p>
                         <div id="post-map" class="h-[380px] w-full rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner z-10"></div>
                     </div>
                 {% endif %}

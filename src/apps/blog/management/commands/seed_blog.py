@@ -658,118 +658,123 @@ def check_location(lon, lat):
                 "slug_es": "django-celery-redis-tareas-asincronas",
                 "slug_eu": "django-celery-redis-zeregin-asinkronoak",
                 "slug_en": "django-celery-redis-asynchronous-tasks",
-                "summary_es": "Cómo integramos Celery y Redis para procesar ingestas periódicas de gran volumen (precios de energía PVPC, gasolineras, puntos de carga de vehículos eléctricos) y tareas bajo demanda con la API de Gemini.",
-                "summary_eu": "Nola integratzen ditugun Celery eta Redis bolumen handiko datuen ingesta periodikoak prozesatzeko (PVPC energia prezioak, gasolindegiak, ibilgailu elektrikoen kargaguneak) eta Gemini APIarekin egindako zeregin asinkronoak.",
-                "summary_en": "How we integrate Celery and Redis to process high-volume periodic ingestions (PVPC energy prices, fuel stations, EV charging points) and on-demand background tasks with the Gemini API.",
+                "summary_es": "Cómo integramos Celery y Redis para procesar ingestas periódicas de gran volumen (como eventos culturales desde OpenData Euskadi) y tareas de enriquecimiento geográfico bajo demanda en maps.eus.",
+                "summary_eu": "Nola integratzen ditugun Celery eta Redis bolumen handiko datuen ingesta periodikoak prozesatzeko (OpenData Euskadiko kultura-ekitaldiak kasu) eta eskaripeko aberaste geografikoko zereginak maps.eus gunean.",
+                "summary_en": "How we integrate Celery and Redis to process high-volume periodic ingestions (such as cultural events from OpenData Euskadi) and on-demand spatial geocoding tasks in maps.eus.",
                 "content_es": """
-<p>En el desarrollo de aplicaciones web de alto rendimiento, delegar tareas pesadas o de ejecución periódica a procesos en segundo plano es fundamental para mantener una interfaz de usuario ágil y responsiva. En <strong>maps.eus</strong> y <strong>ai.maps.eus</strong>, utilizamos una combinación de <strong>Celery</strong> como gestor de tareas asíncronas y <strong>Redis</strong> como broker de mensajería para gestionar flujos de datos complejos sin penalizar los tiempos de carga del usuario final.</p>
+<p>En el desarrollo de aplicaciones web de alto rendimiento, delegar tareas pesadas o de ejecución periódica a procesos en segundo plano es fundamental para mantener una interfaz de usuario ágil y responsiva. En <strong>maps.eus</strong>, utilizamos una combinación de <strong>Celery</strong> como gestor de tareas asíncronas y <strong>Redis</strong> como broker de mensajería para gestionar flujos de datos complejos sin penalizar los tiempos de carga del usuario final.</p>
 
 <h2>La Arquitectura Celery + Redis</h2>
-<p>Celery actúa como un distribuidor de trabajo que monitoriza colas de tareas. Cuando un proceso (por ejemplo, una petición HTTP de Django) solicita ejecutar una tarea pesada, la empaqueta y la envía a <strong>Redis</strong>, que actúa como cola de mensajería (broker). Uno o varios workers de Celery, que corren de forma independiente en contenedores Docker, consumen estos mensajes y procesan las tareas de manera asíncrona.</p>
+<p>Celery actúa como un distribuidor de trabajo que monitoriza colas de tareas. Cuando un proceso (por ejemplo, una petición HTTP de Django o un comando administrativo) solicita ejecutar una tarea pesada, la empaqueta y la envía a <strong>Redis</strong>, que actúa como cola de mensajería (broker). Uno o varios workers de Celery, que corren de forma independiente en contenedores Docker, consumen estos mensajes y procesan las tareas de manera asíncrona.</p>
 
-<h3>Caso de Uso 1: Ingestas Periódicas de Datos (Mubil Data Ingestion)</h3>
-<p>El módulo <strong>Mubil</strong> procesa datos del ecosistema de movilidad eléctrica y combustibles en el País Vasco. Muchas de estas fuentes de datos externas cambian de forma periódica y requieren procesamiento antes de ser presentadas al usuario:</p>
+<h3>Caso de Uso: Ingesta Periódica de Eventos Culturales</h3>
+<p>El módulo <strong>Kultur</strong> centraliza la agenda de eventos culturales en Euskal Herria. Estos eventos se actualizan diariamente a través de APIs de OpenData. Dado que el proceso requiere descargar un volumen importante de registros e indexarlos, delegamos esta carga a una tarea programada:</p>
 <ul>
-    <li><strong>PVPC Horario (<code>ingest_pvpc_hourly</code>):</strong> Descarga cada hora los precios regulados de la luz de la API oficial de ESIOS. Configurando un cron horario en <code>django-celery-beat</code>, nos aseguramos de que el asistente inteligente tenga tarifas eléctricas actualizadas para calcular horarios óptimos de recarga.</li>
-    <li><strong>Gasolineras y Cargadores Eléctricos:</strong> Ingesta diaria de gasolineras desde el Ministerio (MINCOTUR) e ingesta semanal de cargadores de vehículos eléctricos desde OpenChargeMap.</li>
+    <li><strong>Carga e Ingesta (<code>kultur.load_events</code>):</strong> Se ejecuta periódicamente mediante <code>django-celery-beat</code>. Descarga el feed oficial de eventos, los normaliza en base de datos y, a continuación, geolocaliza las salas y recintos culturales que carecen de coordenadas espaciales.</li>
 </ul>
 
-<p>A continuación se muestra una sección simplificada de nuestro archivo de tareas en <code>apps/mubil/tasks.py</code>:</p>
+<p>A continuación se muestra una sección simplificada de nuestro archivo de tareas en <code>apps/kultur/tasks.py</code>:</p>
 
 <pre><code>from celery import shared_task
-from apps.mubil.data import pvpc_ingest, charging_ingest
+from django.core.management import call_command
 
-@shared_task(name="mubil.ingest_pvpc_hourly")
-def ingest_pvpc_hourly(hours: int = 48) -> dict:
-    \"\"\"Descarga las últimas horas de PVPC en la base de datos.\"\"\"
-    stats = pvpc_ingest.ingest_recent_hours(hours=hours)
-    return stats.as_dict()
-
-@shared_task(name="mubil.ingest_charging_stations")
-def ingest_charging_stations() -> dict:
-    \"\"\"Actualización semanal de puntos de carga vía OpenChargeMap.\"\"\"
-    stats = charging_ingest.ingest_default()
-    return stats.as_dict()
+@shared_task(
+    name="kultur.load_events",
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=60,
+    retry_backoff_max=3600,
+    retry_jitter=True,
+    max_retries=3,
+)
+def load_events(self):
+    # Ingesta de eventos culturales
+    call_command("load_events")
+    # Geocodificación espacial de los recintos
+    call_command("geocode_venues")
 </code></pre>
 
-<h3>Caso de Uso 2: Tareas bajo demanda cost-controlled con Gemini</h3>
-<p>Otro caso de uso interesantísimo en nuestro proyecto es la obtención y enriquecimiento de noticias del sector de movilidad (<code>refresh_news</code>). Dado que consultar la API de Gemini para clasificar y resumir noticias es costoso, no queremos programar esta tarea en un cron ciego que consuma cuota innecesariamente.</p>
-<p>En su lugar, cuando un usuario accede a la sección de noticias y la caché local está caducada, el controlador de Django encola una tarea de refresco bajo demanda. El usuario recibe los datos almacenados en caché instantáneamente, mientras un worker en segundo plano se encarga de llamar a la API de Gemini, vectorizar los artículos e indexarlos en <strong>pgvector</strong> para futuras búsquedas semánticas.</p>
-
-<pre><code># apps/mubil/news/tasks.py
-from celery import shared_task
-from apps.mubil.news import services
-
-@shared_task(name="mubil.news.refresh")
-def refresh_news(embed: bool = True) -> dict:
-    # Llama a servicios que invocan a la API de Gemini y vectorizan el contenido
-    stats = services.refresh(embed=embed)
-    return stats.as_dict()
-</code></pre>
+<h3>Gestión Inteligente de Reintentos ante Fallos de Red</h3>
+<p>Una gran ventaja de usar Celery frente a scripts cron simples es la gestión de fallos. Si la API de OpenData Euskadi está temporalmente inactiva o el servicio de mapas externo falla durante la geocodificación, el decorador <code>@shared_task</code> está configurado con reintentos automáticos progresivos (<code>autoretry_for</code> y <code>retry_backoff</code>).</p>
+<p>Esto asegura que la tarea no falle definitivamente al primer contratiempo, sino que vuelva a intentarlo aplicando un retardo exponencial aleatorio (jitter) para evitar saturar el servidor de destino.</p>
 
 <h3>Ventajas clave de esta arquitectura</h3>
 <ol>
-    <li><strong>Resiliencia:</strong> Si el servidor de OpenChargeMap o de ESIOS está temporalmente caído, la tarea de Celery fallará de manera aislada y se reintentará más tarde sin romper la aplicación para el usuario.</li>
-    <li><strong>Experiencia de Usuario (UX):</strong> El usuario nunca tiene que esperar a que el servidor de Django haga peticiones HTTP externas lentas ni procese algoritmos matemáticos complejos.</li>
-    <li><strong>Escalabilidad:</strong> En producción, podemos escalar el número de workers de Celery de forma independiente si el volumen de ingesta crece drásticamente.</li>
+    <li><strong>Resiliencia:</strong> Si la fuente de datos está caída, la tarea de Celery fallará de manera aislada y se reintentará más tarde sin romper la aplicación para el usuario.</li>
+    <li><strong>Experiencia de Usuario (UX):</strong> El portal web sirve los eventos almacenados localmente al instante, mientras las tareas pesadas de geocodificación ocurren silenciosamente por detrás.</li>
+    <li><strong>Escalabilidad:</strong> En producción, podemos escalar el número de workers de Celery de forma independiente si el volumen de eventos o recintos a geolocalizar crece drásticamente.</li>
 </ol>
 """,
                 "content_eu": """
-<p>Errendimendu handiko web aplikazioen garapenean, zeregin astunak edo aldiro exekutatu beharrekoak atzeko planoan delegatzea funtsezkoa da erabiltzaile-interfaze arina eta sentikorra mantentzeko. Gure plataforman (<strong>maps.eus</strong> eta <strong>ai.maps.eus</strong>), <strong>Celery</strong> (zeregin asinkronoen kudeatzailea) eta <strong>Redis</strong> (mezu-brokerra) erabiltzen ditugu datu-fluxu konplexuak kudeatzeko, erabiltzailearen karga-denborak zigortu gabe.</p>
+<p>Errendimendu handiko web aplikazioen garapenean, zeregin astunak edo aldiro exekutatu beharrekoak atzeko planoan delegatzea funtsezkoa da erabiltzaile-interfaze arina eta sentikorra mantentzeko. Gure plataforman (<strong>maps.eus</strong>), <strong>Celery</strong> (zeregin asinkronoen kudeatzailea) eta <strong>Redis</strong> (mezu-brokerra) erabiltzen ditugu datu-fluxu konplexuak kudeatzeko, erabiltzailearen karga-denborak zigortu gabe.</p>
 
 <h2>Celery + Redis Arkitektura</h2>
-<p>Celeryk zereginen ilarak kontrolatzen dituen lan-banatzaile gisa funtzionatzen du. Prozesu batek (adibidez, Djangoko HTTP eskaera batek) lan astun bat egiteko eskatzen duenean, mezua <strong>Redis</strong>-era bidaltzen du. Docker edukiontzietan modu independentean exekutatzen ari diren Celery workerrek mezu hauek kontsumitzen dituyte eta zereginak modu asinkronoan prozesatzen dituzte.</p>
+<p>Celeryk zereginen ilarak kontrolatzen dituen lan-banatzaile giga funtzionatzen du. Prozesu batek lan astun bat egiteko eskatzen duenean, mezua <strong>Redis</strong>-era bidaltzen du. Docker edukiontzietan modu independentean exekutatzen ari diren Celery workerrek mezu hauek kontsumitzen dituzte eta zereginak modu asinkronoan prozesatzen dituzte.</p>
 
-<h3>1. adibidea: Datuen Ingesta Periodikoak (Mubil)</h3>
-<p>Mubil moduluak mugikortasun elektrikoko eta erregaiei buruzko datuak prozesatzen ditu. Kanpoko datu-iturri hauek aldatu egiten dira aldian-aldian, eta prozesamendua behar dute erabiltzaileari aurkeztu aurretik:</p>
+<h3>Erabilera Kasua: Kultur Ekitaldien Ingesta Periodikoa</h3>
+<p><strong>Kultur</strong> moduluak Euskal Herriko kultur ekitaldien agenda zentralizatzen du. Ekitaldi hauek egunero eguneratzen dira OpenData APIen bidez. Deskarga eta indexazio prozesua astuna denez, karga hau programatutako zeregin baten esku uzten dugu:</p>
 <ul>
-    <li><strong>PVPC Ingesta Horarioa (<code>ingest_pvpc_hourly</code>):</strong> ESIOS API ofizialetik orduko argiaren prezio arautuak deskargatzen ditu orduro. <code>django-celery-beat</code>-en bidez orduko cron bat konfiguratuz, gure laguntzaile adimendunak tarifa elektriko eguneratuak dituela ziurtatzen dugu.</li>
-    <li><strong>Gasolindegiak eta Kargagune Elektrikoak:</strong> Eguneroko gasolindegien ingesta eta asteroko ibilgailu elektrikoen kargaguneen eguneratzea.</li>
+    <li><strong>Karga eta Ingesta (<code>kultur.load_events</code>):</strong> Aldian-aldian exekutatzen da <code>django-celery-beat</code> bidez. Ekitaldien jario ofiziala deskargatzen du, datu-basean normalizatzen ditu eta koordenatu espazialik ez duten aretoak geolokalizatzen ditu.</li>
 </ul>
 
-<pre><code># apps/mubil/tasks.py
-from celery import shared_task
-from apps.mubil.data import pvpc_ingest
+<pre><code>from celery import shared_task
+from django.core.management import call_command
 
-@shared_task(name="mubil.ingest_pvpc_hourly")
-def ingest_pvpc_hourly(hours: int = 48) -> dict:
-    stats = pvpc_ingest.ingest_recent_hours(hours=hours)
-    return stats.as_dict()
+@shared_task(
+    name="kultur.load_events",
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=60,
+    retry_backoff_max=3600,
+    retry_jitter=True,
+    max_retries=3,
+)
+def load_events(self):
+    call_command("load_events")
+    call_command("geocode_venues")
 </code></pre>
 
-<h3>2. adibidea: Gemini bidezko albisteen eguneratzea eskaripean</h3>
-<p>Gure proiektuko beste erabilera-kasu interesgarri bat albisteak lortu eta aberastea da. Gemini APIa erabiltzea garestia denez, ez dugu zeregin hau cron itsu batean programatu nahi. Horren ordez, erabiltzaile bat albisteen atalean sartzen denean eta katxea iraungita dagoenean, Djangok zeregin bat bidaltzen dio Celeryri atzeko planoan albisteak prozesatu eta <strong>pgvector</strong> bidez indexatzeko.</p>
+<h3>Reintentu Adimendunen Kudeaketa Sareko Hutsegiteen Aurrean</h3>
+<p>Celery erabiltzearen abantaila handi bat akatsen kudeaketa da. OpenData Euskadiren APIa aldi baterako erabilgarri ez badago edo kanpoko mapa-zerbitzuak geokodetzean huts egiten badu, <code>@shared_task</code> dekoratzailea berriro saiatze automatiko progresiboekin konfiguratuta dago.</p>
 """,
                 "content_en": """
-<p>In high-performance web development, delegating heavy or periodic tasks to background processes is essential to keeping the user interface fast and responsive. At <strong>maps.eus</strong> and <strong>ai.maps.eus</strong>, we use <strong>Celery</strong> as our asynchronous task manager and <strong>Redis</strong> as a message broker to handle complex data workflows without penalizing frontend load times.</p>
+<p>In high-performance web development, delegating heavy or periodic tasks to background processes is essential to keeping the user interface fast and responsive. At <strong>maps.eus</strong>, we use <strong>Celery</strong> as our asynchronous task manager and <strong>Redis</strong> as a message broker to handle complex data workflows without penalizing frontend load times.</p>
 
 <h2>The Celery + Redis Architecture</h2>
-<p>Celery acts as a work distributor that monitors task queues. When a Django request triggers a resource-intensive operation, it packages the request and posts it to <strong>Redis</strong>, which serves as the message queue. Celery workers running in independent Docker containers consume these tasks and process them asynchronously.</p>
+<p>Celery acts as a work distributor that monitors task queues. When a Django process triggers a resource-intensive operation, it packages the task and posts it to <strong>Redis</strong>, which serves as the message queue. Celery workers running in independent Docker containers consume these tasks and process them asynchronously.</p>
 
-<h3>Use Case 1: Periodic Data Ingestion (Mubil App)</h3>
-<p>The <strong>Mubil</strong> app processes public datasets related to electric mobility and fuel prices in the Basque Country. Many of these external feeds update periodically and require extensive data cleanup before they can be queried:</p>
+<h3>Use Case: Periodic Culture Events Ingestion</h3>
+<p>The <strong>Kultur</strong> module centralizes Euskal Herria's cultural event calendar. These events are updated daily through public OpenData APIs. Since the process requires downloading a large volume of records and indexing them, we delegate this workload to a scheduled task:</p>
 <ul>
-    <li><strong>Hourly PVPC Ingest (<code>ingest_pvpc_hourly</code>):</strong> Fetches regulated hourly electricity tariffs from Spain's official ESIOS API. An hourly cron configured via <code>django-celery-beat</code> ensures the EV charging planner has updated rates.</li>
-    <li><strong>Fuel and EV Charging Stations:</strong> Daily snapshot imports of fuel stations from MINCOTUR, and weekly imports of electric charging points from OpenChargeMap.</li>
+    <li><strong>Load and Ingest (<code>kultur.load_events</code>):</strong> Runs periodically via <code>django-celery-beat</code>. It fetches the official event feed, normalizes them in the database, and geolocates cultural venues lacking spatial coordinates.</li>
 </ul>
 
-<pre><code># apps/mubil/tasks.py
-from celery import shared_task
-from apps.mubil.data import pvpc_ingest
+<pre><code>from celery import shared_task
+from django.core.management import call_command
 
-@shared_task(name="mubil.ingest_pvpc_hourly")
-def ingest_pvpc_hourly(hours: int = 48) -> dict:
-    stats = pvpc_ingest.ingest_recent_hours(hours=hours)
-    return stats.as_dict()
+@shared_task(
+    name="kultur.load_events",
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=60,
+    retry_backoff_max=3600,
+    retry_jitter=True,
+    max_retries=3,
+)
+def load_events(self):
+    # Ingest cultural events
+    call_command("load_events")
+    # Spatial geocoding of venues
+    call_command("geocode_venues")
 </code></pre>
 
-<h3>Use Case 2: On-Demand News Enrichment with Gemini API</h3>
-<p>Another compelling use case is fetching and summarizing mobility news (<code>refresh_news</code>). Since querying the Gemini API for every news piece has a token cost, we do not want to run this task on a blind periodic schedule.</p>
-<p>Instead, when a user visits the news section and the local cache is expired, Django queues an on-demand refresh task in Celery. The user is served cached content instantly, while the background worker invokes Gemini, vectorizes the articles, and updates the <strong>pgvector</strong> store for semantic searches.</p>
+<h3>Intelligent Retries on Network Failures</h3>
+<p>A major benefit of using Celery over basic cron scripts is error handling. If the OpenData Euskadi API is temporarily down or the external maps geocoding service timeouts, the <code>@shared_task</code> decorator is configured with progressive automatic retries (<code>autoretry_for</code> and <code>retry_backoff</code>).</p>
+<p>This guarantees that temporary network hiccups do not completely crash the pipeline, but instead trigger smart retries with exponential backoff and jitter.</p>
 """,
                 "is_published": True,
                 "published_at": timezone.now(),
-                "read_time": 6,
+                "read_time": 5,
                 "difficulty": "intermediate",
                 "likes": 20,
                 "tag_slugs": ["django", "docker", "celery"],

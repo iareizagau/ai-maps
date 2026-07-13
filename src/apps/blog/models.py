@@ -115,9 +115,7 @@ class Post(models.Model):
         choices=DIFFICULTY_CHOICES,
         default="beginner",
     )
-    featured_image = models.ImageField(
-        upload_to="blog/images/", blank=True, null=True
-    )
+    featured_image = models.ImageField(upload_to="blog/images/", blank=True, null=True)
 
     # WebGIS features
     map_geojson = models.TextField(

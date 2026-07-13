@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -15,67 +14,242 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Category',
+            name="Category",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name_es', models.CharField(max_length=100, verbose_name='Nombre (ES)')),
-                ('name_eu', models.CharField(max_length=100, verbose_name='Izena (EU)')),
-                ('name_en', models.CharField(max_length=100, verbose_name='Name (EN)')),
-                ('slug', models.SlugField(help_text='Universal slug used in URLs', unique=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name_es",
+                    models.CharField(max_length=100, verbose_name="Nombre (ES)"),
+                ),
+                (
+                    "name_eu",
+                    models.CharField(max_length=100, verbose_name="Izena (EU)"),
+                ),
+                ("name_en", models.CharField(max_length=100, verbose_name="Name (EN)")),
+                (
+                    "slug",
+                    models.SlugField(
+                        help_text="Universal slug used in URLs", unique=True
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Category',
-                'verbose_name_plural': 'Categories',
+                "verbose_name": "Category",
+                "verbose_name_plural": "Categories",
             },
         ),
         migrations.CreateModel(
-            name='Tag',
+            name="Tag",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name_es', models.CharField(max_length=100, verbose_name='Nombre (ES)')),
-                ('name_eu', models.CharField(max_length=100, verbose_name='Izena (EU)')),
-                ('name_en', models.CharField(max_length=100, verbose_name='Name (EN)')),
-                ('slug', models.SlugField(help_text='Universal slug used in URLs', unique=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name_es",
+                    models.CharField(max_length=100, verbose_name="Nombre (ES)"),
+                ),
+                (
+                    "name_eu",
+                    models.CharField(max_length=100, verbose_name="Izena (EU)"),
+                ),
+                ("name_en", models.CharField(max_length=100, verbose_name="Name (EN)")),
+                (
+                    "slug",
+                    models.SlugField(
+                        help_text="Universal slug used in URLs", unique=True
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Tag',
-                'verbose_name_plural': 'Tags',
+                "verbose_name": "Tag",
+                "verbose_name_plural": "Tags",
             },
         ),
         migrations.CreateModel(
-            name='Post',
+            name="Post",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title_es', models.CharField(max_length=255, verbose_name='Título (ES)')),
-                ('title_eu', models.CharField(blank=True, max_length=255, verbose_name='Izenburua (EU)')),
-                ('title_en', models.CharField(blank=True, max_length=255, verbose_name='Title (EN)')),
-                ('slug_es', models.SlugField(blank=True, max_length=255, null=True, unique=True, verbose_name='Slug (ES)')),
-                ('slug_eu', models.SlugField(blank=True, max_length=255, null=True, unique=True, verbose_name='Slug (EU)')),
-                ('slug_en', models.SlugField(blank=True, max_length=255, null=True, unique=True, verbose_name='Slug (EN)')),
-                ('summary_es', models.TextField(blank=True, verbose_name='Resumen (ES)')),
-                ('summary_eu', models.TextField(blank=True, verbose_name='Laburpena (EU)')),
-                ('summary_en', models.TextField(blank=True, verbose_name='Summary (EN)')),
-                ('content_es', models.TextField(blank=True, verbose_name='Contenido (ES)')),
-                ('content_eu', models.TextField(blank=True, verbose_name='Edukia (EU)')),
-                ('content_en', models.TextField(blank=True, verbose_name='Content (EN)')),
-                ('is_published', models.BooleanField(db_index=True, default=False)),
-                ('published_at', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('read_time', models.PositiveIntegerField(default=5, help_text='Estimated reading time in minutes')),
-                ('difficulty', models.CharField(choices=[('beginner', 'Introductory'), ('intermediate', 'Intermediate'), ('advanced', 'Advanced')], default='beginner', max_length=20)),
-                ('featured_image', models.ImageField(blank=True, null=True, upload_to='blog/images/')),
-                ('map_geojson', models.TextField(blank=True, help_text='Optional raw GeoJSON to overlay on the Leaflet map widget', null=True)),
-                ('map_center_lat', models.DecimalField(decimal_places=6, default=43.0, help_text='Latitude for Leaflet center', max_digits=9)),
-                ('map_center_lng', models.DecimalField(decimal_places=6, default=-2.5, help_text='Longitude for Leaflet center', max_digits=9)),
-                ('map_zoom', models.IntegerField(default=9, help_text='Zoom level for Leaflet map')),
-                ('likes', models.PositiveIntegerField(default=0)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='blog_posts', to=settings.AUTH_USER_MODEL)),
-                ('category', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='posts', to='blog.category')),
-                ('tags', models.ManyToManyField(blank=True, related_name='posts', to='blog.tag')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "title_es",
+                    models.CharField(max_length=255, verbose_name="Título (ES)"),
+                ),
+                (
+                    "title_eu",
+                    models.CharField(
+                        blank=True, max_length=255, verbose_name="Izenburua (EU)"
+                    ),
+                ),
+                (
+                    "title_en",
+                    models.CharField(
+                        blank=True, max_length=255, verbose_name="Title (EN)"
+                    ),
+                ),
+                (
+                    "slug_es",
+                    models.SlugField(
+                        blank=True,
+                        max_length=255,
+                        null=True,
+                        unique=True,
+                        verbose_name="Slug (ES)",
+                    ),
+                ),
+                (
+                    "slug_eu",
+                    models.SlugField(
+                        blank=True,
+                        max_length=255,
+                        null=True,
+                        unique=True,
+                        verbose_name="Slug (EU)",
+                    ),
+                ),
+                (
+                    "slug_en",
+                    models.SlugField(
+                        blank=True,
+                        max_length=255,
+                        null=True,
+                        unique=True,
+                        verbose_name="Slug (EN)",
+                    ),
+                ),
+                (
+                    "summary_es",
+                    models.TextField(blank=True, verbose_name="Resumen (ES)"),
+                ),
+                (
+                    "summary_eu",
+                    models.TextField(blank=True, verbose_name="Laburpena (EU)"),
+                ),
+                (
+                    "summary_en",
+                    models.TextField(blank=True, verbose_name="Summary (EN)"),
+                ),
+                (
+                    "content_es",
+                    models.TextField(blank=True, verbose_name="Contenido (ES)"),
+                ),
+                (
+                    "content_eu",
+                    models.TextField(blank=True, verbose_name="Edukia (EU)"),
+                ),
+                (
+                    "content_en",
+                    models.TextField(blank=True, verbose_name="Content (EN)"),
+                ),
+                ("is_published", models.BooleanField(db_index=True, default=False)),
+                (
+                    "published_at",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                (
+                    "read_time",
+                    models.PositiveIntegerField(
+                        default=5, help_text="Estimated reading time in minutes"
+                    ),
+                ),
+                (
+                    "difficulty",
+                    models.CharField(
+                        choices=[
+                            ("beginner", "Introductory"),
+                            ("intermediate", "Intermediate"),
+                            ("advanced", "Advanced"),
+                        ],
+                        default="beginner",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "featured_image",
+                    models.ImageField(blank=True, null=True, upload_to="blog/images/"),
+                ),
+                (
+                    "map_geojson",
+                    models.TextField(
+                        blank=True,
+                        help_text="Optional raw GeoJSON to overlay on the Leaflet map widget",
+                        null=True,
+                    ),
+                ),
+                (
+                    "map_center_lat",
+                    models.DecimalField(
+                        decimal_places=6,
+                        default=43.0,
+                        help_text="Latitude for Leaflet center",
+                        max_digits=9,
+                    ),
+                ),
+                (
+                    "map_center_lng",
+                    models.DecimalField(
+                        decimal_places=6,
+                        default=-2.5,
+                        help_text="Longitude for Leaflet center",
+                        max_digits=9,
+                    ),
+                ),
+                (
+                    "map_zoom",
+                    models.IntegerField(
+                        default=9, help_text="Zoom level for Leaflet map"
+                    ),
+                ),
+                ("likes", models.PositiveIntegerField(default=0)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "author",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="blog_posts",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "category",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="posts",
+                        to="blog.category",
+                    ),
+                ),
+                (
+                    "tags",
+                    models.ManyToManyField(
+                        blank=True, related_name="posts", to="blog.tag"
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-published_at', '-created_at'],
+                "ordering": ["-published_at", "-created_at"],
             },
         ),
     ]

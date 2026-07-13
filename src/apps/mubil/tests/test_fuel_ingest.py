@@ -219,8 +219,7 @@ def _make_station(
         postal_code=cp,
         geom=Point(lon, lat, srid=4326),
         prices=prices,
-        last_seen_at=datetime.now(tz=UTC)
-        - timedelta(hours=last_seen_hours_ago),
+        last_seen_at=datetime.now(tz=UTC) - timedelta(hours=last_seen_hours_ago),
     )
 
 

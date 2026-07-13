@@ -1,6 +1,5 @@
 """Schemas for `ask`. PROPUESTA.md §3.2."""
 
-
 from ninja import Schema
 
 

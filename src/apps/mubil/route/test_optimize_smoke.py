@@ -1,6 +1,5 @@
 """Quick smoke test for the /api/route/optimize endpoint."""
 
-
 import requests
 
 payload = {

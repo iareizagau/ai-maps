@@ -2,7 +2,6 @@
 `advisor/schemas.py`, `ask/schemas.py`, etc. See PROPUESTA.md §3.
 """
 
-
 from ninja import Schema
 
 

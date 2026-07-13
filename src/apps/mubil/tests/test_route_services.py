@@ -313,10 +313,13 @@ class FreeODTests(TestCase):
         self.assertIsNotNone(result.ice_baseline)
 
     def test_free_mode_zero_distance_raises(self):
-        with mock.patch(
-            "apps.mubil.advisor.services.get_commute_route",
-            return_value={"distance_km": 0, "route_geojson": {}},
-        ), self.assertRaises(ValueError):
+        with (
+            mock.patch(
+                "apps.mubil.advisor.services.get_commute_route",
+                return_value={"distance_km": 0, "route_geojson": {}},
+            ),
+            self.assertRaises(ValueError),
+        ):
             services.plan(
                 origin_lng=-1.9812,
                 origin_lat=43.3183,

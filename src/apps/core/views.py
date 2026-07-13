@@ -58,7 +58,10 @@ def home(request):
     latest_blog_posts = []
     try:
         from apps.blog.models import Post
-        latest_blog_posts = Post.objects.filter(is_published=True).order_by("-published_at", "-created_at")[:3]
+
+        latest_blog_posts = Post.objects.filter(is_published=True).order_by(
+            "-published_at", "-created_at"
+        )[:3]
     except Exception:
         pass
 

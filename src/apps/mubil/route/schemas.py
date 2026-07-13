@@ -1,6 +1,5 @@
 """Schemas for `route`. PROPUESTA.md §3.3."""
 
-
 from ninja import Schema
 
 

@@ -7,7 +7,6 @@
 /estrata/api/v1/infrastructure/  — chargers + fast-charging desert (read-only)
 """
 
-
 from ninja import Router
 
 from .advisor.api import router as advisor_router

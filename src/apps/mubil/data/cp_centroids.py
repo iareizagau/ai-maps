@@ -8,7 +8,6 @@ vez tengamos un servicio interno estable. Mantener este fichero como
 fallback offline para la defensa.
 """
 
-
 CP_CENTROIDS: dict[str, tuple[float, float, str]] = {
     # Gipuzkoa — núcleos principales
     "20018": (43.300, -2.000, "Donostia / San Sebastián (centro)"),

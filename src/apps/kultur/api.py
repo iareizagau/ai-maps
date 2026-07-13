@@ -5,7 +5,6 @@ Mounted at /api/kultur/ from core/api.py. Auth is session-based (Django's
 default); endpoints raise 401 for anonymous users.
 """
 
-
 from django.shortcuts import get_object_or_404
 from ninja import Router, Schema
 from ninja.errors import HttpError

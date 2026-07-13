@@ -1,4 +1,3 @@
-
 with open("src/templates/adventure/follow.html", encoding="utf-8") as f:
     content = f.read()
 

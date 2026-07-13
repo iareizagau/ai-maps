@@ -7,7 +7,6 @@ Endpoints (PROPUESTA.md §3.1):
   POST /route-commute            → RouteCommuteIn → RouteCommuteOut
 """
 
-
 from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models import Case, FloatField, Q, Value, When
 from django.db.models.functions import Greatest

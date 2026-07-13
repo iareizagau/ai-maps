@@ -1,4 +1,3 @@
-
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import Point
 from django.test import Client, TestCase

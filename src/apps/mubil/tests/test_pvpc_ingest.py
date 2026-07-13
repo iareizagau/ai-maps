@@ -70,9 +70,7 @@ def _mock_response(payload=None, status=200):
 class ClassifyTariffTests(TestCase):
     def test_weekday_morning_peak(self):
         # Madrid 11:00 on a Friday → P1
-        ts = datetime(
-            2026, 5, 1, 9, 0, tzinfo=UTC
-        )  # UTC 09:00 = Madrid 11:00 (CEST)
+        ts = datetime(2026, 5, 1, 9, 0, tzinfo=UTC)  # UTC 09:00 = Madrid 11:00 (CEST)
         self.assertEqual(pvpc_ingest.classify_tariff(ts), EnergyPricePVPC.Tariff.P1)
 
     def test_weekday_afternoon_flat(self):

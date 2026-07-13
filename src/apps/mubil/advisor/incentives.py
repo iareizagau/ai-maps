@@ -204,9 +204,7 @@ def _ivtm_exemption(cp: str) -> Incentive | None:
     return Incentive(code="ivtm_bonif", name=label, amount_eur=annual, recurring=True)
 
 
-def _iva_deducible(
-    profile: Profile, vehicle_price_eur: int | None
-) -> Incentive | None:
+def _iva_deducible(profile: Profile, vehicle_price_eur: int | None) -> Incentive | None:
     """IVA deducible para autónomos/empresas. Precio asumido CON IVA."""
     if profile not in ("autonomo", "empresa") or not vehicle_price_eur:
         return None

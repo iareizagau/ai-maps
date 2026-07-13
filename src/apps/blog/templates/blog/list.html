@@ -1,0 +1,200 @@
+{% load i18n static %}
+<c-layouts.main title="{{ title }}">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        
+        {# ─── HEADER SECTION ─── #}
+        <div class="text-center mb-8 sm:mb-12">
+            <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
+                {% trans "Blog de" %} 
+                <span class="bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent">{% trans "Tecnología & WebGIS" %}</span>
+            </h1>
+            <p class="mt-3 text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
+                {% trans "Detrás de escena de Maps.eus: tutoriales, arquitectura y lecciones aprendidas construyendo con Django, PostGIS, pgrouting y Modelos de Lenguaje." %}
+            </p>
+        </div>
+
+        {# ─── SEARCH & FILTER BAR ─── #}
+        <div class="mb-8">
+            <form method="GET" action="{% url 'blog:post_list' %}" class="flex gap-2 max-w-2xl mx-auto">
+                <div class="relative flex-grow">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="h-4 w-4 text-slate-400"></i>
+                    </span>
+                    <input type="text" name="q" value="{{ search_query|default:'' }}" 
+                           class="w-full pl-10 pr-4 py-2.5 rounded-full text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/35 transition-all"
+                           placeholder="{% trans 'Buscar tutoriales, bases de datos, docker...' %}">
+                </div>
+                <button type="submit" class="px-6 py-2.5 rounded-full bg-primary hover:bg-primary_hover text-white text-sm font-bold shadow-lg shadow-primary/20 transition-all">
+                    {% trans "Buscar" %}
+                </button>
+            </form>
+        </div>
+
+        {# ─── MAIN LAYOUT GRID ─── #}
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            {# ─── LEFT COLUMN: POSTS ─── #}
+            <div class="lg:col-span-3 space-y-6">
+                {% if posts %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {% for post in posts %}
+                            <article class="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/5 glass hover:-translate-y-1 hover:border-primary/50 transition-all duration-300">
+                                {# Image aspect-video #}
+                                <div class="relative aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
+                                    {% if post.featured_image %}
+                                        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                    {% else %}
+                                        <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-850 dark:to-slate-900 text-slate-300 dark:text-slate-700">
+                                            <i data-lucide="code" class="w-12 h-12 stroke-[1.5]"></i>
+                                        </div>
+                                    {% endif %}
+                                    {# Category Badge #}
+                                    {% if post.category %}
+                                        <span class="absolute top-3 left-3 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md bg-primary/95 text-white shadow-sm">
+                                            {{ post.category.name }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+
+                                {# Card Content #}
+                                <div class="flex flex-1 flex-col p-5">
+                                    <div class="flex items-center gap-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                                        <span class="inline-flex items-center gap-1">
+                                            <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                                            {{ post.read_time }} min {% trans "lectura" %}
+                                        </span>
+                                        <span>·</span>
+                                        <span class="inline-flex items-center gap-1 uppercase tracking-wider">
+                                            {% if post.difficulty == "beginner" %}
+                                                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                                {% trans "Intro" %}
+                                            {% elif post.difficulty == "intermediate" %}
+                                                <span class="h-2 w-2 rounded-full bg-blue-500"></span>
+                                                {% trans "Intermedio" %}
+                                            {% else %}
+                                                <span class="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                                                {% trans "Avanzado" %}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+
+                                    <h2 class="text-lg font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-snug line-clamp-2">
+                                        <a href="{% url 'blog:post_detail' post.slug %}">
+                                            {{ post.title }}
+                                        </a>
+                                    </h2>
+                                    
+                                    <p class="mt-2.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">
+                                        {{ post.summary }}
+                                    </p>
+
+                                    <div class="mt-auto pt-4 border-t border-slate-100 dark:border-white/5 flex flex-wrap gap-1.5">
+                                        {% for tag in post.tags.all %}
+                                            <span class="px-2 py-0.5 text-[10px] rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400">
+                                                #{{ tag.name }}
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-16 glass rounded-3xl border border-slate-200/50 dark:border-white/5">
+                        <i data-lucide="inbox" class="w-12 h-12 text-slate-400 mx-auto stroke-[1.5] mb-3"></i>
+                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">{% trans "No se encontraron posts" %}</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{% trans "Prueba con otra búsqueda o filtro de categorías." %}</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            {# ─── RIGHT COLUMN: SIDEBAR ─── #}
+            <div class="space-y-6">
+
+                {# ─── AI CHATBOT WIDGET ─── #}
+                <div x-data="{ 
+                    question: '', 
+                    answer: '', 
+                    loading: false, 
+                    ask() {
+                        if (!this.question.trim()) return;
+                        this.loading = true;
+                        this.answer = '';
+                        fetch('{% url 'blog:blog_chat_api' %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({ question: this.question })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            this.answer = data.answer;
+                            this.loading = false;
+                        })
+                        .catch(err => {
+                            this.answer = '{% trans "Error al comunicarse con la IA." %}';
+                            this.loading = false;
+                        });
+                    }
+                }" class="glass p-5 rounded-2xl border border-slate-200/50 dark:border-white/5 shadow-lg">
+                    <h3 class="font-bold text-sm text-slate-800 dark:text-slate-200 mb-2 flex items-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-primary animate-pulse"></i>
+                        {% trans "Asistente Técnico IA" %}
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                        {% trans "Pregúntame sobre cómo optimizamos PostGIS, pgrouting, o cómo trabaja la IA en esta plataforma." %}
+                    </p>
+                    <div class="space-y-3">
+                        <textarea x-model="question" @keydown.enter.prevent="ask()" rows="2" 
+                                  class="w-full text-xs rounded-xl p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-1 focus:ring-primary" 
+                                  placeholder="{% trans 'Ej: ¿Cómo usar pgrouting?' %}"></textarea>
+                        <button @click="ask()" :disabled="loading" 
+                                class="w-full py-2 px-4 bg-primary hover:bg-primary_hover disabled:bg-slate-300 dark:disabled:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
+                            <span x-show="!loading">{% trans "Preguntar" %}</span>
+                            <span x-show="loading" class="flex items-center gap-1.5">
+                                <span class="animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full"></span>
+                                {% trans "Pensando..." %}
+                            </span>
+                        </button>
+                    </div>
+                    <div x-show="answer || loading" x-cloak class="mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
+                        <p class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">{% trans "Respuesta de la IA" %}</p>
+                        <div class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed prose dark:prose-invert max-w-none" x-html="answer || '...'"></div>
+                    </div>
+                </div>
+
+                {# ─── CATEGORIES WIDGET ─── #}
+                <div class="glass p-5 rounded-2xl border border-slate-200/50 dark:border-white/5">
+                    <h3 class="font-bold text-sm text-slate-800 dark:text-slate-200 mb-3">{% trans "Categorías" %}</h3>
+                    <div class="flex flex-col gap-1.5">
+                        <a href="{% url 'blog:post_list' %}" class="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg {% if not active_category %}bg-primary/10 text-primary font-bold{% else %}hover:bg-slate-100 dark:hover:bg-white/5 text-slate-650 dark:text-slate-350{% endif %}">
+                            <span>{% trans "Todos los posts" %}</span>
+                        </a>
+                        {% for cat in categories %}
+                            <a href="{% url 'blog:post_list_category' cat.slug %}" class="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg {% if active_category == cat %}bg-primary/10 text-primary font-bold{% else %}hover:bg-slate-100 dark:hover:bg-white/5 text-slate-650 dark:text-slate-350{% endif %}">
+                                <span>{{ cat.name }}</span>
+                                <span class="text-[10px] bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded-sm font-semibold">{{ cat.posts.count }}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {# ─── TAGS WIDGET ─── #}
+                <div class="glass p-5 rounded-2xl border border-slate-200/50 dark:border-white/5">
+                    <h3 class="font-bold text-sm text-slate-800 dark:text-slate-200 mb-3">{% trans "Etiquetas" %}</h3>
+                    <div class="flex flex-wrap gap-1.5">
+                        {% for tag in tags %}
+                            <a href="{% url 'blog:post_list_tag' tag.slug %}" class="px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wider transition-all {% if active_tag == tag %}bg-primary text-white{% else %}bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400{% endif %}">
+                                #{{ tag.name }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</c-layouts.main>

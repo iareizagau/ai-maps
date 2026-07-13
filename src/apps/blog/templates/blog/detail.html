@@ -1,0 +1,254 @@
+{% load i18n static %}
+<c-layouts.main title="{{ post.title }}">
+    
+    <c-slot name="extra_head">
+        {% if post.map_geojson or post.map_center_lat %}
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+            <style>
+                .leaflet-tile { transition: filter 0.3s ease; }
+                .dark .leaflet-tile { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7); }
+                .leaflet-container { font-family: inherit; z-index: 1; }
+            </style>
+        {% endif %}
+        <style>
+            /* Premium developer code block styling */
+            .prose pre {
+                background-color: #0f172a !important;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 0.75rem;
+                padding: 1rem;
+                overflow-x: auto;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+                font-size: 0.85em;
+                color: #f8fafc;
+            }
+            .prose code {
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                padding: 0.15em 0.3em;
+                background-color: rgba(249, 115, 22, 0.1);
+                color: #f97316;
+                border-radius: 0.25rem;
+                font-size: 0.9em;
+            }
+            .prose pre code {
+                background-color: transparent !important;
+                padding: 0;
+                color: inherit;
+                font-size: inherit;
+            }
+        </style>
+    </c-slot>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {# Back link #}
+        <div class="mb-6">
+            <a href="{% url 'blog:post_list' %}" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                {% trans "Volver al listado" %}
+            </a>
+        </div>
+
+        {# Header Section #}
+        <div class="max-w-3xl mx-auto mb-8 sm:mb-12">
+            {% if post.category %}
+                <span class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded bg-primary text-white mb-3 inline-block">
+                    {{ post.category.name }}
+                </span>
+            {% endif %}
+            <h1 class="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white leading-tight mb-4">
+                {{ post.title }}
+            </h1>
+            
+            <div class="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pb-6 border-b border-slate-200 dark:border-white/5">
+                <span class="flex items-center gap-1">
+                    <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                    {{ post.author.username }}
+                </span>
+                <span>·</span>
+                <span class="flex items-center gap-1">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                    {{ post.published_at|date:"SHORT_DATE_FORMAT"|default:post.created_at|date:"SHORT_DATE_FORMAT" }}
+                </span>
+                <span>·</span>
+                <span class="flex items-center gap-1">
+                    <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                    {{ post.read_time }} min {% trans "lectura" %}
+                </span>
+                <span>·</span>
+                <span class="inline-flex items-center gap-1 uppercase font-semibold">
+                    {% if post.difficulty == "beginner" %}
+                        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                        {% trans "Introductory" %}
+                    {% elif post.difficulty == "intermediate" %}
+                        <span class="h-2 w-2 rounded-full bg-blue-500"></span>
+                        {% trans "Intermediate" %}
+                    {% else %}
+                        <span class="h-2 w-2 rounded-full bg-red-500"></span>
+                        {% trans "Advanced" %}
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        {# Main Grid #}
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            {# Left Column: Article #}
+            <div class="lg:col-span-3">
+                {# Featured Image #}
+                {% if post.featured_image %}
+                    <div class="w-full rounded-3xl overflow-hidden mb-8 shadow-md">
+                        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" class="w-full h-auto object-cover max-h-[450px]">
+                    </div>
+                {% endif %}
+
+                {# Main Article Body (Prose) #}
+                <article class="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-350 leading-relaxed text-sm sm:text-base">
+                    {{ post.content|safe }}
+                </article>
+
+                {# GIS Map Widget (If geojson or coords provided) #}
+                {% if post.map_geojson or post.map_center_lat %}
+                    <div class="my-8 pt-8 border-t border-slate-200 dark:border-white/5">
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-primary"></i>
+                            {% trans "Visualización Geográfica Asociada" %}
+                        </h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                            {% trans "Este post incluye datos espaciales interactivos. Explora el mapa a continuación." %}
+                        </p>
+                        <div id="post-map" class="h-[380px] w-full rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner z-10"></div>
+                    </div>
+                {% endif %}
+
+                {# Footer Info #}
+                <div class="mt-8 pt-6 border-t border-slate-200 dark:border-white/5 flex justify-between items-center">
+                    <div class="flex flex-wrap gap-1.5">
+                        {% for tag in post.tags.all %}
+                            <span class="px-2.5 py-0.5 text-xs rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400">
+                                #{{ tag.name }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                    
+                    {# Likes Button #}
+                    <button class="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-250 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-white/5 text-xs font-bold transition-all">
+                        <i data-lucide="heart" class="w-4 h-4 text-red-500 fill-red-500"></i>
+                        <span>{{ post.likes }}</span>
+                    </button>
+                </div>
+            </div>
+
+            {# Right Column: Sidebar #}
+            <div class="space-y-6">
+                {# Author Card #}
+                <div class="glass p-5 rounded-2xl border border-slate-200/50 dark:border-white/5">
+                    <h3 class="font-bold text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">{% trans "Autor" %}</h3>
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-sm">
+                            {{ post.author.username|slice:":2"|upper }}
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ post.author.username }}</p>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400">{% trans "Equipo de Desarrollo" %}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {# Recent Posts Widget #}
+                {% if recent_posts %}
+                    <div class="glass p-5 rounded-2xl border border-slate-200/50 dark:border-white/5">
+                        <h3 class="font-bold text-sm text-slate-800 dark:text-slate-200 mb-3">{% trans "Otros artículos" %}</h3>
+                        <div class="flex flex-col gap-3">
+                            {% for r_post in recent_posts %}
+                                <a href="{% url 'blog:post_detail' r_post.slug %}" class="group block">
+                                    <h4 class="text-xs font-bold text-slate-850 dark:text-slate-200 group-hover:text-primary transition-colors line-clamp-2">
+                                        {{ r_post.title }}
+                                    </h4>
+                                    <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                        {{ r_post.published_at|date:"SHORT_DATE_FORMAT"|default:r_post.created_at|date:"SHORT_DATE_FORMAT" }}
+                                    </p>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {# Categories Widget #}
+                <div class="glass p-5 rounded-2xl border border-slate-200/50 dark:border-white/5">
+                    <h3 class="font-bold text-sm text-slate-800 dark:text-slate-200 mb-3">{% trans "Categorías" %}</h3>
+                    <div class="flex flex-col gap-1.5">
+                        {% for cat in categories %}
+                            <a href="{% url 'blog:post_list_category' cat.slug %}" class="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-650 dark:text-slate-350">
+                                <span>{{ cat.name }}</span>
+                                <span class="text-[10px] bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded-sm font-semibold">{{ cat.posts.count }}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <c-slot name="extra_js">
+        {% if post.map_geojson or post.map_center_lat %}
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    const lat = {{ post.map_center_lat|default:43.0 }};
+                    const lng = {{ post.map_center_lng|default:-2.5 }};
+                    const zoom = {{ post.map_zoom|default:9 }};
+                    
+                    const map = L.map('post-map').setView([lat, lng], zoom);
+                    
+                    const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+                    const layer = L.tileLayer(tileUrl, {
+                        attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
+                    }).addTo(map);
+
+                    const isDark = document.documentElement.classList.contains('dark');
+                    if (isDark) {
+                        document.querySelectorAll('#post-map .leaflet-tile').forEach(el => {
+                            el.style.filter = 'brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7)';
+                        });
+                    }
+
+                    // Observe theme change dynamically
+                    const observer = new MutationObserver(mutations => {
+                        mutations.forEach(mutation => {
+                            if (mutation.attributeName === 'class') {
+                                const currentDark = document.documentElement.classList.contains('dark');
+                                document.querySelectorAll('#post-map .leaflet-tile').forEach(el => {
+                                    if (currentDark) {
+                                        el.style.filter = 'brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7)';
+                                    } else {
+                                        el.style.filter = 'none';
+                                    }
+                                });
+                            }
+                        });
+                    });
+                    observer.observe(document.documentElement, { attributes: true });
+                    
+                    {% if post.map_geojson %}
+                    try {
+                        const geojsonStr = `{{ post.map_geojson|escapejs }}`;
+                        if (geojsonStr && geojsonStr.trim() !== "") {
+                            const geojsonData = JSON.parse(geojsonStr);
+                            const geojsonLayer = L.geoJSON(geojsonData, {
+                                style: function() {
+                                    return { color: '#f97316', weight: 4, opacity: 0.85 };
+                                }
+                            }).addTo(map);
+                            map.fitBounds(geojsonLayer.getBounds());
+                        }
+                    } catch(e) {
+                        console.error("Error loading GeoJSON data:", e);
+                    }
+                    {% endif %}
+                });
+            </script>
+        {% endif %}
+    </c-slot>
+</c-layouts.main>

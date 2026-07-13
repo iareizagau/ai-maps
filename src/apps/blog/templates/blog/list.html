@@ -134,7 +134,8 @@
                         })
                         .then(res => res.json())
                         .then(data => {
-                            this.answer = data.answer;
+                            const rawAnswer = data.answer;
+                            this.answer = typeof marked !== 'undefined' ? marked.parse(rawAnswer) : rawAnswer;
                             this.loading = false;
                         })
                         .catch(err => {
@@ -201,4 +202,8 @@
         </div>
 
     </div>
+
+    <c-slot name="extra_js">
+        <script src="{% static 'js/marked.min.js' %}"></script>
+    </c-slot>
 </c-layouts.main>

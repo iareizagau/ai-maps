@@ -106,6 +106,12 @@ class Command(BaseCommand):
                 "name_eu": "CI/CD",
                 "name_en": "CI/CD",
             },
+            {
+                "slug": "celery",
+                "name_es": "Celery",
+                "name_eu": "Celery",
+                "name_en": "Celery",
+            },
         ]
 
         tags = {}
@@ -131,6 +137,29 @@ class Command(BaseCommand):
                             [-2.6705, 42.8485],
                             [-2.6685, 42.8505],
                             [-2.6720, 42.8530],
+                        ],
+                    },
+                }
+            ],
+        }
+
+        # Mock GeoJSON representing a low emission zone polygon in Vitoria-Gasteiz (ZBE)
+        zbe_geojson = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {"name": "Zona de Bajas Emisiones (ZBE) Centro"},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                                [-2.6780, 42.8430],
+                                [-2.6640, 42.8430],
+                                [-2.6640, 42.8530],
+                                [-2.6780, 42.8530],
+                                [-2.6780, 42.8430]
+                            ]
                         ],
                     },
                 }
@@ -501,6 +530,249 @@ def get_relevant_context(query_vector, limit=5):
                 "difficulty": "intermediate",
                 "likes": 42,
                 "tag_slugs": ["django", "gemini", "cicd"],
+            },
+            {
+                "category": categories["webgis-postgis"],
+                "author": author,
+                "title_es": "Validación de Zonas de Bajas Emisiones (ZBE) con Polígonos en PostGIS",
+                "title_eu": "Emisio Baxuko Eremuen (EBE) balidazioa poligonoekin PostGISen",
+                "title_en": "Validating Low Emission Zones (ZBE) with Polygons in PostGIS",
+                "slug_es": "validacion-zbe-poligonos-postgis",
+                "slug_eu": "ebe-balidazioa-poligonoak-postgis",
+                "slug_en": "validating-zbe-polygons-postgis",
+                "summary_es": "Cómo utilizar las consultas de intersección espacial de PostGIS en Django para verificar en tiempo real si un vehículo ingresa a una Zona de Bajas Emisiones.",
+                "summary_eu": "Nola erabili PostGISen intersekzio espazialen kontsultak Django-n, ibilgailu bat Emisio Baxuko Eremu batean sartzen den denbora errealean egiaztatzeko.",
+                "summary_en": "How to leverage PostGIS spatial intersection queries in Django to verify in real-time if a vehicle enters a Low Emission Zone.",
+                "content_es": """
+<p>Las <strong>Zonas de Bajas Emisiones (ZBE)</strong> son áreas urbanas delimitadas geográficamente donde se restringe el acceso a los vehículos más contaminantes para mejorar la calidad del aire. Para gestionar estas zonas en plataformas WebGIS modernas, la base de datos geoespacial <strong>PostGIS</strong> es la herramienta definitiva gracias a su potente soporte de operaciones con polígonos complejos.</p>
+
+<h3>¿Cómo modelar una ZBE en Django?</h3>
+<p>Utilizando <strong>GeoDjango</strong>, podemos definir las ZBE directamente en nuestro modelo de base de datos relacional asociando un campo geométrico multi-polígono:</p>
+
+<pre><code>from django.contrib.gis.db import models
+
+class LowEmissionZone(models.Model):
+    name = models.CharField(max_length=100)
+    boundary = models.MultiPolygonField(srid=4326)
+    restricted_categories = models.JSONField(default=list)
+
+    def __str__(self):
+        return self.name
+</code></pre>
+
+<h3>El caso práctico: Verificación en tiempo real en ai.maps.eus/zbe/</h3>
+<p>Hemos integrado esta tecnología de forma práctica en nuestro visor interactivo de <a href="https://ai.maps.eus/zbe/" target="_blank">ai.maps.eus/zbe/</a>. Esta herramienta permite a los conductores y gestores de flotas consultar de forma instantánea si una coordenada geográfica específica cae dentro de una zona regulada y qué restricciones le aplican según la etiqueta ambiental del vehículo.</p>
+
+<p>Para determinar si un punto geográfico (latitud, longitud) está dentro del polígono de una ZBE, utilizamos operadores espaciales nativos de PostGIS como <code>ST_Contains</code> a través del ORM de Django:</p>
+
+<pre><code>from django.contrib.gis.geos import Point
+from .models import LowEmissionZone
+
+def check_location_restrictions(lon, lat):
+    user_location = Point(lon, lat, srid=4326)
+    
+    # Buscamos la ZBE que contiene espacialmente nuestra ubicación
+    active_zbe = LowEmissionZone.objects.filter(
+        boundary__contains=user_location
+    ).first()
+    
+    if active_zbe:
+        return {
+            "inside": True,
+            "zbe_name": active_zbe.name,
+            "restrictions": active_zbe.restricted_categories
+        }
+    return {"inside": False}
+</code></pre>
+
+<p>Esta consulta espacial se ejecuta en milisegundos gracias a los índices espaciales GIST (Generalized Search Tree). Al integrar esta lógica en el backend de Django, podemos validar itinerarios completos de reparto de mercancías simplemente iterando sobre los puntos de parada del vehículo y alertando instantáneamente al conductor si vulnera alguna normativa local de acceso urbano.</p>
+""",
+                "content_eu": """
+<p><strong>Emisio Baxuko Eremuak (EBE)</strong> muga geografiko zehatzak dituzten hiri-eremuak dira. Bertan, ibilgailu kutsatzaileenentzako sarbidea mugatzen da airearen kalitatea hobetzeko. WebGIS plataforma modernoetan eremu hauek kudeatzeko, <strong>PostGIS</strong> da erreferentziazko datu-base geoespaziala, poligono eta multipoligono konplexuak prozesatzeko duen gaitasunari esker.</p>
+
+<h3>Inplementazio praktikoa: ai.maps.eus/zbe/</h3>
+<p>Teknologia hau gure <a href="https://ai.maps.eus/zbe/" target="_blank">ai.maps.eus/zbe/</a> bide-orrian aplikatu dugu. Aplikazio honen bidez, erabiltzaileek puntu geografiko bat eremu mugatu baten barruan dagoen egiaztatu dezakete denbora errealean.</p>
+
+<p>Puntu bat ZBE poligonoaren barruan dagoen egiaztatzeko, PostGISen <code>ST_Contains</code> operadore espaziala erabiltzen dugu Django ORM bidez:</p>
+
+<pre><code>from django.contrib.gis.geos import Point
+from .models import LowEmissionZone
+
+user_location = Point(lon, lat, srid=4326)
+active_zbe = LowEmissionZone.objects.filter(
+    boundary__contains=user_location
+).first()
+</code></pre>
+
+<p>GIST (Generalized Search Tree) indize espazialei esker, kontsulta hau milisegundotan exekutatzen da, hiri-mugikortasuna kudeatzeko aplikazio azkar eta fidagarriak ahalbidetuz.</p>
+""",
+                "content_en": """
+<p><strong>Low Emission Zones (ZBE)</strong> are geographically restricted urban areas where access by high-emitting vehicles is regulated to improve air quality. To model and query these zones in WebGIS architectures, <strong>PostGIS</strong> is the industry standard database extension, offering robust support for complex geometry types like polygons.</p>
+
+<h3>Modeling a LEZ in Django</h3>
+<p>By leveraging <strong>GeoDjango</strong>, we can represent these zones directly in our relational database, utilizing spatial fields to store the zone's geographical boundaries:</p>
+
+<pre><code>from django.contrib.gis.db import models
+
+class LowEmissionZone(models.Model):
+    name = models.CharField(max_length=100)
+    boundary = models.MultiPolygonField(srid=4326)
+    restricted_categories = models.JSONField(default=list)
+</code></pre>
+
+<h3>Real-World Use Case: Live Verification at ai.maps.eus/zbe/</h3>
+<p>We put this technology to work in our interactive low emission zone lookup tool at <a href="https://ai.maps.eus/zbe/" target="_blank">ai.maps.eus/zbe/</a>. The application lets logistics operators and commuters instantly check whether a specific set of coordinates intersects with active municipal restrictions.</p>
+
+<p>To check if a point is contained inside the ZBE polygon boundary, we perform a spatial query using PostGIS's <code>ST_Contains</code> operator via the Django ORM:</p>
+
+<pre><code>from django.contrib.gis.geos import Point
+from .models import LowEmissionZone
+
+def check_location(lon, lat):
+    point = Point(lon, lat, srid=4326)
+    zbe = LowEmissionZone.objects.filter(boundary__contains=point).first()
+    if zbe:
+        return {"restricted": True, "zone": zbe.name}
+    return {"restricted": False}
+</code></pre>
+
+<p>Using spatial indexing (GIST indexes), this lookup takes less than a millisecond. This enables real-time verification of complex multi-stop delivery routes, checking each destination coordinate instantly and warning drivers of compliance issues before they enter the restricted areas.</p>
+""",
+                "is_published": True,
+                "published_at": timezone.now(),
+                "read_time": 6,
+                "difficulty": "intermediate",
+                "map_geojson": json.dumps(zbe_geojson),
+                "map_center_lat": 42.8485,
+                "map_center_lng": -2.6705,
+                "map_zoom": 13,
+                "likes": 18,
+                "tag_slugs": ["django", "postgis", "docker"],
+            },
+            {
+                "category": categories["backend-architecture"],
+                "author": author,
+                "title_es": "Orquestación de Tareas Asíncronas en Django con Celery y Redis",
+                "title_eu": "Zeregin asinkronoen orkestrazioa Django-n Celery eta Redis-ekin",
+                "title_en": "Orchestrating Asynchronous Tasks in Django with Celery and Redis",
+                "slug_es": "django-celery-redis-tareas-asincronas",
+                "slug_eu": "django-celery-redis-zeregin-asinkronoak",
+                "slug_en": "django-celery-redis-asynchronous-tasks",
+                "summary_es": "Cómo integramos Celery y Redis para procesar ingestas periódicas de gran volumen (precios de energía PVPC, gasolineras, puntos de carga de vehículos eléctricos) y tareas bajo demanda con la API de Gemini.",
+                "summary_eu": "Nola integratzen ditugun Celery eta Redis bolumen handiko datuen ingesta periodikoak prozesatzeko (PVPC energia prezioak, gasolindegiak, ibilgailu elektrikoen kargaguneak) eta Gemini APIarekin egindako zeregin asinkronoak.",
+                "summary_en": "How we integrate Celery and Redis to process high-volume periodic ingestions (PVPC energy prices, fuel stations, EV charging points) and on-demand background tasks with the Gemini API.",
+                "content_es": """
+<p>En el desarrollo de aplicaciones web de alto rendimiento, delegar tareas pesadas o de ejecución periódica a procesos en segundo plano es fundamental para mantener una interfaz de usuario ágil y responsiva. En <strong>maps.eus</strong> y <strong>ai.maps.eus</strong>, utilizamos una combinación de <strong>Celery</strong> como gestor de tareas asíncronas y <strong>Redis</strong> como broker de mensajería para gestionar flujos de datos complejos sin penalizar los tiempos de carga del usuario final.</p>
+
+<h2>La Arquitectura Celery + Redis</h2>
+<p>Celery actúa como un distribuidor de trabajo que monitoriza colas de tareas. Cuando un proceso (por ejemplo, una petición HTTP de Django) solicita ejecutar una tarea pesada, la empaqueta y la envía a <strong>Redis</strong>, que actúa como cola de mensajería (broker). Uno o varios workers de Celery, que corren de forma independiente en contenedores Docker, consumen estos mensajes y procesan las tareas de manera asíncrona.</p>
+
+<h3>Caso de Uso 1: Ingestas Periódicas de Datos (Mubil Data Ingestion)</h3>
+<p>El módulo <strong>Mubil</strong> procesa datos del ecosistema de movilidad eléctrica y combustibles en el País Vasco. Muchas de estas fuentes de datos externas cambian de forma periódica y requieren procesamiento antes de ser presentadas al usuario:</p>
+<ul>
+    <li><strong>PVPC Horario (<code>ingest_pvpc_hourly</code>):</strong> Descarga cada hora los precios regulados de la luz de la API oficial de ESIOS. Configurando un cron horario en <code>django-celery-beat</code>, nos aseguramos de que el asistente inteligente tenga tarifas eléctricas actualizadas para calcular horarios óptimos de recarga.</li>
+    <li><strong>Gasolineras y Cargadores Eléctricos:</strong> Ingesta diaria de gasolineras desde el Ministerio (MINCOTUR) e ingesta semanal de cargadores de vehículos eléctricos desde OpenChargeMap.</li>
+</ul>
+
+<p>A continuación se muestra una sección simplificada de nuestro archivo de tareas en <code>apps/mubil/tasks.py</code>:</p>
+
+<pre><code>from celery import shared_task
+from apps.mubil.data import pvpc_ingest, charging_ingest
+
+@shared_task(name="mubil.ingest_pvpc_hourly")
+def ingest_pvpc_hourly(hours: int = 48) -> dict:
+    \"\"\"Descarga las últimas horas de PVPC en la base de datos.\"\"\"
+    stats = pvpc_ingest.ingest_recent_hours(hours=hours)
+    return stats.as_dict()
+
+@shared_task(name="mubil.ingest_charging_stations")
+def ingest_charging_stations() -> dict:
+    \"\"\"Actualización semanal de puntos de carga vía OpenChargeMap.\"\"\"
+    stats = charging_ingest.ingest_default()
+    return stats.as_dict()
+</code></pre>
+
+<h3>Caso de Uso 2: Tareas bajo demanda cost-controlled con Gemini</h3>
+<p>Otro caso de uso interesantísimo en nuestro proyecto es la obtención y enriquecimiento de noticias del sector de movilidad (<code>refresh_news</code>). Dado que consultar la API de Gemini para clasificar y resumir noticias es costoso, no queremos programar esta tarea en un cron ciego que consuma cuota innecesariamente.</p>
+<p>En su lugar, cuando un usuario accede a la sección de noticias y la caché local está caducada, el controlador de Django encola una tarea de refresco bajo demanda. El usuario recibe los datos almacenados en caché instantáneamente, mientras un worker en segundo plano se encarga de llamar a la API de Gemini, vectorizar los artículos e indexarlos en <strong>pgvector</strong> para futuras búsquedas semánticas.</p>
+
+<pre><code># apps/mubil/news/tasks.py
+from celery import shared_task
+from apps.mubil.news import services
+
+@shared_task(name="mubil.news.refresh")
+def refresh_news(embed: bool = True) -> dict:
+    # Llama a servicios que invocan a la API de Gemini y vectorizan el contenido
+    stats = services.refresh(embed=embed)
+    return stats.as_dict()
+</code></pre>
+
+<h3>Ventajas clave de esta arquitectura</h3>
+<ol>
+    <li><strong>Resiliencia:</strong> Si el servidor de OpenChargeMap o de ESIOS está temporalmente caído, la tarea de Celery fallará de manera aislada y se reintentará más tarde sin romper la aplicación para el usuario.</li>
+    <li><strong>Experiencia de Usuario (UX):</strong> El usuario nunca tiene que esperar a que el servidor de Django haga peticiones HTTP externas lentas ni procese algoritmos matemáticos complejos.</li>
+    <li><strong>Escalabilidad:</strong> En producción, podemos escalar el número de workers de Celery de forma independiente si el volumen de ingesta crece drásticamente.</li>
+</ol>
+""",
+                "content_eu": """
+<p>Errendimendu handiko web aplikazioen garapenean, zeregin astunak edo aldiro exekutatu beharrekoak atzeko planoan delegatzea funtsezkoa da erabiltzaile-interfaze arina eta sentikorra mantentzeko. Gure plataforman (<strong>maps.eus</strong> eta <strong>ai.maps.eus</strong>), <strong>Celery</strong> (zeregin asinkronoen kudeatzailea) eta <strong>Redis</strong> (mezu-brokerra) erabiltzen ditugu datu-fluxu konplexuak kudeatzeko, erabiltzailearen karga-denborak zigortu gabe.</p>
+
+<h2>Celery + Redis Arkitektura</h2>
+<p>Celeryk zereginen ilarak kontrolatzen dituen lan-banatzaile gisa funtzionatzen du. Prozesu batek (adibidez, Djangoko HTTP eskaera batek) lan astun bat egiteko eskatzen duenean, mezua <strong>Redis</strong>-era bidaltzen du. Docker edukiontzietan modu independentean exekutatzen ari diren Celery workerrek mezu hauek kontsumitzen dituyte eta zereginak modu asinkronoan prozesatzen dituzte.</p>
+
+<h3>1. adibidea: Datuen Ingesta Periodikoak (Mubil)</h3>
+<p>Mubil moduluak mugikortasun elektrikoko eta erregaiei buruzko datuak prozesatzen ditu. Kanpoko datu-iturri hauek aldatu egiten dira aldian-aldian, eta prozesamendua behar dute erabiltzaileari aurkeztu aurretik:</p>
+<ul>
+    <li><strong>PVPC Ingesta Horarioa (<code>ingest_pvpc_hourly</code>):</strong> ESIOS API ofizialetik orduko argiaren prezio arautuak deskargatzen ditu orduro. <code>django-celery-beat</code>-en bidez orduko cron bat konfiguratuz, gure laguntzaile adimendunak tarifa elektriko eguneratuak dituela ziurtatzen dugu.</li>
+    <li><strong>Gasolindegiak eta Kargagune Elektrikoak:</strong> Eguneroko gasolindegien ingesta eta asteroko ibilgailu elektrikoen kargaguneen eguneratzea.</li>
+</ul>
+
+<pre><code># apps/mubil/tasks.py
+from celery import shared_task
+from apps.mubil.data import pvpc_ingest
+
+@shared_task(name="mubil.ingest_pvpc_hourly")
+def ingest_pvpc_hourly(hours: int = 48) -> dict:
+    stats = pvpc_ingest.ingest_recent_hours(hours=hours)
+    return stats.as_dict()
+</code></pre>
+
+<h3>2. adibidea: Gemini bidezko albisteen eguneratzea eskaripean</h3>
+<p>Gure proiektuko beste erabilera-kasu interesgarri bat albisteak lortu eta aberastea da. Gemini APIa erabiltzea garestia denez, ez dugu zeregin hau cron itsu batean programatu nahi. Horren ordez, erabiltzaile bat albisteen atalean sartzen denean eta katxea iraungita dagoenean, Djangok zeregin bat bidaltzen dio Celeryri atzeko planoan albisteak prozesatu eta <strong>pgvector</strong> bidez indexatzeko.</p>
+""",
+                "content_en": """
+<p>In high-performance web development, delegating heavy or periodic tasks to background processes is essential to keeping the user interface fast and responsive. At <strong>maps.eus</strong> and <strong>ai.maps.eus</strong>, we use <strong>Celery</strong> as our asynchronous task manager and <strong>Redis</strong> as a message broker to handle complex data workflows without penalizing frontend load times.</p>
+
+<h2>The Celery + Redis Architecture</h2>
+<p>Celery acts as a work distributor that monitors task queues. When a Django request triggers a resource-intensive operation, it packages the request and posts it to <strong>Redis</strong>, which serves as the message queue. Celery workers running in independent Docker containers consume these tasks and process them asynchronously.</p>
+
+<h3>Use Case 1: Periodic Data Ingestion (Mubil App)</h3>
+<p>The <strong>Mubil</strong> app processes public datasets related to electric mobility and fuel prices in the Basque Country. Many of these external feeds update periodically and require extensive data cleanup before they can be queried:</p>
+<ul>
+    <li><strong>Hourly PVPC Ingest (<code>ingest_pvpc_hourly</code>):</strong> Fetches regulated hourly electricity tariffs from Spain's official ESIOS API. An hourly cron configured via <code>django-celery-beat</code> ensures the EV charging planner has updated rates.</li>
+    <li><strong>Fuel and EV Charging Stations:</strong> Daily snapshot imports of fuel stations from MINCOTUR, and weekly imports of electric charging points from OpenChargeMap.</li>
+</ul>
+
+<pre><code># apps/mubil/tasks.py
+from celery import shared_task
+from apps.mubil.data import pvpc_ingest
+
+@shared_task(name="mubil.ingest_pvpc_hourly")
+def ingest_pvpc_hourly(hours: int = 48) -> dict:
+    stats = pvpc_ingest.ingest_recent_hours(hours=hours)
+    return stats.as_dict()
+</code></pre>
+
+<h3>Use Case 2: On-Demand News Enrichment with Gemini API</h3>
+<p>Another compelling use case is fetching and summarizing mobility news (<code>refresh_news</code>). Since querying the Gemini API for every news piece has a token cost, we do not want to run this task on a blind periodic schedule.</p>
+<p>Instead, when a user visits the news section and the local cache is expired, Django queues an on-demand refresh task in Celery. The user is served cached content instantly, while the background worker invokes Gemini, vectorizes the articles, and updates the <strong>pgvector</strong> store for semantic searches.</p>
+""",
+                "is_published": True,
+                "published_at": timezone.now(),
+                "read_time": 6,
+                "difficulty": "intermediate",
+                "likes": 20,
+                "tag_slugs": ["django", "docker", "celery"],
             },
         ]
 

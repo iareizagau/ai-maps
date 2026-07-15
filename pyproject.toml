@@ -91,7 +91,8 @@ django_find_project = true
 pythonpath = ["src"]
 testpaths = [
     "src/apps/mubil/tests",
-    "src/apps/pintxos/tests"
+    "src/apps/pintxos/tests",
+    "src/apps/blog/tests"
 ]
 
 [tool.mypy]

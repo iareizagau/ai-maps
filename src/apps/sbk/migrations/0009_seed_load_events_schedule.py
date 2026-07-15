@@ -35,7 +35,7 @@ def remove_schedule(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ("sbk", "0008_danceprofile_current_streak_and_more"),
-        ("django_celery_beat", "0001_initial"),
+        ("django_celery_beat", "0016_alter_crontabschedule_timezone"),
     ]
 
     operations = [

@@ -46,7 +46,7 @@ def remove_schedule(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ("mubil", "0009_seed_charging_schedule"),
-        ("django_celery_beat", "0001_initial"),
+        ("django_celery_beat", "0016_alter_crontabschedule_timezone"),
     ]
 
     operations = [

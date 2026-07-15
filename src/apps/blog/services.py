@@ -39,13 +39,17 @@ Tecnologías utilizadas en ai.maps.eus:
 PROMPT_TEMPLATE = """
 {system_dossier}
 
-Recibes una noticia tecnológica reciente. Tu objetivo es redactar un post diario de blog técnico trilingüe (Español, Euskera, Inglés).
-El post debe ser de alta calidad y conectar la temática de la noticia con las tecnologías y aplicaciones del ecosistema de ai.maps.eus.
+Recibes una noticia tecnológica reciente seleccionada por su relevancia. Tu objetivo es redactar un post diario de blog técnico trilingüe (Español, Euskera, Inglés).
+El post debe ser de alta calidad, profundo y conectar la temática de la noticia con las tecnologías y aplicaciones del ecosistema de ai.maps.eus.
 
 === Noticia de Origen ===
 Título: {news_title}
 Descripción: {news_snippet}
 URL original: {news_url}
+Razón de selección: {selection_reason}
+
+=== Artículos Relacionados (Lecturas Recomendadas) ===
+{related_articles_str}
 
 === Historial de Posts Recientes (Evita Duplicaciones) ===
 {history}
@@ -56,7 +60,9 @@ Instrucciones de deduplicación y redacción:
    - Enfócate en un caso de uso diferente, optimizaciones más complejas o mejoras en el pipeline de ai.maps.eus.
 2. Genera contenido para todos los campos indicados en el JSON.
 3. El contenido de cada idioma debe ser estructurado usando HTML limpio y profesional (párrafos con `<p>`, subtítulos con `<h3>`, bloques de código con `<pre><code>`, etc.). No incluyas bloques markdown (```html) dentro de los strings HTML.
-4. Campo `map_geojson`: Si el post tiene alguna relación geográfica (ej. rutas, zonas reguladas ZBE en ciudades vascas, localización de sensores, etc.), autogenera un GeoJSON FeatureCollection válido centrado en Euskal Herria (Bizkaia, Gipuzkoa, Araba, Nafarroa o Iparralde). En caso contrario, pon null. Si pones un GeoJSON, también debes rellenar `map_center_lat`, `map_center_lng` y `map_zoom` con valores válidos y coherentes en el País Vasco.
+4. Al final del campo `content_es`, `content_eu` y `content_en`, debes agregar una sección de Lecturas Recomendadas/Artículos Relacionados en HTML limpio. Por ejemplo:
+   `<h3>Lecturas recomendadas</h3><ul><li><a href="URL_ORIGINAL">TÍTULO</a></li>...</ul>` usando las URLs y títulos provistos en la sección "Artículos Relacionados".
+5. Campo `map_geojson`: Si el post tiene alguna relación geográfica (ej. rutas, zonas reguladas ZBE en ciudades vascas, localización de sensores, etc.), autogenera un GeoJSON FeatureCollection válido centrado en Euskal Herria (Bizkaia, Gipuzkoa, Araba, Nafarroa o Iparralde). En caso contrario, pon null. Si pones un GeoJSON, también debes rellenar `map_center_lat`, `map_center_lng` y `map_zoom` con valores válidos y coherentes en el País Vasco.
 
 Devuelve EXCLUSIVAMENTE un objeto JSON válido (sin texto explicativo antes o después, sin bloques ```json) con la siguiente estructura exacta:
 
@@ -70,9 +76,9 @@ Devuelve EXCLUSIVAMENTE un objeto JSON válido (sin texto explicativo antes o de
   "summary_es": "Resumen de 2 frases en castellano",
   "summary_eu": "Laburpena euskaraz (2 esaldi)",
   "summary_en": "Summary in English (2 sentences)",
-  "content_es": "Contenido HTML del post en castellano",
-  "content_eu": "Contenido HTML del post en euskera",
-  "content_en": "Contenido HTML del post en inglés",
+  "content_es": "Contenido HTML completo (incluyendo el código y al final la sección de lecturas recomendadas) en castellano",
+  "content_eu": "Contenido HTML completo (incluyendo el código y al final la sección de lecturas recomendadas) en euskera",
+  "content_en": "Contenido HTML completo (incluyendo el código y al final la sección de lecturas recomendadas) en inglés",
   "category_slug": "slug-de-categoria-existente (elige uno de: backend-architecture | webgis-postgis | ai-workflows | platform-updates)",
   "tag_slugs": ["lista", "de", "slugs-de-tags-existentes-o-nuevos", "ej: django, postgis, gemini, docker, celery, cicd"],
   "difficulty": "beginner | intermediate | advanced",
@@ -84,10 +90,11 @@ Devuelve EXCLUSIVAMENTE un objeto JSON válido (sin texto explicativo antes o de
 }}
 """
 
-def fetch_latest_tech_news() -> dict | None:
-    """Fetch the latest relevant technical article. Falls back to RSS feeds.
+def fetch_latest_tech_news() -> list[dict]:
+    """Fetch the latest relevant technical articles. Falls back to RSS feeds.
     
     Skips articles that have already been processed into blog posts.
+    Returns a list of candidate news items.
     """
     # Fetch existing post titles and contents to search for URLs and titles
     existing_posts = list(Post.objects.values("title_es", "content_es"))
@@ -112,13 +119,14 @@ def fetch_latest_tech_news() -> dict | None:
                     return True
         return False
 
+    candidates = []
     key = (settings.NEWS_API_KEY or "").strip()
     if key:
         params = {
             "q": NEWSAPI_QUERY,
             "language": "es",
             "sortBy": "publishedAt",
-            "pageSize": 20,
+            "pageSize": 30,
         }
         headers = {"X-Api-Key": key}
         try:
@@ -126,34 +134,109 @@ def fetch_latest_tech_news() -> dict | None:
             if resp.status_code == 200:
                 payload = resp.json()
                 if payload.get("status") == "ok" and payload.get("articles"):
-                    # Pick the first article with sufficient content that hasn't been processed
                     for art in payload["articles"]:
                         title = (art.get("title") or "").strip()
                         snippet = (art.get("description") or art.get("content") or "").strip()
                         url = art.get("url") or ""
                         if title and snippet and url:
                             if not is_already_processed(title, url):
-                                return {"title": title, "snippet": snippet, "url": url}
+                                candidates.append({"title": title, "snippet": snippet, "url": url})
+                                if len(candidates) >= 8:
+                                    break
         except Exception as e:
             log.warning("NewsAPI fetch failed in blog services: %s. Falling back to RSS.", e)
 
-    # Fallback to RSS Feeds
-    for source, url in FALLBACK_RSS_FEEDS:
-        try:
-            parsed = feedparser.parse(url)
-            if not parsed.bozo and parsed.entries:
-                for entry in parsed.entries[:10]:
-                    title = (entry.get("title") or "").strip()
-                    snippet = (entry.get("summary") or entry.get("description") or "").strip()
-                    link = entry.get("link") or ""
-                    if title and snippet and link:
-                        if not is_already_processed(title, link):
-                            return {"title": title, "snippet": snippet, "url": link}
-        except Exception as e:
-            log.warning("RSS fallback feed %s failed: %s", source, e)
-            continue
+    # Fallback/complements from RSS Feeds
+    if len(candidates) < 5:
+        for source, url in FALLBACK_RSS_FEEDS:
+            try:
+                parsed = feedparser.parse(url)
+                if not parsed.bozo and parsed.entries:
+                    for entry in parsed.entries[:10]:
+                        title = (entry.get("title") or "").strip()
+                        snippet = (entry.get("summary") or entry.get("description") or "").strip()
+                        link = entry.get("link") or ""
+                        if title and snippet and link:
+                            if not is_already_processed(title, link):
+                                if not any(c["url"] == link for c in candidates):
+                                    candidates.append({"title": title, "snippet": snippet, "url": link})
+                                    if len(candidates) >= 12:
+                                        break
+            except Exception as e:
+                log.warning("RSS fallback feed %s failed: %s", source, e)
+                continue
+            if len(candidates) >= 12:
+                break
 
-    return None
+    return candidates
+
+
+def select_best_article_with_gemini(candidates: list[dict]) -> dict | None:
+    """Use Gemini to evaluate candidate news items against our system dossier and select the best one."""
+    if not candidates:
+        return None
+    
+    if len(candidates) == 1:
+        return candidates[0]
+        
+    candidates_list = []
+    for idx, c in enumerate(candidates):
+        candidates_list.append(
+            f"[{idx}] Título: {c['title']}\nSnippet: {c['snippet']}\nURL: {c['url']}"
+        )
+    candidates_str = "\n\n".join(candidates_list)
+
+    prompt = f"""
+{SYSTEM_DOSSIER}
+
+Recibes una lista de noticias tecnológicas recientes. Tu tarea es seleccionar la noticia más relevante y de mayor valor para escribir un artículo técnico en el blog de ai.maps.eus.
+
+El blog está dirigido a desarrolladores e ingenieros de software interesados en WebGIS, PostGIS, pgrouting, pgvector, Django, bases de datos y desarrollo de software con IA.
+
+=== Lista de Noticias Candidatas ===
+{candidates_str}
+
+Instrucciones:
+1. Analiza cada noticia y evalúa qué tan relevante y útil es para nuestra audiencia y nuestro stack tecnológico (especialmente Django, PostgreSQL/PostGIS/pgvector, WebGIS, Python).
+2. Selecciona el índice de la mejor noticia para realizar un tutorial técnico, explicación arquitectónica o caso de uso. Evita noticias demasiado genéricas o no técnicas (como noticias corporativas sencillas, resultados deportivos/loterías que mencionen la palabra IA).
+3. Selecciona también hasta 3 índices de otras noticias de la lista que estén de alguna forma relacionadas con la principal (o que aporten valor complementario) para citarlas como lecturas recomendadas al final.
+
+Devuelve estrictamente un objeto JSON con la siguiente estructura (sin bloques markdown ```json ni texto explicativo):
+{{
+  "selected_index": <int_indice_seleccionado>,
+  "reason": "Explicación corta de 1 frase en castellano de por qué es la mejor opción",
+  "related_indices": [<lista_de_indices_relacionados>]
+}}
+"""
+
+    try:
+        raw_response = _call_gemini_generate(prompt, max_output_tokens=500)
+        clean_txt = raw_response.strip()
+        if clean_txt.startswith("```"):
+            clean_txt = clean_txt.split("\n", 1)[1] if "\n" in clean_txt else clean_txt
+            if clean_txt.endswith("```"):
+                clean_txt = clean_txt[:-3]
+            clean_txt = clean_txt.strip()
+            
+        data = json.loads(clean_txt)
+        sel_idx = int(data.get("selected_index", 0))
+        if 0 <= sel_idx < len(candidates):
+            selected = candidates[sel_idx].copy()
+            related = []
+            for r_idx in data.get("related_indices", []):
+                try:
+                    r_idx = int(r_idx)
+                    if 0 <= r_idx < len(candidates) and r_idx != sel_idx:
+                        related.append(candidates[r_idx])
+                except (ValueError, TypeError):
+                    continue
+            selected["related_articles"] = related
+            selected["selection_reason"] = data.get("reason", "")
+            return selected
+    except Exception as e:
+        log.warning("Gemini article selection failed: %s. Falling back to the first candidate.", e)
+        
+    return candidates[0]
 
 def get_recent_posts_history() -> str:
     """Compile titles and summaries of recent posts for context."""
@@ -180,21 +263,36 @@ def validate_and_clean_geojson(geojson_str: str | None) -> tuple[str | None, boo
 
 def create_daily_post() -> Post | None:
     """Orchestrate fetching, deduplication, Gemini generation, and database save in draft mode."""
-    # 1. Fetch news article
-    news = fetch_latest_tech_news()
-    if not news:
+    # 1. Fetch news candidates
+    candidates = fetch_latest_tech_news()
+    if not candidates:
         log.error("Could not fetch any news or RSS articles to start daily blog generation.")
         return None
 
-    # 2. Get history
+    # 2. Select the best article
+    news = select_best_article_with_gemini(candidates)
+    if not news:
+        log.error("Could not select a news article to write the daily post.")
+        return None
+
+    # 3. Compile related articles string
+    related_articles = news.get("related_articles", [])
+    related_lines = []
+    for r in related_articles:
+        related_lines.append(f"- Título: {r['title']}\n  URL: {r['url']}")
+    related_articles_str = "\n".join(related_lines) if related_lines else "(No hay artículos relacionados)"
+
+    # 4. Get history
     history = get_recent_posts_history()
 
-    # 3. Format prompt
+    # 5. Format prompt
     prompt = PROMPT_TEMPLATE.format(
         system_dossier=SYSTEM_DOSSIER,
         news_title=news["title"],
         news_snippet=news["snippet"],
         news_url=news["url"],
+        selection_reason=news.get("selection_reason", "Relevancia técnica general"),
+        related_articles_str=related_articles_str,
         history=history,
     )
 

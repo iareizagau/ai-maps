@@ -69,10 +69,11 @@ class DailyPostServicesTests(TestCase):
         }
         mock_get.return_value = mock_response
 
-        news = services.fetch_latest_tech_news()
-        self.assertIsNotNone(news)
-        self.assertEqual(news["title"], "PostGIS optimizations")
-        self.assertEqual(news["url"], "https://example.com/postgis")
+        news_list = services.fetch_latest_tech_news()
+        self.assertIsNotNone(news_list)
+        self.assertTrue(len(news_list) > 0)
+        self.assertEqual(news_list[0]["title"], "PostGIS optimizations")
+        self.assertEqual(news_list[0]["url"], "https://example.com/postgis")
 
     @override_settings(NEWS_API_KEY="")
     @mock.patch("apps.blog.services.feedparser.parse")
@@ -89,10 +90,11 @@ class DailyPostServicesTests(TestCase):
         ]
         mock_parse.return_value = mock_feed
 
-        news = services.fetch_latest_tech_news()
-        self.assertIsNotNone(news)
-        self.assertEqual(news["title"], "RSS Tech News")
-        self.assertEqual(news["url"], "https://example.com/rss-news")
+        news_list = services.fetch_latest_tech_news()
+        self.assertIsNotNone(news_list)
+        self.assertTrue(len(news_list) > 0)
+        self.assertEqual(news_list[0]["title"], "RSS Tech News")
+        self.assertEqual(news_list[0]["url"], "https://example.com/rss-news")
 
     def test_get_recent_posts_history_empty(self):
         history = services.get_recent_posts_history()
@@ -126,12 +128,14 @@ class DailyPostServicesTests(TestCase):
     @mock.patch("apps.blog.services.fetch_latest_tech_news")
     @mock.patch("apps.blog.services._call_gemini_generate")
     def test_create_daily_post_success(self, mock_gemini, mock_fetch):
-        mock_fetch.return_value = {
-            "title": "PostGIS optimizations",
-            "snippet": "Index speedups.",
-            "url": "https://example.com/postgis",
-        }
-        mock_gemini.return_value = _gemini_payload()
+        mock_fetch.return_value = [
+            {"title": "Noise", "snippet": "Irrelevant", "url": "https://example.com/noise"},
+            {"title": "PostGIS optimizations", "snippet": "Index speedups.", "url": "https://example.com/postgis"},
+        ]
+        mock_gemini.side_effect = [
+            '{"selected_index": 1, "reason": "Good match", "related_indices": [0]}',
+            _gemini_payload()
+        ]
 
         post = services.create_daily_post()
         self.assertIsNotNone(post)
@@ -152,13 +156,14 @@ class DailyPostServicesTests(TestCase):
     @mock.patch("apps.blog.services.fetch_latest_tech_news")
     @mock.patch("apps.blog.services._call_gemini_generate")
     def test_create_daily_post_fenced_json(self, mock_gemini, mock_fetch):
-        mock_fetch.return_value = {
-            "title": "PostGIS optimizations",
-            "snippet": "Index speedups.",
-            "url": "https://example.com/postgis",
-        }
-        # Gemini returning markdown fences
-        mock_gemini.return_value = "```json\n" + _gemini_payload(title_es="Fenced Title") + "\n```"
+        mock_fetch.return_value = [
+            {"title": "Noise", "snippet": "Irrelevant", "url": "https://example.com/noise"},
+            {"title": "PostGIS optimizations", "snippet": "Index speedups.", "url": "https://example.com/postgis"},
+        ]
+        mock_gemini.side_effect = [
+            '{"selected_index": 1, "reason": "Good match", "related_indices": [0]}',
+            "```json\n" + _gemini_payload(title_es="Fenced Title") + "\n```"
+        ]
 
         post = services.create_daily_post()
         self.assertIsNotNone(post)
@@ -168,18 +173,33 @@ class DailyPostServicesTests(TestCase):
     @mock.patch("apps.blog.services.fetch_latest_tech_news")
     @mock.patch("apps.blog.services._call_gemini_generate")
     def test_create_daily_post_invalid_geojson_recovery(self, mock_gemini, mock_fetch):
-        mock_fetch.return_value = {
-            "title": "PostGIS optimizations",
-            "snippet": "Index speedups.",
-            "url": "https://example.com/postgis",
-        }
-        # Gemini returning invalid GeoJSON format
-        mock_gemini.return_value = _gemini_payload(map_geojson="{bad geojson}")
+        mock_fetch.return_value = [
+            {"title": "Noise", "snippet": "Irrelevant", "url": "https://example.com/noise"},
+            {"title": "PostGIS optimizations", "snippet": "Index speedups.", "url": "https://example.com/postgis"},
+        ]
+        mock_gemini.side_effect = [
+            '{"selected_index": 1, "reason": "Good match", "related_indices": [0]}',
+            _gemini_payload(map_geojson="{bad geojson}")
+        ]
 
         post = services.create_daily_post()
         self.assertIsNotNone(post)
         self.assertIsNone(post.map_geojson)
         self.assertIsNone(post.map_center_lat)
+
+    @mock.patch("apps.blog.services._call_gemini_generate")
+    def test_select_best_article_with_gemini(self, mock_gemini):
+        mock_gemini.return_value = '{"selected_index": 1, "reason": "Ideal postgis match", "related_indices": [0]}'
+        candidates = [
+            {"title": "Generic tech news", "snippet": "A general announcement", "url": "https://example.com/generic"},
+            {"title": "PostGIS speedups", "snippet": "Spatial index query optimizations", "url": "https://example.com/postgis"},
+        ]
+        result = services.select_best_article_with_gemini(candidates)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["title"], "PostGIS speedups")
+        self.assertEqual(result["selection_reason"], "Ideal postgis match")
+        self.assertEqual(len(result["related_articles"]), 1)
+        self.assertEqual(result["related_articles"][0]["title"], "Generic tech news")
 
 
 class DailyPostTasksTests(TestCase):

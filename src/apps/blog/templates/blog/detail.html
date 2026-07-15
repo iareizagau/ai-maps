@@ -195,7 +195,7 @@
                                         {{ r_post.title }}
                                     </h4>
                                     <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                        {{ r_post.published_at|date:"SHORT_DATE_FORMAT"|default:r_post.created_at|date:"SHORT_DATE_FORMAT" }}
+                                        {{ r_post.published_at|date:"d/m/Y H:i"|default:r_post.created_at|date:"d/m/Y H:i" }}
                                     </p>
                                 </a>
                             {% endfor %}

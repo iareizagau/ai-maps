@@ -54,14 +54,19 @@
 
                                 {# Card Content #}
                                 <div class="flex flex-1 flex-col p-5">
-                                    <div class="flex items-center justify-between gap-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                                    <div class="flex flex-wrap items-center justify-between gap-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
                                         {% if not post.featured_image and post.category %}
                                             <span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded bg-primary/10 text-primary">
                                                 {{ post.category.name }}
                                             </span>
                                         {% endif %}
                                         
-                                        <div class="flex items-center gap-2">
+                                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                            <time class="inline-flex items-center gap-1" datetime="{{ post.published_at|default:post.created_at|date:'c' }}" title="{{ post.published_at|default:post.created_at|date:'DATETIME_FORMAT' }}">
+                                                <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                                                {{ post.published_at|default:post.created_at|date:"d/m/Y H:i" }}
+                                            </time>
+                                            <span>·</span>
                                             <span class="inline-flex items-center gap-1">
                                                 <i data-lucide="clock" class="w-3.5 h-3.5"></i>
                                                 {{ post.read_time }} min {% trans "lectura" %}

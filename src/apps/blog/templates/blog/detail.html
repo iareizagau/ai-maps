@@ -109,7 +109,7 @@
                 <span>·</span>
                 <span class="flex items-center gap-1">
                     <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-                    {{ post.published_at|date:"SHORT_DATE_FORMAT"|default:post.created_at|date:"SHORT_DATE_FORMAT" }}
+                    {{ post.published_at|date:"d/m/Y H:i"|default:post.created_at|date:"d/m/Y H:i" }}
                 </span>
                 <span>·</span>
                 <span class="flex items-center gap-1">

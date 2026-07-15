@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 User = get_user_model()
 
 NEWSAPI_URL = "https://newsapi.org/v2/everything"
-NEWSAPI_QUERY = '("software development" OR "inteligencia artificial" OR "WebGIS" OR "PostGIS" OR "pgrouting" OR "pgvector")'
+NEWSAPI_QUERY = '("desarrollo de software" OR "desarrollo software" OR "arquitectura de software" OR "WebGIS" OR "PostGIS" OR "pgrouting" OR "pgvector")'
 
 FALLBACK_RSS_FEEDS = [
     ("xataka", "https://feeds.weblogssl.com/xataka2"),
@@ -85,14 +85,40 @@ Devuelve EXCLUSIVAMENTE un objeto JSON válido (sin texto explicativo antes o de
 """
 
 def fetch_latest_tech_news() -> dict | None:
-    """Fetch the latest relevant technical article. Falls back to RSS feeds."""
+    """Fetch the latest relevant technical article. Falls back to RSS feeds.
+    
+    Skips articles that have already been processed into blog posts.
+    """
+    # Fetch existing post titles and contents to search for URLs and titles
+    existing_posts = list(Post.objects.values("title_es", "content_es"))
+    existing_titles_lower = [p["title_es"].lower() for p in existing_posts if p.get("title_es")]
+    existing_contents = [p["content_es"] for p in existing_posts if p.get("content_es")]
+
+    def is_already_processed(title: str, url: str) -> bool:
+        # 1. Check if URL is in any existing post content
+        for content in existing_contents:
+            if url in content:
+                return True
+        # 2. Check if title has significant word overlap with any post title
+        title_lower = title.lower()
+        for et in existing_titles_lower:
+            if title_lower in et or et in title_lower:
+                return True
+            words_art = set(w for w in title_lower.split() if len(w) > 3)
+            words_exist = set(w for w in et.split() if len(w) > 3)
+            if words_art and words_exist:
+                overlap = words_art.intersection(words_exist)
+                if len(overlap) / min(len(words_art), len(words_exist)) > 0.5:
+                    return True
+        return False
+
     key = (settings.NEWS_API_KEY or "").strip()
     if key:
         params = {
             "q": NEWSAPI_QUERY,
             "language": "es",
             "sortBy": "publishedAt",
-            "pageSize": 10,
+            "pageSize": 20,
         }
         headers = {"X-Api-Key": key}
         try:
@@ -100,13 +126,14 @@ def fetch_latest_tech_news() -> dict | None:
             if resp.status_code == 200:
                 payload = resp.json()
                 if payload.get("status") == "ok" and payload.get("articles"):
-                    # Pick the first article with sufficient content
+                    # Pick the first article with sufficient content that hasn't been processed
                     for art in payload["articles"]:
                         title = (art.get("title") or "").strip()
                         snippet = (art.get("description") or art.get("content") or "").strip()
                         url = art.get("url") or ""
                         if title and snippet and url:
-                            return {"title": title, "snippet": snippet, "url": url}
+                            if not is_already_processed(title, url):
+                                return {"title": title, "snippet": snippet, "url": url}
         except Exception as e:
             log.warning("NewsAPI fetch failed in blog services: %s. Falling back to RSS.", e)
 
@@ -115,12 +142,13 @@ def fetch_latest_tech_news() -> dict | None:
         try:
             parsed = feedparser.parse(url)
             if not parsed.bozo and parsed.entries:
-                for entry in parsed.entries[:5]:
+                for entry in parsed.entries[:10]:
                     title = (entry.get("title") or "").strip()
                     snippet = (entry.get("summary") or entry.get("description") or "").strip()
                     link = entry.get("link") or ""
                     if title and snippet and link:
-                        return {"title": title, "snippet": snippet, "url": link}
+                        if not is_already_processed(title, link):
+                            return {"title": title, "snippet": snippet, "url": link}
         except Exception as e:
             log.warning("RSS fallback feed %s failed: %s", source, e)
             continue
@@ -225,6 +253,11 @@ def create_daily_post() -> Post | None:
     except (ValueError, TypeError):
         read_time = 5
 
+    # Append news URL as a hidden comment for robust future deduplication
+    content_es = data.get("content_es") or ""
+    if news.get("url"):
+        content_es += f"\n\n<!-- news_url: {news['url']} -->"
+
     # Create the post in Draft mode
     post = Post.objects.create(
         category=category,
@@ -238,7 +271,7 @@ def create_daily_post() -> Post | None:
         summary_es=data.get("summary_es") or "",
         summary_eu=data.get("summary_eu") or "",
         summary_en=data.get("summary_en") or "",
-        content_es=data.get("content_es") or "",
+        content_es=content_es,
         content_eu=data.get("content_eu") or "",
         content_en=data.get("content_en") or "",
         is_published=False,

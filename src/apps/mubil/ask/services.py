@@ -262,7 +262,7 @@ def _generation_ladder() -> list[str]:
     return [settings.GEMINI_GENERATION_MODEL]
 
 
-def _call_gemini_generate(prompt: str) -> str:
+def _call_gemini_generate(prompt: str, max_output_tokens: int | None = None) -> str:
     """Call Gemini Flash with a fallback ladder. Wrapped so tests can mock.
 
     Iterates :func:`_generation_ladder`. The first non-quota response (text
@@ -279,7 +279,7 @@ def _call_gemini_generate(prompt: str) -> str:
     client = genai.Client(api_key=settings.GEMINI_API_KEY)
     cfg = types.GenerateContentConfig(
         temperature=0.2,
-        max_output_tokens=ANSWER_MAX_TOKENS,
+        max_output_tokens=max_output_tokens or ANSWER_MAX_TOKENS,
     )
 
     ladder = _generation_ladder()

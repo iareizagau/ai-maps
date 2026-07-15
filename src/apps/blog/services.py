@@ -172,7 +172,7 @@ def create_daily_post() -> Post | None:
 
     # 4. Call Gemini
     try:
-        raw_response = _call_gemini_generate(prompt)
+        raw_response = _call_gemini_generate(prompt, max_output_tokens=6000)
     except Exception as e:
         log.exception("Failed calling Gemini to write the blog post: %s", e)
         return None

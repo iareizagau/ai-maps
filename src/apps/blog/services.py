@@ -14,7 +14,11 @@ log = logging.getLogger(__name__)
 User = get_user_model()
 
 NEWSAPI_URL = "https://newsapi.org/v2/everything"
-NEWSAPI_QUERY = '("desarrollo de software" OR "desarrollo software" OR "arquitectura de software" OR "WebGIS" OR "PostGIS" OR "pgrouting" OR "pgvector")'
+NEWSAPI_QUERY = (
+    '("desarrollo de software" OR "desarrollo software" OR "arquitectura de software" OR '
+    '"WebGIS" OR "PostGIS" OR "pgrouting" OR "pgvector" OR "django python" OR "htmx" OR '
+    '"desarrollo web frontend" OR "devops ci cd" OR "seguridad software")'
+)
 
 FALLBACK_RSS_FEEDS = [
     ("xataka", "https://feeds.weblogssl.com/xataka2"),
@@ -25,15 +29,23 @@ FALLBACK_RSS_FEEDS = [
 SYSTEM_DOSSIER = """
 Eres el redactor técnico principal y arquitecto de software de ai.maps.eus.
 ai.maps.eus es un ecosistema avanzado de WebGIS e Inteligencia Artificial para Euskal Herria.
-Tecnologías utilizadas en ai.maps.eus:
+Tecnologías y stack local utilizado en ai.maps.eus:
 - Django 6.0 (Python) para el backend.
+- django-cotton para desarrollo ágil de componentes de interfaz reutilizables con sintaxis limpia (ej. <c-component>).
+- HTMX para interacciones web dinámicas y reactivas asíncronas sin recargas completas de página.
+- Leaflet para renderizar mapas geoespaciales interactivos en el navegador.
 - PostgreSQL con la extensión PostGIS para almacenar y consultar datos geoespaciales.
 - pgrouting para resolver problemas de redes y calcular rutas óptimas (ej. rutas de bikepacking en Euskadi).
 - pgvector para almacenamiento de embeddings y búsqueda semántica (RAG).
 - Gemini API (google-genai) como LLM para asistentes virtuales y agentes conversacionales.
 - Celery con Redis para colas de tareas asíncronas y tareas periódicas (Celery Beat).
+- Herramientas de Calidad de Código, CI/CD y DevOps:
+  * ruff: Linter y formateador ultrarrápido para mantener consistencia de código Python.
+  * pre-commit: Framework de git hooks para validar linters y formateadores antes de hacer commits.
+  * bandit: Analizador estático para encontrar problemas de seguridad en código Python.
+  * pip-audit: Escáner automatizado de dependencias de Python para detectar vulnerabilidades.
+  * mypy: Verificador de tipos estático y estricto para Python.
 - Docker y Docker Compose para contenedores, optimizados usando 'uv' para instalaciones ultrarrápidas.
-- Frontend ágil e interactivo construido con HTML, TailwindCSS, Alpine.js y HTMX.
 """
 
 PROMPT_TEMPLATE = """
@@ -63,6 +75,7 @@ Instrucciones de deduplicación y redacción:
 4. Al final del campo `content_es`, `content_eu` y `content_en`, debes agregar una sección de Lecturas Recomendadas/Artículos Relacionados en HTML limpio. Por ejemplo:
    `<h3>Lecturas recomendadas</h3><ul><li><a href="URL_ORIGINAL">TÍTULO</a></li>...</ul>` usando las URLs y títulos provistos en la sección "Artículos Relacionados".
 5. Campo `map_geojson`: Si el post tiene alguna relación geográfica (ej. rutas, zonas reguladas ZBE en ciudades vascas, localización de sensores, etc.), autogenera un GeoJSON FeatureCollection válido centrado en Euskal Herria (Bizkaia, Gipuzkoa, Araba, Nafarroa o Iparralde). En caso contrario, pon null. Si pones un GeoJSON, también debes rellenar `map_center_lat`, `map_center_lng` y `map_zoom` con valores válidos y coherentes en el País Vasco.
+6. Vinculación del Stack Técnico: Conecta la temática de la noticia con al menos una de las herramientas de nuestro stack local listadas en el system_dossier (ej. django-cotton, HTMX, Leaflet, Ruff, Bandit, pip-audit, mypy, o Django 6). Explica en el artículo cómo esta herramienta se aplica para resolver o implementar de forma limpia o segura la temática de la noticia, y proporciona un bloque de código explicativo (ej. etiquetas Cotton, petición HTMX, configuración de Ruff o Bandit, o anotaciones en mypy).
 
 Devuelve EXCLUSIVAMENTE un objeto JSON válido (sin texto explicativo antes o después, sin bloques ```json) con la siguiente estructura exacta:
 

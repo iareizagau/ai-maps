@@ -27,7 +27,7 @@ class PostAdmin(admin.ModelAdmin):
         "read_time",
         "likes",
     )
-    list_filter = ("is_published", "category", "difficulty", "tags")
+    list_filter = ("is_published", "category", "difficulty", "tags", "created_at")
     search_fields = (
         "title_es",
         "title_eu",
@@ -37,6 +37,18 @@ class PostAdmin(admin.ModelAdmin):
         "summary_en",
     )
     date_hierarchy = "published_at"
+
+    actions = ["make_published"]
+
+    @admin.action(description="Marcar como publicados los posts seleccionados")
+    def make_published(self, request, queryset):
+        from django.utils import timezone
+        rows_updated = queryset.update(is_published=True, published_at=timezone.now())
+        if rows_updated == 1:
+            message_bit = "1 post fue publicado"
+        else:
+            message_bit = f"{rows_updated} posts fueron publicados"
+        self.message_user(request, f"{message_bit} correctamente.")
 
     prepopulated_fields = {
         "slug_es": ("title_es",),

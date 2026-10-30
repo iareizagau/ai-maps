@@ -12,8 +12,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="appregistry",
             name="is_featured",
-            field=models.BooleanField(
-                default=False, help_text="Show this app in the Home Hero section"
-            ),
+            field=models.BooleanField(default=False, help_text="Show this app in the Home Hero section"),
         ),
     ]

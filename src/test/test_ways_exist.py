@@ -15,9 +15,7 @@ with connection.cursor() as cursor:
     print("Ways connected to 1427446:", cursor.fetchone()[0])
 
     # Let's find one connected node and trace a very short path
-    cursor.execute(
-        "SELECT gid, source, target, cost FROM ways WHERE source IS NOT NULL AND target IS NOT NULL LIMIT 1"
-    )
+    cursor.execute("SELECT gid, source, target, cost FROM ways WHERE source IS NOT NULL AND target IS NOT NULL LIMIT 1")
     row = cursor.fetchone()
     print("Sample edge:", row)
 

@@ -84,9 +84,7 @@ class Vehicle(BaseModel):
     # in IDAE (TFSI 110 / TDI 115 / GTI / R). Empty string for legacy rows.
     variant = models.CharField(max_length=200, blank=True, default="")
     year = models.PositiveSmallIntegerField()
-    propulsion = models.CharField(
-        max_length=8, choices=Propulsion.choices, db_index=True
-    )
+    propulsion = models.CharField(max_length=8, choices=Propulsion.choices, db_index=True)
 
     # Búsqueda y filtrado por etiqueta DGT / categoría / segmento — los chips
     # que va a tocar el jurado en el pitch.
@@ -110,16 +108,10 @@ class Vehicle(BaseModel):
     segment = models.CharField(max_length=40, blank=True, db_index=True)
 
     mtma_kg = models.PositiveIntegerField(null=True, blank=True)
-    battery_kwh = models.DecimalField(
-        max_digits=6, decimal_places=2, null=True, blank=True
-    )
+    battery_kwh = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     range_wltp_km = models.PositiveIntegerField(null=True, blank=True)
-    consumption_kwh_100km = models.DecimalField(
-        max_digits=5, decimal_places=2, null=True, blank=True
-    )
-    consumption_l_100km = models.DecimalField(
-        max_digits=5, decimal_places=2, null=True, blank=True
-    )
+    consumption_kwh_100km = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    consumption_l_100km = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 
     # CO₂ WLTP — rango por las 4 fases. Para vehículos eléctricos se reporta 0.
     co2_g_km_min = models.PositiveSmallIntegerField(null=True, blank=True)
@@ -236,9 +228,7 @@ class FuelStation(models.Model):
     # {"gasolina_95_e5": "1.659", "gasoleo_a": "1.499", ...}
 
     schedule = models.CharField(max_length=120, blank=True)  # "Horario"
-    sale_type = models.CharField(
-        max_length=4, blank=True
-    )  # "P" public / "R" restricted
+    sale_type = models.CharField(max_length=4, blank=True)  # "P" public / "R" restricted
 
     updated_at = models.DateTimeField(auto_now=True)
     last_seen_at = models.DateTimeField(null=True, blank=True)
@@ -310,17 +300,13 @@ class ChargingStation(models.Model):
     objects = ChargingStationQuerySet.as_manager()
 
     external_id = models.CharField(max_length=80, blank=True)  # id fuente original
-    source = models.CharField(
-        max_length=40, blank=True
-    )  # opendata_euskadi / miteco / ocm
+    source = models.CharField(max_length=40, blank=True)  # opendata_euskadi / miteco / ocm
     operator = models.CharField(max_length=120, blank=True)
     address = models.CharField(max_length=300, blank=True)
 
     geom = gis_models.PointField(srid=4326, spatial_index=True)
 
-    power_kw = models.DecimalField(
-        max_digits=6, decimal_places=2, null=True, blank=True
-    )
+    power_kw = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     connectors = models.JSONField(default=list, blank=True)
     # [{"type": "CCS2", "kw": 150}, ...]
 
@@ -445,9 +431,7 @@ class MobilityDocument(models.Model):
 
     title = models.CharField(max_length=300)
     source_url = models.URLField(blank=True)
-    source_type = models.CharField(
-        max_length=16, choices=SourceType.choices, db_index=True
-    )
+    source_type = models.CharField(max_length=16, choices=SourceType.choices, db_index=True)
     municipality_naia = models.CharField(max_length=16, blank=True, db_index=True)
 
     content = models.TextField()
@@ -507,23 +491,15 @@ class EVRoutePlan(models.Model):
     dest = gis_models.PointField(srid=4326)
 
     vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, null=True)
-    soc_start = models.DecimalField(
-        max_digits=5, decimal_places=2, null=True, blank=True
-    )
+    soc_start = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 
     geojson = models.JSONField(default=dict)
     # {"polyline": [...], "segments": [{"kind": "drive", ...}, {"kind": "charge_stop", ...}]}
 
-    distance_km = models.DecimalField(
-        max_digits=7, decimal_places=2, null=True, blank=True
-    )
+    distance_km = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
     duration_min = models.PositiveIntegerField(null=True, blank=True)
-    energy_kwh = models.DecimalField(
-        max_digits=7, decimal_places=2, null=True, blank=True
-    )
-    estimated_cost_eur = models.DecimalField(
-        max_digits=7, decimal_places=2, null=True, blank=True
-    )
+    energy_kwh = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    estimated_cost_eur = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
 
     computed_at = models.DateTimeField(auto_now_add=True)
 
@@ -606,7 +582,5 @@ class ContactLead(BaseModel):
         ordering = ["-created_at"]
 
     def __str__(self):
-        created_str = (
-            f"{self.created_at:%Y-%m-%d %H:%M}" if self.created_at else "not saved"
-        )
+        created_str = f"{self.created_at:%Y-%m-%d %H:%M}" if self.created_at else "not saved"
         return f"{self.name} ({self.profile}) — {created_str}"

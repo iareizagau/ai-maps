@@ -74,9 +74,7 @@ class Migration(migrations.Migration):
                 ("contact_email", models.EmailField(blank=True, max_length=254)),
                 (
                     "admin_notes",
-                    models.TextField(
-                        blank=True, help_text="Internal notes left by the reviewer."
-                    ),
+                    models.TextField(blank=True, help_text="Internal notes left by the reviewer."),
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("decided_at", models.DateTimeField(blank=True, null=True)),

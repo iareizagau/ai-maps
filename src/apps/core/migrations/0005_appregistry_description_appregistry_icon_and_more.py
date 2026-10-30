@@ -17,9 +17,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="appregistry",
             name="icon",
-            field=models.CharField(
-                default="map-pin", help_text="Lucide icon name", max_length=50
-            ),
+            field=models.CharField(default="map-pin", help_text="Lucide icon name", max_length=50),
         ),
         migrations.AddField(
             model_name="appregistry",

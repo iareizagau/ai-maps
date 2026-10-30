@@ -117,9 +117,7 @@ class PlanTests(TestCase):
         # Round-trips through json without TypeError.
         json.dumps(data)
         self.assertEqual(data["slug"], "donostia-bilbao")
-        self.assertEqual(
-            len(data["polyline"]), len(services.ROUTE_DEMOS[0]["polyline"])
-        )
+        self.assertEqual(len(data["polyline"]), len(services.ROUTE_DEMOS[0]["polyline"]))
 
 
 class Phase1FieldsTests(TestCase):
@@ -147,9 +145,7 @@ class Phase1FieldsTests(TestCase):
         import json
 
         v = _make_vehicle()
-        result = services.plan(
-            slug="donostia-bilbao", vehicle_id=v.id, departure_hour=3
-        )
+        result = services.plan(slug="donostia-bilbao", vehicle_id=v.id, departure_hour=3)
         data = result.to_dict()
         for key in (
             "mode",
@@ -245,9 +241,7 @@ class ChargersAlongRouteTests(TestCase):
             geom=Point(-3.7000, 40.4000, srid=4326),
             power_kw=Decimal("150"),
         )
-        polyline_lonlat = [
-            (lon, lat) for lat, lon in services.ROUTE_DEMOS[0]["polyline"]
-        ]
+        polyline_lonlat = [(lon, lat) for lat, lon in services.ROUTE_DEMOS[0]["polyline"]]
         qs = list(ChargingStation.objects.along_route(polyline_lonlat, radius_km=5))
         ids = [c.id for c in qs]
         self.assertIn(on_route.id, ids)

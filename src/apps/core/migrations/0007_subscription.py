@@ -65,14 +65,10 @@ class Migration(migrations.Migration):
             ],
             options={
                 "constraints": [
-                    models.UniqueConstraint(
-                        fields=("user", "app_slug"), name="uniq_user_app_sub"
-                    ),
+                    models.UniqueConstraint(fields=("user", "app_slug"), name="uniq_user_app_sub"),
                 ],
                 "indexes": [
-                    models.Index(
-                        fields=["user", "status"], name="core_subscr_user_status_idx"
-                    ),
+                    models.Index(fields=["user", "status"], name="core_subscr_user_status_idx"),
                 ],
             },
         ),

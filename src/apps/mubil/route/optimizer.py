@@ -145,10 +145,7 @@ def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     r = 6371.0088
     dlat = radians(lat2 - lat1)
     dlon = radians(lon2 - lon1)
-    a = (
-        sin(dlat / 2) ** 2
-        + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
-    )
+    a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
     return 2 * r * asin(sqrt(a))
 
 
@@ -234,9 +231,7 @@ def build_distance_matrix(
         # Estimate: 60 km/h average
         dur = [[d / 60.0 * 60.0 for d in row] for row in dist]  # km / (km/h) * 60 = min
         # Simpler: dur[i][j] = dist[i][j] / 60 * 60 = dist[i][j] minutes at 60 km/h
-        dur = [
-            [d for d in row] for row in dist
-        ]  # 1 km ≈ 1 min at 60 km/h is close enough
+        dur = [[d for d in row] for row in dist]  # 1 km ≈ 1 min at 60 km/h is close enough
 
     return dist, dur
 
@@ -280,9 +275,7 @@ def nearest_neighbor(matrix: list[list[float]], depot: int = 0) -> list[int]:
     return tour
 
 
-def improve_2opt(
-    order: list[int], matrix: list[list[float]], max_iterations: int = 100
-) -> list[int]:
+def improve_2opt(order: list[int], matrix: list[list[float]], max_iterations: int = 100) -> list[int]:
     """2-opt local search improvement. Reverses sub-sequences to reduce total distance.
 
     Runs until no improving swap is found or ``max_iterations`` is reached.
@@ -513,9 +506,7 @@ def get_route_polyline(
     on failure.
     """
     coords = f"{origin.lng},{origin.lat};{dest.lng},{dest.lat}"
-    url = (
-        OSRM_ROUTE_URL.format(coords=coords) + "?overview=simplified&geometries=geojson"
-    )
+    url = OSRM_ROUTE_URL.format(coords=coords) + "?overview=simplified&geometries=geojson"
     try:
         req = urllib.request.Request(url, headers={"User-Agent": OSRM_USER_AGENT})
         with urllib.request.urlopen(req, timeout=OSRM_TIMEOUT_S) as resp:

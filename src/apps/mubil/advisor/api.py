@@ -114,9 +114,7 @@ def _breakdown_to_out(b) -> dict:
 def _quote_to_out(quote: services.TCOQuote) -> dict:
     bd_c = _breakdown_to_out(quote.breakdown_current)
     bd_t = _breakdown_to_out(quote.breakdown_target)
-    saved = (quote.co2_kg_year_current - quote.co2_kg_year_target).quantize(
-        quote.co2_kg_year_current
-    )
+    saved = (quote.co2_kg_year_current - quote.co2_kg_year_target).quantize(quote.co2_kg_year_current)
     chargers = [
         {
             "id": c.id,
@@ -155,9 +153,7 @@ def _quote_to_out(quote: services.TCOQuote) -> dict:
         "wallbox_capex_eur": quote.wallbox_capex_eur,
         "purchase_mode": getattr(quote, "purchase_mode", "switch"),
         "current_age_years": getattr(quote, "current_age_years", None),
-        "current_residual_value_eur": getattr(
-            quote, "current_residual_value_eur", None
-        ),
+        "current_residual_value_eur": getattr(quote, "current_residual_value_eur", None),
         "operational_savings_eur": getattr(quote, "operational_savings_eur", None),
         "purchase_savings_eur": getattr(quote, "purchase_savings_eur", None),
         "total_net_savings_eur": getattr(quote, "total_net_savings_eur", None),
@@ -251,17 +247,13 @@ def recommend_vehicles(
     try:
         ice_generic_id = Vehicle.objects.get(**ICE_GENERIC_LOOKUP).id
     except Vehicle.DoesNotExist:
-        return 404, {
-            "message": "Seed 'ICE genérico medio' no existe. Aplica migración mubil 0012."
-        }
+        return 404, {"message": "Seed 'ICE genérico medio' no existe. Aplica migración mubil 0012."}
 
     qs = Vehicle.objects.filter(propulsion="BEV")
     if size:
         flt = SIZE_FILTERS.get(size.lower())
         if flt is None:
-            raise HttpError(
-                400, f"size inválido: {size}. Opciones: {list(SIZE_FILTERS)}"
-            )
+            raise HttpError(400, f"size inválido: {size}. Opciones: {list(SIZE_FILTERS)}")
         qs = qs.filter(**flt)
     if range_bucket:
         flt = RANGE_FILTERS.get(range_bucket.lower())
@@ -277,9 +269,7 @@ def recommend_vehicles(
         qs = qs.filter(price_eur__lte=price_max)
 
     # Más range gana; a igualdad, precio asc.
-    qs = qs.exclude(range_wltp_km__isnull=True).order_by(
-        "-range_wltp_km", "price_eur", "make", "model"
-    )
+    qs = qs.exclude(range_wltp_km__isnull=True).order_by("-range_wltp_km", "price_eur", "make", "model")
     raw = list(qs[: limit * 8])
     grouped = group_by_model_base(raw, propulsion_hint="BEV")
     candidates = [_grouped_summary(g) for g in grouped[:limit]]

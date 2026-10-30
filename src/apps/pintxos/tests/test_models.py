@@ -11,9 +11,7 @@ class RestaurantModelTests(TestCase):
     """Test Restaurant model"""
 
     def setUp(self):
-        self.user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
-        )
+        self.user = User.objects.create_user(username="testuser", email="test@example.com", password="testpass123")
 
     def test_create_restaurant(self):
         """Test creating a restaurant"""
@@ -57,9 +55,7 @@ class DishModelTests(TestCase):
     """Test Dish model"""
 
     def setUp(self):
-        self.user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
-        )
+        self.user = User.objects.create_user(username="testuser", email="test@example.com", password="testpass123")
         self.restaurant = Restaurant.objects.create(
             name="Test Bar",
             address="Test Address",

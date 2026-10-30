@@ -10,6 +10,7 @@ Entry points:
   - `fetch_all_missing_pois(spacing_s=5)` — enqueue one atom per promoción
     without POIs. Call from a management command or the Django shell.
 """
+
 from __future__ import annotations
 
 import logging
@@ -27,7 +28,7 @@ log = logging.getLogger(__name__)
     name="amenabar.fetch_pois_for_promocion",
     bind=True,
     autoretry_for=(Exception,),
-    retry_backoff=120,       # 2 min, then 4, 8, 16 (capped by max)
+    retry_backoff=120,  # 2 min, then 4, 8, 16 (capped by max)
     retry_backoff_max=600,
     retry_jitter=True,
     max_retries=4,
@@ -60,8 +61,7 @@ def fetch_all_missing_pois(spacing_s: int = 5, limit: int | None = None) -> dict
     spaced `spacing_s` seconds apart so Overpass never sees a burst.
     """
     qs = (
-        Promocion.objects
-        .filter(location__isnull=False)
+        Promocion.objects.filter(location__isnull=False)
         .annotate(n_pois=Count("pois"))
         .filter(n_pois=0)
         .order_by("id")
@@ -82,8 +82,7 @@ def refetch_missing_categories(categories: tuple[str, ...] = ("COMPRAS", "EDUCAC
     """Re-enqueue promociones that already have POIs but none of `categories`
     (e.g. after adding new Overpass rules). store_pois is idempotent."""
     ids = list(
-        Promocion.objects
-        .filter(location__isnull=False)
+        Promocion.objects.filter(location__isnull=False)
         .annotate(n_all=Count("pois"), n_new=Count("pois", filter=Q(pois__categoria__in=categories)))
         .filter(n_all__gt=0, n_new=0)
         .values_list("id", flat=True)
@@ -98,13 +97,7 @@ def refetch_missing_categories(categories: tuple[str, ...] = ("COMPRAS", "EDUCAC
 def fetch_pois_summary() -> dict:
     """Count of promociones vs promociones with POIs. Useful for monitoring."""
     total = Promocion.objects.filter(location__isnull=False).count()
-    with_pois = (
-        Promocion.objects
-        .filter(location__isnull=False)
-        .annotate(n=Count("pois"))
-        .filter(n__gt=0)
-        .count()
-    )
+    with_pois = Promocion.objects.filter(location__isnull=False).annotate(n=Count("pois")).filter(n__gt=0).count()
     return {
         "total_geocoded": total,
         "with_pois": with_pois,

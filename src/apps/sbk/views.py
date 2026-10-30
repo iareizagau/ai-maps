@@ -55,9 +55,7 @@ def tonight_view(request):
     context = {
         "page_filter": "tonight",
         "page_title": _("SBK esta noche: Festivales y Sociales hoy | SBK Hub"),
-        "page_h1": _("%d eventos para bailar hoy") % count
-        if count > 0
-        else _("SBK esta noche"),
+        "page_h1": _("%d eventos para bailar hoy") % count if count > 0 else _("SBK esta noche"),
         "meta_description": _(
             "¿Dónde bailar esta noche? Lista actualizada de sesiones sociales, talleres y fiestas SBK para hoy."
         ),
@@ -74,9 +72,7 @@ def type_view(request, type_slug):
         "festivales": (
             "festival",
             _("Próximos Festivales SBK"),
-            _(
-                "Calendario de congresos y festivales internacionales de Bachata, Salsa y Kizomba."
-            ),
+            _("Calendario de congresos y festivales internacionales de Bachata, Salsa y Kizomba."),
         ),
         "socials": (
             "party",
@@ -173,9 +169,7 @@ def person_directory_view(request):
         "people": people,
         "page_title": _("Directorio de Artistas y DJs SBK | SBK Hub"),
         "page_h1": _("Artistas de la Comunidad"),
-        "meta_description": _(
-            "Conoce a los mejores DJs, profesores y artistas de la escena SBK internacional."
-        ),
+        "meta_description": _("Conoce a los mejores DJs, profesores y artistas de la escena SBK internacional."),
     }
     return render(request, "sbk/pages/directory.html", context)
 
@@ -188,10 +182,7 @@ def person_detail_view(request, slug):
     now = timezone.now()
     upcoming_events = (
         Event.objects.filter(
-            Q(teachers=person)
-            | Q(djs=person)
-            | Q(artists=person)
-            | Q(organizer=person),
+            Q(teachers=person) | Q(djs=person) | Q(artists=person) | Q(organizer=person),
             end_date__gte=now,
         )
         .distinct()
@@ -203,9 +194,7 @@ def person_detail_view(request, slug):
         "upcoming_events": upcoming_events,
         "page_title": _("%s | Artista SBK Hub") % person.name,
         "page_h1": person.name,
-        "meta_description": person.bio[:160]
-        if person.bio
-        else _("Perfil oficial de %s en SBK Hub.") % person.name,
+        "meta_description": person.bio[:160] if person.bio else _("Perfil oficial de %s en SBK Hub.") % person.name,
     }
     return render(request, "sbk/pages/person_detail.html", context)
 
@@ -221,10 +210,7 @@ def events_json(request):
     events = (
         Event.objects.prefetch_related("reviews", "checkins", "vibe_reports")
         .filter(moderation_status__in=["pending", "verified"])
-        .filter(
-            models.Q(end_date__gte=yesterday)
-            | models.Q(end_date__isnull=True, start_date__gte=yesterday)
-        )
+        .filter(models.Q(end_date__gte=yesterday) | models.Q(end_date__isnull=True, start_date__gte=yesterday))
         .exclude(report_count__gte=3)
     )
 
@@ -237,9 +223,7 @@ def events_json(request):
     data = []
     for e in events:
         reviews = e.reviews.all()
-        avg_rating = (
-            sum(r.overall_rating for r in reviews) / len(reviews) if reviews else None
-        )
+        avg_rating = sum(r.overall_rating for r in reviews) / len(reviews) if reviews else None
 
         four_hours_ago = now - timedelta(hours=4)
         is_happening = False
@@ -270,9 +254,7 @@ def events_json(request):
             {
                 "id": str(e.id),
                 "name": e.name,
-                "description": e.short_description or e.description[:200]
-                if e.description
-                else "",
+                "description": e.short_description or e.description[:200] if e.description else "",
                 "start_date": e.start_date.isoformat() if e.start_date else None,
                 "end_date": e.end_date.isoformat() if e.end_date else None,
                 "event_type": e.event_type,
@@ -343,10 +325,7 @@ def toggle_event_status(request, event_id):
 
     event = get_object_or_404(Event, id=event_id)
 
-    if (
-        target_status not in [s[0] for s in UserEventStatus.choices]
-        and target_status is not None
-    ):
+    if target_status not in [s[0] for s in UserEventStatus.choices] and target_status is not None:
         return JsonResponse({"error": "Invalid status"}, status=400)
 
     if target_status is None:
@@ -358,9 +337,7 @@ def toggle_event_status(request, event_id):
     )
 
     if event.is_user_submitted and not event.is_verified:
-        going_count = UserEvent.objects.filter(
-            event=event, status=UserEventStatus.GOING
-        ).count()
+        going_count = UserEvent.objects.filter(event=event, status=UserEventStatus.GOING).count()
         if going_count >= 3:
             event.is_verified = True
             event.moderation_status = "verified"
@@ -379,30 +356,20 @@ def passport_view(request):
     """
     User's personal dashboard (Pasaporte Bailador).
     """
-    user_events = (
-        UserEvent.objects.filter(user=request.user)
-        .select_related("event")
-        .order_by("event__start_date")
-    )
+    user_events = UserEvent.objects.filter(user=request.user).select_related("event").order_by("event__start_date")
     now = timezone.now()
 
     going_events = [
         ue
         for ue in user_events
-        if ue.status == UserEventStatus.GOING
-        and ue.event.start_date
-        and ue.event.start_date >= now
+        if ue.status == UserEventStatus.GOING and ue.event.start_date and ue.event.start_date >= now
     ]
     interested_events = [
         ue
         for ue in user_events
-        if ue.status == UserEventStatus.INTERESTED
-        and ue.event.start_date
-        and ue.event.start_date >= now
+        if ue.status == UserEventStatus.INTERESTED and ue.event.start_date and ue.event.start_date >= now
     ]
-    past_events = [
-        ue for ue in user_events if ue.event.start_date and ue.event.start_date < now
-    ]
+    past_events = [ue for ue in user_events if ue.event.start_date and ue.event.start_date < now]
 
     for ue in past_events:
         if ue.status == UserEventStatus.GOING:
@@ -420,9 +387,7 @@ def passport_view(request):
         "profile": profile,
         "leaderboard": leaderboard,
         "UserEventStatus": UserEventStatus,
-        "stats_countries": len(
-            set([ue.event.country for ue in user_events if ue.event.country])
-        ),
+        "stats_countries": len(set([ue.event.country for ue in user_events if ue.event.country])),
         "stats_total_events": len(went_events),
         "user_points": profile.points,
         "user_rank": profile.get_rank(),
@@ -465,9 +430,7 @@ def event_community_api(request, event_id):
     Returns users going to an event and board notices.
     """
     event = get_object_or_404(Event, id=event_id)
-    user_events = UserEvent.objects.filter(
-        event=event, status=UserEventStatus.GOING
-    ).select_related("user")
+    user_events = UserEvent.objects.filter(event=event, status=UserEventStatus.GOING).select_related("user")
 
     community = []
     for ue in user_events:
@@ -487,11 +450,7 @@ def event_community_api(request, event_id):
             }
         )
 
-    notices_qs = (
-        EventNotice.objects.filter(event=event)
-        .select_related("user")
-        .order_by("-created_at")
-    )
+    notices_qs = EventNotice.objects.filter(event=event).select_related("user").order_by("-created_at")
     notices = []
     for n in notices_qs:
         n_profile, _ = DanceProfile.objects.get_or_create(user=n.user)
@@ -509,9 +468,7 @@ def event_community_api(request, event_id):
             }
         )
 
-    return JsonResponse(
-        {"event_name": event.name, "community": community, "notices": notices}
-    )
+    return JsonResponse({"event_name": event.name, "community": community, "notices": notices})
 
 
 @require_POST
@@ -534,9 +491,7 @@ def submit_event_review(request, event_id):
         )
         if created:
             add_xp(request.user, 15)
-        return JsonResponse(
-            {"status": "success", "message": "Reseña guardada correctamente"}
-        )
+        return JsonResponse({"status": "success", "message": "Reseña guardada correctamente"})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
 
@@ -577,9 +532,7 @@ def submit_local_social(request):
         is_verified = False
 
         # Auto-verify if user is a Verified Person (Organizer/Teacher) or Staff
-        person_profile = Person.objects.filter(
-            claimed_by=request.user, is_verified=True
-        ).first()
+        person_profile = Person.objects.filter(claimed_by=request.user, is_verified=True).first()
         if person_profile or request.user.is_staff:
             moderation_status = "verified"
             is_verified = True
@@ -647,16 +600,10 @@ def submit_event_notice(request, event_id):
         category = data.get("category", "other")
         message = data.get("message", "").strip()
         if not message:
-            return JsonResponse(
-                {"error": "El mensaje no puede estar vacío"}, status=400
-            )
-        notice = EventNotice.objects.create(
-            event=event, user=request.user, category=category, message=message[:250]
-        )
+            return JsonResponse({"error": "El mensaje no puede estar vacío"}, status=400)
+        notice = EventNotice.objects.create(event=event, user=request.user, category=category, message=message[:250])
         add_xp(request.user, 10)
-        return JsonResponse(
-            {"status": "success", "message": "Anuncio publicado correctamente"}
-        )
+        return JsonResponse({"status": "success", "message": "Anuncio publicado correctamente"})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
 
@@ -696,9 +643,7 @@ def check_in(request, event_id):
     else:
         checkin.created_at = timezone.now()
         checkin.save()
-        return JsonResponse(
-            {"status": "success", "message": "Has refrescado tu presencia"}
-        )
+        return JsonResponse({"status": "success", "message": "Has refrescado tu presencia"})
 
 
 @require_POST
@@ -738,9 +683,7 @@ def dance_venue_claim(request, venue_id):
             return redirect("sbk:dance_venue_manage", venue_id=venue.id)
         messages.error(request, _("This venue is already claimed."))
         return redirect("account_app_panel", slug="sbk")
-    existing = DanceVenueClaim.objects.filter(
-        venue=venue, claimant=request.user
-    ).first()
+    existing = DanceVenueClaim.objects.filter(venue=venue, claimant=request.user).first()
     if existing and existing.status == DanceVenueClaim.Status.PENDING:
         messages.info(request, _("You already submitted a claim for this venue."))
         return redirect("account_app_panel", slug="sbk")
@@ -755,9 +698,7 @@ def dance_venue_claim(request, venue_id):
             messages.success(request, _("Claim submitted."))
             return redirect("account_app_panel", slug="sbk")
     else:
-        form = DanceVenueClaimForm(
-            instance=existing, initial={"contact_email": request.user.email}
-        )
+        form = DanceVenueClaimForm(instance=existing, initial={"contact_email": request.user.email})
     return render(request, "sbk/claim.html", {"venue": venue, "form": form})
 
 

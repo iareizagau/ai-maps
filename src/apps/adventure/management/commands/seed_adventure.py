@@ -20,20 +20,14 @@ class Command(BaseCommand):
             type=str,
             help="Local path to OSM PBF file (skips download if provided)",
         )
-        parser.add_argument(
-            "--skip-fountains", action="store_true", help="Skip importing fountains"
-        )
-        parser.add_argument(
-            "--skip-pois", action="store_true", help="Skip importing POIs"
-        )
+        parser.add_argument("--skip-fountains", action="store_true", help="Skip importing fountains")
+        parser.add_argument("--skip-pois", action="store_true", help="Skip importing POIs")
         parser.add_argument(
             "--country",
             type=str,
             help="ISO country code for fountains (e.g. ES, FR, CH)",
         )
-        parser.add_argument(
-            "--region", type=str, help="ISO region code for fountains (e.g. ES-PV)"
-        )
+        parser.add_argument("--region", type=str, help="ISO region code for fountains (e.g. ES-PV)")
         parser.add_argument(
             "--bbox",
             type=str,
@@ -72,11 +66,7 @@ class Command(BaseCommand):
             if not pbf_file:
                 pbf_file = "temp_adventure.osm.pbf"
                 temp_file = True
-                self.stdout.write(
-                    self.style.WARNING(
-                        f"Downloading PBF from {pbf_url}... This may take a while."
-                    )
-                )
+                self.stdout.write(self.style.WARNING(f"Downloading PBF from {pbf_url}... This may take a while."))
                 try:
                     urllib.request.urlretrieve(pbf_url, pbf_file)
                     self.stdout.write(self.style.SUCCESS("Download complete."))
@@ -87,9 +77,7 @@ class Command(BaseCommand):
             try:
                 call_command("import_adventure_pois", pbf_file)
             except Exception as e:
-                self.stdout.write(
-                    self.style.ERROR(f"Error in import_adventure_pois: {e}")
-                )
+                self.stdout.write(self.style.ERROR(f"Error in import_adventure_pois: {e}"))
 
             if temp_file and os.path.exists(pbf_file):
                 self.stdout.write("Cleaning up temporary PBF file...")

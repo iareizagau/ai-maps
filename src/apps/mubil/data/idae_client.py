@@ -333,9 +333,7 @@ class IDAESession:
             raise IDAEError("Could not extract AJAX _token from results page.")
         marcas = self._extract_marcas(r.text)
         if not marcas:
-            log.warning(
-                "IDAE marca list parsed empty — selector markup may have changed."
-            )
+            log.warning("IDAE marca list parsed empty — selector markup may have changed.")
 
         # Cookies may have rotated after the POST.
         if r.cookies:
@@ -380,11 +378,7 @@ class IDAESession:
         block = m.group(1)
         out: list[Marca] = []
         for opt in re.finditer(r'<option\s+value="(\d+)"[^>]*>([^<]+)</option>', block):
-            out.append(
-                Marca(
-                    idae_id=int(opt.group(1)), name=html.unescape(opt.group(2)).strip()
-                )
-            )
+            out.append(Marca(idae_id=int(opt.group(1)), name=html.unescape(opt.group(2)).strip()))
         return out
 
     # ---------------- public API
@@ -461,9 +455,7 @@ class IDAESession:
                 ajax=True,
             )
         if r.status_code != 200:
-            raise IDAEError(
-                f"POST /ajax ciclo={ciclo} returned HTTP {r.status_code}: {r.text[:200]}"
-            )
+            raise IDAEError(f"POST /ajax ciclo={ciclo} returned HTTP {r.status_code}: {r.text[:200]}")
         try:
             return r.json()
         except ValueError as e:

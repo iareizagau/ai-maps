@@ -176,11 +176,7 @@ def refresh(*, embed: bool = True, throttle_s: float = 0.6) -> RefreshStats:
         seen_in_batch.add(r.source_url)
         deduped.append(r)
 
-    existing = set(
-        NewsArticle.objects.filter(source_url__in=list(seen_in_batch)).values_list(
-            "source_url", flat=True
-        )
-    )
+    existing = set(NewsArticle.objects.filter(source_url__in=list(seen_in_batch)).values_list("source_url", flat=True))
     new_raws = [r for r in deduped if r.source_url not in existing]
     stats.new = len(new_raws)
 
@@ -226,9 +222,7 @@ def refresh(*, embed: bool = True, throttle_s: float = 0.6) -> RefreshStats:
 # ---------------------------------------------------------------- read API
 
 
-def list_articles(
-    *, limit: int = 60, relevance: str | None = None, tag: str | None = None
-):
+def list_articles(*, limit: int = 60, relevance: str | None = None, tag: str | None = None):
     qs = NewsArticle.objects.all()
     if relevance:
         qs = qs.filter(relevance=relevance)
@@ -246,23 +240,17 @@ def recent_affecting_plan(*, days: int = ALERT_WINDOW_DAYS, limit: int = 3):
     """Chronological feed of `affects_user_plan=True` news within the window."""
     cutoff = timezone.now() - timedelta(days=days)
     return list(
-        NewsArticle.objects.filter(
-            affects_user_plan=True, published_at__gte=cutoff
-        ).order_by("-published_at")[:limit]
+        NewsArticle.objects.filter(affects_user_plan=True, published_at__gte=cutoff).order_by("-published_at")[:limit]
     )
 
 
-def ranked_for_user(
-    *, query_text: str, days: int = ALERT_WINDOW_DAYS, limit: int = 3
-) -> list:
+def ranked_for_user(*, query_text: str, days: int = ALERT_WINDOW_DAYS, limit: int = 3) -> list:
     """Top affects_user_plan news within the window, ranked by embedding
     similarity to `query_text`. Falls back to chronological order if the
     embedding call fails (quota, network, missing key).
     """
     cutoff = timezone.now() - timedelta(days=days)
-    base = NewsArticle.objects.filter(
-        affects_user_plan=True, published_at__gte=cutoff
-    ).exclude(embedding__isnull=True)
+    base = NewsArticle.objects.filter(affects_user_plan=True, published_at__gte=cutoff).exclude(embedding__isnull=True)
     if not base.exists():
         return []
 
@@ -274,8 +262,4 @@ def ranked_for_user(
 
     from pgvector.django import CosineDistance
 
-    return list(
-        base.annotate(_distance=CosineDistance("embedding", qvec)).order_by(
-            "_distance"
-        )[:limit]
-    )
+    return list(base.annotate(_distance=CosineDistance("embedding", qvec)).order_by("_distance")[:limit])

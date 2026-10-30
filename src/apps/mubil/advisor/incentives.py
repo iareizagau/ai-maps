@@ -143,9 +143,7 @@ def _auto_plus_vehicle(
     factor_eu_assembly = Decimal("0.15") if assembled_in_eu else Decimal("0")
     factor_eu_battery = Decimal("0.10") if battery_made_in_eu else Decimal("0")
 
-    total_pct = (
-        factor_electric + factor_economic + factor_eu_assembly + factor_eu_battery
-    )
+    total_pct = factor_electric + factor_economic + factor_eu_assembly + factor_eu_battery
     amount = (max_aid * total_pct).quantize(Decimal("0.01"))
 
     factors_label = []
@@ -210,16 +208,10 @@ def _iva_deducible(profile: Profile, vehicle_price_eur: int | None) -> Incentive
         return None
     price = Decimal(vehicle_price_eur)
     iva_total = price * (IVA_RATE / (Decimal("1") + IVA_RATE))
-    pct = (
-        IVA_DEDUCIBLE_EMPRESA_PCT
-        if profile == "empresa"
-        else IVA_DEDUCIBLE_AUTONOMO_PCT
-    )
+    pct = IVA_DEDUCIBLE_EMPRESA_PCT if profile == "empresa" else IVA_DEDUCIBLE_AUTONOMO_PCT
     amount = (iva_total * pct).quantize(Decimal("0.01"))
     pct_label = "100 %" if profile == "empresa" else "50 %"
-    return Incentive(
-        code="iva_deducible", name=f"IVA deducible ({pct_label})", amount_eur=amount
-    )
+    return Incentive(code="iva_deducible", name=f"IVA deducible ({pct_label})", amount_eur=amount)
 
 
 # ---------------------------------------------------------------- public API
@@ -251,12 +243,8 @@ def compute_incentives(
         target_category = vehicle.category or "M1"
 
     # Manual overrides from form
-    final_assembled = (
-        assembled_in_eu if assembled_in_eu is not None else target_assembled
-    )
-    final_battery = (
-        battery_made_in_eu if battery_made_in_eu is not None else target_battery
-    )
+    final_assembled = assembled_in_eu if assembled_in_eu is not None else target_assembled
+    final_battery = battery_made_in_eu if battery_made_in_eu is not None else target_battery
 
     auto_plus_veh = _auto_plus_vehicle(
         vehicle_price_eur=vehicle_price_eur,

@@ -45,9 +45,7 @@ class Migration(migrations.Migration):
                 ("description", models.TextField(blank=True)),
                 (
                     "image",
-                    models.ImageField(
-                        blank=True, null=True, upload_to="adventure_intel/"
-                    ),
+                    models.ImageField(blank=True, null=True, upload_to="adventure_intel/"),
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 (

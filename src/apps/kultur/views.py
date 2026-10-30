@@ -76,9 +76,7 @@ def weather_forecast(request):
     for date_key in sorted(by_day.keys())[:6]:
         slots = by_day[date_key]
         temps = [s["main"]["temp"] for s in slots]
-        midday = min(
-            slots, key=lambda s: abs(datetime.fromtimestamp(s["dt"]).hour - 13)
-        )
+        midday = min(slots, key=lambda s: abs(datetime.fromtimestamp(s["dt"]).hour - 13))
         cond = midday["weather"][0]["main"] if midday.get("weather") else "Clouds"
         rain_mm = sum(s.get("rain", {}).get("3h", 0) for s in slots)
         days.append(
@@ -195,9 +193,7 @@ def events_geojson(request):
                 "opening_hours_eu": row["opening_hours_eu"],
                 "price_es": row["price_es"],
                 "price_eu": row["price_eu"],
-                "start_date": row["start_date"].isoformat()
-                if row["start_date"]
-                else None,
+                "start_date": row["start_date"].isoformat() if row["start_date"] else None,
                 "image_url": row["image_url"],
                 "is_family": row["is_family"],
             },

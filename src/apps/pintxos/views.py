@@ -64,9 +64,7 @@ def index(request):
     )
 
     # Get all categories for the filter slider
-    categories = [
-        {"id": choice[0], "label": choice[1]} for choice in Dish.Category.choices
-    ]
+    categories = [{"id": choice[0], "label": choice[1]} for choice in Dish.Category.choices]
 
     context = {
         "restaurants": restaurants,
@@ -140,9 +138,7 @@ def restaurant_claim(request, restaurant_id):
         messages.error(request, _("This venue is already claimed."))
         return redirect("pintxos:restaurant_detail", restaurant_id=restaurant.id)
 
-    existing = RestaurantClaim.objects.filter(
-        restaurant=restaurant, claimant=request.user
-    ).first()
+    existing = RestaurantClaim.objects.filter(restaurant=restaurant, claimant=request.user).first()
     if existing and existing.status == RestaurantClaim.Status.PENDING:
         messages.info(
             request,
@@ -160,9 +156,7 @@ def restaurant_claim(request, restaurant_id):
             claim.decided_at = None
             claim.reviewed_by = None
             claim.save()
-            messages.success(
-                request, _("Claim submitted. We'll get back to you within 48h.")
-            )
+            messages.success(request, _("Claim submitted. We'll get back to you within 48h."))
             return redirect("account_app_panel", slug="pintxos")
     else:
         form = RestaurantClaimForm(
@@ -206,12 +200,8 @@ def restaurant_manage(request, restaurant_id):
             "restaurant": restaurant,
             "form": form,
             "dishes": restaurant.dishes.all(),
-            "has_analytics": has_entitlement(
-                request.user, "pintxos", "analytics_dashboard"
-            ),
-            "has_priority": has_entitlement(
-                request.user, "pintxos", "priority_listing"
-            ),
+            "has_analytics": has_entitlement(request.user, "pintxos", "analytics_dashboard"),
+            "has_priority": has_entitlement(request.user, "pintxos", "priority_listing"),
         },
     )
 

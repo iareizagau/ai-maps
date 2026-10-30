@@ -138,9 +138,7 @@ def _inguru_pulse(app):
         .first()
     )
     if not latest:
-        latest = (
-            Measurement.objects.select_related("station").order_by("-timestamp").first()
-        )
+        latest = Measurement.objects.select_related("station").order_by("-timestamp").first()
     if not latest:
         return None
 
@@ -155,9 +153,7 @@ def _inguru_pulse(app):
         label = _("Baja")
 
     city = latest.station.municipality or latest.station.name
-    lat, lon = _coords_or_city_fallback(
-        latest.station.location, city, latest.station.province
-    )
+    lat, lon = _coords_or_city_fallback(latest.station.location, city, latest.station.province)
     return {
         **_base(app),
         "headline": _("Aire en %(city)s: %(label)s") % {"city": city, "label": label},
@@ -173,9 +169,7 @@ def _kultur_pulse(app):
     from apps.kultur.models import CulturalEvent
 
     today = timezone.localdate()
-    today_qs = CulturalEvent.objects.filter(start_date__date=today).order_by(
-        "start_date"
-    )
+    today_qs = CulturalEvent.objects.filter(start_date__date=today).order_by("start_date")
     count = today_qs.count()
 
     if count >= 1:
@@ -200,11 +194,7 @@ def _kultur_pulse(app):
             "lon": lon,
         }
 
-    upcoming = (
-        CulturalEvent.objects.filter(start_date__date__gt=today)
-        .order_by("start_date")
-        .first()
-    )
+    upcoming = CulturalEvent.objects.filter(start_date__date__gt=today).order_by("start_date").first()
     if not upcoming:
         return None
 
@@ -230,9 +220,7 @@ def _sbk_pulse(app):
 
     now = timezone.now()
     next_event = (
-        Event.objects.filter(
-            start_date__gte=now, moderation_status__in=["verified", "pending"]
-        )
+        Event.objects.filter(start_date__gte=now, moderation_status__in=["verified", "pending"])
         .order_by("start_date")
         .first()
     )
@@ -253,9 +241,7 @@ def _sbk_pulse(app):
         else next_event.primary_style
     )
 
-    lat, lon = _coords_or_city_fallback(
-        getattr(next_event, "location", None), next_event.city
-    )
+    lat, lon = _coords_or_city_fallback(getattr(next_event, "location", None), next_event.city)
     return {
         **_base(app),
         "headline": _("Próxima social: %(s)s") % {"s": style},
@@ -280,15 +266,11 @@ def _pintxos_pulse(app):
 
     lat, lon = (None, None)
     if top.restaurant_id:
-        lat, lon = _coords_or_city_fallback(
-            top.restaurant.location, top.restaurant.address
-        )
+        lat, lon = _coords_or_city_fallback(top.restaurant.location, top.restaurant.address)
     return {
         **_base(app),
         "headline": top.name,
-        "subline": _("en %(r)s") % {"r": top.restaurant.name}
-        if top.restaurant_id
-        else None,
+        "subline": _("en %(r)s") % {"r": top.restaurant.name} if top.restaurant_id else None,
         "meta": f"★ {top.avg_rating:.1f} · {top.rating_count}",
         "lat": lat,
         "lon": lon,
@@ -327,9 +309,7 @@ def get_dashboard_points():
     pintxos_app = apps_by_slug.get("pintxos")
     if pintxos_app:
         # Get top 15 approved restaurants
-        restaurants = Restaurant.objects.approved().order_by(
-            "-avg_rating", "-rating_count"
-        )[:15]
+        restaurants = Restaurant.objects.approved().order_by("-avg_rating", "-rating_count")[:15]
         for r in restaurants:
             lat, lon = _coords_or_city_fallback(r.location, r.address)
             if lat is not None and lon is not None:
@@ -353,13 +333,9 @@ def get_dashboard_points():
     if kultur_app:
         today = timezone.localdate()
         # Today's and upcoming 15 events
-        events = CulturalEvent.objects.filter(start_date__date__gte=today).order_by(
-            "start_date"
-        )[:15]
+        events = CulturalEvent.objects.filter(start_date__date__gte=today).order_by("start_date")[:15]
         for e in events:
-            lat, lon = _coords_or_city_fallback(
-                e.location, e.municipality_es, e.municipality_eu, e.province
-            )
+            lat, lon = _coords_or_city_fallback(e.location, e.municipality_es, e.municipality_eu, e.province)
             if lat is not None and lon is not None:
                 title = e.title_es or e.title_eu or _("Evento")
                 venue = e.venue_name_es or e.venue_name_eu or ""
@@ -385,18 +361,12 @@ def get_dashboard_points():
         now = timezone.now()
         # Upcoming 10 socials
         socials = (
-            Event.objects.filter(start_date__gte=now)
-            .exclude(moderation_status="rejected")
-            .order_by("start_date")[:10]
+            Event.objects.filter(start_date__gte=now).exclude(moderation_status="rejected").order_by("start_date")[:10]
         )
         for s in socials:
             lat, lon = _coords_or_city_fallback(getattr(s, "location", None), s.city)
             if lat is not None and lon is not None:
-                style = (
-                    s.get_primary_style_display()
-                    if hasattr(s, "get_primary_style_display")
-                    else s.primary_style
-                )
+                style = s.get_primary_style_display() if hasattr(s, "get_primary_style_display") else s.primary_style
                 date_str = s.start_date.strftime("%d %b %H:%M") if s.start_date else ""
                 points.append(
                     {
@@ -417,18 +387,14 @@ def get_dashboard_points():
     inguru_app = apps_by_slug.get("inguru")
     if inguru_app:
         # Latest measurements
-        measurements = Measurement.objects.select_related("station").order_by(
-            "-timestamp"
-        )[:15]
+        measurements = Measurement.objects.select_related("station").order_by("-timestamp")[:15]
         seen_stations = set()
         for m in measurements:
             if m.station_id in seen_stations:
                 continue
             seen_stations.add(m.station_id)
 
-            lat, lon = _coords_or_city_fallback(
-                m.station.location, m.station.municipality, m.station.province
-            )
+            lat, lon = _coords_or_city_fallback(m.station.location, m.station.municipality, m.station.province)
             if lat is not None and lon is not None:
                 score = m.eco_score or 0
                 if score >= 80:

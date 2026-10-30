@@ -10,13 +10,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Delete old seeded stations with incorrect IDs to avoid duplicates
         old_ids = ["BIL_MDH", "BIL_PDC", "SS_EASO", "VIT_AVG"]
-        deleted_count, _ = EnvironmentalStation.objects.filter(
-            external_id__in=old_ids
-        ).delete()
+        deleted_count, _ = EnvironmentalStation.objects.filter(external_id__in=old_ids).delete()
         if deleted_count > 0:
-            self.stdout.write(
-                f"Eliminadas {deleted_count} estaciones antiguas obsoletas."
-            )
+            self.stdout.write(f"Eliminadas {deleted_count} estaciones antiguas obsoletas.")
 
         stations_data = [
             # Bilbao
@@ -61,9 +57,7 @@ class Command(BaseCommand):
                 external_id=data["external_id"], defaults=data
             )
             if created:
-                self.stdout.write(
-                    self.style.SUCCESS(f"Creada estación: {station.name}")
-                )
+                self.stdout.write(self.style.SUCCESS(f"Creada estación: {station.name}"))
             else:
                 self.stdout.write(f"Actualizada estación: {station.name}")
 

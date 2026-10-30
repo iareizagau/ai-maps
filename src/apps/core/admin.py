@@ -19,9 +19,7 @@ class CustomUserAdmin(UserAdmin):
         "date_joined",
     )
     readonly_fields = ("date_joined", "last_login")
-    fieldsets = UserAdmin.fieldsets + (
-        ("Profile", {"fields": ("phone", "bio", "avatar")}),
-    )
+    fieldsets = UserAdmin.fieldsets + (("Profile", {"fields": ("phone", "bio", "avatar")}),)
 
 
 # ─────────────────────────────── AppRegistry ─────────────────────────────────

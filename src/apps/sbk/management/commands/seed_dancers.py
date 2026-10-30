@@ -42,9 +42,7 @@ class Command(BaseCommand):
         ]
 
         for data in dancers_data:
-            person, created = Person.objects.update_or_create(
-                artistic_name=data["artistic_name"], defaults=data
-            )
+            person, created = Person.objects.update_or_create(artistic_name=data["artistic_name"], defaults=data)
             if created:
                 self.stdout.write(self.style.SUCCESS(f"Created dancer: {person.name}"))
             else:

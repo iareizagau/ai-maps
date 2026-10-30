@@ -30,9 +30,7 @@ class Migration(migrations.Migration):
                 ("description", models.TextField(blank=True)),
                 (
                     "location",
-                    django.contrib.gis.db.models.fields.PointField(
-                        blank=True, null=True, srid=4326
-                    ),
+                    django.contrib.gis.db.models.fields.PointField(blank=True, null=True, srid=4326),
                 ),
                 ("address", models.CharField(max_length=300)),
                 ("city", models.CharField(db_index=True, max_length=100)),
@@ -150,9 +148,7 @@ class Migration(migrations.Migration):
                 ("contact_email", models.EmailField(blank=True, max_length=254)),
                 (
                     "admin_notes",
-                    models.TextField(
-                        blank=True, help_text="Internal notes left by the reviewer."
-                    ),
+                    models.TextField(blank=True, help_text="Internal notes left by the reviewer."),
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("decided_at", models.DateTimeField(blank=True, null=True)),
@@ -211,9 +207,7 @@ class Migration(migrations.Migration):
                 ("music_quality", models.IntegerField(blank=True, null=True)),
                 (
                     "crowd_level",
-                    models.IntegerField(
-                        blank=True, help_text="1: empty, 5: packed", null=True
-                    ),
+                    models.IntegerField(blank=True, help_text="1: empty, 5: packed", null=True),
                 ),
                 ("comment", models.TextField(blank=True)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
@@ -240,21 +234,15 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="dancevenue",
-            index=models.Index(
-                fields=["city", "venue_type"], name="sbk_danceve_city_24227f_idx"
-            ),
+            index=models.Index(fields=["city", "venue_type"], name="sbk_danceve_city_24227f_idx"),
         ),
         migrations.AddIndex(
             model_name="dancevenueclaim",
-            index=models.Index(
-                fields=["status", "-created_at"], name="sbk_danceve_status_6ff70e_idx"
-            ),
+            index=models.Index(fields=["status", "-created_at"], name="sbk_danceve_status_6ff70e_idx"),
         ),
         migrations.AddConstraint(
             model_name="dancevenueclaim",
-            constraint=models.UniqueConstraint(
-                fields=("venue", "claimant"), name="uniq_dance_venue_claimant"
-            ),
+            constraint=models.UniqueConstraint(fields=("venue", "claimant"), name="uniq_dance_venue_claimant"),
         ),
         migrations.AlterUniqueTogether(
             name="venuerating",

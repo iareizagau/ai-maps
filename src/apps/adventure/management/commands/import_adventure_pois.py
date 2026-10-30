@@ -23,15 +23,9 @@ class POIHandler(osmium.SimpleHandler):
         tags = dict(node.tags)
         poi_type = None
 
-        if (
-            tags.get("amenity") == "drinking_water"
-            or tags.get("waterway") == "water_point"
-        ):
+        if tags.get("amenity") == "drinking_water" or tags.get("waterway") == "water_point":
             poi_type = "water"
-        elif (
-            tags.get("tourism") in ["alpine_hut", "wilderness_hut"]
-            or tags.get("amenity") == "shelter"
-        ):
+        elif tags.get("tourism") in ["alpine_hut", "wilderness_hut"] or tags.get("amenity") == "shelter":
             poi_type = "shelter"
         elif tags.get("amenity") in ["cafe", "bar", "restaurant"]:
             poi_type = "cafe"
@@ -73,25 +67,17 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         pbf_file = options["pbf_file"]
 
-        self.stdout.write(
-            self.style.SUCCESS(f"Iniciando importación desde {pbf_file}...")
-        )
+        self.stdout.write(self.style.SUCCESS(f"Iniciando importación desde {pbf_file}..."))
 
         # Limpiar tabla antes de importar opcionalmente
         # PointOfInterest.objects.all().delete()
 
         handler = POIHandler()
         try:
-            handler.apply_file(
-                pbf_file
-            )  # nodes always have locations, no need for locations=True
+            handler.apply_file(pbf_file)  # nodes always have locations, no need for locations=True
             handler.save_batch()  # Guardar el último lote
 
             count = PointOfInterest.objects.count()
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"Importación completada. Total de POIs en BD: {count}"
-                )
-            )
+            self.stdout.write(self.style.SUCCESS(f"Importación completada. Total de POIs en BD: {count}"))
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Error al procesar: {e!s}"))

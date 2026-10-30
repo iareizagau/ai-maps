@@ -52,36 +52,18 @@ def render_panel(request):
     profile = getattr(user, "dance_profile", None)
 
     upcoming = (
-        user.sbk_events.filter(event__start_date__gte=now)
-        .select_related("event")
-        .order_by("event__start_date")[:30]
+        user.sbk_events.filter(event__start_date__gte=now).select_related("event").order_by("event__start_date")[:30]
     )
-    past = (
-        user.sbk_events.filter(event__start_date__lt=now)
-        .select_related("event")
-        .order_by("-event__start_date")[:10]
-    )
+    past = user.sbk_events.filter(event__start_date__lt=now).select_related("event").order_by("-event__start_date")[:10]
     notices = (
-        (
-            EventNotice.objects.filter(user=user)
-            .select_related("event")
-            .order_by("-created_at")[:10]
-        )
+        (EventNotice.objects.filter(user=user).select_related("event").order_by("-created_at")[:10])
         if user.is_authenticated
         else []
     )
 
     claimed = user.claimed_dance_venues.all().order_by("name")
-    pending_claims = (
-        user.sbk_claims.filter(status="pending")
-        .select_related("venue")
-        .order_by("-created_at")
-    )
-    rejected_claims = (
-        user.sbk_claims.filter(status="rejected")
-        .select_related("venue")
-        .order_by("-decided_at")[:5]
-    )
+    pending_claims = user.sbk_claims.filter(status="pending").select_related("venue").order_by("-created_at")
+    rejected_claims = user.sbk_claims.filter(status="rejected").select_related("venue").order_by("-decided_at")[:5]
 
     return render(
         request,

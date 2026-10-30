@@ -4,25 +4,28 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('blog', '0001_initial'),
+        ("blog", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='post',
-            name='map_center_lat',
-            field=models.DecimalField(blank=True, decimal_places=6, help_text='Latitude for Leaflet center', max_digits=9, null=True),
+            model_name="post",
+            name="map_center_lat",
+            field=models.DecimalField(
+                blank=True, decimal_places=6, help_text="Latitude for Leaflet center", max_digits=9, null=True
+            ),
         ),
         migrations.AlterField(
-            model_name='post',
-            name='map_center_lng',
-            field=models.DecimalField(blank=True, decimal_places=6, help_text='Longitude for Leaflet center', max_digits=9, null=True),
+            model_name="post",
+            name="map_center_lng",
+            field=models.DecimalField(
+                blank=True, decimal_places=6, help_text="Longitude for Leaflet center", max_digits=9, null=True
+            ),
         ),
         migrations.AlterField(
-            model_name='post',
-            name='map_zoom',
-            field=models.IntegerField(blank=True, help_text='Zoom level for Leaflet map', null=True),
+            model_name="post",
+            name="map_zoom",
+            field=models.IntegerField(blank=True, help_text="Zoom level for Leaflet map", null=True),
         ),
     ]

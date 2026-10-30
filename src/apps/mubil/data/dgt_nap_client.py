@@ -34,10 +34,7 @@ from apps.mubil.data.openchargemap_client import ChargingPOIRecord
 log = logging.getLogger(__name__)
 
 
-BASE_URL = (
-    "https://infocar.dgt.es/datex2/v3/miterd/"
-    "EnergyInfrastructureTablePublication/electrolineras.xml"
-)
+BASE_URL = "https://infocar.dgt.es/datex2/v3/miterd/EnergyInfrastructureTablePublication/electrolineras.xml"
 HTTP_TIMEOUT = 120  # 85 MB feed, give it room on slow links
 USER_AGENT = "mubil/0.1 "
 
@@ -125,16 +122,8 @@ def _parse_site(elem: ET.Element, *, eh_only: bool) -> ChargingPOIRecord | None:
     # NOTE: ``locationReference`` is in the ``fac:`` namespace (typed via
     # ``xsi:type="loc:PointLocation"``), not the ``loc:`` namespace despite
     # what the type attribute suggests. Verified against the live feed.
-    lat_text = _text_of(
-        elem.find(
-            f"./{_NS_FAC}locationReference/{_NS_LOC}coordinatesForDisplay/{_NS_LOC}latitude"
-        )
-    )
-    lon_text = _text_of(
-        elem.find(
-            f"./{_NS_FAC}locationReference/{_NS_LOC}coordinatesForDisplay/{_NS_LOC}longitude"
-        )
-    )
+    lat_text = _text_of(elem.find(f"./{_NS_FAC}locationReference/{_NS_LOC}coordinatesForDisplay/{_NS_LOC}latitude"))
+    lon_text = _text_of(elem.find(f"./{_NS_FAC}locationReference/{_NS_LOC}coordinatesForDisplay/{_NS_LOC}longitude"))
     try:
         lat = float(lat_text)
         lon = float(lon_text)
@@ -157,18 +146,12 @@ def _parse_site(elem: ET.Element, *, eh_only: bool) -> ChargingPOIRecord | None:
     if eh_only and provincia not in EH_PROVINCES:
         return None
 
-    operator = _text_of(
-        elem.find(f"./{_NS_FAC}operator/{_NS_FAC}name/{_NS_COM}values/{_NS_COM}value")
-    )
+    operator = _text_of(elem.find(f"./{_NS_FAC}operator/{_NS_FAC}name/{_NS_COM}values/{_NS_COM}value"))
 
     connectors: list[dict] = []
     max_kw: Decimal | None = None
-    for cn in elem.findall(
-        f"./{_NS_EGI}energyInfrastructureStation/{_NS_EGI}refillPoint/{_NS_EGI}connector"
-    ):
-        kw = _watts_text_to_kw(
-            _text_of(cn.find(f"./{_NS_EGI}maxPowerAtSocket")) or None
-        )
+    for cn in elem.findall(f"./{_NS_EGI}energyInfrastructureStation/{_NS_EGI}refillPoint/{_NS_EGI}connector"):
+        kw = _watts_text_to_kw(_text_of(cn.find(f"./{_NS_EGI}maxPowerAtSocket")) or None)
         if kw is not None and (max_kw is None or kw > max_kw):
             max_kw = kw
         connectors.append(
@@ -180,9 +163,7 @@ def _parse_site(elem: ET.Element, *, eh_only: bool) -> ChargingPOIRecord | None:
             }
         )
 
-    last_updated = _parse_iso8601(
-        _text_of(elem.find(f"./{_NS_FAC}lastUpdated")) or None
-    )
+    last_updated = _parse_iso8601(_text_of(elem.find(f"./{_NS_FAC}lastUpdated")) or None)
 
     return ChargingPOIRecord(
         external_id=f"dgt_nap-{site_id}",

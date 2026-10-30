@@ -51,9 +51,7 @@ class Command(BaseCommand):
                         lon = float(data[0]["lon"])
                         crag.location = Point(lon, lat)
                         crag.save()
-                        self.stdout.write(
-                            self.style.SUCCESS(f"  ✓ Found at: {lat}, {lon} (global)")
-                        )
+                        self.stdout.write(self.style.SUCCESS(f"  ✓ Found at: {lat}, {lon} (global)"))
                         success_count += 1
                     else:
                         self.stdout.write(self.style.WARNING("  ✗ No results found."))
@@ -64,8 +62,4 @@ class Command(BaseCommand):
             # Nominatim policy requires 1 request per second
             time.sleep(1.1)
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Finished! Successfully geocoded {success_count}/{total} crags."
-            )
-        )
+        self.stdout.write(self.style.SUCCESS(f"Finished! Successfully geocoded {success_count}/{total} crags."))

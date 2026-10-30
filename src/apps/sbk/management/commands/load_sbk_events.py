@@ -18,9 +18,7 @@ class Command(BaseCommand):
         # But for this demo, we just fetch the first page
         response = requests.get(url)
         if response.status_code != 200:
-            self.stderr.write(
-                self.style.ERROR(f"Failed to fetch data: {response.status_code}")
-            )
+            self.stderr.write(self.style.ERROR(f"Failed to fetch data: {response.status_code}"))
             return
 
         data = response.json()
@@ -50,9 +48,7 @@ class Command(BaseCommand):
                 events_data = data["events"]
             else:
                 # If it's a list disguised as dict (unlikely)
-                events_data = [
-                    v for k, v in data.items() if isinstance(v, dict) and "uuid" in v
-                ]
+                events_data = [v for k, v in data.items() if isinstance(v, dict) and "uuid" in v]
         elif isinstance(data, list):
             # Sometimes APIs return a list where the last item is the metadata...
             events_data = [item for item in data if "uuid" in item]
@@ -75,9 +71,7 @@ class Command(BaseCommand):
             description = desc_data.get("es") or desc_data.get("en") or ""
 
             short_desc_data = item.get("shortDescription", {})
-            short_description = (
-                short_desc_data.get("es") or short_desc_data.get("en") or ""
-            )
+            short_description = short_desc_data.get("es") or short_desc_data.get("en") or ""
 
             start_date_str = item.get("dateFrom")
             end_date_str = item.get("dateTo")
@@ -106,23 +100,11 @@ class Command(BaseCommand):
             # Simple heuristic for style based on text
             text_to_search = (name + " " + description).lower()
             primary_style = DanceStyle.MIXED
-            if (
-                "bachata" in text_to_search
-                and "salsa" not in text_to_search
-                and "kizomba" not in text_to_search
-            ):
+            if "bachata" in text_to_search and "salsa" not in text_to_search and "kizomba" not in text_to_search:
                 primary_style = DanceStyle.BACHATA
-            elif (
-                "salsa" in text_to_search
-                and "bachata" not in text_to_search
-                and "kizomba" not in text_to_search
-            ):
+            elif "salsa" in text_to_search and "bachata" not in text_to_search and "kizomba" not in text_to_search:
                 primary_style = DanceStyle.SALSA
-            elif (
-                "kizomba" in text_to_search
-                and "bachata" not in text_to_search
-                and "salsa" not in text_to_search
-            ):
+            elif "kizomba" in text_to_search and "bachata" not in text_to_search and "salsa" not in text_to_search:
                 primary_style = DanceStyle.KIZOMBA
 
             type_data = item.get("type", {})
@@ -167,7 +149,5 @@ class Command(BaseCommand):
                 events_updated += 1
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"Successfully loaded events. Created: {events_created}, Updated: {events_updated}"
-            )
+            self.style.SUCCESS(f"Successfully loaded events. Created: {events_created}, Updated: {events_updated}")
         )

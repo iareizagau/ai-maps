@@ -40,8 +40,6 @@ class ContactSubmitTests(TestCase):
         self.assertEqual(lead.email, "test@example.com")
         self.assertEqual(lead.entity, "My Company")
         self.assertEqual(lead.profile, "flota")
-        self.assertEqual(
-            lead.message, "Hello, I want to learn more about the platform."
-        )
+        self.assertEqual(lead.message, "Hello, I want to learn more about the platform.")
 
         mock_send.assert_called_once()

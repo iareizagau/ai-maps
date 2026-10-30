@@ -65,9 +65,7 @@ class Restaurant(BaseModel):
     website = models.URLField(blank=True)
     image_url = models.URLField(blank=True)
     category = models.CharField(max_length=20, choices=Category.choices)
-    hours = models.JSONField(
-        default=dict, blank=True
-    )  # {"mon": "10-22", "tue": "10-22", ...}
+    hours = models.JSONField(default=dict, blank=True)  # {"mon": "10-22", "tue": "10-22", ...}
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     claimed_by = models.ForeignKey(
         User,
@@ -78,9 +76,7 @@ class Restaurant(BaseModel):
         help_text="Verified owner. Set when a RestaurantClaim is approved.",
     )
     approved = models.BooleanField(default=False)  # Moderación
-    avg_rating = models.FloatField(
-        default=0, validators=[MinValueValidator(0), MaxValueValidator(5)]
-    )
+    avg_rating = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(5)])
     rating_count = models.IntegerField(default=0)
 
     class Meta:
@@ -136,22 +132,16 @@ class Dish(BaseModel):
         PIZZA = "PIZZA", _("Pizza")
         SUSHI = "SUSHI", _("Sushi")
 
-    restaurant = models.ForeignKey(
-        Restaurant, on_delete=models.CASCADE, related_name="dishes"
-    )
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="dishes")
     name = models.CharField(max_length=200)
     category = models.CharField(max_length=30, choices=Category.choices)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     image_url = models.URLField(blank=True)
     # embedding = VectorField(dimensions=384, null=True, blank=True)  # TODO: Enable after pgvector setup
-    avg_rating = models.FloatField(
-        default=0, validators=[MinValueValidator(0), MaxValueValidator(5)]
-    )
+    avg_rating = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(5)])
     rating_count = models.IntegerField(default=0)
-    created_by = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, related_name="dishes_created"
-    )
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="dishes_created")
 
     class Meta:
         ordering = ["-avg_rating", "-created_at"]
@@ -164,9 +154,7 @@ class Dish(BaseModel):
         """Recalculate average rating from DishRating entries"""
         ratings = self.ratings.all()
         if ratings.exists():
-            self.avg_rating = (
-                ratings.aggregate(models.Avg("rating"))["rating__avg"] or 0
-            )
+            self.avg_rating = ratings.aggregate(models.Avg("rating"))["rating__avg"] or 0
             self.rating_count = ratings.count()
         else:
             self.avg_rating = 0
@@ -179,12 +167,8 @@ class DishRating(models.Model):
     """User rating for a dish"""
 
     dish = models.ForeignKey(Dish, on_delete=models.CASCADE, related_name="ratings")
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="dish_ratings"
-    )
-    rating = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)]
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="dish_ratings")
+    rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     comment = models.TextField(blank=True)
     price = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -212,9 +196,7 @@ class DishFavorite(models.Model):
     """User saves a dish as a favourite (heart button)"""
 
     dish = models.ForeignKey(Dish, on_delete=models.CASCADE, related_name="favorites")
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="dish_favorites"
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="dish_favorites")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -244,19 +226,11 @@ class RestaurantClaim(models.Model):
         DOCUMENT = "document", _("Document upload")
         OTHER = "other", _("Other")
 
-    restaurant = models.ForeignKey(
-        Restaurant, on_delete=models.CASCADE, related_name="claims"
-    )
-    claimant = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="pintxos_claims"
-    )
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="claims")
+    claimant = models.ForeignKey(User, on_delete=models.CASCADE, related_name="pintxos_claims")
 
-    status = models.CharField(
-        max_length=16, choices=Status.choices, default=Status.PENDING, db_index=True
-    )
-    method = models.CharField(
-        max_length=16, choices=Method.choices, default=Method.PHONE
-    )
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING, db_index=True)
+    method = models.CharField(max_length=16, choices=Method.choices, default=Method.PHONE)
 
     evidence = models.TextField(
         blank=True,
@@ -265,9 +239,7 @@ class RestaurantClaim(models.Model):
     contact_phone = models.CharField(max_length=30, blank=True)
     contact_email = models.EmailField(blank=True)
 
-    admin_notes = models.TextField(
-        blank=True, help_text=_("Internal notes left by the reviewer.")
-    )
+    admin_notes = models.TextField(blank=True, help_text=_("Internal notes left by the reviewer."))
     reviewed_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -280,9 +252,7 @@ class RestaurantClaim(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=["restaurant", "claimant"], name="uniq_restaurant_claimant"
-            ),
+            models.UniqueConstraint(fields=["restaurant", "claimant"], name="uniq_restaurant_claimant"),
         ]
         indexes = [models.Index(fields=["status", "-created_at"])]
         ordering = ["-created_at"]

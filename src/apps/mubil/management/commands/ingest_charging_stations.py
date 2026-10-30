@@ -67,18 +67,14 @@ class Command(BaseCommand):
         results: dict[str, dict] = {}
 
         if source in ("miteco", "all"):
-            self.stdout.write(
-                f"Ingesting MITECO CSV (eh_only={eh_only}, dry_run={dry_run})…"
-            )
+            self.stdout.write(f"Ingesting MITECO CSV (eh_only={eh_only}, dry_run={dry_run})…")
             stats = charging_ingest.ingest_miteco_csv(
                 csv_path=csv_path,
                 eh_only=eh_only,
                 dry_run=dry_run,
             )
             results["miteco"] = stats.as_dict()
-            self.stdout.write(
-                self.style.SUCCESS(json.dumps(results["miteco"], indent=2))
-            )
+            self.stdout.write(self.style.SUCCESS(json.dumps(results["miteco"], indent=2)))
 
         if source in ("ocm", "all"):
             self.stdout.write(f"Ingesting OpenChargeMap (dry_run={dry_run})…")
@@ -89,14 +85,10 @@ class Command(BaseCommand):
         if source in ("dgt_nap", "all"):
             # DGT NAP defaults to all-Spain — the feed is the canonical
             # nationwide source and the EH filter has no production use.
-            self.stdout.write(
-                f"Ingesting DGT NAP DATEX II (all-Spain, dry_run={dry_run})…"
-            )
+            self.stdout.write(f"Ingesting DGT NAP DATEX II (all-Spain, dry_run={dry_run})…")
             stats = charging_ingest.ingest_dgt_nap(dry_run=dry_run)
             results["dgt_nap"] = stats.as_dict()
-            self.stdout.write(
-                self.style.SUCCESS(json.dumps(results["dgt_nap"], indent=2))
-            )
+            self.stdout.write(self.style.SUCCESS(json.dumps(results["dgt_nap"], indent=2)))
 
         if not results:
             raise CommandError(f"Unknown source: {source}")

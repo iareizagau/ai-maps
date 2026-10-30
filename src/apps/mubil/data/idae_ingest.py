@@ -38,9 +38,7 @@ log = logging.getLogger(__name__)
 # Callback invocado tras cada marca con (marca, delta_stats, cumulative_stats).
 # `delta` aísla lo aportado por esta marca para que el cliente pueda mostrar
 # "78 nuevos en BMW" sin recalcular acumulados.
-MarcaCallback = Callable[
-    [idae_client.Marca, "IDAEIngestStats", "IDAEIngestStats"], None
-]
+MarcaCallback = Callable[[idae_client.Marca, "IDAEIngestStats", "IDAEIngestStats"], None]
 
 
 # ─────────────────────────────────────────────── stats
@@ -150,14 +148,10 @@ def _merge_pair(
     # Average min/max combustion consumption — the advisor only knows one l/100
     # number, so collapse the WLTP range to its midpoint.
     cons_l = None
-    if (
-        wltp
-        and wltp.consumption_l_100km_min is not None
-        and wltp.consumption_l_100km_max is not None
-    ):
-        cons_l = (
-            (wltp.consumption_l_100km_min + wltp.consumption_l_100km_max) / Decimal("2")
-        ).quantize(Decimal("0.01"))
+    if wltp and wltp.consumption_l_100km_min is not None and wltp.consumption_l_100km_max is not None:
+        cons_l = ((wltp.consumption_l_100km_min + wltp.consumption_l_100km_max) / Decimal("2")).quantize(
+            Decimal("0.01")
+        )
     elif wltp and wltp.consumption_l_100km_max is not None:
         cons_l = wltp.consumption_l_100km_max
 

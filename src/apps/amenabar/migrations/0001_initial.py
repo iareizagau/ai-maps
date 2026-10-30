@@ -52,9 +52,7 @@ class Migration(migrations.Migration):
                 ("image_url", models.URLField(blank=True)),
                 (
                     "location",
-                    django.contrib.gis.db.models.fields.PointField(
-                        blank=True, null=True, srid=4326
-                    ),
+                    django.contrib.gis.db.models.fields.PointField(blank=True, null=True, srid=4326),
                 ),
             ],
             options={

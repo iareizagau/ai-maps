@@ -17,9 +17,7 @@ def home(request):
 
     # Fetch all crags with valid coordinates for the map and annotate total routes
     target_point = Point(0, 0)
-    all_crags = Crag.objects.exclude(location=target_point).annotate(
-        routes_count=Count("sectors__routes")
-    )
+    all_crags = Crag.objects.exclude(location=target_point).annotate(routes_count=Count("sectors__routes"))
 
     # Serialize ALL valid crags for the map
     crags_data = []

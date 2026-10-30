@@ -169,9 +169,7 @@ class AnswerMergeTests(TestCase):
 
         with (
             mock.patch.object(services, "retrieve_topk", return_value=[good_doc]),
-            mock.patch.object(
-                services, "retrieve_news_topk", return_value=[noise_news]
-            ),
+            mock.patch.object(services, "retrieve_news_topk", return_value=[noise_news]),
         ):
             result = services.answer(query="¿algo?", k=3)
 

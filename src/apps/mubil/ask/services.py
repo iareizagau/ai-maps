@@ -92,9 +92,7 @@ def retrieve_topk(
     if municipality_naia:
         qs = qs.filter(municipality_naia=municipality_naia)
 
-    rows = qs.annotate(distance=CosineDistance("embedding", query_vec)).order_by(
-        "distance"
-    )[:k]
+    rows = qs.annotate(distance=CosineDistance("embedding", query_vec)).order_by("distance")[:k]
 
     return [
         RetrievedDoc(
@@ -183,12 +181,7 @@ def compose_prompt(query: str, docs: list[RetrievedDoc]) -> str:
             header = f"[{i}] Tipo: NOTICIA (publicada {d.date or 'sin fecha'})"
         else:
             header = f"[{i}] Tipo: DATASET ({d.source_type})"
-        chunks.append(
-            f"{header}\n"
-            f"    Título: {d.title}\n"
-            f"    URL: {d.source_url}\n"
-            f"    Contenido: {snippet}"
-        )
+        chunks.append(f"{header}\n    Título: {d.title}\n    URL: {d.source_url}\n    Contenido: {snippet}")
     docs_block = "\n\n".join(chunks)
 
     return (
@@ -293,9 +286,7 @@ def _call_gemini_generate(prompt: str, max_output_tokens: int | None = None) -> 
             )
         except Exception as e:
             if _should_fallback(e):
-                log.warning(
-                    "Gemini model %s soft-failed (%s) — falling through.", model, e
-                )
+                log.warning("Gemini model %s soft-failed (%s) — falling through.", model, e)
                 last_exc = e
                 continue
             raise
@@ -360,10 +351,7 @@ def answer(
         gen_error: str | None = None
     except Exception as e:
         log.exception("Gemini generation failed: %s", e)
-        answer_md = (
-            "El servicio de generación está temporalmente no disponible. "
-            "Inténtalo de nuevo en unos segundos."
-        )
+        answer_md = "El servicio de generación está temporalmente no disponible. Inténtalo de nuevo en unos segundos."
         gen_error = "generation_unavailable"
 
     elapsed_ms = int((time.monotonic() - t0) * 1000)

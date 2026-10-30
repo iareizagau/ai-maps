@@ -103,9 +103,10 @@ Devuelve EXCLUSIVAMENTE un objeto JSON válido (sin texto explicativo antes o de
 }}
 """
 
+
 def fetch_latest_tech_news() -> list[dict]:
     """Fetch the latest relevant technical articles. Falls back to RSS feeds.
-    
+
     Skips articles that have already been processed into blog posts.
     Returns a list of candidate news items.
     """
@@ -188,15 +189,13 @@ def select_best_article_with_gemini(candidates: list[dict]) -> dict | None:
     """Use Gemini to evaluate candidate news items against our system dossier and select the best one."""
     if not candidates:
         return None
-    
+
     if len(candidates) == 1:
         return candidates[0]
-        
+
     candidates_list = []
     for idx, c in enumerate(candidates):
-        candidates_list.append(
-            f"[{idx}] Título: {c['title']}\nSnippet: {c['snippet']}\nURL: {c['url']}"
-        )
+        candidates_list.append(f"[{idx}] Título: {c['title']}\nSnippet: {c['snippet']}\nURL: {c['url']}")
     candidates_str = "\n\n".join(candidates_list)
 
     prompt = f"""
@@ -230,7 +229,7 @@ Devuelve estrictamente un objeto JSON con la siguiente estructura (sin bloques m
             if clean_txt.endswith("```"):
                 clean_txt = clean_txt[:-3]
             clean_txt = clean_txt.strip()
-            
+
         data = json.loads(clean_txt)
         sel_idx = int(data.get("selected_index", 0))
         if 0 <= sel_idx < len(candidates):
@@ -248,19 +247,21 @@ Devuelve estrictamente un objeto JSON con la siguiente estructura (sin bloques m
             return selected
     except Exception as e:
         log.warning("Gemini article selection failed: %s. Falling back to the first candidate.", e)
-        
+
     return candidates[0]
+
 
 def get_recent_posts_history() -> str:
     """Compile titles and summaries of recent posts for context."""
     posts = Post.objects.all().order_by("-created_at")[:10]
     if not posts.exists():
         return "(No hay posts previos en el blog)"
-    
+
     lines = []
     for p in posts:
         lines.append(f"- Título (ES): {p.title_es} / Título (EU): {p.title_eu}\n  Resumen (ES): {p.summary_es}")
     return "\n".join(lines)
+
 
 def validate_and_clean_geojson(geojson_str: str | None) -> tuple[str | None, bool]:
     """Parse geojson string to ensure it is valid JSON and GeoJSON structure."""
@@ -273,6 +274,7 @@ def validate_and_clean_geojson(geojson_str: str | None) -> tuple[str | None, boo
     except Exception as e:
         log.warning("GeoJSON parsing or validation failed: %s", e)
     return None, False
+
 
 def create_daily_post() -> Post | None:
     """Orchestrate fetching, deduplication, Gemini generation, and database save in draft mode."""
@@ -408,7 +410,7 @@ def create_daily_post() -> Post | None:
                     "name_es": tslug,
                     "name_eu": tslug,
                     "name_en": tslug,
-                }
+                },
             )
             post.tags.add(tag)
 

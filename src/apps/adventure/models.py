@@ -64,12 +64,8 @@ class Route(models.Model):
 
     # Datos de Enrutamiento
     profile = models.CharField(max_length=50)  # ej: 'bikepacking', 'hiking'
-    waypoints = models.JSONField(
-        help_text="Array de coordenadas [lng, lat] para permitir edición posterior"
-    )
-    geom = models.MultiLineStringField(
-        srid=4326, help_text="La línea trazada por PgRouting"
-    )
+    waypoints = models.JSONField(help_text="Array de coordenadas [lng, lat] para permitir edición posterior")
+    geom = models.MultiLineStringField(srid=4326, help_text="La línea trazada por PgRouting")
 
     location_city = models.CharField(max_length=100, blank=True, null=True)
     location_province = models.CharField(max_length=100, blank=True, null=True)
@@ -149,9 +145,7 @@ class Route(models.Model):
         """Devuelve asfalto vs tierra simplificado"""
         stats = self.surface_stats or {}
         asphalt_keys = ["asphalt", "paved", "concrete"]
-        asphalt_pct = sum(
-            [v for k, v in stats.items() if any(ak in k.lower() for ak in asphalt_keys)]
-        )
+        asphalt_pct = sum([v for k, v in stats.items() if any(ak in k.lower() for ak in asphalt_keys)])
         dirt_pct = 100 - asphalt_pct
         if dirt_pct < 0:
             dirt_pct = 0
@@ -253,14 +247,10 @@ class ExplorationRecord(models.Model):
         on_delete=models.CASCADE,
         related_name="discovered_sectors",
     )
-    sector_key = models.CharField(
-        max_length=50, db_index=True
-    )  # Formato "lat_idx:lng_idx"
+    sector_key = models.CharField(max_length=50, db_index=True)  # Formato "lat_idx:lng_idx"
     geom = models.PolygonField(srid=4326)
 
-    is_pioneer = models.BooleanField(
-        default=False, help_text="¿Fue el primero en el mundo en descubrirlo?"
-    )
+    is_pioneer = models.BooleanField(default=False, help_text="¿Fue el primero en el mundo en descubrirlo?")
     discovered_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

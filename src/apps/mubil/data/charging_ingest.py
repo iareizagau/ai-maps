@@ -109,9 +109,7 @@ def _strip_accents_upper(text: str) -> str:
     """ASCII-fold + uppercase, used to normalise provincia values from MITECO."""
     if not text:
         return ""
-    table = str.maketrans(
-        "ÁÉÍÓÚÀÈÌÒÙÄËÏÖÜÑáéíóúàèìòùäëïöüñ", "AEIOUAEIOUAEIOUNaeiouaeiouaeioun"
-    )
+    table = str.maketrans("ÁÉÍÓÚÀÈÌÒÙÄËÏÖÜÑáéíóúàèìòùäëïöüñ", "AEIOUAEIOUAEIOUNaeiouaeiouaeioun")
     return text.translate(table).upper().strip()
 
 
@@ -296,15 +294,10 @@ def ingest_openchargemap(
         dry_run: fetch + parse, no DB writes.
     """
     stats = ChargingIngestStats(source=SOURCE_OCM)
-    key = (
-        api_key
-        if api_key is not None
-        else getattr(settings, "OPENCHARGEMAP_API_KEY", "")
-    )
+    key = api_key if api_key is not None else getattr(settings, "OPENCHARGEMAP_API_KEY", "")
     if not key:
         log.warning(
-            "OPENCHARGEMAP_API_KEY not configured — skipping OCM ingest. "
-            "Set it in src/.env to enable weekly refresh."
+            "OPENCHARGEMAP_API_KEY not configured — skipping OCM ingest. Set it in src/.env to enable weekly refresh."
         )
         return stats
 

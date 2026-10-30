@@ -59,10 +59,7 @@ class Command(BaseCommand):
                 raise CommandError("--start and --end must be used together.")
             start = _parse_iso_date(options["start"])
             end = _parse_iso_date(options["end"])
-            self.stdout.write(
-                f"Ingesting PVPC window {start.isoformat()} → {end.isoformat()} "
-                f"(dry_run={dry_run})…"
-            )
+            self.stdout.write(f"Ingesting PVPC window {start.isoformat()} → {end.isoformat()} (dry_run={dry_run})…")
             stats = pvpc_ingest.ingest_window(start=start, end=end, dry_run=dry_run)
         else:
             hours = options["hours"]

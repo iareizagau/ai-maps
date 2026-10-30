@@ -92,9 +92,7 @@ class CalibrationTable:
     propulsion_fallback_price: dict[str, int]  # propulsion → mediana global
     n_anchors: int
 
-    def estimate(
-        self, *, propulsion: str, make: str, battery_kwh: Decimal | None
-    ) -> int:
+    def estimate(self, *, propulsion: str, make: str, battery_kwh: Decimal | None) -> int:
         """Predice PVP para una fila concreta."""
         tier = tier_for_make(make)
         base = self.cluster_median_price.get((propulsion, tier))
@@ -143,11 +141,7 @@ def calibrate(anchors: list[Vehicle] | None = None) -> CalibrationTable:
     recalcula desde BD en cada `seed_vehicle_prices_heuristic`.
     """
     if anchors is None:
-        anchors = list(
-            Vehicle.objects.filter(
-                price_source=Vehicle.PriceSource.MANUAL, price_eur__isnull=False
-            )
-        )
+        anchors = list(Vehicle.objects.filter(price_source=Vehicle.PriceSource.MANUAL, price_eur__isnull=False))
 
     price_buckets: dict[tuple[str, str], list[int]] = {}
     bat_buckets: dict[tuple[str, str], list[Decimal]] = {}
@@ -165,9 +159,7 @@ def calibrate(anchors: list[Vehicle] | None = None) -> CalibrationTable:
 
     return CalibrationTable(
         cluster_median_price={k: _median_int(v) for k, v in price_buckets.items()},
-        cluster_median_battery={
-            k: _median_decimal(v) for k, v in bat_buckets.items() if v
-        },
+        cluster_median_battery={k: _median_decimal(v) for k, v in bat_buckets.items() if v},
         propulsion_fallback_price={k: _median_int(v) for k, v in by_propulsion.items()},
         n_anchors=len(anchors),
     )

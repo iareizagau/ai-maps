@@ -17,9 +17,7 @@ class User(AbstractUser):
 
 
 class PaymentMethod(models.Model):
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="payment_methods"
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="payment_methods")
     provider = models.CharField(max_length=50, default="Stripe")
     last4 = models.CharField(max_length=4)
     brand = models.CharField(max_length=20)  # Visa, Mastercard, etc.
@@ -33,15 +31,9 @@ class PaymentMethod(models.Model):
 
 
 class Follow(models.Model):
-    follower = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="following_set"
-    )
-    followed = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="follower_set"
-    )
-    app_context = models.CharField(
-        max_length=50, db_index=True
-    )  # 'pintxos', 'sbk', etc.
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name="following_set")
+    followed = models.ForeignKey(User, on_delete=models.CASCADE, related_name="follower_set")
+    app_context = models.CharField(max_length=50, db_index=True)  # 'pintxos', 'sbk', etc.
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -76,18 +68,14 @@ class Subscription(models.Model):
         (STATUS_CANCELED, "Canceled"),
     ]
 
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="subscriptions"
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="subscriptions")
     app_slug = models.CharField(
         max_length=50,
         db_index=True,
         help_text="App slug or '*' for the cross-app bundle",
     )
     tier = models.CharField(max_length=16, choices=TIER_CHOICES, default=TIER_FREE)
-    status = models.CharField(
-        max_length=16, choices=STATUS_CHOICES, default=STATUS_ACTIVE
-    )
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=STATUS_ACTIVE)
     stripe_customer_id = models.CharField(max_length=64, blank=True)
     stripe_subscription_id = models.CharField(max_length=64, blank=True)
     current_period_end = models.DateTimeField(null=True, blank=True)
@@ -96,9 +84,7 @@ class Subscription(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=["user", "app_slug"], name="uniq_user_app_sub"
-            ),
+            models.UniqueConstraint(fields=["user", "app_slug"], name="uniq_user_app_sub"),
         ]
         indexes = [models.Index(fields=["user", "status"])]
 
@@ -116,13 +102,9 @@ class AppRegistry(models.Model):
     name = models.CharField(max_length=100)
     tagline = models.CharField(max_length=255, blank=True)
     domain = models.CharField(max_length=255, help_text="e.g., 'pintxos.maps.eus'")
-    icon = models.CharField(
-        max_length=50, default="map-pin", help_text="Lucide icon name"
-    )
+    icon = models.CharField(max_length=50, default="map-pin", help_text="Lucide icon name")
     is_active = models.BooleanField(default=True)
-    is_featured = models.BooleanField(
-        default=False, help_text="Show this app in the Home Hero section"
-    )
+    is_featured = models.BooleanField(default=False, help_text="Show this app in the Home Hero section")
 
     # Editorial ordering & lifecycle
     STATUS_LIVE = "live"
@@ -149,9 +131,7 @@ class AppRegistry(models.Model):
     )
 
     # Branding
-    primary_color = models.CharField(
-        max_length=7, default="#f97316", help_text="Hex color"
-    )
+    primary_color = models.CharField(max_length=7, default="#f97316", help_text="Hex color")
     secondary_color = models.CharField(max_length=7, default="#84cc16")
     font_family = models.CharField(max_length=100, default="'Inter', sans-serif")
 

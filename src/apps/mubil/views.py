@@ -166,11 +166,7 @@ def _adoption_snapshot():
     propulsions present for the latest (year, month), aggregated across the
     three Basque territories.
     """
-    latest = (
-        EVRegistration.objects.order_by("-year", "-month")
-        .values("year", "month")
-        .first()
-    )
+    latest = EVRegistration.objects.order_by("-year", "-month").values("year", "month").first()
     if not latest:
         return None
 
@@ -193,9 +189,7 @@ def _adoption_snapshot():
         "month": month,
         "ev_count": ev_count,
         "share_pct": round(share * 100, 1),
-        "yoy_pp": round((share - prev_share) * 100, 1)
-        if prev_share is not None
-        else None,
+        "yoy_pp": round((share - prev_share) * 100, 1) if prev_share is not None else None,
     }
 
 
@@ -303,9 +297,7 @@ def _parse_advisor_payload(src):
         return int(raw)
 
     night = src.get("night_charging")
-    night_charging = (
-        night in ("on", "1", "true", "True", True) if night is not None else False
-    )
+    night_charging = night in ("on", "1", "true", "True", True) if night is not None else False
 
     return {
         "cp": src["cp"].strip(),
@@ -325,17 +317,12 @@ def _parse_advisor_payload(src):
         "public_ac_pct": _opt_int("public_ac_pct"),
         "public_dc_pct": _opt_int("public_dc_pct"),
         "subvencion_override_eur": _opt_int("subvencion_override_eur"),
-        "vehicle_current_price_override_eur": _opt_int(
-            "vehicle_current_price_override_eur"
-        ),
-        "vehicle_target_price_override_eur": _opt_int(
-            "vehicle_target_price_override_eur"
-        ),
+        "vehicle_current_price_override_eur": _opt_int("vehicle_current_price_override_eur"),
+        "vehicle_target_price_override_eur": _opt_int("vehicle_target_price_override_eur"),
         "purchase_mode": (src.get("purchase_mode") or "switch").strip(),
         "current_age_years": _opt_int("current_age_years"),
         "assembled_in_eu": src.get("assembled_in_eu") in ("on", "1", "true", "True"),
-        "battery_made_in_eu": src.get("battery_made_in_eu")
-        in ("on", "1", "true", "True"),
+        "battery_made_in_eu": src.get("battery_made_in_eu") in ("on", "1", "true", "True"),
     }
 
 
@@ -512,14 +499,7 @@ def contact_submit(request):
         logging.getLogger(__name__).exception("contact_submit: database save failed")
 
     subject = f"[eStrata · landing] {profile_label} — {entity or name}"
-    body = (
-        f"Nombre: {name}\n"
-        f"Email: {email}\n"
-        f"Entidad: {entity or '—'}\n"
-        f"Perfil: {profile_label}\n"
-        "\n"
-        f"{message}\n"
-    )
+    body = f"Nombre: {name}\nEmail: {email}\nEntidad: {entity or '—'}\nPerfil: {profile_label}\n\n{message}\n"
 
     try:
         msg = EmailMessage(

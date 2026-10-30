@@ -84,11 +84,7 @@ class Migration(migrations.Migration):
                         name="kultur_even_user_id_076148_idx",
                     )
                 ],
-                "constraints": [
-                    models.UniqueConstraint(
-                        fields=("user", "event"), name="uniq_user_event_fav"
-                    )
-                ],
+                "constraints": [models.UniqueConstraint(fields=("user", "event"), name="uniq_user_event_fav")],
             },
         ),
     ]

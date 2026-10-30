@@ -43,6 +43,7 @@ class PostAdmin(admin.ModelAdmin):
     @admin.action(description="Marcar como publicados los posts seleccionados")
     def make_published(self, request, queryset):
         from django.utils import timezone
+
         rows_updated = queryset.update(is_published=True, published_at=timezone.now())
         if rows_updated == 1:
             message_bit = "1 post fue publicado"

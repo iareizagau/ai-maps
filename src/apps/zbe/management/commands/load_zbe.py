@@ -14,9 +14,7 @@ class Command(BaseCommand):
         data_dir = os.path.join(os.path.dirname(__file__), "data")
 
         if not os.path.exists(data_dir):
-            self.stdout.write(
-                self.style.ERROR(f"Directorio de datos no encontrado: {data_dir}")
-            )
+            self.stdout.write(self.style.ERROR(f"Directorio de datos no encontrado: {data_dir}"))
             return
 
         files = [f for f in os.listdir(data_dir) if f.endswith(".geojson")]
@@ -34,9 +32,7 @@ class Command(BaseCommand):
                 try:
                     data = json.load(f)
                 except Exception as e:
-                    self.stdout.write(
-                        self.style.ERROR(f"  Error al leer {filename}: {e}")
-                    )
+                    self.stdout.write(self.style.ERROR(f"  Error al leer {filename}: {e}"))
                     continue
 
             # Detectar SRID del archivo
@@ -66,9 +62,7 @@ class Command(BaseCommand):
                     # Ignorar puntos o líneas pero avisar solo si no es Point (para evitar ruido con Málaga)
                     if geom_type != "Point":
                         self.stdout.write(
-                            self.style.WARNING(
-                                f"  [Saltado] Tipo de geometría {geom_type} no compatible."
-                            )
+                            self.style.WARNING(f"  [Saltado] Tipo de geometría {geom_type} no compatible.")
                         )
                     continue
 
@@ -152,9 +146,7 @@ class Command(BaseCommand):
                         zones_to_process[name]["polygons"].extend([p for p in geom])
 
                 except Exception as e:
-                    self.stdout.write(
-                        self.style.ERROR(f"  Error en fragmento de {name}: {e}")
-                    )
+                    self.stdout.write(self.style.ERROR(f"  Error en fragmento de {name}: {e}"))
 
             # Guardar las zonas fusionadas
             for name, info in zones_to_process.items():
@@ -169,21 +161,9 @@ class Command(BaseCommand):
                     )
 
                     status = "Creada" if created else "Actualizada (Fusionada)"
-                    self.stdout.write(
-                        self.style.SUCCESS(
-                            f"  [{status}] {name} ({len(info['polygons'])} fragmentos)"
-                        )
-                    )
+                    self.stdout.write(self.style.SUCCESS(f"  [{status}] {name} ({len(info['polygons'])} fragmentos)"))
                     total_count += 1
                 except Exception as e:
-                    self.stdout.write(
-                        self.style.ERROR(
-                            f"  Error al guardar zona fusionada {name}: {e}"
-                        )
-                    )
+                    self.stdout.write(self.style.ERROR(f"  Error al guardar zona fusionada {name}: {e}"))
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Proceso finalizado. Total de zonas procesadas: {total_count}"
-            )
-        )
+        self.stdout.write(self.style.SUCCESS(f"Proceso finalizado. Total de zonas procesadas: {total_count}"))

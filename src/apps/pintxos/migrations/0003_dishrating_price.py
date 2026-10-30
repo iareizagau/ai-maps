@@ -12,8 +12,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="dishrating",
             name="price",
-            field=models.DecimalField(
-                blank=True, decimal_places=2, max_digits=6, null=True
-            ),
+            field=models.DecimalField(blank=True, decimal_places=2, max_digits=6, null=True),
         ),
     ]

@@ -24,9 +24,7 @@ class EnvironmentalStation(BaseModel):
         METEO = "METEO", _("Meteorología (Euskalmet)")
 
     name = models.CharField(max_length=200)
-    external_id = models.CharField(
-        max_length=100, unique=True, help_text="ID en el sistema de Open Data Euskadi"
-    )
+    external_id = models.CharField(max_length=100, unique=True, help_text="ID en el sistema de Open Data Euskadi")
     station_type = models.CharField(max_length=20, choices=StationType.choices)
     location = gis_models.PointField(srid=4326)
     municipality = models.CharField(max_length=100, blank=True)
@@ -51,14 +49,10 @@ class Measurement(BaseModel):
     Medición puntual en una estación
     """
 
-    station = models.ForeignKey(
-        EnvironmentalStation, on_delete=models.CASCADE, related_name="measurements"
-    )
+    station = models.ForeignKey(EnvironmentalStation, on_delete=models.CASCADE, related_name="measurements")
     timestamp = models.DateTimeField()
     values = models.JSONField(help_text="Valores medidos (ej: {'NO2': 20, 'O3': 40})")
-    eco_score = models.IntegerField(
-        null=True, blank=True, help_text="Índice unificado calculado (0-100)"
-    )
+    eco_score = models.IntegerField(null=True, blank=True, help_text="Índice unificado calculado (0-100)")
 
     class Meta:
         ordering = ["-timestamp"]

@@ -18,9 +18,7 @@ class DanceVenueClaimForm(forms.ModelForm):
             "contact_email": _("Best contact email"),
         }
         help_texts = {
-            "evidence": _(
-                "Tell us your role at the venue and any details that help us verify ownership."
-            ),
+            "evidence": _("Tell us your role at the venue and any details that help us verify ownership."),
         }
 
 
@@ -41,9 +39,7 @@ class DanceVenueManageForm(forms.ModelForm):
         ]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 4}),
-            "styles": forms.Textarea(
-                attrs={"rows": 2, "placeholder": '["salsa", "bachata", "kizomba"]'}
-            ),
+            "styles": forms.Textarea(attrs={"rows": 2, "placeholder": '["salsa", "bachata", "kizomba"]'}),
             "weekly_schedule": forms.Textarea(
                 attrs={
                     "rows": 4,

@@ -78,21 +78,13 @@ class Post(models.Model):
 
     # Titles
     title_es = models.CharField(max_length=255, verbose_name="Título (ES)")
-    title_eu = models.CharField(
-        max_length=255, verbose_name="Izenburua (EU)", blank=True
-    )
+    title_eu = models.CharField(max_length=255, verbose_name="Izenburua (EU)", blank=True)
     title_en = models.CharField(max_length=255, verbose_name="Title (EN)", blank=True)
 
     # Slugs
-    slug_es = models.SlugField(
-        max_length=255, unique=True, verbose_name="Slug (ES)", blank=True, null=True
-    )
-    slug_eu = models.SlugField(
-        max_length=255, unique=True, verbose_name="Slug (EU)", blank=True, null=True
-    )
-    slug_en = models.SlugField(
-        max_length=255, unique=True, verbose_name="Slug (EN)", blank=True, null=True
-    )
+    slug_es = models.SlugField(max_length=255, unique=True, verbose_name="Slug (ES)", blank=True, null=True)
+    slug_eu = models.SlugField(max_length=255, unique=True, verbose_name="Slug (EU)", blank=True, null=True)
+    slug_en = models.SlugField(max_length=255, unique=True, verbose_name="Slug (EN)", blank=True, null=True)
 
     # Summaries
     summary_es = models.TextField(verbose_name="Resumen (ES)", blank=True)
@@ -107,9 +99,7 @@ class Post(models.Model):
     # Editorial metadata
     is_published = models.BooleanField(default=False, db_index=True)
     published_at = models.DateTimeField(blank=True, null=True, db_index=True)
-    read_time = models.PositiveIntegerField(
-        default=5, help_text="Estimated reading time in minutes"
-    )
+    read_time = models.PositiveIntegerField(default=5, help_text="Estimated reading time in minutes")
     difficulty = models.CharField(
         max_length=20,
         choices=DIFFICULTY_CHOICES,

@@ -58,39 +58,19 @@ class CulturalEvent(models.Model):
     description_es = models.TextField(_("Descripción (ES)"), blank=True, null=True)
     description_eu = models.TextField(_("Descripción (EU)"), blank=True, null=True)
 
-    start_date = models.DateTimeField(
-        _("Fecha Inicio"), blank=True, null=True, db_index=True
-    )
-    end_date = models.DateTimeField(
-        _("Fecha Fin"), blank=True, null=True, db_index=True
-    )
+    start_date = models.DateTimeField(_("Fecha Inicio"), blank=True, null=True, db_index=True)
+    end_date = models.DateTimeField(_("Fecha Fin"), blank=True, null=True, db_index=True)
 
-    venue_name_es = models.CharField(
-        _("Lugar (ES)"), max_length=500, blank=True, null=True
-    )
-    venue_name_eu = models.CharField(
-        _("Lugar (EU)"), max_length=500, blank=True, null=True
-    )
-    municipality_es = models.CharField(
-        _("Municipio (ES)"), max_length=255, blank=True, null=True
-    )
-    municipality_eu = models.CharField(
-        _("Municipio (EU)"), max_length=255, blank=True, null=True
-    )
+    venue_name_es = models.CharField(_("Lugar (ES)"), max_length=500, blank=True, null=True)
+    venue_name_eu = models.CharField(_("Lugar (EU)"), max_length=500, blank=True, null=True)
+    municipality_es = models.CharField(_("Municipio (ES)"), max_length=255, blank=True, null=True)
+    municipality_eu = models.CharField(_("Municipio (EU)"), max_length=255, blank=True, null=True)
     province = models.CharField(_("Provincia"), max_length=255, blank=True, null=True)
-    event_type_es = models.CharField(
-        _("Tipo/Categoría (ES)"), max_length=255, blank=True, null=True
-    )
-    event_type_eu = models.CharField(
-        _("Tipo/Categoría (EU)"), max_length=255, blank=True, null=True
-    )
+    event_type_es = models.CharField(_("Tipo/Categoría (ES)"), max_length=255, blank=True, null=True)
+    event_type_eu = models.CharField(_("Tipo/Categoría (EU)"), max_length=255, blank=True, null=True)
 
-    opening_hours_es = models.CharField(
-        _("Horario (ES)"), max_length=500, blank=True, null=True
-    )
-    opening_hours_eu = models.CharField(
-        _("Horario (EU)"), max_length=500, blank=True, null=True
-    )
+    opening_hours_es = models.CharField(_("Horario (ES)"), max_length=500, blank=True, null=True)
+    opening_hours_eu = models.CharField(_("Horario (EU)"), max_length=500, blank=True, null=True)
     price_es = models.CharField(_("Precio (ES)"), max_length=500, blank=True, null=True)
     price_eu = models.CharField(_("Precio (EU)"), max_length=500, blank=True, null=True)
 
@@ -98,12 +78,8 @@ class CulturalEvent(models.Model):
     url_es = models.URLField(_("URL (ES)"), max_length=1000, blank=True, null=True)
     url_eu = models.URLField(_("URL (EU)"), max_length=1000, blank=True, null=True)
 
-    purchase_url_es = models.URLField(
-        _("URL Compra (ES)"), max_length=1000, blank=True, null=True
-    )
-    purchase_url_eu = models.URLField(
-        _("URL Compra (EU)"), max_length=1000, blank=True, null=True
-    )
+    purchase_url_es = models.URLField(_("URL Compra (ES)"), max_length=1000, blank=True, null=True)
+    purchase_url_eu = models.URLField(_("URL Compra (EU)"), max_length=1000, blank=True, null=True)
 
     # Image URL
     image_url = models.URLField(_("Imagen"), max_length=1000, blank=True, null=True)
@@ -157,9 +133,7 @@ class EventFavorite(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=["user", "event"], name="uniq_user_event_fav"
-            ),
+            models.UniqueConstraint(fields=["user", "event"], name="uniq_user_event_fav"),
         ]
         indexes = [models.Index(fields=["user", "-created_at"])]
         verbose_name = _("Cultural event favorite")
@@ -181,9 +155,7 @@ class KulturPrefs(models.Model):
     default_moods = models.JSONField(default=list, blank=True)
     default_municipality = models.CharField(max_length=255, blank=True, default="")
     digest_enabled = models.BooleanField(default=True)
-    digest_day_of_week = models.SmallIntegerField(
-        default=3
-    )  # 0=Mon..6=Sun, default Thursday
+    digest_day_of_week = models.SmallIntegerField(default=3)  # 0=Mon..6=Sun, default Thursday
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

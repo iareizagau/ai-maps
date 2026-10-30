@@ -64,9 +64,7 @@ def promociones(request):
         }
         for p in qs
     ]
-    categories = [
-        {"code": c.value, "label": str(c.label)} for c in POI.Categoria
-    ]
+    categories = [{"code": c.value, "label": str(c.label)} for c in POI.Categoria]
     # Resolve lazy strings to the active language right now so the dict is
     # JSON-serializable and reflects the user's locale.
     subtipo_labels = {k: str(v) for k, v in SUBTIPO_LABELS.items()}
@@ -78,9 +76,7 @@ def promociones(request):
             "promociones_data": data,
             "categories": categories,
             "subtipo_labels": subtipo_labels,
-            "estados": [
-                {"code": e.value, "label": str(e.label)} for e in Promocion.Estado
-            ],
+            "estados": [{"code": e.value, "label": str(e.label)} for e in Promocion.Estado],
             "carto_api_key": settings.CARTO_API_KEY,
         },
     )
@@ -92,9 +88,7 @@ def promocion_pois(request, slug: str):
 
     # .values() not .only() on the related manager: .only() without the FK
     # makes Django lazy-load promocion_id once per row (N+1).
-    pois = POI.objects.filter(promocion=p).values(
-        "id", "nombre", "categoria", "subtipo", "location"
-    )
+    pois = POI.objects.filter(promocion=p).values("id", "nombre", "categoria", "subtipo", "location")
     nearest = nearest_by_category(p) if p.location else []
     return JsonResponse(
         {

@@ -130,16 +130,11 @@ def _resolve_headers(fieldnames: list[str]) -> dict[str, str]:
                 break
     missing = [r for r in _HEADER_ROLES if r not in resolved]
     if missing:
-        raise ValueError(
-            f"CSV missing required column(s) for {missing}. "
-            f"Headers seen: {list(fieldnames or [])}"
-        )
+        raise ValueError(f"CSV missing required column(s) for {missing}. Headers seen: {list(fieldnames or [])}")
     return resolved
 
 
-def ingest_csv(
-    path: str | Path | None = None, *, dry_run: bool = False
-) -> EVRegIngestStats:
+def ingest_csv(path: str | Path | None = None, *, dry_run: bool = False) -> EVRegIngestStats:
     """Parse a province-level matriculaciones CSV and upsert EVRegistration rows.
 
     Idempotent: re-running the same CSV updates counts in place (unique key is
@@ -169,9 +164,7 @@ def ingest_csv(
             try:
                 year = int(raw[cols["year"]])
                 month = int(raw[cols["month"]])
-                count = int(
-                    float(raw[cols["count"]].replace(".", "").replace(",", "."))
-                )
+                count = int(float(raw[cols["count"]].replace(".", "").replace(",", ".")))
                 if not (1 <= month <= 12) or year < 2000 or count < 0:
                     raise ValueError
             except (ValueError, KeyError, AttributeError):

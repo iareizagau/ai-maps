@@ -20,9 +20,7 @@ class Command(BaseCommand):
         # Get or create a superuser for associations
         admin_user = User.objects.filter(is_superuser=True).first()
         if not admin_user:
-            self.stdout.write(
-                self.style.ERROR("No superuser found. Please create one first.")
-            )
+            self.stdout.write(self.style.ERROR("No superuser found. Please create one first."))
             return
 
         # 1. Clear existing data (optional, but good for idempotent testing)
@@ -108,9 +106,7 @@ class Command(BaseCommand):
         mock_users = []
         for i in range(10):
             username = f"user_{i}_{fake.user_name()}"
-            user, created = User.objects.get_or_create(
-                username=username, defaults={"email": f"{username}@example.com"}
-            )
+            user, created = User.objects.get_or_create(username=username, defaults={"email": f"{username}@example.com"})
             mock_users.append(user)
 
         for name, desc, lat, lon, cat, addr in restaurants_data:
@@ -168,6 +164,4 @@ class Command(BaseCommand):
                             comment=fake.sentence(),
                         )
 
-        self.stdout.write(
-            self.style.SUCCESS("Successfully seeded pintxos data and ratings!")
-        )
+        self.stdout.write(self.style.SUCCESS("Successfully seeded pintxos data and ratings!"))

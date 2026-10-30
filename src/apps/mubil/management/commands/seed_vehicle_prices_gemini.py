@@ -77,11 +77,7 @@ class Command(BaseCommand):
 
         candidates = list(qs)
         if not candidates:
-            self.stdout.write(
-                self.style.WARNING(
-                    "Sin candidatos. ¿Has corrido la Capa 2 (heurística)?"
-                )
-            )
+            self.stdout.write(self.style.WARNING("Sin candidatos. ¿Has corrido la Capa 2 (heurística)?"))
             return
 
         self.stdout.write(
@@ -91,8 +87,7 @@ class Command(BaseCommand):
         if opts["dry_run"]:
             for v in candidates:
                 self.stdout.write(
-                    f"  · {v.id:5d}  {v.make[:14]:14s} {v.model[:35]:35s} "
-                    f"{v.propulsion:5s}  heurística={v.price_eur} €"
+                    f"  · {v.id:5d}  {v.make[:14]:14s} {v.model[:35]:35s} {v.propulsion:5s}  heurística={v.price_eur} €"
                 )
             self.stdout.write(self.style.NOTICE("(dry-run: no se llamó a Gemini)"))
             return
@@ -111,9 +106,7 @@ class Command(BaseCommand):
             except Exception as e:
                 errored += 1
                 self.stderr.write(
-                    self.style.ERROR(
-                        f"  [{i}/{len(candidates)}] {v.make[:14]} {v.model[:30]} → ERROR: {e}"
-                    )
+                    self.style.ERROR(f"  [{i}/{len(candidates)}] {v.make[:14]} {v.model[:30]} → ERROR: {e}")
                 )
                 continue
 
@@ -143,10 +136,7 @@ class Command(BaseCommand):
             if not (5_000 <= est.price_eur <= 250_000):
                 rejected_outlier += 1
                 self.stdout.write(
-                    self.style.WARNING(
-                        f"  [{i}/{len(candidates)}] {v.make[:14]:14s} → "
-                        f"OUT-OF-RANGE {est.price_eur} €"
-                    )
+                    self.style.WARNING(f"  [{i}/{len(candidates)}] {v.make[:14]:14s} → OUT-OF-RANGE {est.price_eur} €")
                 )
                 time.sleep(SLEEP_BETWEEN_CALLS_S)
                 continue

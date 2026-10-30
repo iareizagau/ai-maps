@@ -44,24 +44,12 @@ def render_panel(request):
         {
             "claimed": user.claimed_pintxos_venues.all().order_by("name"),
             "pending_claims": (
-                user.pintxos_claims.filter(status="pending")
-                .select_related("restaurant")
-                .order_by("-created_at")
+                user.pintxos_claims.filter(status="pending").select_related("restaurant").order_by("-created_at")
             ),
             "rejected_claims": (
-                user.pintxos_claims.filter(status="rejected")
-                .select_related("restaurant")
-                .order_by("-decided_at")[:5]
+                user.pintxos_claims.filter(status="rejected").select_related("restaurant").order_by("-decided_at")[:5]
             ),
-            "favs": (
-                user.dish_favorites.select_related("dish__restaurant").order_by(
-                    "-created_at"
-                )[:10]
-            ),
-            "ratings": (
-                user.dish_ratings.select_related("dish__restaurant").order_by(
-                    "-created_at"
-                )[:10]
-            ),
+            "favs": (user.dish_favorites.select_related("dish__restaurant").order_by("-created_at")[:10]),
+            "ratings": (user.dish_ratings.select_related("dish__restaurant").order_by("-created_at")[:10]),
         },
     )

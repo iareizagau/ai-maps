@@ -109,9 +109,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="event",
             name="recurrence_rule",
-            field=models.CharField(
-                blank=True, help_text="iCalendar RRULE", max_length=255
-            ),
+            field=models.CharField(blank=True, help_text="iCalendar RRULE", max_length=255),
         ),
         migrations.AlterField(
             model_name="event",
@@ -135,9 +133,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="event",
             name="djs",
-            field=models.ManyToManyField(
-                blank=True, related_name="dj_events", to="sbk.person"
-            ),
+            field=models.ManyToManyField(blank=True, related_name="dj_events", to="sbk.person"),
         ),
         migrations.AddField(
             model_name="event",
@@ -153,28 +149,20 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="event",
             name="teachers",
-            field=models.ManyToManyField(
-                blank=True, related_name="teaching_events", to="sbk.person"
-            ),
+            field=models.ManyToManyField(blank=True, related_name="teaching_events", to="sbk.person"),
         ),
         migrations.AlterField(
             model_name="event",
             name="artists",
-            field=models.ManyToManyField(
-                blank=True, related_name="performing_events", to="sbk.person"
-            ),
+            field=models.ManyToManyField(blank=True, related_name="performing_events", to="sbk.person"),
         ),
         migrations.AddIndex(
             model_name="eventoccurrence",
-            index=models.Index(
-                fields=["event", "start_date"], name="sbk_eventoc_event_i_1b8a2e_idx"
-            ),
+            index=models.Index(fields=["event", "start_date"], name="sbk_eventoc_event_i_1b8a2e_idx"),
         ),
         migrations.AddConstraint(
             model_name="eventoccurrence",
-            constraint=models.UniqueConstraint(
-                fields=("event", "start_date"), name="uniq_occurrence"
-            ),
+            constraint=models.UniqueConstraint(fields=("event", "start_date"), name="uniq_occurrence"),
         ),
         migrations.RemoveField(
             model_name="person",

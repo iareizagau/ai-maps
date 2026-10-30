@@ -194,17 +194,11 @@ def render_docx_table(doc, raw_rows):
 
 
 if __name__ == "__main__":
-    base_dir = (
-        r"c:\Users\imanol\projects\imanol\saas\maps\.claude\knowledge\mubil\inscripcion"
-    )
+    base_dir = r"c:\Users\imanol\projects\imanol\saas\maps\.claude\knowledge\mubil\inscripcion"
 
     # 1. Resumen Ejecutivo
-    md_resumen = os.path.join(
-        base_dir, "Resumen_ejecutivo_eStrata_MUBIL_2026_v2_PROPUESTA.md"
-    )
-    docx_resumen = os.path.join(
-        base_dir, "Resumen_ejecutivo_eStrata_MUBIL_2026_v2_PROPUESTA.docx"
-    )
+    md_resumen = os.path.join(base_dir, "Resumen_ejecutivo_eStrata_MUBIL_2026_v2_PROPUESTA.md")
+    docx_resumen = os.path.join(base_dir, "Resumen_ejecutivo_eStrata_MUBIL_2026_v2_PROPUESTA.docx")
     print(f"Procesando resumen: {md_resumen}...")
     parse_markdown_to_docx(md_resumen, docx_resumen)
 

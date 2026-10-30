@@ -76,11 +76,7 @@ class Command(BaseCommand):
             for row in rows:
                 # pgr_dijkstra v3.0+ devuelve: seq, path_seq, start_vid, end_vid, node, edge, cost, agg_cost
                 seq, path_seq, start_vid, end_vid, node, edge, cost, agg_cost = row
-                self.stdout.write(
-                    f" {seq}   |  {node}   |      {edge if edge != -1 else 'FIN'}      | {agg_cost}"
-                )
+                self.stdout.write(f" {seq}   |  {node}   |      {edge if edge != -1 else 'FIN'}      | {agg_cost}")
 
-        self.stdout.write(
-            "\nNota: Fíjate que ha preferido ir de 0->1 y luego 1->2 (coste 25) "
-        )
+        self.stdout.write("\nNota: Fíjate que ha preferido ir de 0->1 y luego 1->2 (coste 25) ")
         self.stdout.write("en lugar de ir directo 0->2 (coste 50). ¡Esa es la magia!")

@@ -131,9 +131,7 @@ class FormContext:
         if self.cp:
             lines.append(f"Código postal: {self.cp}")
         if self.current_make or self.current_model:
-            lines.append(
-                f"Coche actual: {self.current_make} {self.current_model} ({self.current_propulsion})"
-            )
+            lines.append(f"Coche actual: {self.current_make} {self.current_model} ({self.current_propulsion})")
         if self.current_consumption:
             lines.append(f"Consumo actual: {self.current_consumption} L/100")
         if self.target_make or self.target_model:
@@ -152,9 +150,7 @@ class FormContext:
             lines.append("Achatarramiento: Sí")
         lines.append(f"Modo de compra: {self.purchase_mode}")
         lines.append(f"Montado en la UE: {'Sí' if self.assembled_in_eu else 'No'}")
-        lines.append(
-            f"Batería fabricada en la UE: {'Sí' if self.battery_made_in_eu else 'No'}"
-        )
+        lines.append(f"Batería fabricada en la UE: {'Sí' if self.battery_made_in_eu else 'No'}")
         return "\n".join(lines)
 
 
@@ -212,9 +208,7 @@ def get_hint(ctx: FormContext, user_message: str | None = None) -> AssistantResp
     if ctx.current_make or ctx.current_model:
         rag_query_parts.append(f"{ctx.current_make} {ctx.current_model}")
     if ctx.target_make or ctx.target_model:
-        rag_query_parts.append(
-            f"{ctx.target_make} {ctx.target_model} eléctrico autonomía"
-        )
+        rag_query_parts.append(f"{ctx.target_make} {ctx.target_model} eléctrico autonomía")
     if ctx.step == "3":
         rag_query_parts.append("incentivos ayudas programa auto+ moves wallbox irpf")
     if ctx.step == "2":
@@ -230,9 +224,7 @@ def get_hint(ctx: FormContext, user_message: str | None = None) -> AssistantResp
         if docs:
             snippets = []
             for i, d in enumerate(docs[:4], 1):
-                snippets.append(
-                    f"[{i}] {d.title} ({d.source_type})\n{d.content[:600].strip()}"
-                )
+                snippets.append(f"[{i}] {d.title} ({d.source_type})\n{d.content[:600].strip()}")
             rag_block = "=== Documentos de apoyo ===\n" + "\n\n".join(snippets)
     except Exception as e:
         log.warning("Assistant RAG retrieval failed: %s", e)
@@ -245,13 +237,9 @@ def get_hint(ctx: FormContext, user_message: str | None = None) -> AssistantResp
         hint_type = "info"
         # Heuristic: warnings if key issues detected
         low = text.lower()
-        if any(
-            w in low for w in ("ojo", "atención", "cuidado", "riesgo", "incompatible")
-        ):
+        if any(w in low for w in ("ojo", "atención", "cuidado", "riesgo", "incompatible")):
             hint_type = "warning"
-        elif any(
-            w in low for w in ("recomiendo", "te sugiero", "podrías", "considera")
-        ):
+        elif any(w in low for w in ("recomiendo", "te sugiero", "podrías", "considera")):
             hint_type = "tip"
         return AssistantResponse(message=text, hint_type=hint_type)
     except Exception as e:

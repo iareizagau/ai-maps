@@ -38,8 +38,7 @@ SUPABASE_URL = "https://stsdtacfauprzrdebmzg.supabase.co"
 
 HEADERS = {
     "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
     ),
     "Accept": "application/json",
 }
@@ -54,9 +53,7 @@ _KNOWN_BUNDLE_PATH = "/assets/index-DNuTsjp4.js"
 
 def _get_bundle_url() -> str:
     """Fetch the SPA homepage and extract the main JS bundle src."""
-    r = requests.get(
-        SITE_URL, headers={"User-Agent": HEADERS["User-Agent"]}, timeout=15
-    )
+    r = requests.get(SITE_URL, headers={"User-Agent": HEADERS["User-Agent"]}, timeout=15)
     r.raise_for_status()
     matches = re.findall(r'src="(/assets/index-[^"]+\.js)"', r.text)
     if matches:
@@ -76,9 +73,7 @@ def _extract_anon_key(bundle_url: str) -> str | None:
     The JWT format is: <header>.<payload>.<signature>  (all base64url segments).
     The payload we already know starts with eyJpc3MiOiJzdXBhYmFzZSIs...
     """
-    r = requests.get(
-        bundle_url, headers={"User-Agent": HEADERS["User-Agent"]}, timeout=20
-    )
+    r = requests.get(bundle_url, headers={"User-Agent": HEADERS["User-Agent"]}, timeout=20)
     r.raise_for_status()
     js = r.text
 
@@ -107,9 +102,7 @@ def _extract_anon_key(bundle_url: str) -> str | None:
 
 def _get_event_slugs_from_sitemap() -> list[str]:
     """Parse sitemap.xml and return all /event/<slug> paths."""
-    r = requests.get(
-        SITEMAP_URL, headers={"User-Agent": HEADERS["User-Agent"]}, timeout=15
-    )
+    r = requests.get(SITEMAP_URL, headers={"User-Agent": HEADERS["User-Agent"]}, timeout=15)
     r.raise_for_status()
     root = ElementTree.fromstring(r.content)
     ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
@@ -135,9 +128,7 @@ def _supabase_headers(anon_key: str) -> dict:
     }
 
 
-def _fetch_events_from_supabase(
-    anon_key: str, city_slug: str = "london-gb", limit: int = 200
-) -> list[dict]:
+def _fetch_events_from_supabase(anon_key: str, city_slug: str = "london-gb", limit: int = 200) -> list[dict]:
     """
     Try common Supabase table/view names for events.
     Returns raw rows or [] if none found.
@@ -250,9 +241,7 @@ def _parse_iso(s: str | None) -> datetime | None:
 
 def _event_type(name: str) -> str:
     n = name.lower()
-    if any(
-        w in n for w in ("workshop", "class", "bootcamp", "lesson", "course", "styling")
-    ):
+    if any(w in n for w in ("workshop", "class", "bootcamp", "lesson", "course", "styling")):
         return EventType.WORKSHOP
     if any(w in n for w in ("festival", "congress")):
         return EventType.FESTIVAL
@@ -368,11 +357,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        self.stdout.write(
-            self.style.MIGRATE_HEADING(
-                "\n🕷  Scraping bachatacalendar.co.uk via Supabase REST API\n"
-            )
-        )
+        self.stdout.write(self.style.MIGRATE_HEADING("\n🕷  Scraping bachatacalendar.co.uk via Supabase REST API\n"))
 
         # ------------------------------------------------------------------
         # 1. Discover JS bundle & extract anon key
@@ -388,13 +373,9 @@ class Command(BaseCommand):
         self.stdout.write("  🔑 Extracting Supabase anon key…")
         anon_key = _extract_anon_key(bundle_url)
         if anon_key:
-            self.stdout.write(
-                self.style.SUCCESS(f"  Anon key found ({len(anon_key)} chars)")
-            )
+            self.stdout.write(self.style.SUCCESS(f"  Anon key found ({len(anon_key)} chars)"))
         else:
-            self.stdout.write(
-                self.style.WARNING("  Anon key NOT found — will use slug-only fallback")
-            )
+            self.stdout.write(self.style.WARNING("  Anon key NOT found — will use slug-only fallback"))
 
         # ------------------------------------------------------------------
         # 2. Fetch events
@@ -403,18 +384,10 @@ class Command(BaseCommand):
         table_name = None
 
         if anon_key:
-            self.stdout.write(
-                f"  📡 Querying Supabase REST API (limit={options['limit']})…"
-            )
-            raw_rows, table_name = _fetch_events_from_supabase(
-                anon_key, limit=options["limit"]
-            )
+            self.stdout.write(f"  📡 Querying Supabase REST API (limit={options['limit']})…")
+            raw_rows, table_name = _fetch_events_from_supabase(anon_key, limit=options["limit"])
             if raw_rows:
-                self.stdout.write(
-                    self.style.SUCCESS(
-                        f"  Found {len(raw_rows)} rows in table '{table_name}'"
-                    )
-                )
+                self.stdout.write(self.style.SUCCESS(f"  Found {len(raw_rows)} rows in table '{table_name}'"))
                 # Show field names to help debug schema
                 if raw_rows:
                     self.stdout.write(f"  Fields: {list(raw_rows[0].keys())}")
@@ -465,9 +438,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("--- DRY RUN — not saving ---"))
             for ev in events:
                 self.stdout.write(
-                    f"  • {ev['name']}\n"
-                    f"    {ev['start_date']}  |  {ev['city']}  "
-                    f"|  lat={ev['lat']} lng={ev['lng']}\n"
+                    f"  • {ev['name']}\n    {ev['start_date']}  |  {ev['city']}  |  lat={ev['lat']} lng={ev['lng']}\n"
                 )
             return
 
@@ -476,11 +447,7 @@ class Command(BaseCommand):
         # ------------------------------------------------------------------
         if options["clear"]:
             deleted, _ = Event.objects.filter(ticket_url__startswith=SITE_URL).delete()
-            self.stdout.write(
-                self.style.WARNING(
-                    f"  Cleared {deleted} existing BachataCalendar events."
-                )
-            )
+            self.stdout.write(self.style.WARNING(f"  Cleared {deleted} existing BachataCalendar events."))
 
         # ------------------------------------------------------------------
         # 6. Insert into DB
@@ -490,9 +457,7 @@ class Command(BaseCommand):
         for data in events:
             if not data.get("start_date"):
                 # Events without a date get skipped (slug-only fallback rows)
-                self.stdout.write(
-                    self.style.WARNING(f"  SKIP (no date): {data['name']}")
-                )
+                self.stdout.write(self.style.WARNING(f"  SKIP (no date): {data['name']}"))
                 skipped += 1
                 continue
 
@@ -532,20 +497,14 @@ class Command(BaseCommand):
                     defaults={"end_date": end},
                 )
                 self.stdout.write(
-                    self.style.SUCCESS(
-                        f"  CREATED: {event.name}  ({data['city']}, {start.strftime('%a %d %b %H:%M')})"
-                    )
+                    self.style.SUCCESS(f"  CREATED: {event.name}  ({data['city']}, {start.strftime('%a %d %b %H:%M')})")
                 )
                 created += 1
             except Exception as exc:
                 self.stdout.write(self.style.ERROR(f"  ERROR {data['name']!r}: {exc}"))
                 errors += 1
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"\n✅  Done — {created} created, {skipped} skipped, {errors} errors."
-            )
-        )
+        self.stdout.write(self.style.SUCCESS(f"\n✅  Done — {created} created, {skipped} skipped, {errors} errors."))
 
         # ------------------------------------------------------------------
         # 7. Debug hint if Supabase had no data

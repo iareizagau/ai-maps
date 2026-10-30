@@ -32,10 +32,7 @@ class Command(BaseCommand):
         )
         scope.add_argument(
             "--provinces",
-            help=(
-                "Comma-separated INE province codes "
-                f"(default: {','.join(mincotur_client.DEFAULT_EH_PROVINCES)})."
-            ),
+            help=(f"Comma-separated INE province codes (default: {','.join(mincotur_client.DEFAULT_EH_PROVINCES)})."),
         )
         parser.add_argument(
             "--workers",
@@ -80,18 +77,14 @@ class Command(BaseCommand):
                 completed[0] += 1
                 pct = completed[0] * 100 // total_provinces
                 name = fuel_ingest._PROVINCE_NAMES.get(code, code)
-                status = (
-                    self.style.SUCCESS("✓") if errors == 0 else self.style.ERROR("✗")
-                )
+                status = self.style.SUCCESS("✓") if errors == 0 else self.style.ERROR("✗")
                 self.stdout.write(
-                    f"  [{pct:3d}%] {status} {code} {name:<22} "
-                    f"fetched={fetched} created={created} errors={errors}"
+                    f"  [{pct:3d}%] {status} {code} {name:<22} fetched={fetched} created={created} errors={errors}"
                 )
 
         if options["spain"]:
             self.stdout.write(
-                f"Ingesting España completa ({total_provinces} provinces, "
-                f"workers={workers}, dry_run={dry_run})…"
+                f"Ingesting España completa ({total_provinces} provinces, workers={workers}, dry_run={dry_run})…"
             )
             stats = fuel_ingest.ingest_spain(
                 dry_run=dry_run,
@@ -99,10 +92,7 @@ class Command(BaseCommand):
                 progress_cb=progress_cb,
             )
         else:
-            self.stdout.write(
-                f"Ingesting MINCOTUR provinces {list(codes)} "
-                f"(workers={workers}, dry_run={dry_run})…"
-            )
+            self.stdout.write(f"Ingesting MINCOTUR provinces {list(codes)} (workers={workers}, dry_run={dry_run})…")
             stats = fuel_ingest.ingest_provinces(
                 prov_codes=codes,
                 dry_run=dry_run,

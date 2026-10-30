@@ -39,9 +39,7 @@ def run_cmd(cmd, shell=True):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Importacion progresiva de carreteras en pgRouting"
-    )
+    parser = argparse.ArgumentParser(description="Importacion progresiva de carreteras en pgRouting")
     parser.add_argument(
         "--pbf",
         type=str,
@@ -72,9 +70,7 @@ def main():
     try:
         min_lon, min_lat, max_lon, max_lat = map(float, args.bbox.split(","))
     except ValueError:
-        print(
-            " [ERROR] Formato de BBOX invalido. Debe ser: min_lon,min_lat,max_lon,max_lat"
-        )
+        print(" [ERROR] Formato de BBOX invalido. Debe ser: min_lon,min_lat,max_lon,max_lat")
         sys.exit(1)
 
     print("=" * 60)
@@ -125,25 +121,17 @@ def main():
         print(f"\n [STEP] [{idx + 1}/{total_tiles}] Procesando tesela: {tile_bbox}...")
 
         # A. Recortar la tesela a formato o5m (rapido y compacto)
-        clip_cmd = (
-            f'docker exec maps_db sh -c "'
-            f'osmconvert {args.pbf} -b={tile_bbox} --out-o5m -o=/tmp/tile.o5m"'
-        )
+        clip_cmd = f'docker exec maps_db sh -c "osmconvert {args.pbf} -b={tile_bbox} --out-o5m -o=/tmp/tile.o5m"'
         ok, _, err = run_cmd(clip_cmd)
         if not ok:
             print(f" [WARN] Error al recortar tesela {tile_bbox}. Saltando...")
             continue
 
         # B. Filtrar unicamente las carreteras (highway)
-        filter_cmd = (
-            'docker exec maps_db sh -c "'
-            "osmfilter /tmp/tile.o5m --keep='highway=' -o=/tmp/tile_roads.osm\""
-        )
+        filter_cmd = "docker exec maps_db sh -c \"osmfilter /tmp/tile.o5m --keep='highway=' -o=/tmp/tile_roads.osm\""
         ok, _, _ = run_cmd(filter_cmd)
         if not ok:
-            print(
-                f" [WARN] Error al filtrar carreteras de la tesela {tile_bbox}. Saltando..."
-            )
+            print(f" [WARN] Error al filtrar carreteras de la tesela {tile_bbox}. Saltando...")
             continue
 
         # C. Comprobar si la tesela contiene datos
@@ -204,9 +192,7 @@ def main():
     )
     run_cmd(topology_cmd)
 
-    print(
-        "\n [COST] CALIBRANDO COSTES DE ENRUTAMIENTO (Bikepacking / Hiking / Camper)..."
-    )
+    print("\n [COST] CALIBRANDO COSTES DE ENRUTAMIENTO (Bikepacking / Hiking / Camper)...")
     # Configurar costes de bikepacking y hiking en Django
     run_cmd("docker exec maps_web python manage.py setup_routing_costs")
 

@@ -25,9 +25,7 @@ class Promocion(BaseModel):
     nombre = models.CharField(max_length=200)
     ciudad = models.CharField(max_length=120)
     provincia = models.CharField(max_length=80, blank=True)
-    estado = models.CharField(
-        max_length=20, choices=Estado.choices, default=Estado.EN_VENTA, db_index=True
-    )
+    estado = models.CharField(max_length=20, choices=Estado.choices, default=Estado.EN_VENTA, db_index=True)
     porcentaje_vendido = models.PositiveSmallIntegerField(null=True, blank=True)
     nota = models.CharField(max_length=200, blank=True)
 
@@ -74,15 +72,11 @@ class POI(BaseModel):
         HISTORICO = "HISTORICO", _("Histórico")
         NATURAL = "NATURAL", _("Elementos naturales")
 
-    promocion = models.ForeignKey(
-        Promocion, on_delete=models.CASCADE, related_name="pois"
-    )
+    promocion = models.ForeignKey(Promocion, on_delete=models.CASCADE, related_name="pois")
     osm_type = models.CharField(max_length=10)  # node / way / relation
     osm_id = models.BigIntegerField()
     nombre = models.CharField(max_length=200, blank=True)
-    categoria = models.CharField(
-        max_length=20, choices=Categoria.choices, db_index=True
-    )
+    categoria = models.CharField(max_length=20, choices=Categoria.choices, db_index=True)
     subtipo = models.CharField(max_length=80, blank=True)  # p.ej. bus_stop, pharmacy
     tags = models.JSONField(default=dict, blank=True)
     location = gis_models.PointField(srid=4326)

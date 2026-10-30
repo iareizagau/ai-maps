@@ -77,9 +77,7 @@ class CKANParsingTests(TestCase):
         self.assertEqual(doc["title"], "Datos de tráfico A Coruña")
         self.assertIn("Aforos por viario", doc["content"])
         self.assertIn("Keywords: tráfico, aforos, movilidad", doc["content"])
-        self.assertEqual(
-            doc["source_url"], "https://datos.gob.es/catalogo/a-coruna-trafico-1"
-        )
+        self.assertEqual(doc["source_url"], "https://datos.gob.es/catalogo/a-coruna-trafico-1")
 
     def test_ckan_to_doc_payload_skips_missing_description(self):
         item = SAMPLE_PAYLOAD["result"]["items"][1]
@@ -125,9 +123,7 @@ class CKANIngestTests(TestCase):
         # First run: original content.
         fetch_mock.side_effect = [SAMPLE_PAYLOAD, {"result": {"items": []}}]
         ingest.ingest_ckan(max_pages=5)
-        doc = MobilityDocument.objects.get(
-            source_url="https://datos.gob.es/catalogo/a-coruna-trafico-1"
-        )
+        doc = MobilityDocument.objects.get(source_url="https://datos.gob.es/catalogo/a-coruna-trafico-1")
         # Simulate an embedding having been generated.
         from pgvector.django import VectorField  # noqa: F401
 
@@ -140,9 +136,7 @@ class CKANIngestTests(TestCase):
                 "items": [
                     {
                         "_about": "https://datos.gob.es/catalogo/a-coruna-trafico-1",
-                        "title": [
-                            {"_value": "Datos de tráfico A Coruña", "_lang": "es"}
-                        ],
+                        "title": [{"_value": "Datos de tráfico A Coruña", "_lang": "es"}],
                         "description": [
                             {
                                 "_value": "Aforos por viario. ACTUALIZADO 2026.",

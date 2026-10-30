@@ -20,9 +20,7 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("comanda/", views.comanda, name="comanda"),
     path("comanda/camarero/", views.comanda_camarero, name="comanda_camarero"),
-    path(
-        "comanda/manifest.webmanifest", views.comanda_manifest, name="comanda_manifest"
-    ),
+    path("comanda/manifest.webmanifest", views.comanda_manifest, name="comanda_manifest"),
     path("comanda/sw.js", views.comanda_sw, name="comanda_sw"),
     path(
         "restaurant/<int:restaurant_id>/",

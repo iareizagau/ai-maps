@@ -387,9 +387,7 @@ class ChargingMixTests(TestCase):
         from apps.mubil.advisor.charging_mix import ChargingMix
 
         m = ChargingMix.normalized(50, 30, 10, 5)  # suma 95
-        self.assertEqual(
-            m.home_pct + m.work_pct + m.public_ac_pct + m.public_dc_pct, 100
-        )
+        self.assertEqual(m.home_pct + m.work_pct + m.public_ac_pct + m.public_dc_pct, 100)
         self.assertEqual(m.home_pct, 55)  # residuo +5 absorbido en casa
 
     def test_preset_home_always(self):
@@ -663,9 +661,7 @@ class PriceHeuristicTests(TestCase):
         pred = table.estimate(propulsion="BEV", make="Audi", battery_kwh=D("70"))
         self.assertEqual(pred, 50000)
         # 100 kWh → +30 kWh × 250 €/kWh = +7500
-        pred_big = table.estimate(
-            propulsion="BEV", make="Porsche", battery_kwh=D("100")
-        )
+        pred_big = table.estimate(propulsion="BEV", make="Porsche", battery_kwh=D("100"))
         self.assertEqual(pred_big, 50000 + 7500)
 
     def test_estimate_falls_back_to_propulsion_median_when_cluster_empty(self):
@@ -720,10 +716,6 @@ class GeminiPriceLookupTests(TestCase):
         from apps.mubil.data.gemini_price_lookup import validate_against_heuristic
 
         # Gemini 35k vs heurística 30k → diff 16,7 % → OK
-        self.assertTrue(
-            validate_against_heuristic(gemini_price=35000, heuristic_price=30000)
-        )
+        self.assertTrue(validate_against_heuristic(gemini_price=35000, heuristic_price=30000))
         # Gemini 80k vs heurística 30k → diff 166 % → rechazar
-        self.assertFalse(
-            validate_against_heuristic(gemini_price=80000, heuristic_price=30000)
-        )
+        self.assertFalse(validate_against_heuristic(gemini_price=80000, heuristic_price=30000))

@@ -6,6 +6,7 @@ Three responsibilities:
 - geocode: resolve "<nombre>, <ciudad>" to a lat/lon via Nominatim (1 req/s)
 - fetch_pois_overpass: query the Overpass API for POIs around a Point
 """
+
 from __future__ import annotations
 
 import logging
@@ -25,12 +26,8 @@ from .models import POI, Promocion
 logger = logging.getLogger(__name__)
 
 AMENABAR_INDEX = "https://www.amenabarpromociones.com/es/promociones/"
-AMENABAR_FUTURAS = (
-    "https://www.amenabarpromociones.com/es/promociones/futuras-promociones.php"
-)
-AMENABAR_FINALIZADAS = (
-    "https://www.amenabarpromociones.com/es/promociones/finalizadas.php"
-)
+AMENABAR_FUTURAS = "https://www.amenabarpromociones.com/es/promociones/futuras-promociones.php"
+AMENABAR_FINALIZADAS = "https://www.amenabarpromociones.com/es/promociones/finalizadas.php"
 
 USER_AGENT = "maps.eus-amenabar/1.0 (contact: iareizagau@gmail.com)"
 
@@ -41,79 +38,79 @@ USER_AGENT = "maps.eus-amenabar/1.0 (contact: iareizagau@gmail.com)"
 
 SUBTIPO_LABELS = {
     # Compras
-    "supermarket":       _("Supermercado"),
-    "convenience":       _("Tienda de alimentación"),
-    "bakery":            _("Panadería"),
+    "supermarket": _("Supermercado"),
+    "convenience": _("Tienda de alimentación"),
+    "bakery": _("Panadería"),
     # Educación
-    "school":            _("Colegio"),
-    "kindergarten":      _("Guardería"),
+    "school": _("Colegio"),
+    "kindergarten": _("Guardería"),
     # Transporte público
-    "bus_stop":          _("Parada de autobús"),
-    "train_station":     _("Estación de tren"),
-    "tram_stop":         _("Parada de tranvía"),
-    "subway":            _("Metro"),
+    "bus_stop": _("Parada de autobús"),
+    "train_station": _("Estación de tren"),
+    "tram_stop": _("Parada de tranvía"),
+    "subway": _("Metro"),
     # Vehículos
-    "fuel":              _("Gasolinera"),
-    "charging_station":  _("Punto de carga eléctrica"),
-    "parking":           _("Aparcamiento"),
-    "bicycle_rental":    _("Alquiler de bicis"),
-    "car_rental":        _("Alquiler de coches"),
+    "fuel": _("Gasolinera"),
+    "charging_station": _("Punto de carga eléctrica"),
+    "parking": _("Aparcamiento"),
+    "bicycle_rental": _("Alquiler de bicis"),
+    "car_rental": _("Alquiler de coches"),
     # Comida
-    "restaurant":        _("Restaurante"),
-    "cafe":              _("Cafetería"),
-    "fast_food":         _("Comida rápida"),
-    "ice_cream":         _("Heladería"),
+    "restaurant": _("Restaurante"),
+    "cafe": _("Cafetería"),
+    "fast_food": _("Comida rápida"),
+    "ice_cream": _("Heladería"),
     # Bebida
-    "bar":               _("Bar"),
-    "pub":               _("Pub"),
-    "nightclub":         _("Discoteca"),
+    "bar": _("Bar"),
+    "pub": _("Pub"),
+    "nightclub": _("Discoteca"),
     # Atractivos
-    "museum":            _("Museo"),
-    "viewpoint":         _("Mirador"),
-    "artwork":           _("Obra de arte"),
-    "zoo":               _("Zoo"),
-    "theme_park":        _("Parque temático"),
+    "museum": _("Museo"),
+    "viewpoint": _("Mirador"),
+    "artwork": _("Obra de arte"),
+    "zoo": _("Zoo"),
+    "theme_park": _("Parque temático"),
     # Información
-    "information":       _("Oficina de turismo"),
+    "information": _("Oficina de turismo"),
     # Salud
-    "hospital":          _("Hospital"),
-    "clinic":            _("Clínica"),
-    "pharmacy":          _("Farmacia"),
-    "dentist":           _("Dentista"),
-    "veterinary":        _("Veterinario"),
+    "hospital": _("Hospital"),
+    "clinic": _("Clínica"),
+    "pharmacy": _("Farmacia"),
+    "dentist": _("Dentista"),
+    "veterinary": _("Veterinario"),
     # Finanzas
-    "atm":               _("Cajero automático"),
-    "bank":              _("Banco"),
+    "atm": _("Cajero automático"),
+    "bank": _("Banco"),
     # Administración
-    "post_office":       _("Oficina de correos"),
-    "police":            _("Comisaría"),
-    "townhall":          _("Ayuntamiento"),
-    "courthouse":        _("Juzgado"),
+    "post_office": _("Oficina de correos"),
+    "police": _("Comisaría"),
+    "townhall": _("Ayuntamiento"),
+    "courthouse": _("Juzgado"),
     # Religión
-    "place_of_worship":  _("Lugar de culto"),
+    "place_of_worship": _("Lugar de culto"),
     # Espacios verdes
-    "park":              _("Parque"),
-    "garden":            _("Jardín"),
-    "nature_reserve":    _("Reserva natural"),
+    "park": _("Parque"),
+    "garden": _("Jardín"),
+    "nature_reserve": _("Reserva natural"),
     # Deporte
-    "sports_centre":     _("Centro deportivo"),
-    "swimming_pool":     _("Piscina"),
-    "fitness_centre":    _("Gimnasio"),
+    "sports_centre": _("Centro deportivo"),
+    "swimming_pool": _("Piscina"),
+    "fitness_centre": _("Gimnasio"),
     # Cultura
-    "cinema":            _("Cine"),
-    "theatre":           _("Teatro"),
-    "playground":        _("Parque infantil"),
-    "community_centre":  _("Centro cívico"),
+    "cinema": _("Cine"),
+    "theatre": _("Teatro"),
+    "playground": _("Parque infantil"),
+    "community_centre": _("Centro cívico"),
     # Histórico
-    "castle":            _("Castillo"),
-    "ruins":             _("Ruinas"),
-    "archaeological":    _("Yacimiento arqueológico"),
-    "monument":          _("Monumento"),
+    "castle": _("Castillo"),
+    "ruins": _("Ruinas"),
+    "archaeological": _("Yacimiento arqueológico"),
+    "monument": _("Monumento"),
     # Naturales
-    "drinking_water":    _("Fuente"),
-    "peak":              _("Cumbre"),
-    "cave":              _("Cueva"),
-    "beach":             _("Playa"),
+    "drinking_water": _("Fuente"),
+    "peak": _("Cumbre"),
+    "cave": _("Cueva"),
+    "beach": _("Playa"),
 }
 
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
@@ -129,6 +126,7 @@ POI_FETCH_RADIUS_M = 3800
 # --------------------------------------------------------------------------- #
 # Scraper
 # --------------------------------------------------------------------------- #
+
 
 @dataclass
 class ScrapedPromocion:
@@ -274,6 +272,7 @@ def _parse_listado(html: str, source_url: str) -> list[ScrapedPromocion]:
 # Geocoding (Nominatim)
 # --------------------------------------------------------------------------- #
 
+
 def geocode_nominatim(query: str) -> Point | None:
     """One-shot query against Nominatim. Returns a 4326 Point or None."""
     params = {"q": query, "format": "json", "limit": 1, "countrycodes": "es"}
@@ -392,10 +391,7 @@ OVERPASS_RULES: list[tuple[str, str, str]] = [
 
 
 def _overpass_query(lat: float, lon: float, radius_m: int) -> str:
-    parts = [
-        f'nwr{sel}(around:{radius_m},{lat},{lon});'
-        for (sel, _, _) in OVERPASS_RULES
-    ]
+    parts = [f"nwr{sel}(around:{radius_m},{lat},{lon});" for (sel, _, _) in OVERPASS_RULES]
     body = "\n".join(parts)
     return f"[out:json][timeout:60];\n(\n{body}\n);\nout center tags;"
 
@@ -411,7 +407,9 @@ OVERPASS_MIRRORS = (
 
 
 def fetch_pois_overpass(
-    lat: float, lon: float, radius_m: int = POI_FETCH_RADIUS_M,
+    lat: float,
+    lon: float,
+    radius_m: int = POI_FETCH_RADIUS_M,
 ) -> list[dict]:
     """Fetch POIs rotating mirrors. One shot per mirror with a short timeout —
     worst case ~90 s per failed promotion instead of 15 min."""
@@ -466,11 +464,7 @@ def nearest_by_category(promocion: Promocion) -> list[dict]:
     center = promocion.location
     base = POI.objects.filter(promocion=promocion)
 
-    nearest = (
-        base.annotate(dist=Distance("location", center))
-        .order_by("categoria", "dist")
-        .distinct("categoria")
-    )
+    nearest = base.annotate(dist=Distance("location", center)).order_by("categoria", "dist").distinct("categoria")
     counts = {
         row["categoria"]: row
         for row in base.values("categoria").annotate(
@@ -483,17 +477,19 @@ def nearest_by_category(promocion: Promocion) -> list[dict]:
     for poi in nearest:
         dist_m = poi.dist.m
         c = counts.get(poi.categoria, {})
-        out.append({
-            "categoria": poi.categoria,
-            "nombre": poi.nombre,
-            "subtipo": poi.subtipo,
-            "lat": poi.location.y,
-            "lon": poi.location.x,
-            "dist_m": round(dist_m),
-            "walk_min": max(1, round(dist_m * CIRCUITY / WALK_M_PER_MIN)),
-            "n_5": c.get("n_5", 0),
-            "n_15": c.get("n_15", 0),
-        })
+        out.append(
+            {
+                "categoria": poi.categoria,
+                "nombre": poi.nombre,
+                "subtipo": poi.subtipo,
+                "lat": poi.location.y,
+                "lon": poi.location.x,
+                "dist_m": round(dist_m),
+                "walk_min": max(1, round(dist_m * CIRCUITY / WALK_M_PER_MIN)),
+                "n_5": c.get("n_5", 0),
+                "n_15": c.get("n_15", 0),
+            }
+        )
     return out
 
 

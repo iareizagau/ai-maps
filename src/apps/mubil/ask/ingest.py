@@ -96,9 +96,7 @@ def _upsert(
     source_url = source_url[:200] if source_url else ""
 
     existing = (
-        MobilityDocument.objects.filter(
-            source_type=source_type, source_url=source_url
-        ).first()
+        MobilityDocument.objects.filter(source_type=source_type, source_url=source_url).first()
         if source_url
         else MobilityDocument.objects.filter(content_hash=new_hash).first()
     )

@@ -38,10 +38,7 @@ from urllib3.util.ssl_ import create_urllib3_context
 log = logging.getLogger(__name__)
 
 
-BASE_URL = (
-    "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/"
-    "PreciosCarburantes"
-)
+BASE_URL = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes"
 HTTP_TIMEOUT = 30
 USER_AGENT = "mubil/0.1 (iareizagau@gmail.com)"
 
@@ -217,21 +214,15 @@ def fetch_province(prov_code: str) -> list[FuelStationRecord]:
 
     r = _session().get(url, headers=headers, timeout=HTTP_TIMEOUT)
     if r.status_code >= 400:
-        raise MincoturError(
-            f"MINCOTUR returned HTTP {r.status_code} for province {code}: {r.text[:200]}"
-        )
+        raise MincoturError(f"MINCOTUR returned HTTP {r.status_code} for province {code}: {r.text[:200]}")
     try:
         payload = r.json()
     except ValueError as e:
-        raise MincoturError(
-            f"MINCOTUR returned non-JSON for province {code}: {e}"
-        ) from e
+        raise MincoturError(f"MINCOTUR returned non-JSON for province {code}: {e}") from e
 
     rows = payload.get("ListaEESSPrecio")
     if not isinstance(rows, list):
-        raise MincoturError(
-            f"MINCOTUR payload missing 'ListaEESSPrecio' for province {code}."
-        )
+        raise MincoturError(f"MINCOTUR payload missing 'ListaEESSPrecio' for province {code}.")
 
     records: list[FuelStationRecord] = []
     for raw in rows:

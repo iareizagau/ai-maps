@@ -32,9 +32,7 @@ class Migration(migrations.Migration):
                 ("logo", models.ImageField(blank=True, null=True, upload_to="clubs/")),
                 (
                     "location",
-                    django.contrib.gis.db.models.fields.PointField(
-                        blank=True, null=True, srid=4326
-                    ),
+                    django.contrib.gis.db.models.fields.PointField(blank=True, null=True, srid=4326),
                 ),
             ],
             options={
@@ -87,9 +85,7 @@ class Migration(migrations.Migration):
                 ("description", models.TextField(blank=True)),
                 (
                     "location",
-                    django.contrib.gis.db.models.fields.PointField(
-                        blank=True, null=True, srid=4326
-                    ),
+                    django.contrib.gis.db.models.fields.PointField(blank=True, null=True, srid=4326),
                 ),
                 ("difficulty", models.CharField(blank=True, max_length=100)),
                 (
@@ -98,9 +94,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "image",
-                    models.ImageField(
-                        blank=True, null=True, upload_to="outings/images/"
-                    ),
+                    models.ImageField(blank=True, null=True, upload_to="outings/images/"),
                 ),
                 (
                     "club",

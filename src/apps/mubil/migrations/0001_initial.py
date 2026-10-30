@@ -116,9 +116,7 @@ class Migration(migrations.Migration):
                 ("content_hash", models.CharField(db_index=True, max_length=64)),
                 (
                     "embedding",
-                    pgvector.django.vector.VectorField(
-                        blank=True, dimensions=768, null=True
-                    ),
+                    pgvector.django.vector.VectorField(blank=True, dimensions=768, null=True),
                 ),
                 ("ingested_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
@@ -146,9 +144,7 @@ class Migration(migrations.Migration):
                 ("geom", django.contrib.gis.db.models.fields.PointField(srid=4326)),
                 (
                     "power_kw",
-                    models.DecimalField(
-                        blank=True, decimal_places=2, max_digits=6, null=True
-                    ),
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=6, null=True),
                 ),
                 ("connectors", models.JSONField(blank=True, default=list)),
                 ("last_seen_at", models.DateTimeField(blank=True, null=True)),
@@ -236,9 +232,7 @@ class Migration(migrations.Migration):
                         name="mubil_evreg_propuls_d1e5eb_idx",
                     )
                 ],
-                "unique_together": {
-                    ("municipality_naia", "year", "month", "propulsion")
-                },
+                "unique_together": {("municipality_naia", "year", "month", "propulsion")},
             },
         ),
         migrations.CreateModel(
@@ -292,9 +286,7 @@ class Migration(migrations.Migration):
                         fields=["date", "origin_naia", "dest_naia"],
                         name="mubil_mobil_date_6df50a_idx",
                     ),
-                    models.Index(
-                        fields=["date", "mode"], name="mubil_mobil_date_6da7e7_idx"
-                    ),
+                    models.Index(fields=["date", "mode"], name="mubil_mobil_date_6da7e7_idx"),
                 ],
             },
         ),
@@ -331,22 +323,16 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "battery_kwh",
-                    models.DecimalField(
-                        blank=True, decimal_places=2, max_digits=6, null=True
-                    ),
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=6, null=True),
                 ),
                 ("range_wltp_km", models.PositiveIntegerField(blank=True, null=True)),
                 (
                     "consumption_kwh_100km",
-                    models.DecimalField(
-                        blank=True, decimal_places=2, max_digits=5, null=True
-                    ),
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=5, null=True),
                 ),
                 (
                     "consumption_l_100km",
-                    models.DecimalField(
-                        blank=True, decimal_places=2, max_digits=5, null=True
-                    ),
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=5, null=True),
                 ),
                 ("price_eur", models.PositiveIntegerField(blank=True, null=True)),
                 ("source_url", models.URLField(blank=True)),
@@ -378,29 +364,21 @@ class Migration(migrations.Migration):
                 ("dest", django.contrib.gis.db.models.fields.PointField(srid=4326)),
                 (
                     "soc_start",
-                    models.DecimalField(
-                        blank=True, decimal_places=2, max_digits=5, null=True
-                    ),
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=5, null=True),
                 ),
                 ("geojson", models.JSONField(default=dict)),
                 (
                     "distance_km",
-                    models.DecimalField(
-                        blank=True, decimal_places=2, max_digits=7, null=True
-                    ),
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=7, null=True),
                 ),
                 ("duration_min", models.PositiveIntegerField(blank=True, null=True)),
                 (
                     "energy_kwh",
-                    models.DecimalField(
-                        blank=True, decimal_places=2, max_digits=7, null=True
-                    ),
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=7, null=True),
                 ),
                 (
                     "estimated_cost_eur",
-                    models.DecimalField(
-                        blank=True, decimal_places=2, max_digits=7, null=True
-                    ),
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=7, null=True),
                 ),
                 ("computed_at", models.DateTimeField(auto_now_add=True)),
                 (

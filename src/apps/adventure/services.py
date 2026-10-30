@@ -61,11 +61,7 @@ def discover_sectors_from_route(route):
 
             if created:
                 new_sectors_count += 1
-                if (
-                    not ExplorationRecord.objects.filter(sector_key=key)
-                    .exclude(id=record.id)
-                    .exists()
-                ):
+                if not ExplorationRecord.objects.filter(sector_key=key).exclude(id=record.id).exists():
                     record.is_pioneer = True
                     record.save(update_fields=["is_pioneer"])
                     pioneer_count += 1

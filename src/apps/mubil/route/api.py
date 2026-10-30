@@ -53,9 +53,7 @@ def plan(request, payload: EVPlanIn):
     in MOCK mode we snap the request to whichever demo has the closest
     origin-destination pair so the visual stays consistent.
     """
-    demo = _nearest_demo(
-        payload.origin_lat, payload.origin_lon, payload.dest_lat, payload.dest_lon
-    )
+    demo = _nearest_demo(payload.origin_lat, payload.origin_lon, payload.dest_lat, payload.dest_lon)
     result = services.plan(
         slug=demo["slug"],
         vehicle_id=payload.vehicle_id,

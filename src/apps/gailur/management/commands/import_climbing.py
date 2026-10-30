@@ -57,17 +57,13 @@ class Command(BaseCommand):
 
                 full_url = link_elem.get("href")
                 url_path = urlparse(full_url).path
-                route_slug = slugify(url_path.replace(".html", "").replace("/", "-"))[
-                    :255
-                ]
+                route_slug = slugify(url_path.replace(".html", "").replace("/", "-"))[:255]
 
                 title = title_elem.text
                 content_elem = entry.find("atom:content", ns)
                 content = content_elem.text if content_elem is not None else ""
 
-                match = re.match(
-                    r"^(?P<zone>.*?) - (?P<route>.*?) \((?P<specs>.*)\)$", title
-                )
+                match = re.match(r"^(?P<zone>.*?) - (?P<route>.*?) \((?P<specs>.*)\)$", title)
 
                 if match:
                     zone_name = match.group("zone").strip()
@@ -78,9 +74,7 @@ class Command(BaseCommand):
 
                     # 1. Crag (Bilingual)
                     zone_slug = slugify(zone_name)[:50]
-                    crag, created_crag = Crag.objects.get_or_create(
-                        slug=zone_slug, defaults={"location": Point(0, 0)}
-                    )
+                    crag, created_crag = Crag.objects.get_or_create(slug=zone_slug, defaults={"location": Point(0, 0)})
 
                     # Update crag name and description based on current language
                     if lang == "es":
@@ -92,9 +86,7 @@ class Command(BaseCommand):
                     crag.save()
 
                     # 2. Sector
-                    sector, _ = Sector.objects.get_or_create(
-                        crag=crag, name="Principal"
-                    )
+                    sector, _ = Sector.objects.get_or_create(crag=crag, name="Principal")
 
                     # 3. Grade
                     grade = ""

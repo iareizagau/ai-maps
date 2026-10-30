@@ -57,9 +57,7 @@ def get_eco_score(request, lat: float, lon: float):
 
     pnt = Point(lon, lat, srid=4326)
     nearest_station = (
-        EnvironmentalStation.objects.annotate(distance=Distance("location", pnt))
-        .order_by("distance")
-        .first()
+        EnvironmentalStation.objects.annotate(distance=Distance("location", pnt)).order_by("distance").first()
     )
 
     if not nearest_station:

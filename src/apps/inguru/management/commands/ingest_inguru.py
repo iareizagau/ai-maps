@@ -11,14 +11,10 @@ class Command(BaseCommand):
 
         self.stdout.write("Iniciando ingesta de Calidad del Aire...")
         air_count = ingestor.ingest_air_quality()
-        self.stdout.write(
-            self.style.SUCCESS(f"Procesadas {air_count} estaciones de aire.")
-        )
+        self.stdout.write(self.style.SUCCESS(f"Procesadas {air_count} estaciones de aire."))
 
         self.stdout.write("Iniciando ingesta de Polen...")
         pollen_count = ingestor.ingest_pollen()
-        self.stdout.write(
-            self.style.SUCCESS(f"Procesadas {pollen_count} estaciones de polen.")
-        )
+        self.stdout.write(self.style.SUCCESS(f"Procesadas {pollen_count} estaciones de polen."))
 
         self.stdout.write(self.style.SUCCESS("Ingesta completada correctamente."))

@@ -37,9 +37,7 @@ class Command(BaseCommand):
         }
 
         try:
-            response = requests.post(
-                url, data={"data": query}, headers=headers, timeout=100
-            )
+            response = requests.post(url, data={"data": query}, headers=headers, timeout=100)
             response.raise_for_status()
             data = response.json()
 
@@ -47,11 +45,7 @@ class Command(BaseCommand):
             self.stdout.write(f"Total elements received: {len(elements)}")
 
             # Helper to build geometries
-            nodes = {
-                el["id"]: (el["lon"], el["lat"])
-                for el in elements
-                if el["type"] == "node"
-            }
+            nodes = {el["id"]: (el["lon"], el["lat"]) for el in elements if el["type"] == "node"}
             ways = [el for el in elements if el["type"] == "way"]
             self.stdout.write(f"Total nodes: {len(nodes)}, Total ways: {len(ways)}")
 
@@ -113,9 +107,7 @@ class Command(BaseCommand):
                     # self.stdout.write(f"Error processing way {osm_id}: {e}")
                     continue
 
-            self.stdout.write(
-                self.style.SUCCESS(f"Successfully imported {count} buildings")
-            )
+            self.stdout.write(self.style.SUCCESS(f"Successfully imported {count} buildings"))
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Error: {e}"))

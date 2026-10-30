@@ -65,12 +65,8 @@ class NewsPageTests(TestCase):
         self.assertNotContains(resp, "Solo España")
 
     def test_tag_filter(self):
-        _make(
-            "https://example.com/sub", title="Con tag subvención", tags=["subvencion"]
-        )
-        _make(
-            "https://example.com/luz", title="Con tag precio_luz", tags=["precio_luz"]
-        )
+        _make("https://example.com/sub", title="Con tag subvención", tags=["subvencion"])
+        _make("https://example.com/luz", title="Con tag precio_luz", tags=["precio_luz"])
         with mock.patch("apps.mubil.views.refresh_news.delay"):
             resp = self.client.get(
                 reverse("mubil:news") + "?tag=subvencion",

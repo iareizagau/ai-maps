@@ -53,9 +53,7 @@ class Command(BaseCommand):
                 "phone": restaurant.phone,
                 "website": restaurant.website,
                 "description": restaurant.description,
-                "created_at": restaurant.created_at.isoformat()
-                if restaurant.created_at
-                else None,
+                "created_at": restaurant.created_at.isoformat() if restaurant.created_at else None,
             }
 
             if include_dishes:
@@ -66,9 +64,7 @@ class Command(BaseCommand):
                         "name": dish.name,
                         "category": dish.get_category_display(),
                         "price": str(dish.price) if dish.price else None,
-                        "avg_rating": float(dish.avg_rating)
-                        if dish.avg_rating
-                        else None,
+                        "avg_rating": float(dish.avg_rating) if dish.avg_rating else None,
                         "rating_count": dish.rating_count,
                     }
                     for dish in dishes
@@ -81,11 +77,7 @@ class Command(BaseCommand):
         if output_file:
             with open(output_file, "w", encoding="utf-8") as f:
                 f.write(output)
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"✓ Exported {len(data)} restaurants to {output_file}"
-                )
-            )
+            self.stdout.write(self.style.SUCCESS(f"✓ Exported {len(data)} restaurants to {output_file}"))
         else:
             self.stdout.write(output)
 
@@ -157,9 +149,7 @@ class Command(BaseCommand):
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writeheader()
                 writer.writerows(rows)
-            self.stdout.write(
-                self.style.SUCCESS(f"✓ Exported {len(rows)} rows to {output_file}")
-            )
+            self.stdout.write(self.style.SUCCESS(f"✓ Exported {len(rows)} rows to {output_file}"))
         else:
             import sys
 

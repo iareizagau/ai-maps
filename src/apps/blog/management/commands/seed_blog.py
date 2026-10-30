@@ -55,9 +55,7 @@ class Command(BaseCommand):
 
         categories = {}
         for cdata in categories_data:
-            cat, created = Category.objects.update_or_create(
-                slug=cdata["slug"], defaults=cdata
-            )
+            cat, created = Category.objects.update_or_create(slug=cdata["slug"], defaults=cdata)
             categories[cdata["slug"]] = cat
             status = "Created" if created else "Updated"
             self.stdout.write(f"{status} Category: {cat.name}")
@@ -116,9 +114,7 @@ class Command(BaseCommand):
 
         tags = {}
         for tdata in tags_data:
-            tag, created = Tag.objects.update_or_create(
-                slug=tdata["slug"], defaults=tdata
-            )
+            tag, created = Tag.objects.update_or_create(slug=tdata["slug"], defaults=tdata)
             tags[tdata["slug"]] = tag
             status = "Created" if created else "Updated"
             self.stdout.write(f"{status} Tag: {tag.name}")
@@ -158,7 +154,7 @@ class Command(BaseCommand):
                                 [-2.6640, 42.8430],
                                 [-2.6640, 42.8530],
                                 [-2.6780, 42.8530],
-                                [-2.6780, 42.8430]
+                                [-2.6780, 42.8430],
                             ]
                         ],
                     },

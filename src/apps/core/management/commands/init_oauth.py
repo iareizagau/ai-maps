@@ -39,7 +39,5 @@ class Command(BaseCommand):
         )
         app.sites.add(site)
         self.stdout.write(
-            self.style.SUCCESS(
-                f"{'Created' if created else 'Updated'} Google SocialApp and linked to {site.domain}"
-            )
+            self.style.SUCCESS(f"{'Created' if created else 'Updated'} Google SocialApp and linked to {site.domain}")
         )

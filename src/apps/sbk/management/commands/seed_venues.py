@@ -104,9 +104,7 @@ class Command(BaseCommand):
             lng = data.pop("lng")
             data["location"] = Point(lng, lat)
 
-            venue, created = DanceVenue.objects.update_or_create(
-                slug=slug, defaults=data
-            )
+            venue, created = DanceVenue.objects.update_or_create(slug=slug, defaults=data)
             if created:
                 self.stdout.write(self.style.SUCCESS(f"Created venue: {venue.name}"))
             else:

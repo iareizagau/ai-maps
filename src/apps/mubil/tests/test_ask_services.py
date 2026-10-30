@@ -84,9 +84,7 @@ class RetrieveTests(TestCase):
 
             # Skip annotate complexity in this test — just call the function:
             with mock.patch.object(MobilityDocument.objects, "exclude") as exc:
-                exc.return_value = MobilityDocument.objects.filter(
-                    id__in=[d1.id, d2.id, d3.id]
-                )
+                exc.return_value = MobilityDocument.objects.filter(id__in=[d1.id, d2.id, d3.id])
                 # we still don't easily test pgvector ordering — see live test
 
 
@@ -114,9 +112,7 @@ class AnswerPipelineTests(TestCase):
         self.assertIn("MOVES III", result.answer_md)
         self.assertEqual(len(result.sources), 1)
         self.assertEqual(result.sources[0].title, "MOVES III")
-        embed_mock.assert_called_once_with(
-            "¿ayudas MOVES III?", task_type="RETRIEVAL_QUERY"
-        )
+        embed_mock.assert_called_once_with("¿ayudas MOVES III?", task_type="RETRIEVAL_QUERY")
         retrieve_mock.assert_called_once()
         gen_mock.assert_called_once()
         self.assertGreaterEqual(result.latency_ms, 0)
@@ -155,9 +151,7 @@ class AnswerPipelineTests(TestCase):
     @mock.patch("apps.mubil.ask.services._call_gemini_generate")
     @mock.patch("apps.mubil.ask.services.retrieve_topk")
     @mock.patch("apps.mubil.ask.embeddings.embed_text")
-    def test_answer_recovers_from_generation_failure(
-        self, embed_mock, retrieve_mock, gen_mock
-    ):
+    def test_answer_recovers_from_generation_failure(self, embed_mock, retrieve_mock, gen_mock):
         embed_mock.return_value = [0.1] * 768
         retrieve_mock.return_value = []
         gen_mock.side_effect = RuntimeError("gemini boom")
@@ -176,9 +170,7 @@ class AnswerPipelineTests(TestCase):
     @mock.patch("apps.mubil.ask.services._call_gemini_generate")
     @mock.patch("apps.mubil.ask.services.retrieve_topk")
     @mock.patch("apps.mubil.ask.embeddings.embed_text")
-    def test_answer_recovers_from_query_embed_failure(
-        self, embed_mock, retrieve_mock, gen_mock
-    ):
+    def test_answer_recovers_from_query_embed_failure(self, embed_mock, retrieve_mock, gen_mock):
         embed_mock.side_effect = RuntimeError("429 RESOURCE_EXHAUSTED")
 
         result = services.answer(query="cualquier pregunta")

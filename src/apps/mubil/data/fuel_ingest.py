@@ -332,10 +332,7 @@ def ingest_provinces(
     now = datetime.now(tz=UTC)
 
     with ThreadPoolExecutor(max_workers=min(workers, len(codes) or 1)) as pool:
-        futures = {
-            pool.submit(_ingest_one_province, code, now, dry_run, progress_cb): code
-            for code in codes
-        }
+        futures = {pool.submit(_ingest_one_province, code, now, dry_run, progress_cb): code for code in codes}
         for future in as_completed(futures):
             code = futures[future]
             try:

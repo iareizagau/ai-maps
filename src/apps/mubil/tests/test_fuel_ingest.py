@@ -92,9 +92,7 @@ class ParserTests(TestCase):
 
     def test_parse_record_drops_rows_without_id_or_coords(self):
         # Missing IDEESS
-        self.assertIsNone(
-            mincotur_client._parse_record({"Latitud": "1,0", "Longitud (WGS84)": "1,0"})
-        )
+        self.assertIsNone(mincotur_client._parse_record({"Latitud": "1,0", "Longitud (WGS84)": "1,0"}))
         # Missing coords
         self.assertIsNone(mincotur_client._parse_record({"IDEESS": "1"}))
 
@@ -250,9 +248,7 @@ class FuelQueryTests(TestCase):
             municipality="Donostia",
             prices={"gasolina_95_e5": "1.500"},
         )
-        _make_station(
-            ideess=2, cp="20018", municipality="Donostia", prices={"gasoleo_a": "1.400"}
-        )  # no gasolina
+        _make_station(ideess=2, cp="20018", municipality="Donostia", prices={"gasoleo_a": "1.400"})  # no gasolina
         avg = fuel_ingest.recent_avg_eur_l(fuel_key="gasolina_95_e5")
         self.assertEqual(avg, Decimal("1.500"))
 

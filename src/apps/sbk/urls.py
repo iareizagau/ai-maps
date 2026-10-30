@@ -51,9 +51,7 @@ urlpatterns = [
     path("directorio/", views.person_directory_view, name="person_directory"),
     path("persona/<slug:slug>/", views.person_detail_view, name="person_detail"),
     # Venue claim + manage
-    path(
-        "venue/<int:venue_id>/claim/", views.dance_venue_claim, name="dance_venue_claim"
-    ),
+    path("venue/<int:venue_id>/claim/", views.dance_venue_claim, name="dance_venue_claim"),
     path(
         "venue/<int:venue_id>/manage/",
         views.dance_venue_manage,

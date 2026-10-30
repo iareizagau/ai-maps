@@ -16,14 +16,10 @@ class Building(models.Model):
     # Atributos de OSM relevantes
     height = models.FloatField(null=True, blank=True)
     levels = models.IntegerField(null=True, blank=True)
-    building_type = models.CharField(
-        max_length=100, blank=True
-    )  # apartments, house, commercial...
+    building_type = models.CharField(max_length=100, blank=True)  # apartments, house, commercial...
 
     # Metadatos calculados
-    roof_area = models.FloatField(
-        null=True, blank=True, help_text=_("Área útil proyectada del tejado en m2")
-    )
+    roof_area = models.FloatField(null=True, blank=True, help_text=_("Área útil proyectada del tejado en m2"))
     azimuth = models.FloatField(
         null=True,
         blank=True,
@@ -44,15 +40,11 @@ class SolarPotential(models.Model):
     Resultados del cálculo de potencial solar vía PVGIS.
     """
 
-    building = models.OneToOneField(
-        Building, on_delete=models.CASCADE, related_name="potential"
-    )
+    building = models.OneToOneField(Building, on_delete=models.CASCADE, related_name="potential")
 
     # Resultados de generación
     annual_generation_kwh = models.FloatField(null=True, blank=True)
-    monthly_generation_json = models.JSONField(
-        null=True, blank=True
-    )  # [jan, feb, ..., dec]
+    monthly_generation_json = models.JSONField(null=True, blank=True)  # [jan, feb, ..., dec]
 
     # Configuración de la instalación ideal calculada
     peak_power_kwp = models.FloatField(null=True, blank=True)

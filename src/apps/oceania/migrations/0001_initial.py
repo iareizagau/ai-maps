@@ -29,15 +29,11 @@ class Migration(migrations.Migration):
                 ("year", models.IntegerField(verbose_name="Año")),
                 (
                     "category",
-                    models.IntegerField(
-                        default=1, verbose_name="Categoría (Saffir-Simpson)"
-                    ),
+                    models.IntegerField(default=1, verbose_name="Categoría (Saffir-Simpson)"),
                 ),
                 (
                     "max_wind_speed",
-                    models.FloatField(
-                        default=0.0, verbose_name="Velocidad de Viento Máx (km/h)"
-                    ),
+                    models.FloatField(default=0.0, verbose_name="Velocidad de Viento Máx (km/h)"),
                 ),
                 (
                     "damage_usd",
@@ -82,9 +78,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "code",
-                    models.CharField(
-                        max_length=3, unique=True, verbose_name="Código ISO"
-                    ),
+                    models.CharField(max_length=3, unique=True, verbose_name="Código ISO"),
                 ),
                 (
                     "population",
@@ -99,15 +93,11 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "nd_gain_vulnerability",
-                    models.FloatField(
-                        default=0.0, verbose_name="Índice de Vulnerabilidad ND-GAIN"
-                    ),
+                    models.FloatField(default=0.0, verbose_name="Índice de Vulnerabilidad ND-GAIN"),
                 ),
                 (
                     "nd_gain_readiness",
-                    models.FloatField(
-                        default=0.0, verbose_name="Índice de Preparación ND-GAIN"
-                    ),
+                    models.FloatField(default=0.0, verbose_name="Índice de Preparación ND-GAIN"),
                 ),
                 (
                     "geom",

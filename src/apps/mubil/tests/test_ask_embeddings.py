@@ -157,9 +157,7 @@ class EmbedCorpusTests(TestCase):
 
         self.assertEqual(stats.errors, 2)
         self.assertEqual(stats.embedded, 0)
-        self.assertEqual(
-            MobilityDocument.objects.filter(embedding__isnull=True).count(), 2
-        )
+        self.assertEqual(MobilityDocument.objects.filter(embedding__isnull=True).count(), 2)
 
     @mock.patch("apps.mubil.ask.embeddings._configure_genai")
     def test_embed_corpus_respects_limit(self, conf_mock):
@@ -182,6 +180,4 @@ class EmbedCorpusTests(TestCase):
 
         self.assertEqual(stats.embedded, 3)
         client.models.embed_content.assert_not_called()
-        self.assertEqual(
-            MobilityDocument.objects.filter(embedding__isnull=True).count(), 3
-        )
+        self.assertEqual(MobilityDocument.objects.filter(embedding__isnull=True).count(), 3)

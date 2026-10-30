@@ -13,20 +13,14 @@ def get_top_dishes(user=None, limit=10, lense="global"):
 
     if lense == "circle" and user and user.is_authenticated:
         # 1. Get IDs of people the user follows in this app context
-        followed_ids = Follow.objects.filter(
-            follower=user, app_context="pintxos"
-        ).values_list("followed_id", flat=True)
+        followed_ids = Follow.objects.filter(follower=user, app_context="pintxos").values_list("followed_id", flat=True)
 
         # 2. Annotate with average from those users ONLY
         queryset = (
             queryset.filter(ratings__user_id__in=followed_ids)
             .annotate(
-                lense_avg=Avg(
-                    "ratings__rating", filter=Q(ratings__user_id__in=followed_ids)
-                ),
-                lense_count=Count(
-                    "ratings", filter=Q(ratings__user_id__in=followed_ids)
-                ),
+                lense_avg=Avg("ratings__rating", filter=Q(ratings__user_id__in=followed_ids)),
+                lense_count=Count("ratings", filter=Q(ratings__user_id__in=followed_ids)),
             )
             .filter(lense_count__gt=0)
             .order_by("-lense_avg", "-lense_count")

@@ -81,9 +81,7 @@ class Command(BaseCommand):
         started_at = time.monotonic()
         wall_start = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.stdout.write(
-            self.style.HTTP_INFO(
-                f"[{wall_start}] IDAE ingest — {scope} · throttle={throttle}s · dry_run={dry_run}"
-            )
+            self.style.HTTP_INFO(f"[{wall_start}] IDAE ingest — {scope} · throttle={throttle}s · dry_run={dry_run}")
         )
 
         # Callbacks que escriben progreso a stdout. Encapsulados aquí para
@@ -94,8 +92,7 @@ class Command(BaseCommand):
         def on_marcas_listed(marcas):
             state["total_marcas"] = len(marcas)
             self.stdout.write(
-                f"  → {len(marcas)} marcas a procesar "
-                f"(estimación ~{_fmt_eta(len(marcas) * 7)} a este throttle)"
+                f"  → {len(marcas)} marcas a procesar (estimación ~{_fmt_eta(len(marcas) * 7)} a este throttle)"
             )
 
         def on_marca_done(marca, delta, cumulative):
@@ -137,9 +134,7 @@ class Command(BaseCommand):
         elapsed = time.monotonic() - started_at
         wall_end = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.stdout.write("")
-        self.stdout.write(
-            self.style.SUCCESS(f"[{wall_end}] Finalizado en {_fmt_eta(elapsed)}")
-        )
+        self.stdout.write(self.style.SUCCESS(f"[{wall_end}] Finalizado en {_fmt_eta(elapsed)}"))
         self.stdout.write(self.style.SUCCESS(json.dumps(stats.as_dict(), indent=2)))
         if dry_run:
             self.stdout.write(self.style.WARNING("Dry run — no DB writes."))

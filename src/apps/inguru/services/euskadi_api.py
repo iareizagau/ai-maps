@@ -27,9 +27,7 @@ class EuskadiOpenDataClient:
         self.api_key = api_key or getattr(settings, "EUSKALMET_API_KEY", None)
         self.session = requests.Session()
 
-    def _get(
-        self, endpoint_key: str, params: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    def _get(self, endpoint_key: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         url = f"{self.BASE_URL}{self.ENDPOINTS.get(endpoint_key)}"
         try:
             response = self.session.get(url, params=params, timeout=10)
@@ -46,9 +44,7 @@ class EuskadiOpenDataClient:
         res = self._get("air_quality_stations")
         return res.get("features", [])
 
-    def get_air_quality_measurements(
-        self, station_id: str, date_from: str, date_to: str
-    ) -> list[dict[str, Any]]:
+    def get_air_quality_measurements(self, station_id: str, date_from: str, date_to: str) -> list[dict[str, Any]]:
         """
         Obtiene las mediciones horarias de calidad del aire para una estación en un rango de fechas.
         date_from y date_to deben tener formato 'YYYY-MM-DDTHH:MM' (ej: '2026-07-10T00:00').
@@ -59,9 +55,7 @@ class EuskadiOpenDataClient:
             response.raise_for_status()
             return response.json()
         except Exception as e:
-            logger.error(
-                f"Error fetching air quality measurements for station {station_id}: {e}"
-            )
+            logger.error(f"Error fetching air quality measurements for station {station_id}: {e}")
             return []
 
     # --- Polen (Pollen Quality) ---
@@ -71,9 +65,7 @@ class EuskadiOpenDataClient:
         res = self._get("pollen_species")
         return res if isinstance(res, list) else []
 
-    def get_pollen_measurements(
-        self, date_from: str, date_to: str
-    ) -> list[dict[str, Any]]:
+    def get_pollen_measurements(self, date_from: str, date_to: str) -> list[dict[str, Any]]:
         """
         Obtiene los niveles de polen de todos los municipios en un rango de fechas.
         date_from y date_to deben tener formato 'YYYY-MM-DD'.
@@ -94,9 +86,7 @@ class EuskadiOpenDataClient:
         res = self._get("water_mass_stations")
         return res.get("features", [])
 
-    def get_water_mass_measurements(
-        self, point_id: str, date_from: str, date_to: str
-    ) -> list[dict[str, Any]]:
+    def get_water_mass_measurements(self, point_id: str, date_from: str, date_to: str) -> list[dict[str, Any]]:
         """
         Obtiene las mediciones de calidad de aguas para un punto específico y rango de fechas.
         date_from y date_to deben tener formato 'YYYY-MM-DD'.
@@ -108,9 +98,7 @@ class EuskadiOpenDataClient:
             res_json = response.json()
             return res_json.get("measurements", [])
         except Exception as e:
-            logger.error(
-                f"Error fetching water mass measurements for point {point_id}: {e}"
-            )
+            logger.error(f"Error fetching water mass measurements for point {point_id}: {e}")
             return []
 
     # --- Aguas de Consumo (Drinking Water) ---
@@ -120,9 +108,7 @@ class EuskadiOpenDataClient:
         res = self._get("drinking_water_stations")
         return res.get("items", [])
 
-    def get_drinking_water_measurements(
-        self, point_id: str, date_from: str, date_to: str
-    ) -> list[dict[str, Any]]:
+    def get_drinking_water_measurements(self, point_id: str, date_from: str, date_to: str) -> list[dict[str, Any]]:
         """
         Obtiene las mediciones de aguas de consumo para un punto específico en un rango de fechas.
         date_from y date_to deben tener formato 'YYYY-MM-DD'.
@@ -133,9 +119,7 @@ class EuskadiOpenDataClient:
             response.raise_for_status()
             return response.json()
         except Exception as e:
-            logger.error(
-                f"Error fetching drinking water measurements for point {point_id}: {e}"
-            )
+            logger.error(f"Error fetching drinking water measurements for point {point_id}: {e}")
             return []
 
     # --- Meteorología (Euskalmet) ---

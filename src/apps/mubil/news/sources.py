@@ -149,9 +149,7 @@ def fetch_newsapi(*, page_size: int = 40, language: str = "es") -> list[RawArtic
         if not url or not title:
             continue
         try:
-            published = datetime.fromisoformat(
-                art["publishedAt"].replace("Z", "+00:00")
-            )
+            published = datetime.fromisoformat(art["publishedAt"].replace("Z", "+00:00"))
         except (KeyError, ValueError):
             continue
         snippet = " ".join(

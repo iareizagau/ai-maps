@@ -212,9 +212,7 @@ def rate_dish(request, dish_id: int, payload: DishRatingIn):
 
 
 @router.get("/dishes/{dish_id}/ratings/", response=list[DishRatingOut])
-def list_dish_ratings(
-    request, dish_id: int, skip: int = Query(0), limit: int = Query(20)
-):
+def list_dish_ratings(request, dish_id: int, skip: int = Query(0), limit: int = Query(20)):
     """List ratings for a dish"""
     dish = get_object_or_404(Dish, id=dish_id)
     return dish.ratings.all()[skip : skip + limit]
@@ -268,11 +266,7 @@ def search_nearby(
     radius_km: float = Query(5),
 ):
     """Search nearby restaurants and dishes using QuerySet methods"""
-    restaurants = (
-        Restaurant.objects.approved()
-        .nearby(longitude, latitude, radius_km)
-        .filter(name__icontains=q)[:10]
-    )
+    restaurants = Restaurant.objects.approved().nearby(longitude, latitude, radius_km).filter(name__icontains=q)[:10]
 
     dishes = Dish.objects.approved_restaurants().search(q).select_related("restaurant")
 
@@ -281,9 +275,9 @@ def search_nearby(
     from django.contrib.gis.geos import Point
 
     user_point = Point(longitude, latitude)
-    dishes = dishes.annotate(
-        distance=Distance("restaurant__location", user_point)
-    ).order_by("-avg_rating", "distance")[:10]
+    dishes = dishes.annotate(distance=Distance("restaurant__location", user_point)).order_by("-avg_rating", "distance")[
+        :10
+    ]
 
     return 200, {
         "restaurants": [_restaurant_to_schema(r) for r in restaurants],
@@ -318,10 +312,7 @@ def toggle_favourite(request, dish_id: int):
 def get_favourite_status(request, dish_id: int):
     """Get favourite status for current user and total count"""
     dish = get_object_or_404(Dish, id=dish_id)
-    favourited = (
-        request.user.is_authenticated
-        and DishFavorite.objects.filter(dish=dish, user=request.user).exists()
-    )
+    favourited = request.user.is_authenticated and DishFavorite.objects.filter(dish=dish, user=request.user).exists()
     count = dish.favorites.count()
     return 200, {"favourited": favourited, "count": count}
 
@@ -332,9 +323,9 @@ def list_my_favourites(request, skip: int = 0, limit: int = 20):
     if not request.user.is_authenticated:
         raise HttpError(401, "Se requiere iniciar sesión.")
 
-    favs = DishFavorite.objects.filter(user=request.user).select_related(
-        "dish", "dish__restaurant"
-    )[skip : skip + limit]
+    favs = DishFavorite.objects.filter(user=request.user).select_related("dish", "dish__restaurant")[
+        skip : skip + limit
+    ]
 
     return 200, [
         {

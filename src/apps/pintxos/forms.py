@@ -18,9 +18,7 @@ class RestaurantClaimForm(forms.ModelForm):
             "contact_email": _("Best contact email"),
         }
         help_texts = {
-            "evidence": _(
-                "Tell us your role at the venue and any details that help us verify ownership."
-            ),
+            "evidence": _("Tell us your role at the venue and any details that help us verify ownership."),
         }
 
 
@@ -30,7 +28,5 @@ class RestaurantManageForm(forms.ModelForm):
         fields = ["name", "description", "phone", "website", "image_url", "hours"]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 4}),
-            "hours": forms.Textarea(
-                attrs={"rows": 3, "placeholder": '{"mon":"10-22","tue":"10-22"}'}
-            ),
+            "hours": forms.Textarea(attrs={"rows": 3, "placeholder": '{"mon":"10-22","tue":"10-22"}'}),
         }

@@ -210,9 +210,7 @@ def fetch_bbox(
         OpenChargeMapError: on missing key, HTTP failure, or non-JSON payload.
     """
     if not api_key:
-        raise OpenChargeMapError(
-            "OpenChargeMap API key missing — set OPENCHARGEMAP_API_KEY."
-        )
+        raise OpenChargeMapError("OpenChargeMap API key missing — set OPENCHARGEMAP_API_KEY.")
 
     headers = {
         "Accept": "application/json",
@@ -241,9 +239,7 @@ def fetch_bbox(
         raise OpenChargeMapError(f"OCM returned non-JSON: {e}") from e
 
     if not isinstance(payload, list):
-        raise OpenChargeMapError(
-            f"OCM payload was not a JSON array (got {type(payload).__name__})."
-        )
+        raise OpenChargeMapError(f"OCM payload was not a JSON array (got {type(payload).__name__}).")
 
     records: list[ChargingPOIRecord] = []
     for raw in payload:

@@ -85,9 +85,7 @@ class Migration(migrations.Migration):
                 ("timestamp", models.DateTimeField()),
                 (
                     "values",
-                    models.JSONField(
-                        help_text="Valores medidos (ej: {'NO2': 20, 'O3': 40})"
-                    ),
+                    models.JSONField(help_text="Valores medidos (ej: {'NO2': 20, 'O3': 40})"),
                 ),
                 (
                     "eco_score",

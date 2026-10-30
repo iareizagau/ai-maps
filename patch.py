@@ -118,9 +118,7 @@ replacement = """        <!-- Predictive Chart as Header Background -->
 
 if target.replace("\\r\\n", "\\n") in content.replace("\\r\\n", "\\n"):
     print("Found HTML! Replacing...")
-    content = content.replace("\\r\\n", "\\n").replace(
-        target.replace("\\r\\n", "\\n"), replacement
-    )
+    content = content.replace("\\r\\n", "\\n").replace(target.replace("\\r\\n", "\\n"), replacement)
 else:
     print("NOT FOUND HTML")
 
@@ -216,9 +214,7 @@ replacement_js = """    function toggleDashboard() {
 
 if target_js.replace("\\r\\n", "\\n") in content.replace("\\r\\n", "\\n"):
     print("Found JS! Replacing...")
-    content = content.replace("\\r\\n", "\\n").replace(
-        target_js.replace("\\r\\n", "\\n"), replacement_js
-    )
+    content = content.replace("\\r\\n", "\\n").replace(target_js.replace("\\r\\n", "\\n"), replacement_js)
 else:
     print("NOT FOUND JS")
 

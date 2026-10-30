@@ -44,11 +44,7 @@ def account_security(request):
 
 @login_required
 def account_social(request):
-    following = (
-        request.user.following_set.select_related("followed")
-        .all()
-        .order_by("app_context")
-    )
+    following = request.user.following_set.select_related("followed").all().order_by("app_context")
     suggested_experts = selectors.get_top_experts(exclude_user=request.user, limit=6)
     followed_ids = following.values_list("followed_id", flat=True)
 

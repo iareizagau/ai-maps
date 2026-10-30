@@ -24,14 +24,10 @@ def create_restaurant(
         location = Point(float(longitude), float(latitude))
 
     # Proximity check: same name within 50 meters
-    existing = Restaurant.objects.filter(
-        name__iexact=name, location__distance_lte=(location, D(m=50))
-    ).first()
+    existing = Restaurant.objects.filter(name__iexact=name, location__distance_lte=(location, D(m=50))).first()
 
     if existing:
-        raise ValueError(
-            f"El restaurante '{name}' ya existe en esta ubicación o muy cerca."
-        )
+        raise ValueError(f"El restaurante '{name}' ya existe en esta ubicación o muy cerca.")
 
     return Restaurant.objects.create(
         name=name,
@@ -54,9 +50,7 @@ def update_restaurant(restaurant_id, *, user, **data):
         raise PermissionError("No tienes permiso para editar este bar.")
 
     if "latitude" in data and "longitude" in data:
-        data["location"] = Point(
-            float(data.pop("longitude")), float(data.pop("latitude"))
-        )
+        data["location"] = Point(float(data.pop("longitude")), float(data.pop("latitude")))
 
     for attr, value in data.items():
         setattr(restaurant, attr, value)

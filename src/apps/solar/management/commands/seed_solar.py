@@ -16,9 +16,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         bbox = options["bbox"]
 
-        self.stdout.write(
-            self.style.SUCCESS(f"Starting import_buildings for bbox: {bbox}...")
-        )
+        self.stdout.write(self.style.SUCCESS(f"Starting import_buildings for bbox: {bbox}..."))
 
         try:
             call_command("import_buildings", bbox=bbox)

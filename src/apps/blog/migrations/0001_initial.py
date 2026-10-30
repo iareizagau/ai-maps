@@ -36,9 +36,7 @@ class Migration(migrations.Migration):
                 ("name_en", models.CharField(max_length=100, verbose_name="Name (EN)")),
                 (
                     "slug",
-                    models.SlugField(
-                        help_text="Universal slug used in URLs", unique=True
-                    ),
+                    models.SlugField(help_text="Universal slug used in URLs", unique=True),
                 ),
             ],
             options={
@@ -69,9 +67,7 @@ class Migration(migrations.Migration):
                 ("name_en", models.CharField(max_length=100, verbose_name="Name (EN)")),
                 (
                     "slug",
-                    models.SlugField(
-                        help_text="Universal slug used in URLs", unique=True
-                    ),
+                    models.SlugField(help_text="Universal slug used in URLs", unique=True),
                 ),
             ],
             options={
@@ -97,15 +93,11 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "title_eu",
-                    models.CharField(
-                        blank=True, max_length=255, verbose_name="Izenburua (EU)"
-                    ),
+                    models.CharField(blank=True, max_length=255, verbose_name="Izenburua (EU)"),
                 ),
                 (
                     "title_en",
-                    models.CharField(
-                        blank=True, max_length=255, verbose_name="Title (EN)"
-                    ),
+                    models.CharField(blank=True, max_length=255, verbose_name="Title (EN)"),
                 ),
                 (
                     "slug_es",
@@ -168,9 +160,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "read_time",
-                    models.PositiveIntegerField(
-                        default=5, help_text="Estimated reading time in minutes"
-                    ),
+                    models.PositiveIntegerField(default=5, help_text="Estimated reading time in minutes"),
                 ),
                 (
                     "difficulty",
@@ -216,9 +206,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "map_zoom",
-                    models.IntegerField(
-                        default=9, help_text="Zoom level for Leaflet map"
-                    ),
+                    models.IntegerField(default=9, help_text="Zoom level for Leaflet map"),
                 ),
                 ("likes", models.PositiveIntegerField(default=0)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
@@ -243,9 +231,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "tags",
-                    models.ManyToManyField(
-                        blank=True, related_name="posts", to="blog.tag"
-                    ),
+                    models.ManyToManyField(blank=True, related_name="posts", to="blog.tag"),
                 ),
             ],
             options={

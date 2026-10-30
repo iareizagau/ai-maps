@@ -59,9 +59,7 @@ def home(request):
     try:
         from apps.blog.models import Post
 
-        latest_blog_posts = Post.objects.filter(is_published=True).order_by(
-            "-published_at", "-created_at"
-        )[:3]
+        latest_blog_posts = Post.objects.filter(is_published=True).order_by("-published_at", "-created_at")[:3]
     except Exception:
         pass
 
@@ -98,9 +96,7 @@ def login_view(request):
             login(request, user)
             return redirect("pintxos:index")
         else:
-            return render(
-                request, "auth/login.html", {"error": "Usuario o contraseña inválidos"}
-            )
+            return render(request, "auth/login.html", {"error": "Usuario o contraseña inválidos"})
 
     return render(request, "auth/login.html")
 
@@ -131,11 +127,7 @@ def profile(request):
     username_form = UsernameChangeForm(instance=request.user)
     password_form = PasswordChangeForm(request.user)
     payment_methods = request.user.payment_methods.all()
-    following = (
-        request.user.following_set.select_related("followed")
-        .all()
-        .order_by("app_context")
-    )
+    following = request.user.following_set.select_related("followed").all().order_by("app_context")
 
     # Discovery Engine
     suggested_experts = selectors.get_top_experts(exclude_user=request.user, limit=6)
@@ -164,9 +156,7 @@ def update_profile(request):
         if form.is_valid():
             form.save()
             messages.success(request, "Perfil actualizado correctamente.")
-            return render(
-                request, "core/partials/profile_form.html", {"user_form": form}
-            )
+            return render(request, "core/partials/profile_form.html", {"user_form": form})
         return render(request, "core/partials/profile_form.html", {"user_form": form})
     return redirect("profile")
 
@@ -179,12 +169,8 @@ def update_username(request):
         if form.is_valid():
             form.save()
             messages.success(request, "Nombre de usuario cambiado.")
-            return render(
-                request, "core/partials/username_form.html", {"username_form": form}
-            )
-        return render(
-            request, "core/partials/username_form.html", {"username_form": form}
-        )
+            return render(request, "core/partials/username_form.html", {"username_form": form})
+        return render(request, "core/partials/username_form.html", {"username_form": form})
     return redirect("profile")
 
 
@@ -202,9 +188,7 @@ def update_password(request):
                 "core/partials/password_form.html",
                 {"password_form": PasswordChangeForm(request.user)},
             )
-        return render(
-            request, "core/partials/password_form.html", {"password_form": form}
-        )
+        return render(request, "core/partials/password_form.html", {"password_form": form})
     return redirect("profile")
 
 
@@ -252,14 +236,8 @@ def remove_follow(request, pk):
         follow.delete()
         messages.success(request, "Has dejado de seguir a este usuario.")
 
-    following = (
-        request.user.following_set.select_related("followed")
-        .all()
-        .order_by("app_context")
-    )
-    return render(
-        request, "core/partials/following_list.html", {"following": following}
-    )
+    following = request.user.following_set.select_related("followed").all().order_by("app_context")
+    return render(request, "core/partials/following_list.html", {"following": following})
 
 
 @login_required
@@ -269,12 +247,10 @@ def search_users(request):
     if len(query) < 2:
         return render(request, "core/partials/user_search_results.html", {"users": []})
 
-    users = User.objects.filter(username__icontains=query).exclude(id=request.user.id)[
-        :10
-    ]
-    followed_ids = Follow.objects.filter(
-        follower=request.user, app_context="pintxos"
-    ).values_list("followed_id", flat=True)
+    users = User.objects.filter(username__icontains=query).exclude(id=request.user.id)[:10]
+    followed_ids = Follow.objects.filter(follower=request.user, app_context="pintxos").values_list(
+        "followed_id", flat=True
+    )
 
     return render(
         request,

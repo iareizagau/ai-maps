@@ -9,9 +9,7 @@ class Command(BaseCommand):
     help = "Import rich POIs (shelters, cafes, stations, campsites) from OpenStreetMap via Overpass API"
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "--country", type=str, help="ISO 3166-1 country code (e.g. ES, FR, CH)"
-        )
+        parser.add_argument("--country", type=str, help="ISO 3166-1 country code (e.g. ES, FR, CH)")
         parser.add_argument(
             "--region",
             type=str,
@@ -35,31 +33,21 @@ class Command(BaseCommand):
         elif country:
             area_expr = f'area["ISO3166-1"="{country}"]->.a;'
             filter_expr = "(area.a)"
-            self.stdout.write(
-                f"Fetching POIs for country {country} from Overpass API..."
-            )
+            self.stdout.write(f"Fetching POIs for country {country} from Overpass API...")
         elif bbox:
             coords = [c.strip() for c in bbox.split(",")]
             if len(coords) != 4:
-                self.stdout.write(
-                    self.style.ERROR(
-                        'Bbox format must be "min_lon,min_lat,max_lon,max_lat"'
-                    )
-                )
+                self.stdout.write(self.style.ERROR('Bbox format must be "min_lon,min_lat,max_lon,max_lat"'))
                 return
             # Overpass expects (lat_min, lon_min, lat_max, lon_max)
             area_expr = ""
             filter_expr = f"({coords[1]},{coords[0]},{coords[3]},{coords[2]})"
-            self.stdout.write(
-                f"Fetching POIs for bounding box {bbox} from Overpass API..."
-            )
+            self.stdout.write(f"Fetching POIs for bounding box {bbox} from Overpass API...")
         else:
             # Default to ES-PV
             area_expr = 'area["ISO3166-2"="ES-PV"]->.a;'
             filter_expr = "(area.a)"
-            self.stdout.write(
-                "Fetching POIs for default region (Basque Country, ES-PV) from Overpass API..."
-            )
+            self.stdout.write("Fetching POIs for default region (Basque Country, ES-PV) from Overpass API...")
 
         query = f"""
         [out:json][timeout:120];
@@ -89,9 +77,7 @@ class Command(BaseCommand):
             data = response.json()
 
             if "remark" in data:
-                self.stdout.write(
-                    self.style.WARNING(f"Overpass API Warning/Error: {data['remark']}")
-                )
+                self.stdout.write(self.style.WARNING(f"Overpass API Warning/Error: {data['remark']}"))
 
             elements = data.get("elements", [])
             self.stdout.write(f"Found {len(elements)} POI elements. Importing...")
@@ -127,16 +113,10 @@ class Command(BaseCommand):
                     else:
                         poi_type = "camp_paid"
                 # 4. Camper / Free area
-                elif (
-                    tags.get("tourism") == "caravan_site"
-                    or tags.get("amenity") == "caravan_site"
-                ):
+                elif tags.get("tourism") == "caravan_site" or tags.get("amenity") == "caravan_site":
                     poi_type = "camp_free"
                 # 5. Station
-                elif (
-                    tags.get("railway") == "station"
-                    or tags.get("public_transport") == "station"
-                ):
+                elif tags.get("railway") == "station" or tags.get("public_transport") == "station":
                     poi_type = "station"
 
                 # We skip 'other' to keep it clean and high-quality
@@ -154,16 +134,10 @@ class Command(BaseCommand):
 
             # Bulk create
             if pois_to_create:
-                PointOfInterest.objects.bulk_create(
-                    pois_to_create, ignore_conflicts=True
-                )
+                PointOfInterest.objects.bulk_create(pois_to_create, ignore_conflicts=True)
                 count = len(pois_to_create)
 
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"Successfully imported {count} rich POIs from Overpass!"
-                )
-            )
+            self.stdout.write(self.style.SUCCESS(f"Successfully imported {count} rich POIs from Overpass!"))
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Error importing POIs: {e}"))

@@ -20,71 +20,51 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="culturalevent",
             name="municipality_es",
-            field=models.CharField(
-                blank=True, max_length=255, null=True, verbose_name="Municipio (ES)"
-            ),
+            field=models.CharField(blank=True, max_length=255, null=True, verbose_name="Municipio (ES)"),
         ),
         migrations.AddField(
             model_name="culturalevent",
             name="municipality_eu",
-            field=models.CharField(
-                blank=True, max_length=255, null=True, verbose_name="Municipio (EU)"
-            ),
+            field=models.CharField(blank=True, max_length=255, null=True, verbose_name="Municipio (EU)"),
         ),
         migrations.AddField(
             model_name="culturalevent",
             name="opening_hours_es",
-            field=models.CharField(
-                blank=True, max_length=500, null=True, verbose_name="Horario (ES)"
-            ),
+            field=models.CharField(blank=True, max_length=500, null=True, verbose_name="Horario (ES)"),
         ),
         migrations.AddField(
             model_name="culturalevent",
             name="opening_hours_eu",
-            field=models.CharField(
-                blank=True, max_length=500, null=True, verbose_name="Horario (EU)"
-            ),
+            field=models.CharField(blank=True, max_length=500, null=True, verbose_name="Horario (EU)"),
         ),
         migrations.AddField(
             model_name="culturalevent",
             name="price_es",
-            field=models.CharField(
-                blank=True, max_length=500, null=True, verbose_name="Precio (ES)"
-            ),
+            field=models.CharField(blank=True, max_length=500, null=True, verbose_name="Precio (ES)"),
         ),
         migrations.AddField(
             model_name="culturalevent",
             name="price_eu",
-            field=models.CharField(
-                blank=True, max_length=500, null=True, verbose_name="Precio (EU)"
-            ),
+            field=models.CharField(blank=True, max_length=500, null=True, verbose_name="Precio (EU)"),
         ),
         migrations.AddField(
             model_name="culturalevent",
             name="purchase_url_es",
-            field=models.URLField(
-                blank=True, max_length=1000, null=True, verbose_name="URL Compra (ES)"
-            ),
+            field=models.URLField(blank=True, max_length=1000, null=True, verbose_name="URL Compra (ES)"),
         ),
         migrations.AddField(
             model_name="culturalevent",
             name="purchase_url_eu",
-            field=models.URLField(
-                blank=True, max_length=1000, null=True, verbose_name="URL Compra (EU)"
-            ),
+            field=models.URLField(blank=True, max_length=1000, null=True, verbose_name="URL Compra (EU)"),
         ),
         migrations.AddField(
             model_name="culturalevent",
             name="venue_name_es",
-            field=models.CharField(
-                blank=True, max_length=500, null=True, verbose_name="Lugar (ES)"
-            ),
+            field=models.CharField(blank=True, max_length=500, null=True, verbose_name="Lugar (ES)"),
         ),
         migrations.AddField(
             model_name="culturalevent",
             name="venue_name_eu",
-            field=models.CharField(
-                blank=True, max_length=500, null=True, verbose_name="Lugar (EU)"
-            ),
+            field=models.CharField(blank=True, max_length=500, null=True, verbose_name="Lugar (EU)"),
         ),
     ]

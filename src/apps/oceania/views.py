@@ -167,9 +167,7 @@ MOCK_COUNTRIES = [
         "vulnerability": 0.43,
         "readiness": 0.48,
         "coords": [134.5074, 7.3611],
-        "poly": [
-            [[134.0, 6.8], [135.0, 6.8], [135.0, 8.5], [134.0, 8.5], [134.0, 6.8]]
-        ],
+        "poly": [[[134.0, 6.8], [135.0, 6.8], [135.0, 8.5], [134.0, 8.5], [134.0, 6.8]]],
     },
     {
         "name": "Micronesia",
@@ -179,9 +177,7 @@ MOCK_COUNTRIES = [
         "vulnerability": 0.50,
         "readiness": 0.38,
         "coords": [158.1611, 6.9172],
-        "poly": [
-            [[137.0, 1.0], [163.0, 1.0], [163.0, 10.0], [137.0, 10.0], [137.0, 1.0]]
-        ],
+        "poly": [[[137.0, 1.0], [163.0, 1.0], [163.0, 10.0], [137.0, 10.0], [137.0, 1.0]]],
     },
     {
         "name": "Nauru",
@@ -389,9 +385,7 @@ def country_geojson(request):
                     "co2": c.co2_emissions,
                     "vulnerability": c.nd_gain_vulnerability,
                     "readiness": c.nd_gain_readiness,
-                    "capital": [c.capital_coords.x, c.capital_coords.y]
-                    if c.capital_coords
-                    else None,
+                    "capital": [c.capital_coords.x, c.capital_coords.y] if c.capital_coords else None,
                 },
                 "geometry": json.loads(c.geom.geojson),
             }

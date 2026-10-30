@@ -30,9 +30,7 @@ class Migration(migrations.Migration):
                 ("name", models.CharField(max_length=255)),
                 (
                     "role",
-                    models.CharField(
-                        help_text="e.g., Dancer, DJ, Singer", max_length=100
-                    ),
+                    models.CharField(help_text="e.g., Dancer, DJ, Singer", max_length=100),
                 ),
                 (
                     "instagram_handle",
@@ -58,9 +56,7 @@ class Migration(migrations.Migration):
                 ("name", models.CharField(max_length=255)),
                 (
                     "slug",
-                    models.SlugField(
-                        blank=True, max_length=255, null=True, unique=True
-                    ),
+                    models.SlugField(blank=True, max_length=255, null=True, unique=True),
                 ),
                 ("description", models.TextField(blank=True)),
                 ("short_description", models.TextField(blank=True)),
@@ -98,31 +94,23 @@ class Migration(migrations.Migration):
                 ("country", models.CharField(blank=True, max_length=100, null=True)),
                 (
                     "lat",
-                    models.DecimalField(
-                        blank=True, decimal_places=8, max_digits=12, null=True
-                    ),
+                    models.DecimalField(blank=True, decimal_places=8, max_digits=12, null=True),
                 ),
                 (
                     "lng",
-                    models.DecimalField(
-                        blank=True, decimal_places=8, max_digits=12, null=True
-                    ),
+                    models.DecimalField(blank=True, decimal_places=8, max_digits=12, null=True),
                 ),
                 ("image_url", models.URLField(blank=True, max_length=500, null=True)),
                 ("ticket_url", models.URLField(blank=True, max_length=500, null=True)),
                 (
                     "estimated_pass_price",
-                    models.DecimalField(
-                        blank=True, decimal_places=2, max_digits=6, null=True
-                    ),
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=6, null=True),
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
                     "artists",
-                    models.ManyToManyField(
-                        blank=True, related_name="events", to="sbk.artist"
-                    ),
+                    models.ManyToManyField(blank=True, related_name="events", to="sbk.artist"),
                 ),
             ],
         ),
@@ -140,9 +128,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "overall_rating",
-                    models.IntegerField(
-                        choices=[(1, "1"), (2, "2"), (3, "3"), (4, "4"), (5, "5")]
-                    ),
+                    models.IntegerField(choices=[(1, "1"), (2, "2"), (3, "3"), (4, "4"), (5, "5")]),
                 ),
                 (
                     "floor_quality",
@@ -167,9 +153,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "music_quality",
-                    models.IntegerField(
-                        choices=[(1, "1"), (2, "2"), (3, "3"), (4, "4"), (5, "5")]
-                    ),
+                    models.IntegerField(choices=[(1, "1"), (2, "2"), (3, "3"), (4, "4"), (5, "5")]),
                 ),
                 ("comment", models.TextField(blank=True)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
@@ -230,9 +214,7 @@ class Migration(migrations.Migration):
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 (
                     "event",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="sbk.event"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="sbk.event"),
                 ),
                 (
                     "user",

@@ -209,9 +209,7 @@ class RoutePlanResult:
             "segments": [
                 {
                     "kind": s.kind,
-                    "distance_km": float(s.distance_km)
-                    if s.distance_km is not None
-                    else None,
+                    "distance_km": float(s.distance_km) if s.distance_km is not None else None,
                     "duration_min": s.duration_min,
                     "meta": s.meta,
                 }
@@ -303,10 +301,7 @@ def _haversine_km(p1: tuple[float, float], p2: tuple[float, float]) -> float:
     r = 6371.0088  # WGS-84 mean radius
     dlat = radians(lat2 - lat1)
     dlon = radians(lon2 - lon1)
-    a = (
-        sin(dlat / 2) ** 2
-        + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
-    )
+    a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
     return 2 * r * asin(sqrt(a))
 
 
@@ -375,9 +370,7 @@ def _cost_by_hour(
 
 def _ice_trip_cost(distance_km: Decimal, *, postal_code: str | None = None) -> dict:
     """Comparable gasoline-95 trip cost for the EV vs ICE badge."""
-    fuel_l = (distance_km * ICE_BASELINE_L_PER_100KM / Decimal("100")).quantize(
-        Decimal("0.01")
-    )
+    fuel_l = (distance_km * ICE_BASELINE_L_PER_100KM / Decimal("100")).quantize(Decimal("0.01"))
     price_l = fuel_ingest.current_price_eur_l(
         fuel_key=ICE_BASELINE_FUEL_KEY,
         postal_code=postal_code,
@@ -415,9 +408,7 @@ def _chargers_along_route(
     if len(polyline_latlon) < 2:
         return []
     polyline_lonlat = [(lon, lat) for lat, lon in polyline_latlon]
-    qs = ChargingStation.objects.filter(power_kw__gte=min_kw).along_route(
-        polyline_lonlat, radius_km=radius_km
-    )[:limit]
+    qs = ChargingStation.objects.filter(power_kw__gte=min_kw).along_route(polyline_lonlat, radius_km=radius_km)[:limit]
     out: list[dict] = []
     for c in qs:
         out.append(
@@ -544,11 +535,7 @@ def _build_segments(
     kwh_to_add: Decimal,
 ) -> list[RouteSegment]:
     if not needs_stop:
-        return [
-            RouteSegment(
-                kind="drive", distance_km=distance_km, duration_min=duration_min
-            )
-        ]
+        return [RouteSegment(kind="drive", distance_km=distance_km, duration_min=duration_min)]
 
     half_km = (distance_km / Decimal("2")).quantize(Decimal("0.1"))
     half_min = duration_min // 2
@@ -591,9 +578,7 @@ def _plan_for_demo(
     # Without it we fall back to "no stop needed" and show the trip as-is —
     # better than fabricating a charge_stop on imaginary capacity.
     if battery_kwh and battery_kwh > 0:
-        soc_consumed_pct = (energy_kwh / battery_kwh * Decimal("100")).quantize(
-            Decimal("0.1")
-        )
+        soc_consumed_pct = (energy_kwh / battery_kwh * Decimal("100")).quantize(Decimal("0.1"))
         soc_end_pct = (soc_start_pct - soc_consumed_pct).quantize(Decimal("0.1"))
         needs_stop = soc_end_pct < SOC_RESERVE_PCT
     else:
@@ -604,9 +589,7 @@ def _plan_for_demo(
         # Top up just enough to land at ~80% (typical fast-charge cut-off
         # before taper). kwh_to_add is the energy delivered during the stop.
         target_soc = Decimal("80")
-        kwh_to_add = (
-            (target_soc - soc_end_pct) / Decimal("100") * battery_kwh
-        ).quantize(Decimal("0.1"))
+        kwh_to_add = ((target_soc - soc_end_pct) / Decimal("100") * battery_kwh).quantize(Decimal("0.1"))
         if kwh_to_add < Decimal("5"):
             # Anything <5 kWh is below the noise floor for a real stop.
             needs_stop = False
@@ -622,15 +605,11 @@ def _plan_for_demo(
     if needs_stop:
         stop_min = _charge_stop_duration_min(kwh_to_add)
         total_duration_min = duration_min + stop_min
-        soc_end_pct = (
-            soc_end_pct + (kwh_to_add / battery_kwh * Decimal("100"))
-        ).quantize(Decimal("0.1"))
+        soc_end_pct = (soc_end_pct + (kwh_to_add / battery_kwh * Decimal("100"))).quantize(Decimal("0.1"))
     else:
         total_duration_min = duration_min
 
-    segments = _build_segments(
-        distance_km, duration_min, demo["polyline"], needs_stop, kwh_to_add
-    )
+    segments = _build_segments(distance_km, duration_min, demo["polyline"], needs_stop, kwh_to_add)
 
     polyline = demo["polyline"]
     nearby_chargers = _chargers_along_route(polyline)
@@ -658,9 +637,7 @@ def _plan_for_demo(
     )
     pvpc_curve = _pvpc_24h_curve()
     cost_by_hour = _cost_by_hour(energy_kwh, kwh_to_add, pvpc_curve)
-    ice_baseline = _ice_vs_ev(
-        estimated_cost_eur, _ice_trip_cost(distance_km, postal_code=postal_code)
-    )
+    ice_baseline = _ice_vs_ev(estimated_cost_eur, _ice_trip_cost(distance_km, postal_code=postal_code))
 
     return RoutePlanResult(
         slug=demo["slug"],
@@ -767,18 +744,14 @@ def _plan_for_free_od(
         polyline = [(origin_lat, origin_lng), (dest_lat, dest_lng)]
 
     # Duration: routing layer doesn't surface one; estimate from avg speed.
-    duration_min = int(
-        (distance_km / FREE_MODE_AVG_KMH * Decimal("60")).to_integral_value()
-    )
+    duration_min = int((distance_km / FREE_MODE_AVG_KMH * Decimal("60")).to_integral_value())
 
     kwh_per_100 = _vehicle_kwh_per_100km(vehicle)
     energy_kwh = (kwh_per_100 * distance_km / Decimal("100")).quantize(Decimal("0.01"))
     battery_kwh = _vehicle_battery_kwh(vehicle)
 
     if battery_kwh and battery_kwh > 0:
-        soc_consumed_pct = (energy_kwh / battery_kwh * Decimal("100")).quantize(
-            Decimal("0.1")
-        )
+        soc_consumed_pct = (energy_kwh / battery_kwh * Decimal("100")).quantize(Decimal("0.1"))
         soc_end_pct = (soc_start_pct - soc_consumed_pct).quantize(Decimal("0.1"))
         needs_stop = soc_end_pct < SOC_RESERVE_PCT
     else:
@@ -787,9 +760,7 @@ def _plan_for_free_od(
 
     if needs_stop and battery_kwh:
         target_soc = Decimal("80")
-        kwh_to_add = (
-            (target_soc - soc_end_pct) / Decimal("100") * battery_kwh
-        ).quantize(Decimal("0.1"))
+        kwh_to_add = ((target_soc - soc_end_pct) / Decimal("100") * battery_kwh).quantize(Decimal("0.1"))
         if kwh_to_add < Decimal("5"):
             needs_stop = False
             kwh_to_add = Decimal("0")
@@ -804,15 +775,11 @@ def _plan_for_free_od(
     if needs_stop:
         stop_min = _charge_stop_duration_min(kwh_to_add)
         total_duration_min = duration_min + stop_min
-        soc_end_pct = (
-            soc_end_pct + (kwh_to_add / battery_kwh * Decimal("100"))
-        ).quantize(Decimal("0.1"))
+        soc_end_pct = (soc_end_pct + (kwh_to_add / battery_kwh * Decimal("100"))).quantize(Decimal("0.1"))
     else:
         total_duration_min = duration_min
 
-    segments = _build_segments(
-        distance_km, duration_min, polyline, needs_stop, kwh_to_add
-    )
+    segments = _build_segments(distance_km, duration_min, polyline, needs_stop, kwh_to_add)
 
     nearby_chargers = _chargers_along_route(polyline)
     selected_charger = (
@@ -839,9 +806,7 @@ def _plan_for_free_od(
     )
     pvpc_curve = _pvpc_24h_curve()
     cost_by_hour = _cost_by_hour(energy_kwh, kwh_to_add, pvpc_curve)
-    ice_baseline = _ice_vs_ev(
-        estimated_cost_eur, _ice_trip_cost(distance_km, postal_code=postal_code)
-    )
+    ice_baseline = _ice_vs_ev(estimated_cost_eur, _ice_trip_cost(distance_km, postal_code=postal_code))
 
     label = f"{origin_lat:.4f},{origin_lng:.4f} → {dest_lat:.4f},{dest_lng:.4f}"
     return RoutePlanResult(
@@ -1036,9 +1001,7 @@ def optimize_multistop(
         if lat is None or lng is None:
             address = raw.get("address", "")
             if not address:
-                raise ValueError(
-                    f"Ubicación '{raw.get('name', '?')}' sin coordenadas ni dirección."
-                )
+                raise ValueError(f"Ubicación '{raw.get('name', '?')}' sin coordenadas ni dirección.")
             coords = geocode_address(address)
             if coords is None:
                 raise ValueError(f"No se pudo geocodificar: '{address}'")
@@ -1103,11 +1066,7 @@ def optimize_multistop(
             (from_loc.lng, from_loc.lat),
             (to_loc.lng, to_loc.lat),
         ]
-        chargers = list(
-            ChargingStation.objects.filter(power_kw__gte=50).along_route(
-                polyline_lonlat, radius_km=10
-            )[:5]
-        )
+        chargers = list(ChargingStation.objects.filter(power_kw__gte=50).along_route(polyline_lonlat, radius_km=10)[:5])
         if chargers:
             best = chargers[0]
             cs.charger_id = best.id

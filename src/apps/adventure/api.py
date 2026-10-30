@@ -31,9 +31,7 @@ def get_fountains(request, bbox: str):
     try:
         coords = [float(x) for x in bbox.split(",")]
         poly = Polygon.from_bbox(coords)
-        fountains = Fountain.objects.filter(location__within=poly)[
-            :100
-        ]  # Limitamos a 100 por rendimiento
+        fountains = Fountain.objects.filter(location__within=poly)[:100]  # Limitamos a 100 por rendimiento
 
         return {
             "type": "FeatureCollection",
@@ -108,9 +106,7 @@ def get_route(request, coords: str, profile: str = "bikepacking", scenic: bool =
 
     # Calculamos la ruta por tramos (segmentos)
     for i in range(len(points) - 1):
-        segment = get_adventure_route(
-            points[i], points[i + 1], profile=profile, scenic=scenic
-        )
+        segment = get_adventure_route(points[i], points[i + 1], profile=profile, scenic=scenic)
         if "error" in segment:
             return {"error": segment["error"]}
 
@@ -143,9 +139,7 @@ def vanlife_planner(request, data: VanlifePlannerSchema):
     if len(data.waypoints) < 2:
         return {"error": "Se necesitan al menos 2 puntos."}
     if len(data.waypoints) > 12:
-        return {
-            "error": "El planificador permite un máximo de 12 puntos de parada por rendimiento."
-        }
+        return {"error": "El planificador permite un máximo de 12 puntos de parada por rendimiento."}
 
     try:
         result = get_vanlife_tsp_route(
@@ -177,9 +171,7 @@ class RouteCreateSchema(Schema):
 @router.post("/routes")
 def save_route(request, data: RouteCreateSchema):
     if not request.user.is_authenticated:
-        return {
-            "error": "AutenticaciÃ³n requerida. Por favor, inicia sesiÃ³n para guardar rutas."
-        }
+        return {"error": "AutenticaciÃ³n requerida. Por favor, inicia sesiÃ³n para guardar rutas."}
 
     try:
         lines = []
@@ -399,7 +391,9 @@ def upload_gpx(request, file: UploadedFile = File(...)):
             try:
                 first_point = points[0]
                 headers = {"User-Agent": "AdventureMapsApp/1.0"}
-                url = f"https://nominatim.openstreetmap.org/reverse?lat={first_point[1]}&lon={first_point[0]}&format=json"
+                url = (
+                    f"https://nominatim.openstreetmap.org/reverse?lat={first_point[1]}&lon={first_point[0]}&format=json"
+                )
                 response = requests.get(url, headers=headers, timeout=5)
                 if response.status_code == 200:
                     data = response.json()
@@ -427,9 +421,7 @@ def upload_gpx(request, file: UploadedFile = File(...)):
             distance_meters=distance_2d,
             elevation_gain=uphill or 0,
             elevation_loss=downhill or 0,
-            surface_stats={
-                "unknown": 100
-            },  # Placeholder hasta que crucemos con TrailEdge
+            surface_stats={"unknown": 100},  # Placeholder hasta que crucemos con TrailEdge
             location_city=city,
             location_province=province,
         )
@@ -449,9 +441,7 @@ def upload_gpx(request, file: UploadedFile = File(...)):
             route.save(update_fields=["surface_stats"])
 
         # Buscar fuentes cercanas (aprox 200m)
-        fountains_count = Fountain.objects.filter(
-            location__dwithin=(geom, 0.0018)
-        ).count()
+        fountains_count = Fountain.objects.filter(location__dwithin=(geom, 0.0018)).count()
 
         # Fog of War: Desbloquear sectores
         discovery = discover_sectors_from_route(route)
@@ -561,9 +551,7 @@ def toggle_follow(request, user_id: int):
         return {"error": "No puedes seguirte a ti mismo."}
 
     # Toggle logic
-    follow, created = Follow.objects.get_or_create(
-        follower=request.user, followed=target_user, app_context="adventure"
-    )
+    follow, created = Follow.objects.get_or_create(follower=request.user, followed=target_user, app_context="adventure")
 
     if not created:
         follow.delete()
@@ -611,9 +599,7 @@ def get_route_intel(request, route_id: int):
 
     # Get direct intel drops for the route
     direct_intel = IntelDrop.objects.filter(route=route)
-    nearby_intel = IntelDrop.objects.filter(
-        location__dwithin=(route.geom, 0.0018)
-    ).exclude(route=route)
+    nearby_intel = IntelDrop.objects.filter(location__dwithin=(route.geom, 0.0018)).exclude(route=route)
 
     intel_list = []
     for drop in list(direct_intel) + list(nearby_intel):

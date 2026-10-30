@@ -8,19 +8,11 @@ class PacificCountry(models.Model):
     name = models.CharField(_("Nombre del País"), max_length=100)
     code = models.CharField(_("Código ISO"), max_length=3, unique=True)
     population = models.IntegerField(_("Población"), default=0)
-    co2_emissions = models.FloatField(
-        _("Emisiones de CO2 per cápita (toneladas)"), default=0.0
-    )
-    nd_gain_vulnerability = models.FloatField(
-        _("Índice de Vulnerabilidad ND-GAIN"), default=0.0
-    )
-    nd_gain_readiness = models.FloatField(
-        _("Índice de Preparación ND-GAIN"), default=0.0
-    )
+    co2_emissions = models.FloatField(_("Emisiones de CO2 per cápita (toneladas)"), default=0.0)
+    nd_gain_vulnerability = models.FloatField(_("Índice de Vulnerabilidad ND-GAIN"), default=0.0)
+    nd_gain_readiness = models.FloatField(_("Índice de Preparación ND-GAIN"), default=0.0)
     geom = models.MultiPolygonField(_("Geometría"), srid=4326, blank=True, null=True)
-    capital_coords = models.PointField(
-        _("Coordenadas de la Capital"), srid=4326, blank=True, null=True
-    )
+    capital_coords = models.PointField(_("Coordenadas de la Capital"), srid=4326, blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -55,11 +55,7 @@ def get_tier(user, app_slug: str) -> str:
     if not user.is_authenticated:
         return DEFAULT_TIER
 
-    subs = list(
-        user.subscriptions.filter(app_slug__in=[app_slug, "*"], status="active").values(
-            "app_slug", "tier"
-        )
-    )
+    subs = list(user.subscriptions.filter(app_slug__in=[app_slug, "*"], status="active").values("app_slug", "tier"))
     if not subs:
         return DEFAULT_TIER
     for s in subs:

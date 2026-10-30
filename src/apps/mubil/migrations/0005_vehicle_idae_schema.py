@@ -149,9 +149,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="vehicle",
-            index=models.Index(
-                fields=["category", "segment"], name="mubil_vehic_categor_736ec8_idx"
-            ),
+            index=models.Index(fields=["category", "segment"], name="mubil_vehic_categor_736ec8_idx"),
         ),
         migrations.AddIndex(
             model_name="vehicle",

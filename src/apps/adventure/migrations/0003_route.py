@@ -31,9 +31,7 @@ class Migration(migrations.Migration):
                 ("profile", models.CharField(max_length=50)),
                 (
                     "waypoints",
-                    models.JSONField(
-                        help_text="Array de coordenadas [lng, lat] para permitir edición posterior"
-                    ),
+                    models.JSONField(help_text="Array de coordenadas [lng, lat] para permitir edición posterior"),
                 ),
                 (
                     "geom",

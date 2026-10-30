@@ -38,9 +38,7 @@ urlpatterns = [
     # Service Worker
     path(
         "sw.js",
-        TemplateView.as_view(
-            template_name="adventure/sw.js", content_type="application/javascript"
-        ),
+        TemplateView.as_view(template_name="adventure/sw.js", content_type="application/javascript"),
         name="service_worker",
     ),
 ]

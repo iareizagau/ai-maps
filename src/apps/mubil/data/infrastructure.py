@@ -143,9 +143,7 @@ _INCOMPATIBLE_COLOR = "#9ca3af"  # gray-400, regardless of power
 
 def _style_for(power_tier: str, compatible: bool) -> ChargerStyle:
     if not compatible:
-        return ChargerStyle(
-            tier=power_tier, compatible=False, color=_INCOMPATIBLE_COLOR
-        )
+        return ChargerStyle(tier=power_tier, compatible=False, color=_INCOMPATIBLE_COLOR)
     return ChargerStyle(
         tier=power_tier,
         compatible=True,
@@ -234,9 +232,7 @@ def chargers_geojson(
                     "color": style.color,
                     "compatible": style.compatible,
                     "connectors": s["connectors"] or [],
-                    "last_seen_at": s["last_seen_at"].isoformat()
-                    if s["last_seen_at"]
-                    else None,
+                    "last_seen_at": s["last_seen_at"].isoformat() if s["last_seen_at"] else None,
                 },
             }
         )
@@ -382,9 +378,7 @@ def fuel_stations_geojson(*, scope: str = "eh") -> dict:
                     "prices": s["prices"] or {},
                     "schedule": s["schedule"],
                     "sale_type": s["sale_type"],
-                    "last_seen_at": s["last_seen_at"].isoformat()
-                    if s["last_seen_at"]
-                    else None,
+                    "last_seen_at": s["last_seen_at"].isoformat() if s["last_seen_at"] else None,
                 },
             }
         )

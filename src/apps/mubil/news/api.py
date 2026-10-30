@@ -17,9 +17,7 @@ def health(request):
 
 
 @router.get("/", response=list[NewsArticleOut])
-def list_news(
-    request, relevance: str | None = None, tag: str | None = None, limit: int = 60
-):
+def list_news(request, relevance: str | None = None, tag: str | None = None, limit: int = 60):
     return list(services.list_articles(limit=limit, relevance=relevance, tag=tag))
 
 

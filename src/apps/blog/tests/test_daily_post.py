@@ -37,7 +37,6 @@ def _gemini_payload(**overrides) -> str:
 
 
 class DailyPostServicesTests(TestCase):
-
     def setUp(self):
         # Create default categories and users
         self.category = Category.objects.create(
@@ -134,7 +133,7 @@ class DailyPostServicesTests(TestCase):
         ]
         mock_gemini.side_effect = [
             '{"selected_index": 1, "reason": "Good match", "related_indices": [0]}',
-            _gemini_payload()
+            _gemini_payload(),
         ]
 
         post = services.create_daily_post()
@@ -162,7 +161,7 @@ class DailyPostServicesTests(TestCase):
         ]
         mock_gemini.side_effect = [
             '{"selected_index": 1, "reason": "Good match", "related_indices": [0]}',
-            "```json\n" + _gemini_payload(title_es="Fenced Title") + "\n```"
+            "```json\n" + _gemini_payload(title_es="Fenced Title") + "\n```",
         ]
 
         post = services.create_daily_post()
@@ -179,7 +178,7 @@ class DailyPostServicesTests(TestCase):
         ]
         mock_gemini.side_effect = [
             '{"selected_index": 1, "reason": "Good match", "related_indices": [0]}',
-            _gemini_payload(map_geojson="{bad geojson}")
+            _gemini_payload(map_geojson="{bad geojson}"),
         ]
 
         post = services.create_daily_post()
@@ -192,7 +191,11 @@ class DailyPostServicesTests(TestCase):
         mock_gemini.return_value = '{"selected_index": 1, "reason": "Ideal postgis match", "related_indices": [0]}'
         candidates = [
             {"title": "Generic tech news", "snippet": "A general announcement", "url": "https://example.com/generic"},
-            {"title": "PostGIS speedups", "snippet": "Spatial index query optimizations", "url": "https://example.com/postgis"},
+            {
+                "title": "PostGIS speedups",
+                "snippet": "Spatial index query optimizations",
+                "url": "https://example.com/postgis",
+            },
         ]
         result = services.select_best_article_with_gemini(candidates)
         self.assertIsNotNone(result)
@@ -203,7 +206,6 @@ class DailyPostServicesTests(TestCase):
 
 
 class DailyPostTasksTests(TestCase):
-
     def setUp(self):
         self.category = Category.objects.create(
             name_es="WebGIS",

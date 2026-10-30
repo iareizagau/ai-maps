@@ -9,9 +9,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("username", type=str, help="Username for the admin account")
-        parser.add_argument(
-            "email", type=str, help="Email address for the admin account"
-        )
+        parser.add_argument("email", type=str, help="Email address for the admin account")
         parser.add_argument("password", type=str, help="Password for the admin account")
 
     def handle(self, *args, **options):
@@ -26,6 +24,4 @@ class Command(BaseCommand):
         # Create superuser
         User.objects.create_superuser(username=username, email=email, password=password)
 
-        self.stdout.write(
-            self.style.SUCCESS(f"✓ Created superuser '{username}' with email '{email}'")
-        )
+        self.stdout.write(self.style.SUCCESS(f"✓ Created superuser '{username}' with email '{email}'"))

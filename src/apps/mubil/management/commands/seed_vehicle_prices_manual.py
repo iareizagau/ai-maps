@@ -85,9 +85,7 @@ ANCHORS = [
 
 
 class Command(BaseCommand):
-    help = (
-        "Capa 1: marca como 'manual' el PVP verificado de ~30 anclas del catálogo IDAE."
-    )
+    help = "Capa 1: marca como 'manual' el PVP verificado de ~30 anclas del catálogo IDAE."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -115,9 +113,9 @@ class Command(BaseCommand):
         for make, kw, prop, price, note in ANCHORS:
             # icontains en make porque IDAE tiene "Volkswagen Canarias" como
             # marca separada para ciertos modelos (importadora regional).
-            qs = Vehicle.objects.filter(
-                make__icontains=make, model__icontains=kw, propulsion=prop
-            ).order_by("-year", "id")
+            qs = Vehicle.objects.filter(make__icontains=make, model__icontains=kw, propulsion=prop).order_by(
+                "-year", "id"
+            )
             row = qs.first()
             if row is None:
                 not_found.append((make, kw, prop, note))
@@ -126,8 +124,7 @@ class Command(BaseCommand):
             if row.price_source == Vehicle.PriceSource.MANUAL and row.price_eur:
                 skipped_protected += 1
                 self.stdout.write(
-                    f"  · {make:14s} {kw:14s} {prop:6s} → SKIP (ya manual, "
-                    f"id={row.id}, price={row.price_eur} €)"
+                    f"  · {make:14s} {kw:14s} {prop:6s} → SKIP (ya manual, id={row.id}, price={row.price_eur} €)"
                 )
                 continue
 
@@ -135,21 +132,17 @@ class Command(BaseCommand):
                 row.price_eur = price
                 row.price_source = Vehicle.PriceSource.MANUAL
                 row.price_updated_at = now
-                row.save(
-                    update_fields=["price_eur", "price_source", "price_updated_at"]
-                )
+                row.save(update_fields=["price_eur", "price_source", "price_updated_at"])
 
             matched += 1
             self.stdout.write(
-                f"  ✓ {make:14s} {kw:14s} {prop:6s} → "
-                f"id={row.id:5d}  y={row.year}  {price:6d} €  ({note})"
+                f"  ✓ {make:14s} {kw:14s} {prop:6s} → id={row.id:5d}  y={row.year}  {price:6d} €  ({note})"
             )
 
         self.stdout.write("")
         self.stdout.write(
             self.style.SUCCESS(
-                f"Resumen: {matched} actualizados · {skipped_protected} protegidos · "
-                f"{len(not_found)} sin match"
+                f"Resumen: {matched} actualizados · {skipped_protected} protegidos · {len(not_found)} sin match"
             )
         )
         if not_found:

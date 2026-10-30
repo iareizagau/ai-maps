@@ -28,15 +28,11 @@ class Migration(migrations.Migration):
                 ("name", models.CharField(max_length=100)),
                 (
                     "domain",
-                    models.CharField(
-                        help_text="e.g., 'pintxos.maps.eus'", max_length=255
-                    ),
+                    models.CharField(help_text="e.g., 'pintxos.maps.eus'", max_length=255),
                 ),
                 (
                     "primary_color",
-                    models.CharField(
-                        default="#f97316", help_text="Hex color", max_length=7
-                    ),
+                    models.CharField(default="#f97316", help_text="Hex color", max_length=7),
                 ),
                 ("secondary_color", models.CharField(default="#84cc16", max_length=7)),
                 (

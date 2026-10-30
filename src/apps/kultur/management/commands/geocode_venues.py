@@ -87,23 +87,16 @@ class Command(BaseCommand):
                             "updated_at",
                         ]
                     )
-                    self.stdout.write(
-                        self.style.SUCCESS(f"  ✓ {point.y:.5f}, {point.x:.5f}")
-                    )
+                    self.stdout.write(self.style.SUCCESS(f"  ✓ {point.y:.5f}, {point.x:.5f}"))
                     resolved += 1
                 else:
-                    self.stdout.write(
-                        self.style.WARNING("  ✗ no match (kept municipality centroid)")
-                    )
+                    self.stdout.write(self.style.WARNING("  ✗ no match (kept municipality centroid)"))
         except NominatimRateLimited as exc:
             raise CommandError(
-                f"Aborted at {i}/{total} (resolved {resolved} so far): {exc}. "
-                f"Re-run later — the command is idempotent."
+                f"Aborted at {i}/{total} (resolved {resolved} so far): {exc}. Re-run later — the command is idempotent."
             )
 
-        self.stdout.write(
-            self.style.SUCCESS(f"Done. Resolved {resolved}/{total} venues.")
-        )
+        self.stdout.write(self.style.SUCCESS(f"Done. Resolved {resolved}/{total} venues."))
 
     def _geocode(self, session, name, municipality):
         # Multiple passes, narrowest first. Each later pass relaxes the query
@@ -185,9 +178,7 @@ class Command(BaseCommand):
             # Hard-stop. Continuing would push the ban window further out and
             # waste cycles on guaranteed failures. Surface Retry-After if set.
             retry_after = r.headers.get("Retry-After", "unknown")
-            raise NominatimRateLimited(
-                f"Nominatim returned 429 (Retry-After: {retry_after})"
-            )
+            raise NominatimRateLimited(f"Nominatim returned 429 (Retry-After: {retry_after})")
 
         try:
             r.raise_for_status()

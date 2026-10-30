@@ -207,9 +207,7 @@ def get_vanlife_tsp_route(
         nodes.append(node)
 
     if len(nodes) < 2:
-        return {
-            "error": "Se necesitan al menos 2 puntos de paso válidos para calcular la ruta."
-        }
+        return {"error": "Se necesitan al menos 2 puntos de paso válidos para calcular la ruta."}
 
     n_nodes = len(nodes)
 
@@ -379,9 +377,7 @@ def get_vanlife_tsp_route(
             )
 
     if not features:
-        return {
-            "error": "No se pudo trazar la geometría física de los caminos para el bucle circular."
-        }
+        return {"error": "No se pudo trazar la geometría física de los caminos para el bucle circular."}
 
     # 6. Búsqueda de POIs tácticos cercanos en corredor de 2 km (0.018 grados)
     lines = []
@@ -423,17 +419,13 @@ def get_vanlife_tsp_route(
             coord = f["geometry"]["coordinates"][0]
             pnt = Point(coord[0], coord[1], srid=4326)
 
-            pernoctas = PointOfInterest.objects.filter(
-                poi_type__in=["camp_free", "camp_paid"]
-            )
+            pernoctas = PointOfInterest.objects.filter(poi_type__in=["camp_free", "camp_paid"])
             if pernocta_preference == "free":
                 pernoctas = pernoctas.filter(poi_type="camp_free")
             elif pernocta_preference == "paid":
                 pernoctas = pernoctas.filter(poi_type="camp_paid")
 
-            closest_options = sorted(pernoctas, key=lambda p: p.location.distance(pnt))[
-                :3
-            ]
+            closest_options = sorted(pernoctas, key=lambda p: p.location.distance(pnt))[:3]
             options_list = []
 
             for op in closest_options:

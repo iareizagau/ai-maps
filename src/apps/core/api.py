@@ -27,9 +27,7 @@ def toggle_follow(request, user_id: int, app_context: str):
     if followed == request.user:
         raise HttpError(400, "You cannot follow yourself")
 
-    follow, created = Follow.objects.get_or_create(
-        follower=request.user, followed=followed, app_context=app_context
-    )
+    follow, created = Follow.objects.get_or_create(follower=request.user, followed=followed, app_context=app_context)
     if not created:
         follow.delete()
         return {"status": "unfollowed"}

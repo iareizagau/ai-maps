@@ -51,63 +51,43 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "description_es",
-                    models.TextField(
-                        blank=True, null=True, verbose_name="Descripción (ES)"
-                    ),
+                    models.TextField(blank=True, null=True, verbose_name="Descripción (ES)"),
                 ),
                 (
                     "description_eu",
-                    models.TextField(
-                        blank=True, null=True, verbose_name="Descripción (EU)"
-                    ),
+                    models.TextField(blank=True, null=True, verbose_name="Descripción (EU)"),
                 ),
                 (
                     "start_date",
-                    models.DateTimeField(
-                        blank=True, null=True, verbose_name="Fecha Inicio"
-                    ),
+                    models.DateTimeField(blank=True, null=True, verbose_name="Fecha Inicio"),
                 ),
                 (
                     "end_date",
-                    models.DateTimeField(
-                        blank=True, null=True, verbose_name="Fecha Fin"
-                    ),
+                    models.DateTimeField(blank=True, null=True, verbose_name="Fecha Fin"),
                 ),
                 (
                     "venue_name",
-                    models.CharField(
-                        blank=True, max_length=500, null=True, verbose_name="Lugar"
-                    ),
+                    models.CharField(blank=True, max_length=500, null=True, verbose_name="Lugar"),
                 ),
                 (
                     "municipality",
-                    models.CharField(
-                        blank=True, max_length=255, null=True, verbose_name="Municipio"
-                    ),
+                    models.CharField(blank=True, max_length=255, null=True, verbose_name="Municipio"),
                 ),
                 (
                     "province",
-                    models.CharField(
-                        blank=True, max_length=255, null=True, verbose_name="Provincia"
-                    ),
+                    models.CharField(blank=True, max_length=255, null=True, verbose_name="Provincia"),
                 ),
                 (
                     "url_es",
-                    models.URLField(
-                        blank=True, max_length=1000, null=True, verbose_name="URL (ES)"
-                    ),
+                    models.URLField(blank=True, max_length=1000, null=True, verbose_name="URL (ES)"),
                 ),
                 (
                     "url_eu",
-                    models.URLField(
-                        blank=True, max_length=1000, null=True, verbose_name="URL (EU)"
-                    ),
+                    models.URLField(blank=True, max_length=1000, null=True, verbose_name="URL (EU)"),
                 ),
                 (
                     "image_url",
-                    models.URLField(
-                        blank=True, max_length=1000, null=True, verbose_name="Imagen"
-                    ),
+                    models.URLField(blank=True, max_length=1000, null=True, verbose_name="Imagen"),
                 ),
                 (
                     "location",

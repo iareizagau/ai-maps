@@ -196,13 +196,9 @@ class Command(BaseCommand):
         if created:
             user.set_password("testpass123")
             user.save()
-            self.stdout.write(
-                self.style.SUCCESS(f"✓ Created test user: {user.username}")
-            )
+            self.stdout.write(self.style.SUCCESS(f"✓ Created test user: {user.username}"))
         else:
-            self.stdout.write(
-                self.style.WARNING(f"✓ Test user already exists: {user.username}")
-            )
+            self.stdout.write(self.style.WARNING(f"✓ Test user already exists: {user.username}"))
 
         # Create restaurants
         restaurants = []
@@ -217,15 +213,9 @@ class Command(BaseCommand):
             )
             restaurants.append(restaurant)
             if created:
-                self.stdout.write(
-                    self.style.SUCCESS(f"✓ Created restaurant: {restaurant.name}")
-                )
+                self.stdout.write(self.style.SUCCESS(f"✓ Created restaurant: {restaurant.name}"))
             else:
-                self.stdout.write(
-                    self.style.WARNING(
-                        f"✓ Restaurant already exists: {restaurant.name}"
-                    )
-                )
+                self.stdout.write(self.style.WARNING(f"✓ Restaurant already exists: {restaurant.name}"))
 
         # Create dishes
         dishes_created = 0
@@ -257,9 +247,7 @@ class Command(BaseCommand):
                         rating_value, comment = random.choice(RATINGS)
                         rating_user, _ = User.objects.get_or_create(
                             username=f"user_{restaurant.id}_{dish.id}_{i}",
-                            defaults={
-                                "email": f"user_{restaurant.id}_{dish.id}_{i}@pintxos.eus"
-                            },
+                            defaults={"email": f"user_{restaurant.id}_{dish.id}_{i}@pintxos.eus"},
                         )
                         DishRating.objects.get_or_create(
                             dish=dish,

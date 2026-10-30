@@ -61,12 +61,8 @@ def dashboard_view(request):
                 "dirt": float(surface.get("dirt", 0)),
                 "difficulty": r.difficulty_badge,
                 "isPublic": bool(r.is_public),
-                "location": f"{r.location_city or ''}, {r.location_province or ''}".strip(
-                    ", "
-                ),
-                "geojson": json.loads(r.geom_simplified_geojson)
-                if r.geom_simplified_geojson
-                else {},
+                "location": f"{r.location_city or ''}, {r.location_province or ''}".strip(", "),
+                "geojson": json.loads(r.geom_simplified_geojson) if r.geom_simplified_geojson else {},
             }
         )
 
@@ -85,17 +81,13 @@ def explore_view(request):
     Feed social para descubrir rutas públicas de otros aventureros.
     """
     # Rutas públicas recientes
-    routes = (
-        Route.objects.filter(is_public=True)
-        .select_related("user")
-        .order_by("-created_at")[:50]
-    )
+    routes = Route.objects.filter(is_public=True).select_related("user").order_by("-created_at")[:50]
 
     # Obtener IDs de usuarios a los que ya sigue el request.user en el contexto de adventure
 
-    following_ids = Follow.objects.filter(
-        follower=request.user, app_context="adventure"
-    ).values_list("followed_id", flat=True)
+    following_ids = Follow.objects.filter(follower=request.user, app_context="adventure").values_list(
+        "followed_id", flat=True
+    )
 
     context = {
         "title": "Explorar Aventuras",

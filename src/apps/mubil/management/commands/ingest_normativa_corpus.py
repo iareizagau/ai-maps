@@ -43,9 +43,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         dry_run = options["dry_run"]
-        self.stdout.write(
-            f"Normativa ingest — only={options['only']} dry_run={dry_run}…"
-        )
+        self.stdout.write(f"Normativa ingest — only={options['only']} dry_run={dry_run}…")
 
         stats = normativa_ingest.ingest_normativa(
             only=options["only"],
@@ -56,6 +54,4 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(json.dumps(stats.as_dict(), indent=2)))
         if dry_run:
             self.stdout.write(self.style.WARNING("Dry run — no DB writes."))
-        self.stdout.write(
-            "Run `manage.py embed_ask_corpus` next to embed the new chunks."
-        )
+        self.stdout.write("Run `manage.py embed_ask_corpus` next to embed the new chunks.")

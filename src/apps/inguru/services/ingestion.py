@@ -49,15 +49,11 @@ class InguruIngestor:
         date_from = yesterday.strftime("%Y-%m-%dT00:00")
         date_to = now.strftime("%Y-%m-%dT23:59")
 
-        air_stations = EnvironmentalStation.objects.filter(
-            station_type=EnvironmentalStation.StationType.AIR
-        )
+        air_stations = EnvironmentalStation.objects.filter(station_type=EnvironmentalStation.StationType.AIR)
         measurement_count = 0
 
         for station in air_stations:
-            measurements_data = self.client.get_air_quality_measurements(
-                station.external_id, date_from, date_to
-            )
+            measurements_data = self.client.get_air_quality_measurements(station.external_id, date_from, date_to)
             for item in measurements_data:
                 date_str = item.get("date")
                 if not date_str:

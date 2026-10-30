@@ -25,9 +25,7 @@ class Command(BaseCommand):
     help = "Capa 2: rellena `price_eur` con heurística calibrada sobre anclas manuales."
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "--dry-run", action="store_true", help="Reporta sin escribir."
-        )
+        parser.add_argument("--dry-run", action="store_true", help="Reporta sin escribir.")
         parser.add_argument(
             "--propulsion",
             type=str,
@@ -44,17 +42,10 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **opts):
         # 1. Calibrar contra anclas manuales
-        anchors = list(
-            Vehicle.objects.filter(
-                price_source=Vehicle.PriceSource.MANUAL, price_eur__isnull=False
-            )
-        )
+        anchors = list(Vehicle.objects.filter(price_source=Vehicle.PriceSource.MANUAL, price_eur__isnull=False))
         if len(anchors) < 5:
             self.stderr.write(
-                self.style.ERROR(
-                    f"Sólo {len(anchors)} anclas manuales — corre primero "
-                    "`seed_vehicle_prices_manual`."
-                )
+                self.style.ERROR(f"Sólo {len(anchors)} anclas manuales — corre primero `seed_vehicle_prices_manual`.")
             )
             return
 
@@ -108,15 +99,11 @@ class Command(BaseCommand):
             applied += 1
             if len(buf) >= CHUNK:
                 if not opts["dry_run"]:
-                    Vehicle.objects.bulk_update(
-                        buf, ["price_eur", "price_source", "price_updated_at"]
-                    )
+                    Vehicle.objects.bulk_update(buf, ["price_eur", "price_source", "price_updated_at"])
                 buf.clear()
 
         if buf and not opts["dry_run"]:
-            Vehicle.objects.bulk_update(
-                buf, ["price_eur", "price_source", "price_updated_at"]
-            )
+            Vehicle.objects.bulk_update(buf, ["price_eur", "price_source", "price_updated_at"])
 
         self.stdout.write("")
         self.stdout.write(self.style.SUCCESS(f"Aplicado: {applied} filas"))
@@ -128,9 +115,7 @@ class Command(BaseCommand):
     def _print_calibration(self, table: price_heuristic.CalibrationTable):
         self.stdout.write("\nMedianas por cluster (propulsion × tier):")
         tiers = ("budget", "mid", "premium")
-        self.stdout.write(
-            f"  {'propulsion':10s} " + "".join(f"{t:>12s}" for t in tiers)
-        )
+        self.stdout.write(f"  {'propulsion':10s} " + "".join(f"{t:>12s}" for t in tiers))
         for prop in ("BEV", "PHEV", "HEV", "ICE", "DIESEL"):
             row = f"  {prop:10s} "
             for tier in tiers:

@@ -58,9 +58,7 @@ class Person(models.Model):
         VIDEOGRAPHER = "videographer", "Videographer"
         PROMOTER = "promoter", "Promoter"
 
-    roles = ArrayField(
-        models.CharField(max_length=20, choices=Role.choices), default=list, blank=True
-    )
+    roles = ArrayField(models.CharField(max_length=20, choices=Role.choices), default=list, blank=True)
     styles = ArrayField(
         models.CharField(max_length=20, choices=DanceStyle.choices),
         default=list,
@@ -107,20 +105,14 @@ class Event(models.Model):
 
     # Recurring events (Phase 2.2)
     is_recurring = models.BooleanField(default=False)
-    recurrence_rule = models.CharField(
-        max_length=255, blank=True, help_text="iCalendar RRULE"
-    )
+    recurrence_rule = models.CharField(max_length=255, blank=True, help_text="iCalendar RRULE")
 
     # Legacy dates (to be moved to occurrences)
     start_date = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
 
-    event_type = models.CharField(
-        max_length=50, choices=EventType.choices, default=EventType.FESTIVAL
-    )
-    primary_style = models.CharField(
-        max_length=50, choices=DanceStyle.choices, default=DanceStyle.MIXED
-    )
+    event_type = models.CharField(max_length=50, choices=EventType.choices, default=EventType.FESTIVAL)
+    primary_style = models.CharField(max_length=50, choices=DanceStyle.choices, default=DanceStyle.MIXED)
 
     # Location
     address = models.CharField(max_length=255, blank=True, null=True)
@@ -136,9 +128,7 @@ class Event(models.Model):
     ticket_clicks = models.PositiveIntegerField(default=0)
 
     # Trust & Info (Waze approach)
-    price_info = models.CharField(
-        max_length=100, blank=True, null=True, help_text="e.g. 10€ with drink"
-    )
+    price_info = models.CharField(max_length=100, blank=True, null=True, help_text="e.g. 10€ with drink")
     atmosphere = models.CharField(
         max_length=100,
         blank=True,
@@ -147,9 +137,7 @@ class Event(models.Model):
     )
 
     # Cost Estimation
-    estimated_pass_price = models.DecimalField(
-        max_digits=6, decimal_places=2, null=True, blank=True
-    )
+    estimated_pass_price = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
 
     # Relations (Phase 2.1)
     organizer = models.ForeignKey(
@@ -159,13 +147,9 @@ class Event(models.Model):
         blank=True,
         related_name="organized_events",
     )
-    teachers = models.ManyToManyField(
-        Person, related_name="teaching_events", blank=True
-    )
+    teachers = models.ManyToManyField(Person, related_name="teaching_events", blank=True)
     djs = models.ManyToManyField(Person, related_name="dj_events", blank=True)
-    artists = models.ManyToManyField(
-        Person, related_name="performing_events", blank=True
-    )
+    artists = models.ManyToManyField(Person, related_name="performing_events", blank=True)
 
     # User Submissions (Waze approach)
     is_user_submitted = models.BooleanField(default=False)
@@ -183,9 +167,7 @@ class Event(models.Model):
         ("verified", "Verified"),
         ("rejected", "Rejected"),
     ]
-    moderation_status = models.CharField(
-        max_length=20, choices=MODERATION_CHOICES, default="pending"
-    )
+    moderation_status = models.CharField(max_length=20, choices=MODERATION_CHOICES, default="pending")
     is_verified = models.BooleanField(default=False)
     report_count = models.IntegerField(default=0)
 
@@ -198,9 +180,7 @@ class Event(models.Model):
 
 class EventOccurrence(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    event = models.ForeignKey(
-        Event, on_delete=models.CASCADE, related_name="occurrences"
-    )
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="occurrences")
     start_date = models.DateTimeField()
     end_date = models.DateTimeField(null=True, blank=True)
     cancelled = models.BooleanField(default=False)
@@ -210,11 +190,7 @@ class EventOccurrence(models.Model):
         indexes = [
             models.Index(fields=["event", "start_date"]),
         ]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["event", "start_date"], name="uniq_occurrence"
-            )
-        ]
+        constraints = [models.UniqueConstraint(fields=["event", "start_date"], name="uniq_occurrence")]
         ordering = ["start_date"]
 
     def __str__(self):
@@ -228,15 +204,9 @@ class EventReview(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     overall_rating = models.IntegerField(choices=RATING_CHOICES)
-    floor_quality = models.IntegerField(
-        choices=RATING_CHOICES, help_text="1: Slippery/Sticky, 5: Perfect wood"
-    )
-    ac_ventilation = models.IntegerField(
-        choices=RATING_CHOICES, help_text="1: Sauna, 5: Perfect AC"
-    )
-    gender_ratio = models.IntegerField(
-        choices=RATING_CHOICES, help_text="1: Bad balance, 5: Perfect 50/50"
-    )
+    floor_quality = models.IntegerField(choices=RATING_CHOICES, help_text="1: Slippery/Sticky, 5: Perfect wood")
+    ac_ventilation = models.IntegerField(choices=RATING_CHOICES, help_text="1: Sauna, 5: Perfect AC")
+    gender_ratio = models.IntegerField(choices=RATING_CHOICES, help_text="1: Bad balance, 5: Perfect 50/50")
     music_quality = models.IntegerField(choices=RATING_CHOICES)
 
     comment = models.TextField(blank=True)
@@ -253,9 +223,7 @@ class UserEventStatus(models.TextChoices):
 
 
 class UserEvent(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sbk_events"
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sbk_events")
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     status = models.CharField(
         max_length=50,
@@ -266,9 +234,7 @@ class UserEvent(models.Model):
     # For Matchmaking/Social
     looking_for_roommate = models.BooleanField(default=False)
     looking_for_dance_partner = models.BooleanField(default=False)
-    notes = models.CharField(
-        max_length=255, blank=True, help_text="E.g., 'Have a spare bed in my Airbnb'"
-    )
+    notes = models.CharField(max_length=255, blank=True, help_text="E.g., 'Have a spare bed in my Airbnb'")
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -277,9 +243,7 @@ class UserEvent(models.Model):
 
 
 class DanceProfile(models.Model):
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="dance_profile"
-    )
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="dance_profile")
     points = models.IntegerField(default=0)
     current_streak = models.IntegerField(default=0)
     max_streak = models.IntegerField(default=0)
@@ -314,9 +278,7 @@ class EventNotice(models.Model):
 
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="notices")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    category = models.CharField(
-        max_length=20, choices=CATEGORY_CHOICES, default="other"
-    )
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="other")
     message = models.TextField(max_length=250)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -337,9 +299,7 @@ class CheckIn(models.Model):
 
 
 class VibeReport(models.Model):
-    event = models.ForeignKey(
-        Event, on_delete=models.CASCADE, related_name="vibe_reports"
-    )
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="vibe_reports")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     music_score = models.IntegerField(default=3)  # 1-5
     crowd_score = models.IntegerField(default=3)  # 1-5 (1=Empty, 5=Packed)
@@ -370,9 +330,7 @@ class DanceVenue(models.Model):
     city = models.CharField(max_length=100, db_index=True)
     country = models.CharField(max_length=100, default="Euskadi")
 
-    venue_type = models.CharField(
-        max_length=20, choices=DanceVenueType.choices, default=DanceVenueType.MULTI
-    )
+    venue_type = models.CharField(max_length=20, choices=DanceVenueType.choices, default=DanceVenueType.MULTI)
     styles = models.JSONField(
         default=list,
         blank=True,
@@ -381,9 +339,7 @@ class DanceVenue(models.Model):
     weekly_schedule = models.JSONField(
         default=dict,
         blank=True,
-        help_text=_(
-            'Free-form: e.g. {"mon":{"class":["bachata-19h"]},"wed":{"social":["21h-2h"]}}'
-        ),
+        help_text=_('Free-form: e.g. {"mon":{"class":["bachata-19h"]},"wed":{"social":["21h-2h"]}}'),
     )
 
     website = models.URLField(blank=True)
@@ -431,31 +387,23 @@ class DanceVenue(models.Model):
         return self.location.x if self.location else None
 
     def update_rating(self):
-        agg = self.ratings.aggregate(
-            avg=models.Avg("overall"), count=models.Count("id")
-        )
+        agg = self.ratings.aggregate(avg=models.Avg("overall"), count=models.Count("id"))
         self.avg_rating = agg["avg"] or 0
         self.rating_count = agg["count"] or 0
         self.save(update_fields=["avg_rating", "rating_count"])
 
 
 class VenueRating(models.Model):
-    venue = models.ForeignKey(
-        DanceVenue, on_delete=models.CASCADE, related_name="ratings"
-    )
+    venue = models.ForeignKey(DanceVenue, on_delete=models.CASCADE, related_name="ratings")
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="dance_venue_ratings",
     )
     overall = models.IntegerField()
-    floor_quality = models.IntegerField(
-        null=True, blank=True, help_text=_("1: slippery/sticky, 5: perfect")
-    )
+    floor_quality = models.IntegerField(null=True, blank=True, help_text=_("1: slippery/sticky, 5: perfect"))
     music_quality = models.IntegerField(null=True, blank=True)
-    crowd_level = models.IntegerField(
-        null=True, blank=True, help_text=_("1: empty, 5: packed")
-    )
+    crowd_level = models.IntegerField(null=True, blank=True, help_text=_("1: empty, 5: packed"))
     comment = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -491,19 +439,11 @@ class DanceVenueClaim(models.Model):
         DOCUMENT = "document", _("Document upload")
         OTHER = "other", _("Other")
 
-    venue = models.ForeignKey(
-        DanceVenue, on_delete=models.CASCADE, related_name="claims"
-    )
-    claimant = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sbk_claims"
-    )
+    venue = models.ForeignKey(DanceVenue, on_delete=models.CASCADE, related_name="claims")
+    claimant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sbk_claims")
 
-    status = models.CharField(
-        max_length=16, choices=Status.choices, default=Status.PENDING, db_index=True
-    )
-    method = models.CharField(
-        max_length=16, choices=Method.choices, default=Method.PHONE
-    )
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING, db_index=True)
+    method = models.CharField(max_length=16, choices=Method.choices, default=Method.PHONE)
 
     evidence = models.TextField(
         blank=True,
@@ -512,9 +452,7 @@ class DanceVenueClaim(models.Model):
     contact_phone = models.CharField(max_length=30, blank=True)
     contact_email = models.EmailField(blank=True)
 
-    admin_notes = models.TextField(
-        blank=True, help_text=_("Internal notes left by the reviewer.")
-    )
+    admin_notes = models.TextField(blank=True, help_text=_("Internal notes left by the reviewer."))
     reviewed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -527,9 +465,7 @@ class DanceVenueClaim(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=["venue", "claimant"], name="uniq_dance_venue_claimant"
-            ),
+            models.UniqueConstraint(fields=["venue", "claimant"], name="uniq_dance_venue_claimant"),
         ]
         indexes = [models.Index(fields=["status", "-created_at"])]
         ordering = ["-created_at"]

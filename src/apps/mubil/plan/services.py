@@ -91,10 +91,7 @@ def _haversine_km(p1: tuple[float, float], p2: tuple[float, float]) -> float:
     lat2, lon2 = map(math.radians, p2)
     dlat = lat2 - lat1
     dlon = lon2 - lon1
-    a = (
-        math.sin(dlat / 2) ** 2
-        + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
-    )
+    a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
     return 2 * 6371 * math.asin(math.sqrt(a))
 
 

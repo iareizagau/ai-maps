@@ -70,9 +70,7 @@ def check_location(request):
     lng = request.GET.get("lng")
 
     if not lat or not lng:
-        return JsonResponse(
-            {"status": "error", "message": "Faltan coordenadas"}, status=400
-        )
+        return JsonResponse({"status": "error", "message": "Faltan coordenadas"}, status=400)
 
     try:
         from django.contrib.gis.geos import Point

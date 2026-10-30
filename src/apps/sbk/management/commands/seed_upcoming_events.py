@@ -15,9 +15,7 @@ class Command(BaseCommand):
             yul = Person.objects.get(artistic_name="Yulgarmendia")
             maddi = Person.objects.get(artistic_name="Maddi")
         except Person.DoesNotExist:
-            self.stdout.write(
-                self.style.ERROR("Dancers not found. Run seed_dancers first.")
-            )
+            self.stdout.write(self.style.ERROR("Dancers not found. Run seed_dancers first."))
             return
 
         # 2. Define events
@@ -86,12 +84,6 @@ class Command(BaseCommand):
             event.teachers.add(yul, maddi)
 
             # Create occurrence
-            EventOccurrence.objects.create(
-                event=event, start_date=data["start_date"], end_date=event.end_date
-            )
+            EventOccurrence.objects.create(event=event, start_date=data["start_date"], end_date=event.end_date)
 
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"Updated event {event.name} with Yulgarmendia and Maddi."
-                )
-            )
+            self.stdout.write(self.style.SUCCESS(f"Updated event {event.name} with Yulgarmendia and Maddi."))

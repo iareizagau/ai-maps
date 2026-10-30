@@ -7,6 +7,7 @@ Usage:
   docker compose exec web python manage.py ingest_amenabar --only-pois
   docker compose exec web python manage.py ingest_amenabar --limit 3
 """
+
 from __future__ import annotations
 
 import time
@@ -70,24 +71,26 @@ class Command(BaseCommand):
 
         if via_celery:
             from apps.amenabar.tasks import fetch_pois_for_promocion
+
             ids = list(qs.values_list("id", flat=True))
             for i, pk in enumerate(ids):
                 fetch_pois_for_promocion.apply_async(
-                    args=[pk], countdown=i * spacing_s,
+                    args=[pk],
+                    countdown=i * spacing_s,
                 )
-            self.stdout.write(self.style.SUCCESS(
-                f"Enqueued {len(ids)} tasks (spacing {spacing_s}s). "
-                f"Total ETA: ~{len(ids) * spacing_s // 60} min. "
-                f"Watch with: docker compose logs -f worker"
-            ))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"Enqueued {len(ids)} tasks (spacing {spacing_s}s). "
+                    f"Total ETA: ~{len(ids) * spacing_s // 60} min. "
+                    f"Watch with: docker compose logs -f worker"
+                )
+            )
             return
 
         for p in qs:
             self.stdout.write(f"POIs → {p.nombre} ({p.ciudad})")
             try:
-                elements = services.fetch_pois_overpass(
-                    p.location.y, p.location.x
-                )
+                elements = services.fetch_pois_overpass(p.location.y, p.location.x)
                 kept = services.store_pois(p, elements)
                 self.stdout.write(self.style.SUCCESS(f"  {kept} POIs stored"))
             except Exception as e:
@@ -121,10 +124,7 @@ class Command(BaseCommand):
                     obj.location = pt
                     obj.save(update_fields=["location"])
                     self.stdout.write(
-                        self.style.SUCCESS(
-                            f"  {'+' if created else '~'} {obj.nombre}  @ "
-                            f"{pt.y:.4f},{pt.x:.4f}"
-                        )
+                        self.style.SUCCESS(f"  {'+' if created else '~'} {obj.nombre}  @ {pt.y:.4f},{pt.x:.4f}")
                     )
                 else:
                     self.stderr.write(f"  ? {obj.nombre}  (no geocode)")

@@ -126,9 +126,7 @@ class Command(BaseCommand):
         ]
 
         for app_data in apps:
-            app, created = AppRegistry.objects.update_or_create(
-                slug=app_data["slug"], defaults=app_data
-            )
+            app, created = AppRegistry.objects.update_or_create(slug=app_data["slug"], defaults=app_data)
             status = "Created" if created else "Updated"
             self.stdout.write(f"{status} {app.name}")
 

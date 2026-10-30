@@ -69,8 +69,7 @@ def _configure_genai():
     """
     if not settings.GEMINI_API_KEY:
         raise EmbeddingError(
-            "GEMINI_API_KEY is not set — embedding cannot proceed. "
-            "Get one at https://aistudio.google.com/app/apikey."
+            "GEMINI_API_KEY is not set — embedding cannot proceed. Get one at https://aistudio.google.com/app/apikey."
         )
 
     from google import genai
@@ -115,9 +114,7 @@ def embed_text(text: str, *, task_type: str = "RETRIEVAL_DOCUMENT") -> list[floa
     )
     vec = list(response.embeddings[0].values)
     if len(vec) != EMBEDDING_DIM:
-        raise EmbeddingError(
-            f"Unexpected embedding dim {len(vec)} (want {EMBEDDING_DIM})."
-        )
+        raise EmbeddingError(f"Unexpected embedding dim {len(vec)} (want {EMBEDDING_DIM}).")
     return _normalize(vec)
 
 
@@ -162,9 +159,7 @@ def embed_corpus(
         try:
             vec = embed_text(doc.content, task_type="RETRIEVAL_DOCUMENT")
         except Exception as e:
-            log.warning(
-                "embed failed for doc id=%d (%s): %s", doc.id, doc.title[:60], e
-            )
+            log.warning("embed failed for doc id=%d (%s): %s", doc.id, doc.title[:60], e)
             stats.errors += 1
             continue
 

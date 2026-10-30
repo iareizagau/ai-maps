@@ -51,9 +51,7 @@ class Command(BaseCommand):
                 options["all"],
             ]
         ):
-            raise CommandError(
-                "Specify what to clear: --restaurants, --dishes, --ratings, --users, or --all"
-            )
+            raise CommandError("Specify what to clear: --restaurants, --dishes, --ratings, --users, or --all")
 
         # Build list of items to delete
         items = []
@@ -97,28 +95,18 @@ class Command(BaseCommand):
         # Delete data
         if options["all"] or options["restaurants"]:
             Restaurant.objects.all().delete()
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"✓ Deleted {counts.get('restaurants', 0)} restaurants"
-                )
-            )
+            self.stdout.write(self.style.SUCCESS(f"✓ Deleted {counts.get('restaurants', 0)} restaurants"))
 
         if options["all"] or options["dishes"]:
             Dish.objects.all().delete()
-            self.stdout.write(
-                self.style.SUCCESS(f"✓ Deleted {counts.get('dishes', 0)} dishes")
-            )
+            self.stdout.write(self.style.SUCCESS(f"✓ Deleted {counts.get('dishes', 0)} dishes"))
 
         if options["all"] or options["ratings"]:
             DishRating.objects.all().delete()
-            self.stdout.write(
-                self.style.SUCCESS(f"✓ Deleted {counts.get('ratings', 0)} ratings")
-            )
+            self.stdout.write(self.style.SUCCESS(f"✓ Deleted {counts.get('ratings', 0)} ratings"))
 
         if options["all"] or options["users"]:
             User.objects.exclude(is_superuser=True).delete()
-            self.stdout.write(
-                self.style.SUCCESS(f"✓ Deleted {counts.get('users', 0)} users")
-            )
+            self.stdout.write(self.style.SUCCESS(f"✓ Deleted {counts.get('users', 0)} users"))
 
         self.stdout.write(self.style.SUCCESS("✓ Clear data completed"))

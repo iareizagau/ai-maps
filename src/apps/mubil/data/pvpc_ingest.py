@@ -51,9 +51,7 @@ PENINSULA_GEO_ID = 8741
 # Hour ranges are half-open: [start, end). Reference:
 # https://www.cnmc.es/ambitos-de-actuacion/energia/mercado-electrico#peajes-y-cargos
 _P1_HOURS = set(range(10, 14)) | set(range(18, 22))  # 10–14, 18–22
-_P2_HOURS = (
-    set(range(8, 10)) | set(range(14, 18)) | set(range(22, 24))
-)  # 8–10, 14–18, 22–24
+_P2_HOURS = set(range(8, 10)) | set(range(14, 18)) | set(range(22, 24))  # 8–10, 14–18, 22–24
 # everything else is P3 (0–8 + all weekend hours)
 
 

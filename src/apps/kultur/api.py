@@ -87,9 +87,7 @@ def sync_favs(request, payload: FavSyncIn):
     """Merge a list of event ids (e.g. from localStorage) with the user's DB favs.
     Invalid ids are silently dropped. Returns the resulting full list."""
     _require_auth(request)
-    valid_ids = set(
-        CulturalEvent.objects.filter(id__in=payload.ids).values_list("id", flat=True)
-    )
+    valid_ids = set(CulturalEvent.objects.filter(id__in=payload.ids).values_list("id", flat=True))
     existing_ids = set(request.user.kultur_favs.values_list("event_id", flat=True))
     to_create = valid_ids - existing_ids
     if to_create:

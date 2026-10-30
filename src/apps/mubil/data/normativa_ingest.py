@@ -32,10 +32,7 @@ log = logging.getLogger(__name__)
 
 
 HTTP_TIMEOUT = 45
-USER_AGENT = (
-    "mubil/0.1 (iareizagau@gmail.com) academic research corpus, "
-    "MUBIL Mobility Awards 2026"
-)
+USER_AGENT = "mubil/0.1 (iareizagau@gmail.com) academic research corpus, MUBIL Mobility Awards 2026"
 DEFAULT_CHUNK_CHARS = 2000
 MIN_BODY_CHARS = 200  # below this we skip the source (likely empty/JS page).
 DEFAULT_THROTTLE_S = 1.0  # be polite to gov.es / Wikipedia.

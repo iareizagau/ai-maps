@@ -132,12 +132,8 @@ class Route(BaseModel):
 class Topo(BaseModel):
     """Croquis / Imágenes de las vías"""
 
-    sector = models.ForeignKey(
-        Sector, on_delete=models.SET_NULL, null=True, blank=True, related_name="topos"
-    )
-    outing = models.ForeignKey(
-        Outing, on_delete=models.SET_NULL, null=True, blank=True, related_name="images"
-    )
+    sector = models.ForeignKey(Sector, on_delete=models.SET_NULL, null=True, blank=True, related_name="topos")
+    outing = models.ForeignKey(Outing, on_delete=models.SET_NULL, null=True, blank=True, related_name="images")
     image = models.ImageField(upload_to="gailur/topos/")
     title = models.CharField(max_length=255, blank=True)
     description = models.TextField(blank=True)

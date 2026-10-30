@@ -40,9 +40,7 @@ def list_buildings(request, bbox: str):
                         "name": b.name or "Edificio",
                         "height": b.height or 9.0,
                         "building_type": b.building_type,
-                        "color": "#fbbf24"
-                        if has_solar
-                        else "#ffffff",  # Dorado para analizados, blanco para el resto
+                        "color": "#fbbf24" if has_solar else "#ffffff",  # Dorado para analizados, blanco para el resto
                         "solar": potential_data,
                     },
                 }
@@ -106,11 +104,7 @@ def get_building_at(request, lat: float, lon: float):
     point = Point(lon, lat, srid=4326)
 
     # 1. Intentamos primero una intersección exacta
-    building = (
-        Building.objects.filter(geom__intersects=point)
-        .select_related("potential")
-        .first()
-    )
+    building = Building.objects.filter(geom__intersects=point).select_related("potential").first()
 
     # 2. Si no se encuentra, buscamos el edificio más cercano dentro de 15 metros para tolerar la inclinación 3D y toques táctiles
     if not building:
@@ -133,12 +127,8 @@ def get_building_at(request, lat: float, lon: float):
             "peak_power": potential.peak_power_kwp,
             "monthly_data": potential.monthly_generation_json,
             "kpis": {
-                "co2_offset": round(
-                    potential.annual_generation_kwh * 0.25
-                ),  # 0.25kg/kWh approx
-                "annual_savings": round(
-                    potential.annual_generation_kwh * 0.18
-                ),  # 0.18€/kWh approx
+                "co2_offset": round(potential.annual_generation_kwh * 0.25),  # 0.25kg/kWh approx
+                "annual_savings": round(potential.annual_generation_kwh * 0.18),  # 0.18€/kWh approx
                 "roi_years": 6.5,  # Estimación fija para el prototipo
             },
         }

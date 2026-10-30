@@ -39,9 +39,7 @@ def _make(url, *, affects=True, days_ago=1, tags=None, title="X"):
 
 class RecentAffectingPlanTests(TestCase):
     def test_only_flagged_within_window_are_returned(self):
-        _make(
-            "https://x/inside-flagged", affects=True, days_ago=5, title="Dentro y flag"
-        )
+        _make("https://x/inside-flagged", affects=True, days_ago=5, title="Dentro y flag")
         _make(
             "https://x/inside-unflagged",
             affects=False,
@@ -101,9 +99,7 @@ class AdvisorPageContextTests(TestCase):
         self.assertEqual(list(resp.context["recent_alerts"]), [])
 
     def test_alert_strip_renders_when_news_flagged(self):
-        _make(
-            "https://x/flagged", affects=True, days_ago=2, title="Subvención ampliada"
-        )
+        _make("https://x/flagged", affects=True, days_ago=2, title="Subvención ampliada")
         resp = self.client.get(reverse("mubil:advisor"), HTTP_HOST="localhost")
         self.assertContains(resp, "Subvención ampliada")
         self.assertContains(resp, "que afecta")

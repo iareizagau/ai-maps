@@ -489,9 +489,7 @@ class Command(BaseCommand):
                 make=spec["make"],
                 model=spec["model"],
                 year=spec["year"],
-                defaults={
-                    k: v for k, v in spec.items() if k not in ("make", "model", "year")
-                },
+                defaults={k: v for k, v in spec.items() if k not in ("make", "model", "year")},
             )
             self.stdout.write(f"{'+' if created else '='} Vehicle {obj}")
 
@@ -512,7 +510,6 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Seed complete — {Vehicle.objects.count()} vehicles, "
-                f"{ChargingStation.objects.count()} chargers."
+                f"Seed complete — {Vehicle.objects.count()} vehicles, {ChargingStation.objects.count()} chargers."
             )
         )

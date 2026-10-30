@@ -38,21 +38,15 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "municipality",
-                    models.CharField(
-                        db_index=True, max_length=255, verbose_name="Municipio"
-                    ),
+                    models.CharField(db_index=True, max_length=255, verbose_name="Municipio"),
                 ),
                 (
                     "province",
-                    models.CharField(
-                        blank=True, default="", max_length=255, verbose_name="Provincia"
-                    ),
+                    models.CharField(blank=True, default="", max_length=255, verbose_name="Provincia"),
                 ),
                 (
                     "location",
-                    django.contrib.gis.db.models.fields.PointField(
-                        srid=4326, verbose_name="Ubicación"
-                    ),
+                    django.contrib.gis.db.models.fields.PointField(srid=4326, verbose_name="Ubicación"),
                 ),
                 (
                     "geocoding_source",
@@ -64,9 +58,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "geocoded_at",
-                    models.DateTimeField(
-                        blank=True, null=True, verbose_name="Geocodificado en"
-                    ),
+                    models.DateTimeField(blank=True, null=True, verbose_name="Geocodificado en"),
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),

@@ -24,27 +24,21 @@ class Command(BaseCommand):
         top_dishes = Dish.objects.order_by("-avg_rating")[:5]
 
         # Get restaurants with most dishes
-        restaurants_with_dishes = Restaurant.objects.annotate(
-            dish_count=Count("dishes")
-        ).order_by("-dish_count")[:5]
+        restaurants_with_dishes = Restaurant.objects.annotate(dish_count=Count("dishes")).order_by("-dish_count")[:5]
 
         self.stdout.write(self.style.SUCCESS("\n📊 Pintxos.eus Statistics\n"))
         self.stdout.write(f"Total Restaurants: {restaurants}")
         self.stdout.write(f"Total Dishes: {dishes}")
         self.stdout.write(f"Total Ratings: {ratings}")
         self.stdout.write(f"Total Users: {users}")
-        self.stdout.write(
-            f"\nAverage dishes per restaurant: {avg_dishes_per_restaurant:.2f}"
-        )
+        self.stdout.write(f"\nAverage dishes per restaurant: {avg_dishes_per_restaurant:.2f}")
         self.stdout.write(f"Average ratings per dish: {avg_ratings_per_dish:.2f}")
 
         if top_dishes.exists():
             self.stdout.write(self.style.SUCCESS("\n⭐ Top Rated Dishes:"))
             for i, dish in enumerate(top_dishes, 1):
                 rating = f"{dish.avg_rating:.2f}" if dish.avg_rating else "No ratings"
-                self.stdout.write(
-                    f"  {i}. {dish.name} ({rating} stars, {dish.rating_count} votes)"
-                )
+                self.stdout.write(f"  {i}. {dish.name} ({rating} stars, {dish.rating_count} votes)")
 
         if restaurants_with_dishes.exists():
             self.stdout.write(self.style.SUCCESS("\n🏆 Restaurants with Most Dishes:"))

@@ -7,9 +7,7 @@ from apps.mubil.models import ContactLead, Vehicle
 
 class VehicleModelTests(TestCase):
     def test_str_format(self):
-        v = Vehicle(
-            make="Kia", model="Niro EV", year=2025, propulsion=Vehicle.Propulsion.BEV
-        )
+        v = Vehicle(make="Kia", model="Niro EV", year=2025, propulsion=Vehicle.Propulsion.BEV)
         self.assertEqual(str(v), "Kia Niro EV (2025)")
 
 

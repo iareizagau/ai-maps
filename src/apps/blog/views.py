@@ -42,9 +42,7 @@ def post_list(request, category_slug=None, tag_slug=None):
 
     categories = Category.objects.all()
     tags = Tag.objects.all()
-    recent_posts = Post.objects.filter(is_published=True).order_by(
-        "-published_at", "-created_at"
-    )[:5]
+    recent_posts = Post.objects.filter(is_published=True).order_by("-published_at", "-created_at")[:5]
 
     context = {
         "posts": posts,
@@ -70,9 +68,7 @@ def post_detail(request, slug):
     categories = Category.objects.all()
     tags = Tag.objects.all()
     recent_posts = (
-        Post.objects.filter(is_published=True)
-        .exclude(pk=post.pk)
-        .order_by("-published_at", "-created_at")[:5]
+        Post.objects.filter(is_published=True).exclude(pk=post.pk).order_by("-published_at", "-created_at")[:5]
     )
 
     context = {
@@ -147,11 +143,7 @@ def blog_chat_api(request):
     )
 
     if not getattr(settings, "GEMINI_API_KEY", ""):
-        return JsonResponse(
-            {
-                "answer": "El servicio de IA no está configurado (falta la API key de Gemini)."
-            }
-        )
+        return JsonResponse({"answer": "El servicio de IA no está configurado (falta la API key de Gemini)."})
 
     try:
         from google import genai
@@ -180,17 +172,12 @@ def blog_chat_api(request):
         answer_text = (response.text or "").strip()
 
         if not answer_text:
-            answer_text = (
-                "No he podido formular una respuesta en este momento. "
-                "Por favor, reformula tu pregunta."
-            )
+            answer_text = "No he podido formular una respuesta en este momento. Por favor, reformula tu pregunta."
 
         return JsonResponse({"answer": answer_text})
     except Exception as e:
         log.exception("Error invoking Gemini for blog assistant: %s", e)
         return JsonResponse(
-            {
-                "answer": f"Lo siento, ocurrió un error técnico al invocar la IA: {str(e)}"
-            },
+            {"answer": f"Lo siento, ocurrió un error técnico al invocar la IA: {str(e)}"},
             status=500,
         )

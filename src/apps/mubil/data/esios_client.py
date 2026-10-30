@@ -49,8 +49,7 @@ def _auth_token() -> str:
     token = settings.ESIOS_TOKEN
     if not token:
         raise ESIOSError(
-            "ESIOS_TOKEN is not set — request one at consultasios@ree.es and "
-            "put it in .env. See settings/base.py."
+            "ESIOS_TOKEN is not set — request one at consultasios@ree.es and put it in .env. See settings/base.py."
         )
     return token
 
@@ -95,9 +94,7 @@ def fetch_indicator(
     if r.status_code == 401:
         raise ESIOSError("ESIOS rejected the token (401). Verify settings.ESIOS_TOKEN.")
     if r.status_code == 403:
-        raise ESIOSError(
-            "ESIOS denied access (403). Token may lack permission for this indicator."
-        )
+        raise ESIOSError("ESIOS denied access (403). Token may lack permission for this indicator.")
     r.raise_for_status()
     try:
         payload = r.json()

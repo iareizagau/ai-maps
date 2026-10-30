@@ -40,9 +40,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         dry_run = options["dry_run"]
         keep_stale = options["keep_stale"]
-        self.stdout.write(
-            f"Computing demand scores (dry_run={dry_run}, keep_stale={keep_stale})…"
-        )
+        self.stdout.write(f"Computing demand scores (dry_run={dry_run}, keep_stale={keep_stale})…")
         stats = services.compute_demand_scores(
             dry_run=dry_run,
             prune_outside_bbox=not keep_stale,

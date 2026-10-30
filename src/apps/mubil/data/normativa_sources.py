@@ -190,8 +190,7 @@ PROGRAMA_AUTO_PLUS: list[NormativaSource] = [
         url="https://www.mintur.gob.es/es-es/programa-auto/Documents/QA-PLAN-AUTO_def.pdf",
         title_override="Programa Auto+ — Preguntas Frecuentes (PDF oficial)",
         note=(
-            "QA oficial Programa Auto+: elegibilidad, cuantías, "
-            "beneficiarios, compatibilidad, proceso de solicitud."
+            "QA oficial Programa Auto+: elegibilidad, cuantías, beneficiarios, compatibilidad, proceso de solicitud."
         ),
     ),
     NormativaSource(
@@ -224,11 +223,5 @@ PROGRAMA_AUTO_PLUS: list[NormativaSource] = [
 # ────────────────────────── full registry
 
 ALL_SOURCES: list[NormativaSource] = (
-    MOVES_III
-    + PROGRAMA_AUTO_PLUS
-    + PVPC
-    + TRANSPORTE_EH
-    + ZBE
-    + VEHICULO_ELECTRICO
-    + MOVILIDAD
+    MOVES_III + PROGRAMA_AUTO_PLUS + PVPC + TRANSPORTE_EH + ZBE + VEHICULO_ELECTRICO + MOVILIDAD
 )

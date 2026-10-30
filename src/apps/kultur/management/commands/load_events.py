@@ -32,18 +32,12 @@ class Command(BaseCommand):
             try:
                 with urllib.request.urlopen(req) as response:
                     if response.status != 200:
-                        self.stderr.write(
-                            self.style.ERROR(
-                                f"Failed to fetch API. Status: {response.status}"
-                            )
-                        )
+                        self.stderr.write(self.style.ERROR(f"Failed to fetch API. Status: {response.status}"))
                         break
 
                     data = json.loads(response.read().decode("utf-8"))
             except Exception as e:
-                self.stderr.write(
-                    self.style.ERROR(f"Error occurred on page {page}: {e!s}")
-                )
+                self.stderr.write(self.style.ERROR(f"Error occurred on page {page}: {e!s}"))
                 break
 
             items = data.get("items", [])
@@ -88,9 +82,7 @@ class Command(BaseCommand):
 
         try:
             if start_date_str:
-                start_date = datetime.fromisoformat(
-                    start_date_str.replace("Z", "+00:00")
-                )
+                start_date = datetime.fromisoformat(start_date_str.replace("Z", "+00:00"))
             if end_date_str:
                 end_date = datetime.fromisoformat(end_date_str.replace("Z", "+00:00"))
         except Exception as e:
@@ -120,16 +112,8 @@ class Command(BaseCommand):
 
         location = None
         try:
-            lat_val = (
-                item.get("municipalityLatitude")
-                or item.get("latwgs84")
-                or item.get("latitude")
-            )
-            lng_val = (
-                item.get("municipalityLongitude")
-                or item.get("lonwgs84")
-                or item.get("longitude")
-            )
+            lat_val = item.get("municipalityLatitude") or item.get("latwgs84") or item.get("latitude")
+            lng_val = item.get("municipalityLongitude") or item.get("lonwgs84") or item.get("longitude")
 
             if lat_val and lng_val:
                 location = Point(float(lng_val), float(lat_val), srid=4326)

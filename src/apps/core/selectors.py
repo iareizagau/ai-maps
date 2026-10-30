@@ -16,9 +16,7 @@ def get_top_experts(app_context="pintxos", limit=6, exclude_user=None):
 
     queryset = (
         User.objects.annotate(
-            follower_count=Count(
-                "follower_set", filter=Q(follower_set__app_context=app_context)
-            ),
+            follower_count=Count("follower_set", filter=Q(follower_set__app_context=app_context)),
             # In a real scenario, we'd join with apps.pintxos.DishRating here.
             # But core shouldn't depend on pintxos models directly to avoid circularity.
             # We'll use follower count as the primary 'authority' metric for now.
@@ -40,9 +38,7 @@ def get_suggested_users(user, app_context="pintxos", limit=6):
     if not user.is_authenticated:
         return User.objects.none()
 
-    followed_by_me = Follow.objects.filter(
-        follower=user, app_context=app_context
-    ).values_list("followed_id", flat=True)
+    followed_by_me = Follow.objects.filter(follower=user, app_context=app_context).values_list("followed_id", flat=True)
 
     suggestions = (
         User.objects.filter(
@@ -51,11 +47,7 @@ def get_suggested_users(user, app_context="pintxos", limit=6):
         )
         .exclude(id__in=followed_by_me)
         .exclude(id=user.id)
-        .annotate(
-            mutual_count=Count(
-                "follower_set", filter=Q(follower_set__follower_id__in=followed_by_me)
-            )
-        )
+        .annotate(mutual_count=Count("follower_set", filter=Q(follower_set__follower_id__in=followed_by_me)))
         .order_by("-mutual_count")
     )
 

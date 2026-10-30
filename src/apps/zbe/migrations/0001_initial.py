@@ -32,9 +32,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "geom",
-                    django.contrib.gis.db.models.fields.MultiPolygonField(
-                        srid=4326, verbose_name="Geometría"
-                    ),
+                    django.contrib.gis.db.models.fields.MultiPolygonField(srid=4326, verbose_name="Geometría"),
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),

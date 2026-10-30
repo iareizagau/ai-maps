@@ -99,16 +99,12 @@ class Migration(migrations.Migration):
                 ("description", models.TextField(blank=True)),
                 (
                     "price",
-                    models.DecimalField(
-                        blank=True, decimal_places=2, max_digits=6, null=True
-                    ),
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=6, null=True),
                 ),
                 ("image_url", models.URLField(blank=True)),
                 (
                     "embedding",
-                    pgvector.django.vector.VectorField(
-                        blank=True, dimensions=384, null=True
-                    ),
+                    pgvector.django.vector.VectorField(blank=True, dimensions=384, null=True),
                 ),
                 (
                     "avg_rating",

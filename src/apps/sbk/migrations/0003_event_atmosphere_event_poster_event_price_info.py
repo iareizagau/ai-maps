@@ -27,8 +27,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="event",
             name="price_info",
-            field=models.CharField(
-                blank=True, help_text="e.g. 10€ with drink", max_length=100, null=True
-            ),
+            field=models.CharField(blank=True, help_text="e.g. 10€ with drink", max_length=100, null=True),
         ),
     ]

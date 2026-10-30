@@ -34,8 +34,7 @@ from apps.sbk.models import DanceStyle, Event, EventOccurrence, EventType
 # Defaults
 # ---------------------------------------------------------------------------
 DEFAULT_URL = (
-    "https://www.eventbrite.com/d/united-kingdom--london--18207/bachata/"
-    "?start_date=2026-06-06&end_date=2026-06-13"
+    "https://www.eventbrite.com/d/united-kingdom--london--18207/bachata/?start_date=2026-06-06&end_date=2026-06-13"
 )
 
 # Full browser-like headers — helps with sites that check common headers.
@@ -135,9 +134,7 @@ def _extract_ld_json_events(soup: BeautifulSoup) -> list[dict]:
             candidates = data
         elif isinstance(data, dict):
             if data.get("@type") == "ItemList":
-                candidates = [
-                    el.get("item", {}) for el in data.get("itemListElement", [])
-                ]
+                candidates = [el.get("item", {}) for el in data.get("itemListElement", [])]
             else:
                 candidates = [data]
 
@@ -218,9 +215,7 @@ def _extract_card_events(soup: BeautifulSoup) -> list[dict]:
 
 def _parse_date(date_str: str) -> datetime | None:
     """Parse 'Wed, Jun 10, 7:00 PM' → UTC-aware datetime (assumes BST = UTC+1)."""
-    date_str = re.sub(
-        r"\s*\+\s*\d+\s*more.*", "", date_str, flags=re.IGNORECASE
-    ).strip()
+    date_str = re.sub(r"\s*\+\s*\d+\s*more.*", "", date_str, flags=re.IGNORECASE).strip()
     m = re.search(
         r"(\w{3})\s+(\d+),\s+(\d+):(\d+)\s+([AP]M)",
         date_str,
@@ -403,9 +398,7 @@ def _normalise_card(ev: dict, stdout, style) -> dict | None:
 # ---------------------------------------------------------------------------
 
 
-def scrape_eventbrite(
-    base_url: str, max_pages: int, stdout, style, proxy: str | None = None
-) -> list[dict]:
+def scrape_eventbrite(base_url: str, max_pages: int, stdout, style, proxy: str | None = None) -> list[dict]:
     all_events: list[dict] = []
     seen_names: set[str] = set()
 
@@ -413,9 +406,7 @@ def scrape_eventbrite(
         parsed = urllib.parse.urlparse(base_url)
         qs = urllib.parse.parse_qs(parsed.query)
         qs["page"] = [str(page)]
-        page_url = parsed._replace(
-            query=urllib.parse.urlencode(qs, doseq=True)
-        ).geturl()
+        page_url = parsed._replace(query=urllib.parse.urlencode(qs, doseq=True)).geturl()
 
         stdout.write(f"\n  📄 Page {page}: {page_url}")
         try:
@@ -469,9 +460,7 @@ class Command(BaseCommand):
     help = "Scrapes Eventbrite for bachata events (with BeautifulSoup) and seeds them into the DB"
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "--url", default=DEFAULT_URL, help="Eventbrite search URL to scrape"
-        )
+        parser.add_argument("--url", default=DEFAULT_URL, help="Eventbrite search URL to scrape")
         parser.add_argument(
             "--pages",
             type=int,
@@ -511,13 +500,9 @@ class Command(BaseCommand):
                 )
             )
 
-        self.stdout.write(
-            self.style.MIGRATE_HEADING(f"\n🕷  Scraping Eventbrite — {options['url']}\n")
-        )
+        self.stdout.write(self.style.MIGRATE_HEADING(f"\n🕷  Scraping Eventbrite — {options['url']}\n"))
 
-        events = scrape_eventbrite(
-            options["url"], options["pages"], self.stdout, self.style, proxy=proxy
-        )
+        events = scrape_eventbrite(options["url"], options["pages"], self.stdout, self.style, proxy=proxy)
         self.stdout.write(f"\n  ✅ Total scraped: {len(events)}\n")
 
         if not events:
@@ -528,26 +513,20 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("--- DRY RUN — not saving ---"))
             for ev in events:
                 self.stdout.write(
-                    f"  • {ev['name']}\n"
-                    f"    {ev['start_date']}  |  {ev['city']}  "
-                    f"|  lat={ev['lat']} lng={ev['lng']}\n"
+                    f"  • {ev['name']}\n    {ev['start_date']}  |  {ev['city']}  |  lat={ev['lat']} lng={ev['lng']}\n"
                 )
             return
 
         if options["clear"]:
             names = [ev["name"] for ev in events]
             deleted, _ = Event.objects.filter(name__in=names).delete()
-            self.stdout.write(
-                self.style.WARNING(f"  Cleared {deleted} existing events.")
-            )
+            self.stdout.write(self.style.WARNING(f"  Cleared {deleted} existing events."))
 
         created = skipped = errors = 0
 
         for data in events:
             if not data.get("start_date"):
-                self.stdout.write(
-                    self.style.WARNING(f"  SKIP (no date): {data['name']}")
-                )
+                self.stdout.write(self.style.WARNING(f"  SKIP (no date): {data['name']}"))
                 skipped += 1
                 continue
 
@@ -596,8 +575,4 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f"  ERROR {data['name']!r}: {exc}"))
                 errors += 1
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"\n✅  Done — {created} created, {skipped} skipped, {errors} errors."
-            )
-        )
+        self.stdout.write(self.style.SUCCESS(f"\n✅  Done — {created} created, {skipped} skipped, {errors} errors."))

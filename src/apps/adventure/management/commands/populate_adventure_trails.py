@@ -3,9 +3,7 @@ from django.db import connection
 
 
 class Command(BaseCommand):
-    help = (
-        "Pobla la tabla adventure_trails desde pgr_ways aplicando mapeos de superficie"
-    )
+    help = "Pobla la tabla adventure_trails desde pgr_ways aplicando mapeos de superficie"
 
     def handle(self, *args, **options):
         # 1. Verificar si pgr_ways existe
@@ -19,11 +17,7 @@ class Command(BaseCommand):
             pgr_exists = cursor.fetchone()[0]
 
         if not pgr_exists:
-            self.stderr.write(
-                self.style.ERROR(
-                    "✗ La tabla pgr_ways no existe. Ejecuta el importador de OSM primero."
-                )
-            )
+            self.stderr.write(self.style.ERROR("✗ La tabla pgr_ways no existe. Ejecuta el importador de OSM primero."))
             return
 
         # 2. Verificar si adventure_trails existe
@@ -38,9 +32,7 @@ class Command(BaseCommand):
 
         if not trails_exists:
             self.stderr.write(
-                self.style.ERROR(
-                    "✗ La tabla adventure_trails no existe. Ejecuta las migraciones de Django primero."
-                )
+                self.style.ERROR("✗ La tabla adventure_trails no existe. Ejecuta las migraciones de Django primero.")
             )
             return
 

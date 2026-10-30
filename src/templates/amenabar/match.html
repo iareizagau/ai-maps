@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Amenabar — {% trans "Match-maker" %}{% endblock %}
+
+{% block extra_head %}
+    <style>
+        /* Hide results container until it has content; HTMX indicator shows while loading */
+        #match-indicator { display: none; }
+        .htmx-request #match-indicator { display: inline-block; }
+        .htmx-request #match-submit { opacity: 0.6; pointer-events: none; }
+        #match-indicator .amb-spinner {
+            display: inline-block; width: 14px; height: 14px;
+            border: 2px solid #cbd5e1; border-top-color: #4f46e5;
+            border-radius: 50%; animation: amb-spin 0.8s linear infinite;
+            vertical-align: -2px;
+        }
+        @keyframes amb-spin { to { transform: rotate(360deg); } }
+    </style>
+{% endblock %}
+
+{% block content %}
+<section class="max-w-xl mx-auto px-4 py-6 sm:py-10">
+
+    <header class="mb-6">
+        <p class="text-xs tracking-widest uppercase text-indigo-400">{% trans "Idea #2" %}</p>
+        <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">
+            {% trans "Describe tu familia, te buscamos promoción." %}
+        </h1>
+        <p class="mt-2 text-sm text-slate-500 dark:text-gray-400 leading-relaxed">
+            {% blocktrans %}
+            En una frase. Presupuesto, hijos, teletrabajo, costa o montaña… En 3 s
+            te devolvemos 3 promociones rankeadas sobre datos reales con el porqué
+            de cada una.
+            {% endblocktrans %}
+        </p>
+    </header>
+
+    <form hx-post="{% url 'amenabar:match_results' %}"
+          hx-target="#match-results"
+          hx-swap="innerHTML"
+          hx-indicator="#match-indicator"
+          class="space-y-3">
+        {% csrf_token %}
+        <label for="match-query" class="block text-sm font-medium">
+            {% trans "Cuéntanos qué buscas" %}
+        </label>
+        <textarea id="match-query"
+                  name="query"
+                  rows="5"
+                  class="w-full rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-white/5 p-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  placeholder="{% trans 'Pareja con dos niños pequeños, teletrabajo + 2 días en oficina en Donostia, 300-400 k, cerca de colegio público y zonas verdes, nos gusta la costa.' %}"
+                  required></textarea>
+        <div class="flex items-center justify-between">
+            <span id="match-indicator" class="text-xs text-slate-500">
+                <span class="amb-spinner" aria-hidden="true"></span>
+                {% trans "Analizando preferencias…" %}
+            </span>
+            <button id="match-submit" type="submit"
+                    class="rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium px-4 py-2 transition-colors">
+                {% trans "Buscar promociones" %}
+            </button>
+        </div>
+    </form>
+
+    <p class="mt-3 text-[11px] text-slate-500 dark:text-slate-500 leading-tight">
+        {% blocktrans %}
+        Resultados ordenados sobre datos abiertos (OpenStreetMap, PVGIS, AEMET, OpenAQ).
+        El párrafo narrativo lo redacta una IA sobre esos mismos datos — no inventa valores.
+        {% endblocktrans %}
+    </p>
+
+    <div id="match-results" class="mt-6"></div>
+
+    <div class="mt-10 text-center">
+        <a href="{% url 'amenabar:home' %}" class="text-xs text-slate-500 hover:text-indigo-400">
+            ← {% trans "volver" %}
+        </a>
+    </div>
+</section>
+{% endblock %}

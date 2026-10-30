@@ -1,0 +1,81 @@
+{% load i18n %}
+
+{% if empty_query %}
+    <p class="rounded-lg border border-amber-400/40 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 p-3 text-sm">
+        {% trans "Escribe algo primero." %}
+    </p>
+{% elif not result.results %}
+    <div class="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 text-sm text-slate-600 dark:text-slate-400">
+        <p class="mb-2 font-medium text-slate-900 dark:text-slate-100">
+            {% trans "Sin coincidencias" %}
+        </p>
+        <p>
+            {% blocktrans %}
+            No encontramos promociones compatibles con esos criterios. Prueba a
+            aflojar un criterio (presupuesto, ciudad, servicios imprescindibles)
+            o a describir con menos detalle.
+            {% endblocktrans %}
+        </p>
+    </div>
+{% else %}
+    {% if result.degraded %}
+        <p class="mb-3 text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 border border-amber-200/60 rounded px-3 py-2">
+            {% trans "Modo degradado: no pudimos interpretar todo el texto o alguna explicación no cargó. Los números siguen siendo reales." %}
+        </p>
+    {% endif %}
+
+    <div class="space-y-4">
+        {% for item in result.results %}
+            {% with scored=item.scored %}
+            <article class="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                <header class="flex items-baseline justify-between gap-3 mb-2">
+                    <div>
+                        <h3 class="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100">
+                            {{ scored.promocion.nombre }}
+                        </h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            {{ scored.promocion.ciudad }}
+                            · {{ scored.promocion.get_estado_display }}
+                            {% if scored.promocion.porcentaje_vendido %}
+                                · {{ scored.promocion.porcentaje_vendido }}% {% trans "vendido" %}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <span class="shrink-0 text-[11px] font-medium bg-indigo-500/10 text-indigo-500 rounded-full px-2 py-0.5"
+                          title="{% trans 'Score sobre 1.0' %}">
+                        {{ scored.score }}
+                    </span>
+                </header>
+
+                {% if scored.highlights %}
+                    <ul class="flex flex-wrap gap-1.5 mb-2">
+                        {% for h in scored.highlights %}
+                            <li class="text-[11px] bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 rounded px-2 py-0.5">
+                                {{ h }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                {% if item.explanation %}
+                    <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                        {{ item.explanation }}
+                    </p>
+                {% endif %}
+
+                <div class="mt-3 flex items-center gap-3 text-xs">
+                    {% if scored.promocion.detail_url %}
+                        <a href="{{ scored.promocion.detail_url }}" target="_blank" rel="noopener"
+                           class="text-indigo-500 hover:underline">
+                            {% trans "ficha oficial →" %}
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'amenabar:promociones' %}" class="text-slate-500 hover:text-indigo-500">
+                        {% trans "ver en mapa" %}
+                    </a>
+                </div>
+            </article>
+            {% endwith %}
+        {% endfor %}
+    </div>
+{% endif %}

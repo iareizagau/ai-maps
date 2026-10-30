@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from .models import POI, AirQualityStation, Promocion
 from .services import SUBTIPO_LABELS, nearest_by_category
+from .services_match import match as match_service
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,19 @@ def _ideas(request) -> list[Idea]:
                 "qué tiene el barrio."
             ),
             url=reverse("amenabar:promociones"),
+            estado="LIVE",
+        ),
+        Idea(
+            slug="match-maker",
+            titulo="Match-maker: describe tu familia",
+            descripcion=(
+                "Textarea en lenguaje natural. Dices quién eres y qué buscas "
+                "(presupuesto, familia, teletrabajo, costa o montaña…) y en 3 s "
+                "obtienes 3 promociones rankeadas sobre datos reales: servicios "
+                "cercanos, potencial solar, clima medio y calidad del aire. "
+                "Cada una con un párrafo explicando por qué encaja."
+            ),
+            url=reverse("amenabar:match"),
             estado="LIVE",
         ),
     ]
@@ -159,3 +173,17 @@ def airquality(request):
         for s in qs
     ]
     return JsonResponse({"stations": stations})
+
+
+def match_page(request):
+    """Match-maker landing: form + empty container for HTMX results."""
+    return render(request, "amenabar/match.html", {})
+
+
+def match_results(request):
+    """HTMX endpoint. Accepts POST with `query`, returns a partial."""
+    query = (request.POST.get("query") or "").strip()
+    if not query:
+        return render(request, "amenabar/match_results.html", {"empty_query": True})
+    result = match_service(query, limit=3)
+    return render(request, "amenabar/match_results.html", {"result": result})

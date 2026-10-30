@@ -13,4 +13,6 @@ urlpatterns = [
         name="promocion_pois",
     ),
     path("airquality.json", views.airquality, name="airquality"),
+    path("match/", views.match_page, name="match"),
+    path("match/results/", views.match_results, name="match_results"),
 ]

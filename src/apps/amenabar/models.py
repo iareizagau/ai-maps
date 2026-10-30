@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from django.contrib.gis.db import models as gis_models
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -94,3 +96,29 @@ class POI(BaseModel):
 
     def __str__(self):
         return f"{self.nombre or self.subtipo} [{self.categoria}]"
+
+
+class SolarPotential(BaseModel):
+    """Cached PVGIS v5.3 photovoltaic potential for a Promocion.
+
+    One row per Promocion. Values are per kWp installed under standard
+    orientation (south, 30°) with 14% system losses. Raw JSON kept for
+    audit and re-parsing if PVGIS schema changes.
+    """
+
+    promocion = models.OneToOneField(Promocion, on_delete=models.CASCADE, related_name="solar")
+    kwh_kwp_year = models.DecimalField(max_digits=7, decimal_places=2)
+    monthly_json = models.JSONField(default=list)
+    irradiation_year = models.DecimalField(max_digits=8, decimal_places=2)
+
+    tilt_deg = models.PositiveSmallIntegerField(default=30)
+    azimuth_deg = models.SmallIntegerField(default=0)
+    system_loss_pct = models.DecimalField(max_digits=4, decimal_places=1, default=14)
+    pvgis_version = models.CharField(max_length=20, default="v5_3")
+    raw_json = models.JSONField(default=dict)
+
+    class Meta:
+        indexes: ClassVar[list] = [models.Index(fields=["kwh_kwp_year"])]
+
+    def __str__(self):
+        return f"Solar {self.promocion.slug}: {self.kwh_kwp_year} kWh/kWp·año"

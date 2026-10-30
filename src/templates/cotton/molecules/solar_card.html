@@ -1,0 +1,38 @@
+{% load i18n %}
+{# Solar Card - Cotton Molecule
+   Props:
+     kwh_year : int/float, "número grande" (kWh/kWp · año).
+     bars     : lista de 12 dicts {month: "ene", pct: 0-100, value: float},
+                normalizados por el caller para evitar math en template.
+   Diseño: mobile-first, base 375 px; sin dependencias JS. #}
+<section class="amb-solar-card bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-slate-100 {{ class|default:'' }}"
+         aria-label="{% trans 'Potencial solar' %}">
+    <header class="flex items-baseline gap-2 mb-2">
+        <span class="text-xl leading-none" aria-hidden="true">☀️</span>
+        <div class="flex items-baseline gap-1">
+            <strong class="text-2xl font-semibold tabular-nums">{{ kwh_year|floatformat:0 }}</strong>
+            <small class="text-[11px] text-slate-500 dark:text-slate-400">{% trans "kWh/kWp · año" %}</small>
+        </div>
+    </header>
+
+    <svg viewBox="0 0 240 72" class="w-full h-16" role="img"
+         aria-label="{% trans 'Producción mensual estimada' %}">
+        {% for bar in bars %}
+            <rect x="{{ forloop.counter0|add:'0' }}0"
+                  y="{{ bar.y|default:0 }}"
+                  width="16"
+                  height="{{ bar.h|default:0 }}"
+                  rx="2"
+                  class="fill-amber-500/80"></rect>
+        {% endfor %}
+    </svg>
+    <ul class="grid grid-cols-12 gap-[1px] text-[9px] text-slate-500 dark:text-slate-400 tabular-nums text-center mt-1" aria-hidden="true">
+        {% for bar in bars %}
+            <li>{{ bar.month }}</li>
+        {% endfor %}
+    </ul>
+
+    <p class="mt-2 text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+        {% blocktrans %}Estimación bajo orientación óptima (sur, 30°, 14% pérdidas). Condiciones reales pueden variar.{% endblocktrans %}
+    </p>
+</section>

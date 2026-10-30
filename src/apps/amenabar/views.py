@@ -90,6 +90,7 @@ def promocion_pois(request, slug: str):
     # makes Django lazy-load promocion_id once per row (N+1).
     pois = POI.objects.filter(promocion=p).values("id", "nombre", "categoria", "subtipo", "location")
     nearest = nearest_by_category(p) if p.location else []
+    solar = getattr(p, "solar", None)
     return JsonResponse(
         {
             "promocion": {
@@ -110,5 +111,13 @@ def promocion_pois(request, slug: str):
                 for poi in pois
             ],
             "nearest": nearest,
+            "solar": (
+                {
+                    "kwh_kwp_year": float(solar.kwh_kwp_year),
+                    "monthly": solar.monthly_json,
+                }
+                if solar
+                else None
+            ),
         }
     )

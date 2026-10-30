@@ -11,7 +11,8 @@ repos:
       - id: check-added-large-files
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.1
+    # Keep in sync with the ruff version pinned in uv.lock (used by CI).
+    rev: v0.15.21
     hooks:
       # Run the linter and auto-fix simple violations
       - id: ruff

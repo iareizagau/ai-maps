@@ -4,3 +4,6 @@
 
 # style: apply ruff format across repo
 e6d27f5
+
+# style: reformat codebase with ruff at line-length 120
+9bdc84cb79095828daa98723f3f943b78bb8c0c1

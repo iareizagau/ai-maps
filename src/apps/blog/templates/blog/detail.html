@@ -109,7 +109,11 @@
                 <span>·</span>
                 <span class="flex items-center gap-1">
                     <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-                    {{ post.published_at|date:"d/m/Y H:i"|default:post.created_at|date:"d/m/Y H:i" }}
+                    {% if post.published_at %}
+                        {{ post.published_at|date:"d/m/Y H:i" }}
+                    {% else %}
+                        {{ post.created_at|date:"d/m/Y H:i" }}
+                    {% endif %}
                 </span>
                 <span>·</span>
                 <span class="flex items-center gap-1">
@@ -195,7 +199,11 @@
                                         {{ r_post.title }}
                                     </h4>
                                     <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                        {{ r_post.published_at|date:"d/m/Y H:i"|default:r_post.created_at|date:"d/m/Y H:i" }}
+                                        {% if r_post.published_at %}
+                                            {{ r_post.published_at|date:"d/m/Y H:i" }}
+                                        {% else %}
+                                            {{ r_post.created_at|date:"d/m/Y H:i" }}
+                                        {% endif %}
                                     </p>
                                 </a>
                             {% endfor %}

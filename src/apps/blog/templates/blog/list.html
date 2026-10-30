@@ -62,9 +62,13 @@
                                         {% endif %}
                                         
                                         <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                            <time class="inline-flex items-center gap-1" datetime="{{ post.published_at|default:post.created_at|date:'c' }}" title="{{ post.published_at|default:post.created_at|date:'DATETIME_FORMAT' }}">
+                                            <time class="inline-flex items-center gap-1" datetime="{% if post.published_at %}{{ post.published_at|date:'c' }}{% else %}{{ post.created_at|date:'c' }}{% endif %}" title="{% if post.published_at %}{{ post.published_at|date:'DATETIME_FORMAT' }}{% else %}{{ post.created_at|date:'DATETIME_FORMAT' }}{% endif %}">
                                                 <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-                                                {{ post.published_at|default:post.created_at|date:"d/m/Y H:i" }}
+                                                {% if post.published_at %}
+                                                    {{ post.published_at|date:"d/m/Y H:i" }}
+                                                {% else %}
+                                                    {{ post.created_at|date:"d/m/Y H:i" }}
+                                                {% endif %}
                                             </time>
                                             <span>·</span>
                                             <span class="inline-flex items-center gap-1">

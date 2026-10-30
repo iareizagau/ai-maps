@@ -1,0 +1,25 @@
+{# Amenabar · POI category icon — Cotton atom #}
+<c-vars code="" />
+{% spaceless %}
+<span class="amb-cat-icon">
+    {% if code == "COMPRAS" %}🛒
+    {% elif code == "EDUCACION" %}🎒
+    {% elif code == "TRANSPORTE" %}🚍
+    {% elif code == "VEHICULOS" %}🚗
+    {% elif code == "COMIDA" %}🍽️
+    {% elif code == "BEBIDA" %}🍺
+    {% elif code == "ATRACTIVOS" %}🎭
+    {% elif code == "INFORMACION" %}ℹ️
+    {% elif code == "SALUD" %}🏥
+    {% elif code == "FINANZAS" %}🏧
+    {% elif code == "ADMINISTRACION" %}🏛️
+    {% elif code == "RELIGION" %}⛪
+    {% elif code == "VERDES" %}🌳
+    {% elif code == "DEPORTE" %}⚽
+    {% elif code == "CULTURA" %}🎬
+    {% elif code == "HISTORICO" %}🏰
+    {% elif code == "NATURAL" %}💧
+    {% else %}•
+    {% endif %}
+</span>
+{% endspaceless %}

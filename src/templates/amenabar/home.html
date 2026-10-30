@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Amenabar — Ideas & MVPs{% endblock %}
+
+{% block content %}
+<section class="max-w-5xl mx-auto px-5 py-10 sm:py-16">
+
+    <header class="mb-10 sm:mb-14">
+        <p class="text-xs tracking-widest uppercase text-indigo-400 mb-2">Amenabar · Full-stack showcase</p>
+        <h1 class="text-3xl sm:text-5xl font-semibold tracking-tight">De la idea al MVP.</h1>
+        <p class="mt-4 text-slate-500 dark:text-gray-400 max-w-2xl text-base sm:text-lg leading-relaxed">
+            Un espacio con ideas que creo que podrían aportar valor a Amenabar
+            Promociones. Cada tarjeta es un MVP real, no un slide: código,
+            datos, y mapa en vivo.
+        </p>
+    </header>
+
+    <div class="grid gap-5 sm:grid-cols-2">
+        {% for idea in ideas %}
+        <a href="{{ idea.url }}"
+           class="group block rounded-2xl border border-white/5 bg-white dark:bg-white/5 p-6 hover:border-indigo-400/50 transition-colors">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-[10px] tracking-widest uppercase px-2 py-0.5 rounded-full
+                             {% if idea.estado == 'LIVE' %}bg-emerald-500/10 text-emerald-400{% endif %}
+                             {% if idea.estado == 'WIP' %}bg-amber-500/10 text-amber-400{% endif %}
+                             {% if idea.estado == 'IDEA' %}bg-slate-500/10 text-slate-400{% endif %}">
+                    {{ idea.estado }}
+                </span>
+                <span class="text-slate-400 group-hover:text-indigo-400 transition-colors text-sm">→</span>
+            </div>
+            <h2 class="text-xl font-semibold mb-2 group-hover:text-indigo-500 transition-colors">
+                {{ idea.titulo }}
+            </h2>
+            <p class="text-sm text-slate-500 dark:text-gray-400 leading-relaxed">
+                {{ idea.descripcion }}
+            </p>
+        </a>
+        {% endfor %}
+
+        <div class="rounded-2xl border border-dashed border-white/10 p-6 flex items-center justify-center text-sm text-slate-500">
+            Más ideas en camino…
+        </div>
+    </div>
+</section>
+{% endblock %}

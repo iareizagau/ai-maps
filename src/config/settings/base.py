@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "apps.oceania",
     "apps.mubil",
     "apps.blog",
+    "apps.amenabar",
 ]
 
 MIDDLEWARE = [
@@ -208,6 +209,11 @@ EUSKALMET_API_KEY = env("EUSKALMET_API_KEY", default="")
 OPENWEATHERMAP_API_KEY = env("OPENWEATHERMAP_API_KEY", default="")
 
 GOOGLE_ANALYTICS_ID = env("GOOGLE_ANALYTICS_ID", default="")
+
+# CARTO — basemap tiles (public CDN, no key needed) + opcional authenticated
+# endpoints (isolines, geocoder) via la key. Para la app `amenabar` solo
+# usamos el basemap Voyager por ahora.
+CARTO_API_KEY = env("CARTO_API_KEY", default="")
 
 # Mubil — Gemini (embeddings gemini-embedding-001 @768d + generation gemini-3.5-flash).
 # Obtener gratis en https://aistudio.google.com/app/apikey

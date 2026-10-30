@@ -164,3 +164,40 @@ class PromocionClima(BaseModel):
 
     def __str__(self):
         return f"Clima {self.promocion.slug} ← {self.station.idema} ({self.distance_m} m)"
+
+
+class AirQualityStation(BaseModel):
+    """OpenAQ v3 air-quality monitoring station in Spain, cached locally.
+
+    Standalone (no FK to Promocion): this is a global map layer, not a
+    per-promocion datum. Readings are the most recent values exposed by the
+    OpenAQ /locations endpoint for the four buyer-relevant parameters.
+    Units: µg/m³.
+    """
+
+    openaq_id = models.CharField(max_length=40, unique=True)
+    name = models.CharField(max_length=200)
+    city = models.CharField(max_length=120, blank=True)
+    country = models.CharField(max_length=2, default="ES")
+
+    location = gis_models.PointField(srid=4326)
+
+    pm25 = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    pm10 = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    no2 = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    o3 = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    measurements_at = models.DateTimeField(null=True, blank=True)
+
+    raw_json = models.JSONField(default=dict)
+
+    class Meta:
+        indexes: ClassVar[list] = [gis_models.Index(fields=["location"])]
+        constraints: ClassVar[list] = [
+            models.CheckConstraint(
+                condition=models.Q(country="ES"),
+                name="aqs_country_es_only",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.openaq_id} · {self.name}"

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import POI, AemetStation, Promocion, PromocionClima, SolarPotential
+from .models import POI, AemetStation, AirQualityStation, Promocion, PromocionClima, SolarPotential
 
 
 @admin.register(Promocion)
@@ -66,6 +66,30 @@ class PromocionClimaAdmin(admin.ModelAdmin):
         "precipitation",
         "sun_hours",
         "period_label",
+        "raw_json",
+        "created_at",
+        "updated_at",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(AirQualityStation)
+class AirQualityStationAdmin(admin.ModelAdmin):
+    list_display = ("openaq_id", "name", "city", "pm25", "measurements_at", "updated_at")
+    search_fields = ("openaq_id", "name", "city")
+    readonly_fields = (
+        "openaq_id",
+        "name",
+        "city",
+        "country",
+        "location",
+        "pm25",
+        "pm10",
+        "no2",
+        "o3",
+        "measurements_at",
         "raw_json",
         "created_at",
         "updated_at",

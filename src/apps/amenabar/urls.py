@@ -12,4 +12,5 @@ urlpatterns = [
         views.promocion_pois,
         name="promocion_pois",
     ),
+    path("airquality.json", views.airquality, name="airquality"),
 ]

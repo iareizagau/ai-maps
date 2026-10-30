@@ -1,0 +1,16 @@
+{
+  "meta": {"name": "openaq-api", "found": 4, "page": 2, "limit": 1000},
+  "results": [
+    {
+      "id": 1004,
+      "name": "Barcelona - Eixample",
+      "locality": "Barcelona",
+      "country": {"id": 6, "code": "ES", "name": "Spain"},
+      "coordinates": {"latitude": 41.388, "longitude": 2.173},
+      "sensors": [
+        {"id": 6, "parameter": {"name": "o3", "units": "µg/m³"},
+         "latest": {"value": 58.3, "datetime": {"utc": "2026-10-30T06:00:00Z", "local": "2026-10-30T08:00:00+02:00"}}}
+      ]
+    }
+  ]
+}

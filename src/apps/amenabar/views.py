@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
-from .models import POI, Promocion
+from .models import POI, AirQualityStation, Promocion
 from .services import SUBTIPO_LABELS, nearest_by_category
 
 
@@ -134,3 +134,28 @@ def promocion_pois(request, slug: str):
             ),
         }
     )
+
+
+def airquality(request):
+    """Global air-quality layer: all cached OpenAQ stations in Spain.
+
+    Separate from `promocion_pois` on purpose (see
+    openspec/changes/amenabar-openaq-air-quality/design.md).
+    """
+    qs = AirQualityStation.objects.all()
+    stations = [
+        {
+            "id": s.openaq_id,
+            "name": s.name,
+            "city": s.city,
+            "lat": s.location.y,
+            "lon": s.location.x,
+            "pm25": float(s.pm25) if s.pm25 is not None else None,
+            "pm10": float(s.pm10) if s.pm10 is not None else None,
+            "no2": float(s.no2) if s.no2 is not None else None,
+            "o3": float(s.o3) if s.o3 is not None else None,
+            "measurements_at": s.measurements_at.isoformat() if s.measurements_at else None,
+        }
+        for s in qs
+    ]
+    return JsonResponse({"stations": stations})

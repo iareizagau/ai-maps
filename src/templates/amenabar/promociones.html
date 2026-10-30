@@ -75,6 +75,18 @@
         .amb-clima-svg { display: block; width: 100%; height: 36px; }
         .amb-clima-foot { margin: 6px 0 0; font-size: 10px; color: #94a3b8; }
 
+        /* Air-quality layer (OpenAQ) */
+        .amb-aq-legend { margin: 4px 0 0 18px; font-size: 10px; color: #64748b; display: none; }
+        .amb-aq-legend.open { display: block; }
+        .amb-aq-legend ul { list-style: none; margin: 2px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px 8px; }
+        .amb-aq-legend li { display: flex; align-items: center; gap: 4px; }
+        .amb-aq-legend .amb-dot { width: 8px; height: 8px; }
+        .amb-aq-popup { font-size: 11px; line-height: 1.3; }
+        .amb-aq-popup strong { display: block; font-size: 12px; margin-bottom: 2px; }
+        .amb-aq-popup ul { list-style: none; margin: 2px 0; padding: 0; }
+        .amb-aq-popup li { display: flex; justify-content: space-between; gap: 8px; }
+        .amb-aq-popup time { color: #94a3b8; font-size: 10px; }
+
         @media (max-width: 640px) {
             .amb-ctl { display: none; max-height: calc(100vh - 260px); min-width: 200px; }
             .amb-ctl.open { display: block; }
@@ -152,6 +164,9 @@ function amenabarMap() {
         selected: null,
         allPois: [],
         _flying: false,
+        airQualityLayer: null,
+        aqStations: null,          // session cache of /amenabar/airquality.json
+        aqFetchInFlight: false,
 
         init() {
             this.initMap();
@@ -207,6 +222,9 @@ function amenabarMap() {
             this.leaderLayer = L.layerGroup().addTo(this.map);
             this.nearestLayer = L.layerGroup().addTo(this.map);
             this.selectedLayer = L.layerGroup().addTo(this.map);
+            // Air-quality layer is created now, but only populated the first
+            // time the user activates its toggle (lazy fetch).
+            this.airQualityLayer = L.layerGroup();
 
             // Icon de-overlap is in screen pixels, so it must be redone per zoom.
             this.map.on('zoomend', () => this._layoutNearest());
@@ -282,6 +300,20 @@ function amenabarMap() {
                     const layer = this._getLayer(kind, code);
                     if (!layer) return;
 
+                    // Air-quality: fetch lazily the first time, keep legend
+                    // visibility in sync with the toggle, and if the fetch
+                    // fails revert the checkbox to unchecked.
+                    if (kind === 'global' && code === 'air') {
+                        const legend = panel.querySelector('[data-aq-legend]');
+                        if (t.checked) {
+                            this._enableAirQuality(t, legend);
+                        } else {
+                            this.map.removeLayer(layer);
+                            if (legend) legend.classList.remove('open');
+                        }
+                        return;
+                    }
+
                     if (t.checked) this.map.addLayer(layer);
                     else this.map.removeLayer(layer);
                     // Radius and category toggles both change which POIs qualify.
@@ -315,6 +347,24 @@ function amenabarMap() {
                     ${this.RADII.map(r => row('radio', r.id, r.color, r.label, r.defaultOn, true)).join('')}
                 </div>
                 <div class="amb-section">
+                    <h4 class="amb-h">Capas globales</h4>
+                    <label class="amb-row">
+                        <input type="checkbox" data-lid="global:air">
+                        <span class="amb-dot" style="background:#64748b;"></span>
+                        <span>Calidad del aire</span>
+                    </label>
+                    <div class="amb-aq-legend" data-aq-legend>
+                        PM2.5 µg/m³ (WHO 2021)
+                        <ul>
+                            <li><span class="amb-dot" style="background:#16a34a;"></span>≤ 12</li>
+                            <li><span class="amb-dot" style="background:#eab308;"></span>≤ 35</li>
+                            <li><span class="amb-dot" style="background:#f97316;"></span>≤ 55</li>
+                            <li><span class="amb-dot" style="background:#dc2626;"></span>&gt; 55</li>
+                            <li><span class="amb-dot" style="background:#94a3b8;"></span>sin dato</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="amb-section">
                     <h4 class="amb-h">Ver todos</h4>
                     <p class="amb-hint">Dentro del radio mayor activo</p>
                     ${this.CATS.map(c => row('cat', c.code, this.CAT_COLORS[c.code], c.label, false, false, this.icons[c.code])).join('')}
@@ -326,6 +376,7 @@ function amenabarMap() {
             if (kind === 'estado') return this.estadoLayers[code];
             if (kind === 'radio') return this.circleLayers[code];
             if (kind === 'cat') return this.poiLayers[code];
+            if (kind === 'global' && code === 'air') return this.airQualityLayer;
             return null;
         },
 
@@ -746,6 +797,85 @@ function amenabarMap() {
             return d.innerHTML;
         },
 
+        // ---------------------------------------------------------------
+        // Air quality (OpenAQ) — global toggleable layer, lazy fetch
+        // ---------------------------------------------------------------
+        _enableAirQuality(checkboxEl, legendEl) {
+            const layer = this.airQualityLayer;
+            if (legendEl) legendEl.classList.add('open');
+
+            if (this.aqStations) {
+                this.map.addLayer(layer);
+                return;
+            }
+            if (this.aqFetchInFlight) return;
+            this.aqFetchInFlight = true;
+            fetch('/amenabar/airquality.json')
+                .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+                .then(data => {
+                    this.aqStations = data;
+                    this._paintAirQuality();
+                    this.map.addLayer(layer);
+                })
+                .catch(e => {
+                    console.error('airquality fetch', e);
+                    if (checkboxEl) checkboxEl.checked = false;
+                    if (legendEl) legendEl.classList.remove('open');
+                })
+                .finally(() => { this.aqFetchInFlight = false; });
+        },
+
+        _paintAirQuality() {
+            const layer = this.airQualityLayer;
+            layer.clearLayers();
+            const list = (this.aqStations && this.aqStations.stations) || [];
+            list.forEach(st => {
+                const color = this._colorForPm25(st.pm25);
+                const marker = L.circleMarker([st.lat, st.lon], {
+                    radius: 7, weight: 1, color: '#fff',
+                    fillColor: color, fillOpacity: 0.95,
+                }).bindPopup(this._aqPopup(st), { className: 'amenabar-popup' });
+                layer.addLayer(marker);
+            });
+        },
+
+        _aqPopup(st) {
+            const row = (label, v, unit) => v == null
+                ? ''
+                : `<li><span>${label}</span><span>${v.toFixed(1)} ${unit}</span></li>`;
+            const rows = [
+                row('PM2.5', st.pm25, 'µg/m³'),
+                row('PM10',  st.pm10, 'µg/m³'),
+                row('NO₂',   st.no2,  'µg/m³'),
+                row('O₃',    st.o3,   'µg/m³'),
+            ].join('');
+            const title = st.city ? `${st.name} · ${st.city}` : st.name;
+            const when = st.measurements_at
+                ? `<time>${this._relativeTime(st.measurements_at)}</time>`
+                : '';
+            const body = rows || '<li>Sin lecturas de PM/NO₂/O₃</li>';
+            return `<div class="amb-aq-popup"><strong>${this._escape(title)}</strong><ul>${body}</ul>${when}</div>`;
+        },
+
+        _colorForPm25(v) {
+            if (v == null) return '#94a3b8';   // gris: sin dato
+            if (v <= 12) return '#16a34a';     // verde (WHO 24h good)
+            if (v <= 35) return '#eab308';     // amarillo (moderate)
+            if (v <= 55) return '#f97316';     // naranja (unhealthy for sensitive)
+            return '#dc2626';                   // rojo (>55)
+        },
+
+        _relativeTime(iso) {
+            const then = new Date(iso).getTime();
+            if (!Number.isFinite(then)) return '';
+            const diffMin = Math.round((Date.now() - then) / 60000);
+            if (diffMin < 1) return 'hace instantes';
+            if (diffMin < 60) return `hace ${diffMin} min`;
+            const diffH = Math.round(diffMin / 60);
+            if (diffH < 24) return `hace ${diffH} h`;
+            const diffD = Math.round(diffH / 24);
+            return `hace ${diffD} d`;
+        },
     };
 }
 

@@ -64,6 +64,17 @@
         .amb-solar-months { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1px; margin: 1px 0 0; padding: 0; list-style: none; font-size: 9px; color: #94a3b8; font-variant-numeric: tabular-nums; }
         .amb-solar-foot { margin: 4px 0 0; font-size: 10px; line-height: 1.25; color: #94a3b8; }
 
+        /* Climate block (mirror of cotton/molecules/climate_card.html) */
+        .amb-clima { padding: 10px 14px 8px; border-bottom: 1px solid #e2e8f0; }
+        .amb-clima-head { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+        .amb-clima-head strong { font-size: 13px; font-weight: 600; color: #0f172a; }
+        .amb-clima-head small { font-size: 10px; color: #64748b; }
+        .amb-clima-row { margin-bottom: 6px; }
+        .amb-clima-row:last-of-type { margin-bottom: 0; }
+        .amb-clima-row-head { display: flex; align-items: baseline; justify-content: space-between; font-size: 10px; color: #64748b; margin-bottom: 1px; }
+        .amb-clima-svg { display: block; width: 100%; height: 36px; }
+        .amb-clima-foot { margin: 6px 0 0; font-size: 10px; color: #94a3b8; }
+
         @media (max-width: 640px) {
             .amb-ctl { display: none; max-height: calc(100vh - 260px); min-width: 200px; }
             .amb-ctl.open { display: block; }
@@ -341,7 +352,7 @@ function amenabarMap() {
             control.addTo(this.map);
         },
 
-        _renderCard(nearest, state, solar) {
+        _renderCard(nearest, state, solar, clima) {
             const p = this.selected;
             const head = `
                 <div class="amb-card-head">
@@ -367,7 +378,7 @@ function amenabarMap() {
                 body = sorted.map(c => this._cardRow(c, byCat[c.code])).join('');
             }
 
-            this.cardEl.innerHTML = head + this._solarBlock(solar) + body + `
+            this.cardEl.innerHTML = head + this._solarBlock(solar) + this._climateBlock(clima) + body + `
                 <div class="amb-card-foot">
                     Minutos andando estimados (4,5 km/h, recorrido ≈ 1,3× la línea recta). Datos: OpenStreetMap.
                 </div>`;
@@ -400,6 +411,54 @@ function amenabarMap() {
                     <svg viewBox="0 0 240 72" class="amb-solar-svg" role="img" aria-label="Producción mensual estimada">${bars}</svg>
                     <ul class="amb-solar-months" aria-hidden="true">${labels}</ul>
                     <p class="amb-solar-foot">Estimación bajo orientación óptima (sur, 30°, 14% pérdidas). Condiciones reales pueden variar.</p>
+                </section>
+            `;
+        },
+
+        // Mirror of cotton/molecules/climate_card.html, same reason as _solarBlock.
+        // `clima` null/undefined o sin series válidas → bloque omitido entero.
+        _climateBlock(clima) {
+            if (!clima) return '';
+            const series = [
+                {title: 'Tª media', unit: '°C',  values: clima.temp_mean,     color: '#ef4444'},
+                {title: 'Lluvia',   unit: 'mm',  values: clima.precipitation, color: '#3b82f6'},
+                {title: 'Sol',      unit: 'h',   values: clima.sun_hours,     color: '#f59e0b'},
+            ].filter(s => Array.isArray(s.values) && s.values.some(v => v != null));
+            if (!series.length) return '';
+
+            const colW = 20, barW = 16, maxH = 32, viewH = 48;
+            const rows = series.map(s => {
+                const valid = s.values.filter(v => v != null);
+                const min = Math.min(...valid, 0);  // temperaturas pueden ser negativas
+                const max = Math.max(...valid, 1);
+                const span = Math.max(max - min, 0.01);
+                const bars = s.values.map((v, i) => {
+                    if (v == null) return '';
+                    const h = Math.max(2, Math.round(((v - min) / span) * maxH));
+                    const y = viewH - h - 2;  // 2 px bottom padding
+                    return `<rect x="${i * colW + 2}" y="${y}" width="${barW}" height="${h}" rx="2" fill="${s.color}" fill-opacity="0.85"></rect>`;
+                }).join('');
+                return `
+                    <div class="amb-clima-row">
+                        <div class="amb-clima-row-head"><span>${s.title}</span><span>${s.unit}</span></div>
+                        <svg viewBox="0 0 240 ${viewH}" class="amb-clima-svg" role="img" aria-label="${s.title} mensual">${bars}</svg>
+                    </div>`;
+            }).join('');
+
+            const dist = clima.distance_m >= 1000
+                ? `≈ ${(clima.distance_m / 1000).toFixed(1).replace('.', ',')} km`
+                : `≈ ${clima.distance_m} m`;
+            return `
+                <section class="amb-clima" aria-label="Clima">
+                    <header class="amb-clima-head">
+                        <span aria-hidden="true" style="font-size:16px;line-height:1">🌡️</span>
+                        <div style="display:flex;flex-direction:column;line-height:1.1">
+                            <strong>${this._escape(clima.station)}</strong>
+                            <small>${dist} · ${this._escape(clima.period || '')}</small>
+                        </div>
+                    </header>
+                    ${rows}
+                    <p class="amb-clima-foot">Datos: AEMET.</p>
                 </section>
             `;
         },
@@ -528,7 +587,7 @@ function amenabarMap() {
             this.selected = p;
             this.allPois = [];
             // Card first: the fly target depends on how much map it covers.
-            this._renderCard([], 'loading', null);
+            this._renderCard([], 'loading', null, null);
             this._flyThen(this._centerFor(L.latLng(p.lat, p.lon), 15), 15);
 
             this.selectedLayer.clearLayers();
@@ -560,7 +619,7 @@ function amenabarMap() {
                 data = await resp.json();
             } catch (e) {
                 console.error('POI fetch', e);
-                if (this.selected === p) this._renderCard([], 'error', null);
+                if (this.selected === p) this._renderCard([], 'error', null, null);
                 return;
             }
             // Ignore stale responses when clicking through promotions quickly.
@@ -569,7 +628,7 @@ function amenabarMap() {
             this.allPois = data.pois;
             this._renderNearest(data.nearest);
             this.renderPois();
-            this._renderCard(data.nearest, 'ok', data.solar);
+            this._renderCard(data.nearest, 'ok', data.solar, data.clima);
             this._ensureVisible(L.latLng(p.lat, p.lon));
         },
 

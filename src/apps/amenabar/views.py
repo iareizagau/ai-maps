@@ -91,6 +91,7 @@ def promocion_pois(request, slug: str):
     pois = POI.objects.filter(promocion=p).values("id", "nombre", "categoria", "subtipo", "location")
     nearest = nearest_by_category(p) if p.location else []
     solar = getattr(p, "solar", None)
+    clima = getattr(p, "clima", None)
     return JsonResponse(
         {
             "promocion": {
@@ -117,6 +118,18 @@ def promocion_pois(request, slug: str):
                     "monthly": solar.monthly_json,
                 }
                 if solar
+                else None
+            ),
+            "clima": (
+                {
+                    "station": clima.station.nombre,
+                    "distance_m": clima.distance_m,
+                    "temp_mean": clima.temp_mean,
+                    "precipitation": clima.precipitation,
+                    "sun_hours": clima.sun_hours,
+                    "period": clima.period_label,
+                }
+                if clima
                 else None
             ),
         }

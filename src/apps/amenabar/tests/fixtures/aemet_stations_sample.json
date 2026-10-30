@@ -1,0 +1,29 @@
+[
+  {
+    "indicativo": "C001A",
+    "nombre": "DONOSTIA/SAN SEBASTIAN - IGUELDO",
+    "provincia": "GIPUZKOA",
+    "altitud": "251",
+    "latitud": "431833N",
+    "longitud": "020228W",
+    "indsinop": "08029"
+  },
+  {
+    "indicativo": "C002B",
+    "nombre": "BILBAO - AEROPUERTO",
+    "provincia": "BIZKAIA",
+    "altitud": "42",
+    "latitud": "431757N",
+    "longitud": "025432W",
+    "indsinop": "08025"
+  },
+  {
+    "indicativo": "C003C",
+    "nombre": "ESTACION LEJANA (dummy for 50 km test)",
+    "provincia": "ALMERIA",
+    "altitud": "100",
+    "latitud": "365032N",
+    "longitud": "022728W",
+    "indsinop": "08487"
+  }
+]

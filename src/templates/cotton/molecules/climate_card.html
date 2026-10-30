@@ -1,0 +1,46 @@
+{% load i18n %}
+{# Climate Card - Cotton Molecule
+   Props:
+     station        : nombre de la estación AEMET de referencia.
+     distance_m     : distancia en metros entre promoción y estación.
+     period         : etiqueta del periodo climatológico (p.ej. "1991-2020").
+     temp_series    : lista 12 dicts {month, pct_h, pct_y, value} para Tª media (°C).
+     precip_series  : lista 12 dicts {month, pct_h, pct_y, value} para precipitación (mm).
+     sun_series     : lista 12 dicts {month, pct_h, pct_y, value} para horas de sol (h).
+   El caller normaliza (pct_h = alto de la barra, pct_y = y-offset) para no
+   hacer math en template. Diseño: mobile-first base 375 px. #}
+<section class="amb-climate-card bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-slate-100 {{ class|default:'' }}"
+         aria-label="{% trans 'Clima' %}">
+    <header class="flex items-baseline gap-2 mb-2">
+        <span class="text-xl leading-none" aria-hidden="true">🌡️</span>
+        <div class="flex flex-col leading-tight">
+            <strong class="text-sm font-semibold">{{ station }}</strong>
+            <small class="text-[10px] text-slate-500 dark:text-slate-400">
+                ≈ {{ distance_m|floatformat:0 }} m · {{ period }}
+            </small>
+        </div>
+    </header>
+
+    {% for series in series_list %}
+    <div class="mb-2 last:mb-0">
+        <div class="flex items-baseline justify-between text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">
+            <span>{{ series.title }}</span>
+            <span class="tabular-nums">{{ series.unit }}</span>
+        </div>
+        <svg viewBox="0 0 240 48" class="w-full h-10" role="img" aria-label="{{ series.title }}">
+            {% for bar in series.bars %}
+                <rect x="{{ bar.x }}"
+                      y="{{ bar.y }}"
+                      width="16"
+                      height="{{ bar.h }}"
+                      rx="2"
+                      class="{{ series.fill_class }}"></rect>
+            {% endfor %}
+        </svg>
+    </div>
+    {% endfor %}
+
+    <p class="mt-2 text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+        {% trans "Datos: AEMET" %}
+    </p>
+</section>

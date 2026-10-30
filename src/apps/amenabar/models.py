@@ -122,3 +122,45 @@ class SolarPotential(BaseModel):
 
     def __str__(self):
         return f"Solar {self.promocion.slug}: {self.kwh_kwp_year} kWh/kWp·año"
+
+
+class AemetStation(BaseModel):
+    """Cached AEMET station inventory. Refreshed via management command."""
+
+    idema = models.CharField(max_length=10, unique=True)
+    nombre = models.CharField(max_length=200)
+    provincia = models.CharField(max_length=80, blank=True)
+    altitud_m = models.IntegerField(null=True, blank=True)
+    location = gis_models.PointField(srid=4326)
+    raw_json = models.JSONField(default=dict)
+
+    class Meta:
+        indexes: ClassVar[list] = [gis_models.Index(fields=["location"])]
+
+    def __str__(self):
+        return f"{self.idema} · {self.nombre}"
+
+
+class PromocionClima(BaseModel):
+    """Cached AEMET monthly normals (1991-2020) for a Promocion.
+
+    Three 12-value series: temp_mean (°C), precipitation (mm), sun_hours (h).
+    Linked to the nearest AemetStation within AEMET_MAX_STATION_DISTANCE_M.
+    """
+
+    promocion = models.OneToOneField(Promocion, on_delete=models.CASCADE, related_name="clima")
+    station = models.ForeignKey(AemetStation, on_delete=models.PROTECT, related_name="climas")
+    distance_m = models.PositiveIntegerField()
+
+    temp_mean = models.JSONField(default=list)
+    precipitation = models.JSONField(default=list)
+    sun_hours = models.JSONField(default=list)
+    period_label = models.CharField(max_length=40, blank=True)
+
+    raw_json = models.JSONField(default=dict)
+
+    class Meta:
+        indexes: ClassVar[list] = [models.Index(fields=["station"])]
+
+    def __str__(self):
+        return f"Clima {self.promocion.slug} ← {self.station.idema} ({self.distance_m} m)"

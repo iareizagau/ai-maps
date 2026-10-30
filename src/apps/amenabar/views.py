@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
 from django.conf import settings
-from django.http import Http404, JsonResponse
-from django.shortcuts import render
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from .models import POI, Promocion
@@ -88,10 +88,7 @@ def promociones(request):
 
 def promocion_pois(request, slug: str):
     """JSON endpoint hit by the frontend when a promoción marker is clicked."""
-    try:
-        p = Promocion.objects.get(slug=slug)
-    except Promocion.DoesNotExist:
-        raise Http404
+    p = get_object_or_404(Promocion, slug=slug)
 
     # .values() not .only() on the related manager: .only() without the FK
     # makes Django lazy-load promocion_id once per row (N+1).

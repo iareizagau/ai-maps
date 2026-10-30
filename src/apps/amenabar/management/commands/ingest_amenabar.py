@@ -90,7 +90,7 @@ class Command(BaseCommand):
                 )
                 kept = services.store_pois(p, elements)
                 self.stdout.write(self.style.SUCCESS(f"  {kept} POIs stored"))
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 self.stderr.write(f"  failed: {e}")
             # Overpass is shared infra; be polite.
             time.sleep(2.0)

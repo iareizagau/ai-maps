@@ -11,13 +11,14 @@ from __future__ import annotations
 import logging
 import re
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 import requests
 from bs4 import BeautifulSoup
 from django.contrib.gis.geos import Point
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
 
 from .models import POI, Promocion
 
@@ -37,7 +38,6 @@ USER_AGENT = "maps.eus-amenabar/1.0 (contact: iareizagau@gmail.com)"
 # Human-readable labels for every OSM subtype we classify. Wrapped in
 # gettext_lazy so translations fall back cleanly when LANGUAGE_CODE changes.
 # Keys match the `subtipo` field written in `store_pois`.
-from django.utils.translation import gettext_lazy as _
 
 SUBTIPO_LABELS = {
     # Compras
@@ -187,7 +187,7 @@ def _fetch(url: str) -> str:
     return resp.text
 
 
-def scrape_amenabar_listado(urls: Iterable[str] = None) -> list[ScrapedPromocion]:
+def scrape_amenabar_listado(urls: Iterable[str] | None = None) -> list[ScrapedPromocion]:
     """Scrape the three index pages and dedupe by (nombre, ciudad)."""
     urls = urls or [AMENABAR_INDEX, AMENABAR_FUTURAS, AMENABAR_FINALIZADAS]
 
@@ -195,7 +195,7 @@ def scrape_amenabar_listado(urls: Iterable[str] = None) -> list[ScrapedPromocion
     for url in urls:
         try:
             html = _fetch(url)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logger.warning("amenabar scrape %s failed: %s", url, e)
             continue
         for item in _parse_listado(html, url):
@@ -286,7 +286,7 @@ def geocode_nominatim(query: str) -> Point | None:
         )
         resp.raise_for_status()
         data = resp.json()
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.warning("nominatim %r failed: %s", query, e)
         return None
     if not data:

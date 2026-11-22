@@ -11,7 +11,9 @@
 {% endblock %}
 
 {% block content %}
-<section class="max-w-2xl mx-auto px-4 py-6 sm:py-10">
+<section class="max-w-2xl lg:max-w-6xl mx-auto px-4 py-6 sm:py-10">
+    <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-8">
+    <div>
     <header class="mb-4 flex items-start justify-between gap-3">
         <div>
             <p class="text-xs tracking-widest uppercase text-indigo-400">Quiniela · temporada {{ jornada.temporada }}</p>
@@ -23,6 +25,8 @@
             <a href="{% url 'quiniela:seguimiento' %}" class="text-indigo-500 hover:underline">Seguimiento</a>
         </nav>
     </header>
+
+    {% include "quiniela/_guia_layout.html" with modo="movil" %}
 
     {% if jornadas|length > 1 %}
         <form method="get" class="mb-4" onchange="window.location = this.querySelector('select').value">
@@ -39,5 +43,9 @@
     <p id="q-cargando" class="mb-3 text-xs text-slate-500">Actualizando…</p>
 
     {% include "quiniela/_panel.html" %}
+    </div>
+
+    {% include "quiniela/_guia_layout.html" with modo="lateral" %}
+    </div>
 </section>
 {% endblock %}

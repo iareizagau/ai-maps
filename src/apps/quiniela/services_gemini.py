@@ -52,15 +52,24 @@ def _ladder() -> list[str]:
     return [primary] if primary else []
 
 
-def call_gemini(prompt: str, max_output_tokens: int = 1500, timeout_s: float = 20.0) -> str:
+def call_gemini(
+    prompt: str,
+    max_output_tokens: int = 1500,
+    timeout_s: float = 20.0,
+    imagen: tuple[bytes, str] | None = None,
+) -> str:
     """Texto crudo de la primera respuesta no vacía de la ladder.
 
     503/429/timeout avanzan al siguiente modelo; errores de autenticación cortan.
     Cualquier fallo final se convierte en ``GeminiNoDisponibleError``.
+    ``imagen`` = (bytes, mime): solo se usan los modelos ``gemini-*`` de la
+    ladder, porque los Gemma del final no aceptan imágenes.
     """
     if not getattr(settings, "GEMINI_API_KEY", ""):
         raise GeminiNoDisponibleError("GEMINI_API_KEY no está configurada.")
     ladder = _ladder()
+    if imagen is not None:
+        ladder = [m for m in ladder if m.startswith("gemini")]
     if not ladder:
         raise GeminiNoDisponibleError("No hay modelos de Gemini configurados.")
 
@@ -72,11 +81,15 @@ def call_gemini(prompt: str, max_output_tokens: int = 1500, timeout_s: float = 2
         http_options=types.HttpOptions(timeout=int(timeout_s * 1000)),
     )
     cfg = types.GenerateContentConfig(temperature=0.1, max_output_tokens=max_output_tokens)
+    contenido = prompt
+    if imagen is not None:
+        datos, mime = imagen
+        contenido = [types.Part.from_bytes(data=datos, mime_type=mime), prompt]
 
     ultimo: Exception | None = None
     for modelo in ladder:
         try:
-            respuesta = client.models.generate_content(model=modelo, contents=prompt, config=cfg)
+            respuesta = client.models.generate_content(model=modelo, contents=contenido, config=cfg)
         except Exception as exc:
             if _should_fallback(exc):
                 logger.warning("quiniela Gemini %s falló (%s); siguiente modelo.", modelo, exc)

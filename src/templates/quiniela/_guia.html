@@ -1,0 +1,42 @@
+{% comment %}
+Guía de uso de la quiniela. Se incluye dos veces por página: plegada arriba en
+móvil (<details>) y como columna fija a la derecha en escritorio (lg).
+{% endcomment %}
+<ol class="space-y-3 text-sm text-slate-600 dark:text-gray-300 leading-snug">
+    <li class="{% if paso == 'alta' %}font-semibold text-slate-900 dark:text-white{% endif %}">
+        <span class="text-indigo-500">1 · Alta (jueves o viernes).</span>
+        Temporada, nº de jornada y la <b>hora de cierre</b> del boleto (antes del primer partido).
+        Copia los 15 partidos <b>en el orden del boleto</b>: el 15 es el Pleno. Elige cada equipo en el
+        desplegable; si no está (selección, Copa…), escríbelo debajo.
+    </li>
+    <li class="{% if paso == 'datos' %}font-semibold text-slate-900 dark:text-white{% endif %}">
+        <span class="text-indigo-500">2 · Datos.</span>
+        Al guardar se calcula el pronóstico. En la jornada pulsa <b>Cuotas</b> (salen el viernes por la mañana)
+        y <b>Noticias + avisos</b> (mejor jueves y viernes; usa Gemini).
+    </li>
+    <li class="{% if paso == 'boleto' %}font-semibold text-slate-900 dark:text-white{% endif %}">
+        <span class="text-indigo-500">3 · Boleto.</span>
+        Elige configuración: la <b>recomendada</b> es la que más probabilidad da de 11+ aciertos sin pasar de 5 €.
+        Cambia signos con las casillas <b>1 X 2</b> si tienes otro criterio, y fija el <b>Pleno al 15</b>
+        (un signo por equipo).
+    </li>
+    <li class="{% if paso == 'confirmar' %}font-semibold text-slate-900 dark:text-white{% endif %}">
+        <span class="text-indigo-500">4 · Confirmar y jugar.</span>
+        Confirma (después ya no se puede cambiar), pulsa <b>Copiar signos</b> y pásalos a la app de Loterías
+        o a tu administración.
+    </li>
+    <li class="{% if paso == 'resultados' %}font-semibold text-slate-900 dark:text-white{% endif %}">
+        <span class="text-indigo-500">5 · Lunes.</span>
+        Pulsa <b>Resultados</b> para ver los aciertos. Los partidos fuera de Primera y Segunda se meten a mano.
+        En <b>Seguimiento</b> ves si las cuotas, el modelo o tus cambios aciertan más.
+    </li>
+</ol>
+
+<div class="mt-4 border-t border-slate-200 dark:border-white/10 pt-3 text-xs text-slate-500 space-y-1.5">
+    <p class="font-semibold text-slate-700 dark:text-gray-200">De dónde sale cada probabilidad</p>
+    <p><span class="rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300 px-1.5 py-0.5 text-[10px] uppercase">Cuotas</span> casas de apuestas, la fuente más fiable.</p>
+    <p><span class="rounded bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300 px-1.5 py-0.5 text-[10px] uppercase">Modelo</span> modelo propio con el histórico, cuando aún no hay cuotas.</p>
+    <p><span class="rounded bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 px-1.5 py-0.5 text-[10px] uppercase">Sin datos</span> no hay ni cuotas ni histórico: el signo lo eliges tú.</p>
+    <p class="pt-1">Los <b>avisos</b> (bajas, sanciones, dudas) son solo informativos: no cambian las probabilidades.</p>
+    <p>Cada apuesta cuesta 0,75 €; la quiniela devuelve de media el 55 % de lo apostado.</p>
+</div>

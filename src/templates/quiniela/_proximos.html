@@ -1,0 +1,22 @@
+{% if error %}
+    <p class="text-xs text-red-500">No se pudieron cargar los próximos partidos: {{ error }}</p>
+{% elif not proximos %}
+    <p class="text-xs text-slate-500">No hay partidos de Primera ni Segunda en los próximos días (fixtures.csv se actualiza los viernes).</p>
+{% else %}
+    <p class="mb-2 text-xs text-slate-500">Pulsa los partidos <b>en el orden del boleto</b>: cada uno rellena la siguiente fila vacía.</p>
+    <ul class="space-y-1">
+        {% for p in proximos %}
+            {% ifchanged p.fecha.date %}
+                <li class="pt-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{{ p.fecha|date:"l d/m" }}</li>
+            {% endifchanged %}
+            <li>
+                <button type="button"
+                        class="q-proximo w-full rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2 text-left text-sm hover:bg-indigo-50 dark:hover:bg-white/5 disabled:opacity-40"
+                        onclick="quinielaRellenar({{ p.local.pk }}, {{ p.visitante.pk }}, this)">
+                    <span class="mr-1 text-[10px] text-slate-400">{% if p.division == "SP1" %}1ª{% else %}2ª{% endif %}</span>
+                    {{ p.local }} – {{ p.visitante }}
+                </button>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}

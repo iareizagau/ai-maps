@@ -17,7 +17,15 @@ from django.views.decorators.http import require_POST
 from . import services_boleto as sb
 from .forms import JornadaForm, crear_formset, guardar_jornada
 from .models import SIGNOS_PLENO, Boleto, Jornada, PartidoJornada
+from .services_alta import (
+    ImagenNoValidaError,
+    initial_formset,
+    lista_desde_imagen,
+    parsear_lista,
+    proximos_partidos,
+)
 from .services_avisos import extraer_avisos
+from .services_gemini import GeminiNoDisponibleError
 from .services_ingest import IngestError, ingest_cuotas_jornada, ingest_noticias, ingest_resultados_jornada
 from .services_pronostico import calcular_pronostico_jornada
 from .services_seguimiento import calibracion, evaluar_boleto, jornadas_de_temporada, ultimas_jornadas
@@ -72,6 +80,17 @@ def _panel(request, jornada: Jornada, error: str = "", aviso: str = ""):
     return render(request, "quiniela/_panel.html", _panel_context(jornada, error, aviso))
 
 
+def _paso_actual(jornada: Jornada, boleto) -> str:
+    """Paso de la guía que se resalta en la página de la jornada."""
+    if boleto is not None and boleto.confirmado:
+        return "resultados" if jornada.cerrada else "confirmar"
+    if boleto is not None:
+        return "confirmar"
+    if jornada.partidos.filter(cuotas_capturadas_at__isnull=False).exists():
+        return "boleto"
+    return "datos"
+
+
 # --------------------------------------------------------------------------- #
 # Páginas
 # --------------------------------------------------------------------------- #
@@ -87,7 +106,35 @@ def index(request):
 
 @staff_member_required
 def jornada_nueva(request):
-    if request.method == "POST":
+    contexto: dict = {}
+    accion = request.POST.get("accion") if request.method == "POST" else None
+    if accion in ("pegar", "foto"):
+        # Rellenar las 15 filas desde una lista pegada o leída de una foto: no se guarda nada todavía.
+        lista, error_foto = request.POST.get("lista", ""), ""
+        if accion == "foto":
+            imagen = request.FILES.get("imagen")
+            if imagen is None:
+                error_foto = "Elige una foto o captura del boleto."
+            else:
+                try:
+                    lista = lista_desde_imagen(imagen.read(), imagen.content_type or "")
+                except (ImagenNoValidaError, GeminiNoDisponibleError) as exc:
+                    error_foto = f"No se pudo leer la imagen: {exc}"
+        partidos = parsear_lista(lista)
+        cabecera = {k: request.POST.get(k, "") for k in ("temporada", "numero", "fecha_cierre")}
+        form = JornadaForm(initial={k: v for k, v in cabecera.items() if v})
+        formset = crear_formset(initial=initial_formset(partidos))
+        contexto = {
+            "lista": lista,
+            "error_foto": error_foto,
+            "desde_foto": accion == "foto" and not error_foto,
+            "pegados": None if error_foto else len(partidos),
+            "faltan": 15 - len(partidos),
+            "revisar": [
+                i for i, p in enumerate(partidos) if not (p.local.reconocido and p.visitante.reconocido)
+            ],
+        }
+    elif request.method == "POST":
         form = JornadaForm(request.POST)
         formset = crear_formset(request.POST)
         if form.is_valid() and formset.is_valid():
@@ -102,7 +149,17 @@ def jornada_nueva(request):
     else:
         form = JornadaForm()
         formset = crear_formset()
-    return render(request, "quiniela/jornada_form.html", {"form": form, "formset": formset})
+    return render(request, "quiniela/jornada_form.html", {"form": form, "formset": formset, **contexto})
+
+
+@staff_member_required
+def proximos(request):
+    """Partial con los próximos partidos de liga para rellenar filas con un clic."""
+    try:
+        lista = proximos_partidos()
+    except IngestError as exc:
+        return render(request, "quiniela/_proximos.html", {"error": str(exc)})
+    return render(request, "quiniela/_proximos.html", {"proximos": lista})
 
 
 @staff_member_required
@@ -110,6 +167,7 @@ def jornada_detalle(request, pk: int):
     jornada = get_object_or_404(Jornada, pk=pk)
     contexto = _panel_context(jornada)
     contexto["jornadas"] = Jornada.objects.order_by("-fecha_cierre")[:10]
+    contexto["paso"] = _paso_actual(jornada, contexto["boleto"])
     return render(request, "quiniela/jornada.html", contexto)
 
 

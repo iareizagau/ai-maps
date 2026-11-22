@@ -7,6 +7,7 @@ app_name = "quiniela"
 urlpatterns = [
     path("", views.index, name="index"),
     path("jornada/nueva/", views.jornada_nueva, name="jornada_nueva"),
+    path("jornada/proximos/", views.proximos, name="proximos"),
     path("jornada/<int:pk>/", views.jornada_detalle, name="jornada_detalle"),
     path("seguimiento/", views.seguimiento, name="seguimiento"),
     # Acciones HTMX: devuelven el panel de la jornada.

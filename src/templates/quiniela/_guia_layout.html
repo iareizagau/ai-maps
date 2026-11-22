@@ -1,0 +1,18 @@
+{% comment %}
+Envoltorios de la guía. Uso:
+  {% include "quiniela/_guia_layout.html" with modo="movil" paso="alta" %}   → plegada, solo < lg
+  {% include "quiniela/_guia_layout.html" with modo="lateral" paso="alta" %} → columna fija, solo ≥ lg
+{% endcomment %}
+{% if modo == "movil" %}
+    <details class="lg:hidden mb-5 rounded-xl border border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/60 dark:bg-indigo-500/5 p-3">
+        <summary class="cursor-pointer text-sm font-semibold text-indigo-600 dark:text-indigo-300">¿Cómo funciona?</summary>
+        <div class="mt-3">{% include "quiniela/_guia.html" %}</div>
+    </details>
+{% else %}
+    <aside class="hidden lg:block">
+        <div class="sticky top-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
+            <h2 class="mb-3 text-sm font-semibold uppercase tracking-widest text-indigo-400">Guía</h2>
+            {% include "quiniela/_guia.html" %}
+        </div>
+    </aside>
+{% endif %}

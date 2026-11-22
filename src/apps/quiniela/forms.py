@@ -75,9 +75,9 @@ PartidoFormSet = forms.formset_factory(
 )
 
 
-def crear_formset(data=None):
+def crear_formset(data=None, initial=None):
     equipos = Equipo.objects.order_by("nombre")
-    return PartidoFormSet(data, prefix="p", form_kwargs={"equipos": equipos})
+    return PartidoFormSet(data, prefix="p", initial=initial, form_kwargs={"equipos": equipos})
 
 
 def guardar_jornada(form: JornadaForm, formset) -> Jornada:

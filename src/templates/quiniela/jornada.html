@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Quiniela · {{ jornada }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .htmx-request.q-btn, .htmx-request .q-btn { opacity: .5; pointer-events: none; }
+    #q-cargando { display: none; }
+    .htmx-request #q-cargando, #q-cargando.htmx-request { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="max-w-2xl mx-auto px-4 py-6 sm:py-10">
+    <header class="mb-4 flex items-start justify-between gap-3">
+        <div>
+            <p class="text-xs tracking-widest uppercase text-indigo-400">Quiniela · temporada {{ jornada.temporada }}</p>
+            <h1 class="text-2xl font-semibold tracking-tight">Jornada {{ jornada.numero }}</h1>
+            <p class="text-xs text-slate-500">Cierre: {{ jornada.fecha_cierre|date:"D d/m H:i" }}{% if jornada.cerrada %} · cerrada{% endif %}</p>
+        </div>
+        <nav class="flex flex-col items-end gap-1 text-xs">
+            <a href="{% url 'quiniela:jornada_nueva' %}" class="text-indigo-500 hover:underline">+ Nueva jornada</a>
+            <a href="{% url 'quiniela:seguimiento' %}" class="text-indigo-500 hover:underline">Seguimiento</a>
+        </nav>
+    </header>
+
+    {% if jornadas|length > 1 %}
+        <form method="get" class="mb-4" onchange="window.location = this.querySelector('select').value">
+            <select class="w-full rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-white/5 px-2 py-2 text-sm">
+                {% for j in jornadas %}
+                    <option value="{% url 'quiniela:jornada_detalle' j.pk %}" {% if j.pk == jornada.pk %}selected{% endif %}>
+                        {{ j }} · cierre {{ j.fecha_cierre|date:"d/m" }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+    {% endif %}
+
+    <p id="q-cargando" class="mb-3 text-xs text-slate-500">Actualizando…</p>
+
+    {% include "quiniela/_panel.html" %}
+</section>
+{% endblock %}

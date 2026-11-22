@@ -1,0 +1,48 @@
+{% load quiniela_tags %}
+<div class="mt-2 overflow-x-auto">
+    <table class="w-full text-sm">
+        <thead class="text-xs text-slate-500">
+            <tr><th class="text-left py-1">Fuente</th><th class="text-right">Partidos</th><th class="text-right">Brier</th><th class="text-right">Acierto</th></tr>
+        </thead>
+        <tbody>
+            {% for fuente, m in cal.fuentes.items %}
+                <tr class="border-t border-slate-200 dark:border-white/10">
+                    <td class="py-1 capitalize">{{ fuente }}</td>
+                    <td class="text-right">{{ m.n }}</td>
+                    <td class="text-right">{% if m.n %}{{ m.brier_medio|floatformat:3 }}{% else %}—{% endif %}</td>
+                    <td class="text-right">{% if m.n %}{{ m.tasa_acierto|pct }}{% else %}—{% endif %}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<p class="mt-3 text-sm">
+    Tus cambios de signo: <span class="font-semibold">{{ cal.sobrescrituras_acertadas }}/{{ cal.sobrescrituras }}</span> acertados
+    · la propuesta habría acertado <span class="font-semibold">{{ cal.propuesta_habria_acertado }}</span>.
+</p>
+
+<div class="mt-3 overflow-x-auto">
+    <table class="w-full text-sm">
+        <thead class="text-xs text-slate-500">
+            <tr><th class="text-left py-1">Jornada</th><th class="text-left">Boleto</th><th class="text-right">Coste</th><th class="text-right">Aciertos</th></tr>
+        </thead>
+        <tbody>
+            {% for fila in cal.jornadas %}
+                <tr class="border-t border-slate-200 dark:border-white/10">
+                    <td class="py-1"><a class="text-indigo-500 hover:underline" href="{% url 'quiniela:jornada_detalle' fila.jornada.pk %}">{{ fila.jornada.numero }}</a></td>
+                    <td>{{ fila.configuracion }}</td>
+                    <td class="text-right">{{ fila.coste }} €</td>
+                    <td class="text-right">{% if fila.aciertos is not None %}{{ fila.aciertos }}{% if fila.pleno %} + P15{% endif %}{% else %}—{% endif %}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4" class="py-2 text-slate-500">Aún no hay boletos confirmados.</td></tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr class="border-t border-slate-300 dark:border-white/20 font-semibold">
+                <td class="py-1" colspan="2">Gasto acumulado</td><td class="text-right">{{ cal.gasto_total }} €</td><td></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>

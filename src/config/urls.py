@@ -80,6 +80,7 @@ urlpatterns += [
     path("oceania/", include("apps.oceania.urls")),
     path("blog/", include("apps.blog.urls")),
     path("amenabar/", include("apps.amenabar.urls")),
+    path("quiniela/", include("apps.quiniela.urls")),
     # NinjaAPI de Mubil bajo /api/mubil/ (no colisiona con la core API en /api/).
     path("api/mubil/", mubil_api.urls),
 ]

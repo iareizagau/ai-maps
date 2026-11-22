@@ -93,7 +93,8 @@ testpaths = [
     "src/apps/mubil/tests",
     "src/apps/pintxos/tests",
     "src/apps/blog/tests",
-    "src/apps/amenabar/tests"
+    "src/apps/amenabar/tests",
+    "src/apps/quiniela/tests"
 ]
 
 [tool.mypy]

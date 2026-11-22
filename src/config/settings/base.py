@@ -1,4 +1,5 @@
 import os
+from decimal import Decimal
 from pathlib import Path
 
 import environ
@@ -64,6 +65,7 @@ INSTALLED_APPS = [
     "apps.mubil",
     "apps.blog",
     "apps.amenabar",
+    "apps.quiniela",
 ]
 
 MIDDLEWARE = [
@@ -274,6 +276,38 @@ NEWS_API_KEY = env("NEWS_API_KEY", default="")
 # Mubil — `news` cache TTL. Opening /estrata/news/ when the most recent
 # article is older than this dispatches a Celery refresh; no beat schedule.
 NEWS_CACHE_HOURS = env.int("NEWS_CACHE_HOURS", default=6)
+
+# Quiniela — asistente personal (openspec/changes/quiniela-asistente-v1).
+# Reglas de juego verificadas en las Normas SELAE vigentes desde 2017-18:
+# 0,75 €/apuesta (norma 5ª), mínimo 2 apuestas (19ª). El objetivo por defecto
+# es 11 aciertos porque la 5ª categoría (10) no se paga si sale < 1,50 € (7ª.6).
+QUINIELA_PRECIO_APUESTA = Decimal(env("QUINIELA_PRECIO_APUESTA", default="0.75"))
+QUINIELA_MIN_APUESTAS = env.int("QUINIELA_MIN_APUESTAS", default=2)
+QUINIELA_TOPE_EUR = Decimal(env("QUINIELA_TOPE_EUR", default="5.00"))
+QUINIELA_OBJETIVO_ACIERTOS = env.int("QUINIELA_OBJETIVO_ACIERTOS", default=11)
+# Modelo Poisson: partidos ponderados mínimos por equipo, decaimiento temporal
+# (por día; 0.0019 ≈ media vida de 1 año) y corrección Dixon-Coles (0 = off).
+QUINIELA_MIN_PARTIDOS = env.int("QUINIELA_MIN_PARTIDOS", default=10)
+QUINIELA_DECAY_XI = env.float("QUINIELA_DECAY_XI", default=0.0019)
+QUINIELA_DC_RHO = env.float("QUINIELA_DC_RHO", default=0.0)
+# Cuotas → probabilidades: "shin" calibró mejor que "proporcional" en el
+# backtest 24-25→26-27 (Brier 0,5839 vs 0,5849, 1.679 partidos).
+QUINIELA_METODO_CUOTAS = env("QUINIELA_METODO_CUOTAS", default="shin")
+# football-data.co.uk: `www.` hace 302 a este host; CSV por temporada en
+# {base}/mmz4281/{yyYY}/SP1.csv y próximos partidos en {base}/fixtures.csv.
+QUINIELA_FD_BASE_URL = env("QUINIELA_FD_BASE_URL", default="https://football-data.co.uk")
+# RSS verificados el 2026-11-22 (Marca congelado, Sport/Relevo 404/406).
+QUINIELA_RSS_FEEDS = env.list(
+    "QUINIELA_RSS_FEEDS",
+    default=[
+        "https://feeds.as.com/mrss-s/pages/as/site/as.com/section/futbol/portada/",
+        "https://feeds.as.com/mrss-s/pages/as/site/as.com/section/futbol/subsection/primera/",
+        "https://feeds.as.com/mrss-s/pages/as/site/as.com/section/futbol/subsection/segunda/",
+        "https://www.mundodeportivo.com/rss/futbol.xml",
+    ],
+)
+# Búsqueda Google News RSS por equipo de la jornada (mejor cobertura de Segunda).
+QUINIELA_GNEWS_ENABLED = env.bool("QUINIELA_GNEWS_ENABLED", default=True)
 
 # Celery
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/0")

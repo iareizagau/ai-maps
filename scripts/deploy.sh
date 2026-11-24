@@ -40,6 +40,9 @@ $COMPOSE run --rm web_estrata python manage.py init_apps
 echo ">> Initializing OAuth (Site + SocialApp)..."
 $COMPOSE run --rm web_estrata python manage.py init_oauth
 
+echo ">> Seeding #30DayMapChallenge entries (idempotent)..."
+$COMPOSE run --rm web_estrata python manage.py seed_map30 --publish-past
+
 echo ">> Starting services..."
 $COMPOSE up -d --force-recreate --remove-orphans
 

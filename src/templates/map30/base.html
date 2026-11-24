@@ -7,6 +7,13 @@
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
     <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
     <link rel="stylesheet" href="{% static 'map30/css/map30.css' %}">
+    {% if entry %}
+        <meta property="og:type" content="article">
+        <meta property="og:title" content="Día {{ entry.day|stringformat:'02d' }} · {{ entry.title }}">
+        <meta property="og:description" content="{{ entry.blurb|default:entry.category_name }}">
+        <meta name="twitter:card" content="summary_large_image">
+        {# OG image intencionalmente ausente: generar PNG con Playwright cuando haga falta. #}
+    {% endif %}
     {% block day_head %}{% endblock %}
 {% endblock %}
 
@@ -14,9 +21,12 @@
 <section class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
     {% if entry %}
     <header class="mb-6 sm:mb-8">
-        <nav class="flex items-center justify-between text-xs mb-3">
+        <nav class="flex items-center justify-between text-xs mb-3 gap-3">
             <a href="{% url 'map30:index' %}" class="text-indigo-500 hover:text-indigo-400">← #30DayMapChallenge</a>
-            <div class="flex gap-3">
+            <div class="flex items-center gap-3">
+                <a href="{% url 'map30:day_capture' entry.day %}" target="_blank" rel="noopener"
+                   class="text-slate-500 hover:text-indigo-400"
+                   title="Vista 1200×630 para captura de LinkedIn">📷 Captura</a>
                 {% if prev_entry %}<a href="{% url 'map30:day_detail' prev_entry.day %}" class="text-slate-500 hover:text-slate-300">← Día {{ prev_entry.day }}</a>{% endif %}
                 {% if next_entry %}<a href="{% url 'map30:day_detail' next_entry.day %}" class="text-slate-500 hover:text-slate-300">Día {{ next_entry.day }} →</a>{% endif %}
             </div>

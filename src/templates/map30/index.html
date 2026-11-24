@@ -3,6 +3,119 @@
 
 {% block title %}#30DayMapChallenge 2026 — Calendario{% endblock %}
 
+{% block day_head %}
+<style>
+    .m30-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+    @media (min-width: 640px)  { .m30-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; } }
+    @media (min-width: 1024px) { .m30-grid { grid-template-columns: repeat(5, 1fr); } }
+
+    .m30-card {
+        position: relative;
+        display: block;
+        aspect-ratio: 1 / 1;
+        border-radius: 14px;
+        overflow: hidden;
+        background:
+            radial-gradient(120% 90% at 100% 0%, var(--accent-25) 0%, transparent 55%),
+            linear-gradient(135deg, var(--accent-10) 0%, transparent 65%),
+            var(--card-bg);
+        border: 1px solid var(--card-border);
+        color: inherit;
+        text-decoration: none;
+        transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+    .m30-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--accent);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    }
+    .m30-card .m30-glyph {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        font-size: clamp(90px, 18vw, 150px);
+        line-height: 1;
+        color: var(--accent);
+        opacity: 0.18;
+        pointer-events: none;
+        font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", serif;
+    }
+    .m30-card .m30-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding: 12px 14px 0;
+        position: relative;
+        z-index: 1;
+    }
+    .m30-card .m30-day {
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        color: var(--accent);
+        font-weight: 600;
+    }
+    .m30-card .m30-cat {
+        font-size: 9px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 600;
+        max-width: 60%;
+        text-align: right;
+        line-height: 1.3;
+    }
+    .m30-card .m30-title {
+        position: absolute;
+        bottom: 12px;
+        left: 14px;
+        right: 14px;
+        z-index: 1;
+        font-size: 13px;
+        line-height: 1.3;
+        font-weight: 500;
+        max-height: 3.9em;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+    }
+    .m30-card.is-pending {
+        opacity: 0.55;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    .m30-card.is-pending .m30-pending {
+        position: absolute;
+        bottom: 12px;
+        right: 14px;
+        z-index: 2;
+        font-size: 9px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    /* Light / dark tokens */
+    :root {
+        --card-bg: #ffffff;
+        --card-border: rgba(15, 23, 42, 0.08);
+        --muted: #64748b;
+    }
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --card-bg: rgba(255, 255, 255, 0.02);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --muted: #94a3b8;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block day_body %}
     <header class="mb-8">
         <span class="text-[11px] uppercase tracking-wider text-indigo-500 font-mono">Noviembre 2026</span>
@@ -13,31 +126,30 @@
         </p>
     </header>
 
-    <ol class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+    <ol class="m30-grid" role="list">
         {% for e in entries %}
-            {% if e.status == 'published' %}
-                <li>
-                    <a href="{% url 'map30:day_detail' e.day %}"
-                       class="block h-full p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] hover:border-indigo-500/60 hover:shadow-md transition">
-                        <div class="flex items-baseline justify-between">
-                            <span class="font-mono text-xs text-indigo-500">{{ e.day|stringformat:"02d" }}</span>
-                            <span class="text-[10px] uppercase tracking-wider text-slate-400">{{ e.category_name }}</span>
+            <li style="--accent: {{ e.accent_color }}; --accent-10: {{ e.accent_color }}1a; --accent-25: {{ e.accent_color }}40;">
+                {% if e.status == 'published' %}
+                    <a href="{% url 'map30:day_detail' e.day %}" class="m30-card">
+                        <span class="m30-glyph" aria-hidden="true">{{ e.glyph }}</span>
+                        <div class="m30-head">
+                            <span class="m30-day">{{ e.day|stringformat:"02d" }}</span>
+                            <span class="m30-cat">{{ e.category_name }}</span>
                         </div>
-                        <h2 class="mt-2 text-sm font-medium leading-snug line-clamp-3">{{ e.title }}</h2>
+                        <div class="m30-title">{{ e.title }}</div>
                     </a>
-                </li>
-            {% else %}
-                <li>
-                    <div class="block h-full p-4 rounded-xl border border-dashed border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.01] opacity-60 cursor-not-allowed">
-                        <div class="flex items-baseline justify-between">
-                            <span class="font-mono text-xs text-slate-400">{{ e.day|stringformat:"02d" }}</span>
-                            <span class="text-[10px] uppercase tracking-wider text-slate-400">{{ e.category_name }}</span>
+                {% else %}
+                    <div class="m30-card is-pending">
+                        <span class="m30-glyph" aria-hidden="true">{{ e.glyph }}</span>
+                        <div class="m30-head">
+                            <span class="m30-day">{{ e.day|stringformat:"02d" }}</span>
+                            <span class="m30-cat">{{ e.category_name }}</span>
                         </div>
-                        <h2 class="mt-2 text-sm font-medium leading-snug line-clamp-3 text-slate-500">{{ e.title }}</h2>
-                        <span class="mt-2 inline-block text-[10px] text-slate-400">Pendiente</span>
+                        <div class="m30-title">{{ e.title }}</div>
+                        <span class="m30-pending">Pendiente</span>
                     </div>
-                </li>
-            {% endif %}
+                {% endif %}
+            </li>
         {% endfor %}
     </ol>
 {% endblock %}

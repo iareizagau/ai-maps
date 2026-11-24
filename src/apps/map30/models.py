@@ -42,6 +42,17 @@ class MapEntry(models.Model):
         help_text="Deja vacío para usar map30/days/{day:02}_{category_slug}.html",
     )
 
+    # Identidad visual del día: usada por las cards tipo "póster" del calendario
+    # y por la vista capture (overlay de LinkedIn).
+    accent_color = models.CharField(
+        max_length=7, default="#4f46e5",
+        help_text="Color característico del día (hex #RRGGBB).",
+    )
+    glyph = models.CharField(
+        max_length=4, default="●",
+        help_text="Un símbolo o emoji corto que marca el día.",
+    )
+
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
     published_at = models.DateTimeField(null=True, blank=True)
 

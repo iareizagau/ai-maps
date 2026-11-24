@@ -11,10 +11,11 @@ from apps.mubil.models import ChargingStation
 from .models import MapEntry
 
 
-def _common_ctx(entry: MapEntry | None = None) -> dict:
+def _common_ctx(entry: MapEntry | None = None, parent_template: str = "map30/base.html") -> dict:
     return {
         "carto_api_key": settings.CARTO_API_KEY,
         "entry": entry,
+        "parent_template": parent_template,
     }
 
 
@@ -48,6 +49,24 @@ def day_detail(request, day: int):
             "prev_entry": prev_entry,
             "next_entry": next_entry,
         },
+    )
+
+
+def day_capture(request, day: int):
+    """Vista 1200×630 lista para captura manual (LinkedIn OG).
+
+    Reutiliza el template del día pero inyecta `capture_base.html` como padre.
+    Útil para abrir en Chrome y hacer `Cmd/Ctrl+Shift+P → Capture full size screenshot`.
+    """
+    entry = get_object_or_404(MapEntry, day=day)
+    try:
+        get_template(entry.template_path)
+    except TemplateDoesNotExist as exc:
+        raise Http404(f"Template ausente: {entry.template_path}") from exc
+    return render(
+        request,
+        entry.template_path,
+        _common_ctx(entry, parent_template="map30/capture_base.html"),
     )
 
 

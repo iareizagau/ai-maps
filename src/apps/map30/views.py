@@ -81,9 +81,7 @@ def day01_points_geojson(request):
     Reutiliza `mubil.ChargingStation`. Filtra por bbox opcional para tiles
     grandes; por defecto devuelve todos (pocos miles, aceptable sin tiling).
     """
-    qs = ChargingStation.objects.filter(geom__isnull=False).only(
-        "id", "operator", "power_kw", "geom", "connectors"
-    )
+    qs = ChargingStation.objects.filter(geom__isnull=False).only("id", "operator", "power_kw", "geom", "connectors")
     features = []
     for cs in qs.iterator(chunk_size=1000):
         features.append(
@@ -164,21 +162,21 @@ def day04_pintxos_geojson(request):
 # ------------------------------------------------------------------
 
 _FESTIVALES = [
-    ("BBK Live",              -2.978, 43.288, 115000, "Bilbao"),
-    ("Jazzaldia",             -1.978, 43.321, 165000, "Donostia"),
-    ("Azkena Rock Festival",  -2.681, 42.846,  38000, "Vitoria-Gasteiz"),
-    ("Vitoria Jazz Festival", -2.670, 42.847,  50000, "Vitoria-Gasteiz"),
-    ("Zinemaldia (SSIFF)",    -1.986, 43.319, 185000, "Donostia"),
-    ("Mundaka Festival",      -2.697, 43.407,  32000, "Mundaka"),
-    ("Hatortxu Rock",         -1.645, 42.870,  12000, "Atarrabia"),
-    ("Kalakan Festibala",     -1.479, 43.493,  18000, "Baiona"),
-    ("Musikaria",             -2.935, 43.263,   8000, "Bilbao"),
-    ("Gaztetxe Fest",         -1.981, 43.320,   6000, "Donostia"),
-    ("BBK Mendizabala",       -2.670, 42.846,  25000, "Vitoria-Gasteiz"),
-    ("Iruñea Rock",           -1.644, 42.812,  15000, "Iruñea"),
-    ("Deabruak Teloia",       -2.464, 43.206,   4500, "Eibar"),
-    ("Durangoko Azoka Live",  -2.634, 43.172,   9000, "Durango"),
-    ("Jaialdia Getxo",        -3.010, 43.355,  12000, "Getxo"),
+    ("BBK Live", -2.978, 43.288, 115000, "Bilbao"),
+    ("Jazzaldia", -1.978, 43.321, 165000, "Donostia"),
+    ("Azkena Rock Festival", -2.681, 42.846, 38000, "Vitoria-Gasteiz"),
+    ("Vitoria Jazz Festival", -2.670, 42.847, 50000, "Vitoria-Gasteiz"),
+    ("Zinemaldia (SSIFF)", -1.986, 43.319, 185000, "Donostia"),
+    ("Mundaka Festival", -2.697, 43.407, 32000, "Mundaka"),
+    ("Hatortxu Rock", -1.645, 42.870, 12000, "Atarrabia"),
+    ("Kalakan Festibala", -1.479, 43.493, 18000, "Baiona"),
+    ("Musikaria", -2.935, 43.263, 8000, "Bilbao"),
+    ("Gaztetxe Fest", -1.981, 43.320, 6000, "Donostia"),
+    ("BBK Mendizabala", -2.670, 42.846, 25000, "Vitoria-Gasteiz"),
+    ("Iruñea Rock", -1.644, 42.812, 15000, "Iruñea"),
+    ("Deabruak Teloia", -2.464, 43.206, 4500, "Eibar"),
+    ("Durangoko Azoka Live", -2.634, 43.172, 9000, "Durango"),
+    ("Jaialdia Getxo", -3.010, 43.355, 12000, "Getxo"),
 ]
 
 
@@ -201,10 +199,11 @@ def day11_festivales_geojson(request):
 # para la demo visual del día "Hexagons".
 # ------------------------------------------------------------------
 
+
 def _hex_centers(bbox, step_lng=0.08):
     """Genera centros de una cuadrícula hexagonal (flat-top) sobre bbox."""
     w, s, e, n = bbox
-    step_lat = step_lng * (3 ** 0.5) / 2
+    step_lat = step_lng * (3**0.5) / 2
     row = 0
     lat = s
     while lat <= n:
@@ -219,6 +218,7 @@ def _hex_centers(bbox, step_lng=0.08):
 
 def _hex_polygon(cx, cy, r):
     import math
+
     coords = []
     for i in range(6):
         ang = math.radians(60 * i)  # flat-top
@@ -247,10 +247,12 @@ def day20_hexagons_geojson(request):
         count = sum(1 for (x, y) in ev_coords if xmin <= x <= xmax and ymin <= y <= ymax)
         if count == 0:
             continue
-        features.append({
-            "type": "Feature",
-            "geometry": {"type": "Polygon", "coordinates": [poly_coords]},
-            "properties": {"count": count},
-        })
+        features.append(
+            {
+                "type": "Feature",
+                "geometry": {"type": "Polygon", "coordinates": [poly_coords]},
+                "properties": {"count": count},
+            }
+        )
 
     return JsonResponse({"type": "FeatureCollection", "features": features})

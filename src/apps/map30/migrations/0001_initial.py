@@ -4,35 +4,69 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='MapEntry',
+            name="MapEntry",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('day', models.PositiveSmallIntegerField(unique=True)),
-                ('date', models.DateField()),
-                ('category_slug', models.SlugField(max_length=40)),
-                ('category_name', models.CharField(max_length=80)),
-                ('title', models.CharField(max_length=160)),
-                ('blurb', models.TextField(blank=True)),
-                ('library', models.CharField(choices=[('maplibre', 'MapLibre GL JS'), ('leaflet', 'Leaflet'), ('static', 'Static (imagen / no interactivo)')], default='maplibre', max_length=20)),
-                ('basemap', models.CharField(choices=[('voyager', 'CARTO Voyager'), ('positron', 'CARTO Positron (light)'), ('dark_matter', 'CARTO Dark Matter'), ('osm', 'OSM raster'), ('none', 'Sin basemap')], default='voyager', max_length=20)),
-                ('template_name', models.CharField(blank=True, help_text='Deja vacío para usar map30/days/{day:02}_{category_slug}.html', max_length=200)),
-                ('status', models.CharField(choices=[('draft', 'Borrador'), ('published', 'Publicado')], default='draft', max_length=20)),
-                ('published_at', models.DateTimeField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("day", models.PositiveSmallIntegerField(unique=True)),
+                ("date", models.DateField()),
+                ("category_slug", models.SlugField(max_length=40)),
+                ("category_name", models.CharField(max_length=80)),
+                ("title", models.CharField(max_length=160)),
+                ("blurb", models.TextField(blank=True)),
+                (
+                    "library",
+                    models.CharField(
+                        choices=[
+                            ("maplibre", "MapLibre GL JS"),
+                            ("leaflet", "Leaflet"),
+                            ("static", "Static (imagen / no interactivo)"),
+                        ],
+                        default="maplibre",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "basemap",
+                    models.CharField(
+                        choices=[
+                            ("voyager", "CARTO Voyager"),
+                            ("positron", "CARTO Positron (light)"),
+                            ("dark_matter", "CARTO Dark Matter"),
+                            ("osm", "OSM raster"),
+                            ("none", "Sin basemap"),
+                        ],
+                        default="voyager",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "template_name",
+                    models.CharField(
+                        blank=True,
+                        help_text="Deja vacío para usar map30/days/{day:02}_{category_slug}.html",
+                        max_length=200,
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[("draft", "Borrador"), ("published", "Publicado")], default="draft", max_length=20
+                    ),
+                ),
+                ("published_at", models.DateTimeField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
-                'verbose_name': 'Map30 entry',
-                'verbose_name_plural': 'Map30 entries',
-                'ordering': ['day'],
+                "verbose_name": "Map30 entry",
+                "verbose_name_plural": "Map30 entries",
+                "ordering": ["day"],
             },
         ),
     ]

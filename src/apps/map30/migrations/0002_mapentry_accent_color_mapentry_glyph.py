@@ -4,20 +4,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('map30', '0001_initial'),
+        ("map30", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='mapentry',
-            name='accent_color',
-            field=models.CharField(default='#4f46e5', help_text='Color característico del día (hex #RRGGBB).', max_length=7),
+            model_name="mapentry",
+            name="accent_color",
+            field=models.CharField(
+                default="#4f46e5", help_text="Color característico del día (hex #RRGGBB).", max_length=7
+            ),
         ),
         migrations.AddField(
-            model_name='mapentry',
-            name='glyph',
-            field=models.CharField(default='●', help_text='Un símbolo o emoji corto que marca el día.', max_length=4),
+            model_name="mapentry",
+            name="glyph",
+            field=models.CharField(default="●", help_text="Un símbolo o emoji corto que marca el día.", max_length=4),
         ),
     ]

@@ -45,11 +45,13 @@ class MapEntry(models.Model):
     # Identidad visual del día: usada por las cards tipo "póster" del calendario
     # y por la vista capture (overlay de LinkedIn).
     accent_color = models.CharField(
-        max_length=7, default="#4f46e5",
+        max_length=7,
+        default="#4f46e5",
         help_text="Color característico del día (hex #RRGGBB).",
     )
     glyph = models.CharField(
-        max_length=4, default="●",
+        max_length=4,
+        default="●",
         help_text="Un símbolo o emoji corto que marca el día.",
     )
 

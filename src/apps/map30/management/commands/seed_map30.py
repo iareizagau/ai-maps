@@ -342,6 +342,8 @@ class Command(BaseCommand):
                 "blurb": s.blurb,
                 "library": s.library,
                 "basemap": s.basemap,
+                "accent_color": s.accent,
+                "glyph": s.glyph,
             }
             if publish_past and entry_date <= today:
                 defaults["status"] = MapEntry.Status.PUBLISHED

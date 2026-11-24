@@ -1,0 +1,47 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="map" class="map30-canvas"></div></div>
+<p class="mt-4 text-xs text-slate-500">
+    OpenStreetMap es el commons del mapeo. Hoy el mapa es el propio OSM, puro, sin filtro, servido
+    por los teselados oficiales. Encima, los nodos donde he aportado algo este mes como contribuidor.
+</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", { basemap: "osm", center: [-1.981, 43.321], zoom: 13 });
+
+    // Contribuciones ficticias (sustituir por export real desde achavi/ohsome).
+    const edits = {
+        type:"FeatureCollection", features:[
+            { type:"Feature", properties:{what:"amenity=bicycle_parking añadido"}, geometry:{type:"Point", coordinates:[-1.9821, 43.3184]}},
+            { type:"Feature", properties:{what:"cafe horario corregido"}, geometry:{type:"Point", coordinates:[-1.9869, 43.3238]}},
+            { type:"Feature", properties:{what:"footway trazado"}, geometry:{type:"Point", coordinates:[-1.9741, 43.3159]}},
+            { type:"Feature", properties:{what:"EV charging station: operator"}, geometry:{type:"Point", coordinates:[-1.9705, 43.2968]}}
+        ]
+    };
+
+    map.on("load", function () {
+        map.addSource("e", { type:"geojson", data: edits });
+        map.addLayer({
+            id:"e-pt", type:"circle", source:"e",
+            paint:{ "circle-color":"#16a34a", "circle-radius":10, "circle-stroke-color":"#fff", "circle-stroke-width":2 }
+        });
+        map.on("click","e-pt", function(e){
+            new maplibregl.Popup().setLngLat(e.lngLat)
+                .setHTML(`<strong>${e.features[0].properties.what}</strong>`).addTo(map);
+        });
+    });
+    Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>OSM · ediciones este mes</h4>
+        <div class="row"><span class="swatch" style="background:#16a34a"></span><span>Mis cambios</span></div>
+        <div class="row" style="color:#94a3b8;margin-top:6px;font-size:10px">Datos ilustrativos — sustituir por achavi real.</div>
+    `);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_head %}
+<style>
+    .d14-note {
+        position:absolute; top:12px; left:12px; z-index:5;
+        background: rgba(15,23,42,0.92); color:#e2e8f0;
+        padding: 12px 14px; border-radius: 10px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-style: italic; font-size: 12px; line-height: 1.5;
+        max-width: 320px; backdrop-filter: blur(4px);
+        border: 1px solid rgba(226,232,240,0.15);
+    }
+    .d14-note strong { font-style: normal; color:#fde047; display:block; margin-bottom:4px; letter-spacing:0.04em; }
+</style>
+{% endblock %}
+
+{% block day_body %}
+<div class="map30-wrap">
+    <div id="map" class="map30-canvas"></div>
+    <div class="d14-note">
+        <strong>On Exactitude in Science</strong>
+        «En aquel Imperio, el Arte de la Cartografía logró tal perfección que
+        el mapa de una sola provincia ocupaba toda una ciudad, y el mapa del
+        Imperio, toda una provincia…»<br/>
+        — J. L. Borges
+    </div>
+</div>
+
+<p class="mt-4 text-xs text-slate-500">
+    Haz zoom hasta el nivel 20. El mapa es ya la ciudad.
+    En este nivel, la retícula visible representa parcelas del catastro: el mapa ha ocupado el territorio.
+</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", {
+        basemap:"voyager",
+        center:[-1.9868, 43.3238],
+        zoom: 18
+    });
+    map.setMaxZoom(22);
+    map.setMinZoom(10);
+
+    map.on("load", function () {
+        // Un cuadro con las coordenadas de un metro cuadrado en el centro — el mapa 1:1.
+        const c = [-1.9868, 43.3238];
+        const halfLat = 0.5 / 111320;
+        const halfLng = 0.5 / (111320 * Math.cos(c[1] * Math.PI/180));
+        const square = {
+            type:"Feature",
+            geometry:{ type:"Polygon", coordinates:[[
+                [c[0]-halfLng, c[1]-halfLat],
+                [c[0]+halfLng, c[1]-halfLat],
+                [c[0]+halfLng, c[1]+halfLat],
+                [c[0]-halfLng, c[1]+halfLat],
+                [c[0]-halfLng, c[1]-halfLat]
+            ]]}
+        };
+        map.addSource("sq", { type:"geojson", data: square });
+        map.addLayer({ id:"sq", type:"fill", source:"sq",
+            paint:{ "fill-color":"#dc2626", "fill-opacity":0.35, "fill-outline-color":"#991b1b" }});
+        map.addLayer({ id:"sq-line", type:"line", source:"sq",
+            paint:{ "line-color":"#991b1b", "line-width":2, "line-dasharray":[2,2] }});
+    });
+})();
+</script>
+{% endblock %}

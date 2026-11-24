@@ -1,0 +1,69 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="map" class="map30-canvas"></div></div>
+<p class="mt-4 text-xs text-slate-500">
+    Álava/Araba tiene 7 cuadrillas y más de 300 concejos: la unidad administrativa más fina del Estado.
+    Polígonos aproximados por cuadrilla.
+</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", { basemap: "voyager", center: [-2.65, 42.78], zoom: 8.6 });
+
+    // Cuadrillas de Álava — contornos aproximados muy simplificados.
+    const cuadrillas = {
+        type:"FeatureCollection", features:[
+            {type:"Feature", properties:{name:"Cuadrilla de Vitoria", concejos:60}, geometry:{type:"Polygon", coordinates:[[[-2.85,42.73],[-2.50,42.72],[-2.45,42.90],[-2.80,42.92],[-2.85,42.73]]]}},
+            {type:"Feature", properties:{name:"Cuadrilla de Zuia", concejos:28}, geometry:{type:"Polygon", coordinates:[[[-3.10,42.82],[-2.85,42.82],[-2.85,43.05],[-3.10,43.05],[-3.10,42.82]]]}},
+            {type:"Feature", properties:{name:"Cuadrilla de Ayala", concejos:41}, geometry:{type:"Polygon", coordinates:[[[-3.20,43.05],[-2.90,43.05],[-2.90,43.20],[-3.20,43.20],[-3.20,43.05]]]}},
+            {type:"Feature", properties:{name:"Cuadrilla de Salvatierra", concejos:35}, geometry:{type:"Polygon", coordinates:[[[-2.45,42.78],[-2.20,42.78],[-2.20,42.95],[-2.45,42.95],[-2.45,42.78]]]}},
+            {type:"Feature", properties:{name:"Cuadrilla de Campezo-Montaña", concejos:16}, geometry:{type:"Polygon", coordinates:[[[-2.45,42.60],[-2.20,42.60],[-2.20,42.78],[-2.45,42.78],[-2.45,42.60]]]}},
+            {type:"Feature", properties:{name:"Cuadrilla de Laguardia-Rioja", concejos:22}, geometry:{type:"Polygon", coordinates:[[[-2.85,42.45],[-2.40,42.45],[-2.40,42.70],[-2.85,42.70],[-2.85,42.45]]]}},
+            {type:"Feature", properties:{name:"Cuadrilla de Añana", concejos:51}, geometry:{type:"Polygon", coordinates:[[[-3.10,42.70],[-2.85,42.70],[-2.85,42.85],[-3.10,42.85],[-3.10,42.70]]]}}
+        ]
+    };
+
+    map.on("load", function () {
+        map.addSource("cua", { type:"geojson", data: cuadrillas });
+        map.addLayer({
+            id:"cua-fill", type:"fill", source:"cua",
+            paint:{
+                "fill-color":[
+                    "interpolate", ["linear"], ["get","concejos"],
+                    16,"#fef3c7", 30,"#fbbf24", 50,"#d97706", 60,"#92400e"
+                ],
+                "fill-opacity":0.65, "fill-outline-color":"#78350f"
+            }
+        });
+        map.addLayer({
+            id:"cua-line", type:"line", source:"cua",
+            paint:{ "line-color":"#78350f", "line-width":1.2 }
+        });
+        map.addLayer({
+            id:"cua-label", type:"symbol", source:"cua",
+            layout:{ "text-field":["get","name"], "text-size":11, "text-font":["Open Sans Semibold","Arial Unicode MS Bold"] },
+            paint:{ "text-halo-color":"#ffffff", "text-halo-width":1.5, "text-color":"#78350f" }
+        });
+        map.on("click", "cua-fill", function(e){
+            const p = e.features[0].properties;
+            new maplibregl.Popup().setLngLat(e.lngLat)
+                .setHTML(`<strong>${p.name}</strong><br/><span style="color:#64748b">${p.concejos} concejos</span>`).addTo(map);
+        });
+    });
+
+    Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>Nº de concejos</h4>
+        <div class="row"><span class="swatch" style="background:#fef3c7"></span><span>&lt; 20</span></div>
+        <div class="row"><span class="swatch" style="background:#fbbf24"></span><span>20–40</span></div>
+        <div class="row"><span class="swatch" style="background:#d97706"></span><span>40–55</span></div>
+        <div class="row"><span class="swatch" style="background:#92400e"></span><span>&gt; 55</span></div>
+    `);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+    #d16-map { height: calc(100vh - 260px); min-height: 420px; border-radius:1rem; }
+    .d16-form { display:flex; gap:8px; margin-top:8px; font-size:13px; }
+    .d16-form input { flex:1; padding:8px 10px; border-radius:8px; border:1px solid rgba(100,116,139,0.3); background:transparent; color:inherit; }
+    .d16-form button { padding:8px 14px; border-radius:8px; background:#4f46e5; color:#fff; border:0; cursor:pointer; }
+    .d16-form button:hover { background:#4338ca; }
+    .d16-hint { font-size:11px; color:#94a3b8; margin-top:6px; }
+    .d16-reset { background:transparent; color:#94a3b8; text-decoration:underline; border:0; cursor:pointer; margin-left:8px; font-size:11px; }
+</style>
+{% endblock %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="d16-map"></div></div>
+
+<div class="d16-form mt-3">
+    <input id="d16-name" type="text" placeholder="¿Qué lugar añades? (nombre o descripción)" maxlength="80"/>
+    <button type="button" id="d16-mode">Colocar en el mapa</button>
+</div>
+<div class="d16-hint">
+    Los puntos se guardan sólo en tu navegador (localStorage). El día 30 del challenge quiero compartir aquí todas las contribuciones — mándame tu lista por LinkedIn.
+    <button type="button" class="d16-reset" id="d16-reset">Borrar los míos</button>
+</div>
+{% endblock %}
+
+{% block day_js %}
+<script>
+(function () {
+    "use strict";
+    const map = L.map("d16-map").setView([43.0, -2.1], 8);
+    L.tileLayer("https://basemaps.cartocdn.com/voyager/{z}/{x}/{y}{r}.png", {
+        attribution:"© OpenStreetMap, © CARTO", subdomains:"abcd", maxZoom:19
+    }).addTo(map);
+
+    const KEY = "map30-day16-points";
+    const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; } };
+    const save = (arr) => { try { localStorage.setItem(KEY, JSON.stringify(arr)); } catch {} };
+
+    const layer = L.layerGroup().addTo(map);
+    function redraw() {
+        layer.clearLayers();
+        load().forEach(p => {
+            L.circleMarker([p.lat, p.lng], {
+                radius:7, color:"#1e40af", weight:2, fillColor:"#60a5fa", fillOpacity:0.85
+            }).bindPopup(`<strong>${p.name || "Sin nombre"}</strong>`).addTo(layer);
+        });
+    }
+    redraw();
+
+    let armed = false;
+    const btn = document.getElementById("d16-mode");
+    btn.onclick = () => {
+        armed = !armed;
+        btn.textContent = armed ? "Pulsa el mapa…" : "Colocar en el mapa";
+        map.getContainer().style.cursor = armed ? "crosshair" : "";
+    };
+    map.on("click", (e) => {
+        if (!armed) return;
+        const name = document.getElementById("d16-name").value.trim() || "Punto anónimo";
+        const pts = load();
+        pts.push({ name, lat: e.latlng.lat, lng: e.latlng.lng, ts: Date.now() });
+        save(pts); redraw();
+        document.getElementById("d16-name").value = "";
+        armed = false; btn.textContent = "Colocar en el mapa"; map.getContainer().style.cursor = "";
+    });
+    document.getElementById("d16-reset").onclick = () => {
+        if (confirm("¿Borrar tus puntos locales?")) { save([]); redraw(); }
+    };
+})();
+</script>
+{% endblock %}

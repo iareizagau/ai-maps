@@ -1,0 +1,74 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="map" class="map30-canvas"></div></div>
+<p class="mt-4 text-xs text-slate-500">
+    Simplificación de los corredores principales de Euskotren (azul), Renfe Cercanías (verde) y SNCF Nouvelle-Aquitaine (rojo).
+    Para producción: extraer de GTFS oficiales.
+</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", { basemap: "positron", center: [-2.2, 43.25], zoom: 8.8 });
+
+    const net = { type:"FeatureCollection", features:[
+        // Euskotren: Bilbao–Donostia (línea costa, muy simplificada)
+        {type:"Feature", properties:{op:"Euskotren", line:"Topo Bilbao–Donostia"}, geometry:{type:"LineString", coordinates:[
+            [-2.935,43.263],[-2.780,43.270],[-2.625,43.286],[-2.470,43.275],[-2.310,43.260],[-2.160,43.278],[-1.998,43.305],[-1.970,43.318]
+        ]}},
+        // Euskotren: Donostia–Hendaia (Topo)
+        {type:"Feature", properties:{op:"Euskotren", line:"Topo Donostia–Hendaia"}, geometry:{type:"LineString", coordinates:[
+            [-1.985,43.318],[-1.950,43.305],[-1.900,43.313],[-1.840,43.330],[-1.792,43.337],[-1.775,43.371]
+        ]}},
+        // Renfe Cercanías Bilbao: Muskiz–Bilbao
+        {type:"Feature", properties:{op:"Renfe", line:"C-1 Muskiz–Bilbao"}, geometry:{type:"LineString", coordinates:[
+            [-3.100,43.345],[-3.020,43.323],[-2.991,43.299],[-2.935,43.263]
+        ]}},
+        // Renfe Cercanías Donostia: Brinkola–Hendaia
+        {type:"Feature", properties:{op:"Renfe", line:"E1 Brinkola–Hendaia"}, geometry:{type:"LineString", coordinates:[
+            [-2.317,43.013],[-2.264,43.080],[-2.170,43.141],[-2.078,43.179],[-1.985,43.319],[-1.790,43.337]
+        ]}},
+        // SNCF Baiona–Donibane Garazi
+        {type:"Feature", properties:{op:"SNCF", line:"Baiona–Donibane Garazi"}, geometry:{type:"LineString", coordinates:[
+            [-1.475,43.491],[-1.395,43.432],[-1.313,43.316],[-1.236,43.163]
+        ]}},
+        // SNCF Baiona–Hendaia
+        {type:"Feature", properties:{op:"SNCF", line:"Baiona–Hendaia"}, geometry:{type:"LineString", coordinates:[
+            [-1.475,43.491],[-1.573,43.472],[-1.661,43.390],[-1.775,43.371]
+        ]}}
+    ]};
+
+    map.on("load", function () {
+        map.addSource("net", { type:"geojson", data: net });
+        map.addLayer({
+            id:"net-case", type:"line", source:"net",
+            paint:{ "line-color":"#fff", "line-width":5 }, layout:{ "line-cap":"round", "line-join":"round" }
+        });
+        map.addLayer({
+            id:"net-line", type:"line", source:"net",
+            paint:{
+                "line-color":[ "match", ["get","op"], "Euskotren", "#1d4ed8", "Renfe", "#059669", "SNCF", "#dc2626", "#888" ],
+                "line-width":3
+            },
+            layout:{ "line-cap":"round", "line-join":"round" }
+        });
+        map.on("click","net-line", function(e){
+            const p = e.features[0].properties;
+            new maplibregl.Popup().setLngLat(e.lngLat)
+                .setHTML(`<strong>${p.op}</strong><br/><em style="color:#64748b">${p.line}</em>`).addTo(map);
+        });
+    });
+    Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>Red ferroviaria</h4>
+        <div class="row"><span class="swatch" style="background:#1d4ed8"></span><span>Euskotren</span></div>
+        <div class="row"><span class="swatch" style="background:#059669"></span><span>Renfe Cercanías</span></div>
+        <div class="row"><span class="swatch" style="background:#dc2626"></span><span>SNCF</span></div>
+    `);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="map" class="map30-canvas"></div></div>
+<p class="mt-4 text-xs text-slate-500">
+    Utopía 2040: red troncal de bidegorris proyectada conectando las siete capitales de Euskal Herria.
+    Es ficción cartográfica — no refleja ningún planeamiento real.
+</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script src="{% static 'map30/js/eh-data.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", { basemap: "voyager", center: [-1.9, 43.1], zoom: 7.6 });
+
+    // Grafo utópico: cada capital conectada a sus 2–3 vecinas más cercanas.
+    const pairs = [
+        ["Vitoria-Gasteiz","Bilbao"], ["Vitoria-Gasteiz","Iruñea"],
+        ["Bilbao","Donostia"], ["Donostia","Iruñea"],
+        ["Donostia","Baiona"], ["Baiona","Donibane Garazi"],
+        ["Donibane Garazi","Maule"], ["Maule","Iruñea"]
+    ];
+    const byName = Object.fromEntries(EH.capitales.map(c => [c.name, c]));
+
+    const lines = {
+        type:"FeatureCollection",
+        features: pairs.map(([a,b]) => ({
+            type:"Feature",
+            properties:{ a, b },
+            geometry:{ type:"LineString", coordinates:[[byName[a].lng, byName[a].lat],[byName[b].lng, byName[b].lat]] }
+        }))
+    };
+    const nodes = {
+        type:"FeatureCollection",
+        features: EH.capitales.map(c => ({ type:"Feature", properties:{name:c.name}, geometry:{type:"Point", coordinates:[c.lng, c.lat]} }))
+    };
+
+    map.on("load", function () {
+        map.addSource("utop", { type:"geojson", data: lines });
+        map.addLayer({
+            id:"utop-line", type:"line", source:"utop",
+            paint:{ "line-color":"#10b981", "line-width":4, "line-dasharray":[2,1.4], "line-opacity":0.85 },
+            layout:{ "line-join":"round", "line-cap":"round" }
+        });
+        map.addSource("nodes", { type:"geojson", data: nodes });
+        map.addLayer({
+            id:"nodes", type:"circle", source:"nodes",
+            paint:{ "circle-color":"#065f46", "circle-radius":8, "circle-stroke-color":"#fff", "circle-stroke-width":2.5 }
+        });
+        map.addLayer({
+            id:"node-label", type:"symbol", source:"nodes",
+            layout:{ "text-field":["get","name"], "text-size":12, "text-offset":[0,1.5],
+                     "text-font":["Open Sans Semibold","Arial Unicode MS Bold"] },
+            paint:{ "text-halo-color":"#fff", "text-halo-width":1.5 }
+        });
+    });
+
+    Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>Red utópica 2040</h4>
+        <div class="row"><span class="swatch" style="background:#10b981"></span><span>Bidegorri troncal</span></div>
+        <div class="row"><span class="swatch" style="background:#065f46"></span><span>Capital conectada</span></div>
+    `);
+})();
+</script>
+{% endblock %}

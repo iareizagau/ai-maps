@@ -1,0 +1,47 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="map" class="map30-canvas"></div></div>
+<p class="mt-4 text-xs text-slate-500">
+    Reto: una sola capa, un solo color, cero filtros. Catedrales, colegiatas y basílicas mayores de Euskal Herria.
+    Tiempo total invertido: menos de 10 minutos.
+</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", { basemap: "positron", center: [-1.9, 43.0], zoom: 7.4 });
+
+    const data = { type:"FeatureCollection", features:[
+        { type:"Feature", properties:{name:"Catedral de Santa María (Vitoria)", y:1200}, geometry:{type:"Point", coordinates:[-2.672, 42.848]}},
+        { type:"Feature", properties:{name:"Catedral Nueva (Vitoria)", y:1907}, geometry:{type:"Point", coordinates:[-2.671, 42.840]}},
+        { type:"Feature", properties:{name:"Catedral de Santiago (Bilbao)", y:1379}, geometry:{type:"Point", coordinates:[-2.924, 43.256]}},
+        { type:"Feature", properties:{name:"Basílica de Begoña (Bilbao)", y:1519}, geometry:{type:"Point", coordinates:[-2.919, 43.264]}},
+        { type:"Feature", properties:{name:"Catedral del Buen Pastor (Donostia)", y:1897}, geometry:{type:"Point", coordinates:[-1.985, 43.321]}},
+        { type:"Feature", properties:{name:"Basílica de Santa María del Coro", y:1774}, geometry:{type:"Point", coordinates:[-1.988, 43.325]}},
+        { type:"Feature", properties:{name:"Catedral de Pamplona", y:1397}, geometry:{type:"Point", coordinates:[-1.639, 42.819]}},
+        { type:"Feature", properties:{name:"Catedral Sainte-Marie (Baiona)", y:1258}, geometry:{type:"Point", coordinates:[-1.475, 43.491]}},
+        { type:"Feature", properties:{name:"Colegiata de Gernika", y:1572}, geometry:{type:"Point", coordinates:[-2.681, 43.311]}},
+        { type:"Feature", properties:{name:"Santuario de Arantzazu", y:1950}, geometry:{type:"Point", coordinates:[-2.397, 42.981]}},
+        { type:"Feature", properties:{name:"Basílica de Loiola", y:1738}, geometry:{type:"Point", coordinates:[-2.273, 43.141]}},
+        { type:"Feature", properties:{name:"Colegiata de Roncesvalles", y:1137}, geometry:{type:"Point", coordinates:[-1.320, 43.010]}},
+    ]};
+
+    map.on("load", function () {
+        map.addSource("c", { type:"geojson", data });
+        map.addLayer({ id:"c-pt", type:"circle", source:"c",
+            paint:{ "circle-color":"#0f172a", "circle-radius":6, "circle-stroke-color":"#fff", "circle-stroke-width":1.5 }});
+        map.on("click", "c-pt", function(e){
+            const p = e.features[0].properties;
+            new maplibregl.Popup().setLngLat(e.lngLat)
+                .setHTML(`<strong>${p.name}</strong><br/><span style="color:#64748b">${p.y}</span>`).addTo(map);
+        });
+    });
+    Map30.addLegend(document.querySelector(".map30-wrap"), `<h4>10 minute map</h4><div class="row"><span class="swatch" style="background:#0f172a"></span><span>Catedrales / Colegiatas</span></div>`);
+})();
+</script>
+{% endblock %}

@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "apps.blog",
     "apps.amenabar",
     "apps.quiniela",
+    "apps.map30",
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,69 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_head %}
+<style>
+    .map30-canvas.vintage { background:#efe6d1; filter: sepia(0.15); }
+    .vintage-legend { background: #efe6d1 !important; color:#4a3a1f !important; border:1px solid #c9b78a; font-family: 'Georgia','Times New Roman',serif !important; }
+    .vintage-legend h4 { color:#8a6a2a !important; letter-spacing:0.12em !important; }
+    .vintage-legend .swatch { border:1px solid #8a6a2a !important; }
+</style>
+{% endblock %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="map" class="map30-canvas vintage"></div></div>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script src="{% static 'map30/js/eh-data.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", { basemap: "none", center: [-1.9, 43.0], zoom: 7.3 });
+
+    map.on("load", function () {
+        // Base ornamental.
+        map.setPaintProperty(map.getLayer("bg").id, "background-color", "#efe6d1");
+
+        const capitales = {
+            type:"FeatureCollection",
+            features: EH.capitales.map(c => ({
+                type:"Feature",
+                properties:{ name:c.name, prov:c.prov },
+                geometry:{ type:"Point", coordinates:[c.lng, c.lat] }
+            }))
+        };
+        map.addSource("cap", { type:"geojson", data: capitales });
+        map.addLayer({
+            id:"cap-star", type:"symbol", source:"cap",
+            layout:{ "text-field":"★", "text-size":22, "text-font":["Open Sans Bold","Arial Unicode MS Bold"] },
+            paint:{ "text-color":"#7c2d12" }
+        });
+        map.addLayer({
+            id:"cap-label", type:"symbol", source:"cap",
+            layout:{
+                "text-field":["get","name"], "text-size":15, "text-offset":[0,1.4],
+                "text-font":["Open Sans Semibold","Arial Unicode MS Bold"], "text-letter-spacing":0.08
+            },
+            paint:{ "text-color":"#4a3a1f", "text-halo-color":"#efe6d1", "text-halo-width":2 }
+        });
+        map.addLayer({
+            id:"cap-prov", type:"symbol", source:"cap",
+            layout:{
+                "text-field":["get","prov"], "text-size":10, "text-offset":[0,2.6],
+                "text-font":["Open Sans Italic","Arial Unicode MS Regular"], "text-letter-spacing":0.1
+            },
+            paint:{ "text-color":"#78350f", "text-halo-color":"#efe6d1", "text-halo-width":2 }
+        });
+    });
+
+    const leg = Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>Euskal Herria MDCCCLXXV</h4>
+        <div class="row"><span class="swatch" style="background:#7c2d12"></span><span>Capital histórica</span></div>
+        <div style="margin-top:6px;font-size:10px">Impreso en el estilo del siglo XIX.</div>
+    `);
+    leg.classList.add("vintage-legend");
+})();
+</script>
+{% endblock %}

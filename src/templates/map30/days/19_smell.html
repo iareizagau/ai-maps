@@ -1,0 +1,76 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="map" class="map30-canvas"></div></div>
+<p class="mt-4 text-xs text-slate-500">
+    El Txotx (sidrerías), el humo (asadores) y la brea (lonjas de pescado): tres olores
+    que atraviesan la costa de Gipuzkoa como un pentagrama invisible.
+</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", { basemap: "voyager", center: [-2.0, 43.2], zoom: 9.2 });
+
+    const sidrerias = [
+        ["Petritegi", -1.934, 43.279],
+        ["Sarasola", -1.926, 43.278],
+        ["Isastegi", -2.077, 43.191],
+        ["Zapiain", -1.934, 43.278],
+        ["Zelaia", -1.918, 43.275],
+        ["Astigarraga – Gartziategi", -1.933, 43.280],
+        ["Iturrieta", -1.937, 43.283]
+    ];
+    const asadores = [
+        ["Asador Etxebarri (Axpe)", -2.616, 43.186],
+        ["Elkano (Getaria)", -2.204, 43.299],
+        ["Kaia-Kaipe (Getaria)", -2.201, 43.302],
+        ["Txapela (Hondarribia)", -1.793, 43.371],
+        ["Portuetxe (Donostia)", -1.999, 43.311]
+    ];
+    const lonjas = [
+        ["Lonja de Ondarroa", -2.418, 43.321],
+        ["Lonja de Bermeo", -2.724, 43.422],
+        ["Lonja de Getaria", -2.203, 43.303],
+        ["Lonja de Hondarribia", -1.789, 43.370],
+        ["Lonja de Pasaia", -1.922, 43.329]
+    ];
+
+    const fc = (arr, kind) => ({
+        type:"FeatureCollection",
+        features: arr.map(([n,lng,lat]) => ({ type:"Feature", properties:{name:n, kind}, geometry:{type:"Point", coordinates:[lng,lat]} }))
+    });
+
+    map.on("load", function () {
+        map.addSource("sid", { type:"geojson", data: fc(sidrerias,"Sidrería · manzana fermentada") });
+        map.addSource("asa", { type:"geojson", data: fc(asadores,"Asador · brasas de encina") });
+        map.addSource("lon", { type:"geojson", data: fc(lonjas,"Lonja · salitre y pescado fresco") });
+
+        map.addLayer({ id:"sid", type:"circle", source:"sid",
+            paint:{ "circle-color":"#fde047", "circle-radius":8, "circle-stroke-color":"#fff", "circle-stroke-width":1.5 }});
+        map.addLayer({ id:"asa", type:"circle", source:"asa",
+            paint:{ "circle-color":"#ea580c", "circle-radius":8, "circle-stroke-color":"#fff", "circle-stroke-width":1.5 }});
+        map.addLayer({ id:"lon", type:"circle", source:"lon",
+            paint:{ "circle-color":"#0ea5e9", "circle-radius":8, "circle-stroke-color":"#fff", "circle-stroke-width":1.5 }});
+
+        ["sid","asa","lon"].forEach(l=>{
+            map.on("click", l, e => {
+                const p = e.features[0].properties;
+                new maplibregl.Popup().setLngLat(e.lngLat)
+                    .setHTML(`<strong>${p.name}</strong><br/><em style="color:#64748b">${p.kind}</em>`).addTo(map);
+            });
+        });
+    });
+    Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>Paisaje olfativo</h4>
+        <div class="row"><span class="swatch" style="background:#fde047"></span><span>Sidrería (manzana)</span></div>
+        <div class="row"><span class="swatch" style="background:#ea580c"></span><span>Asador (humo)</span></div>
+        <div class="row"><span class="swatch" style="background:#0ea5e9"></span><span>Lonja (mar)</span></div>
+    `);
+})();
+</script>
+{% endblock %}

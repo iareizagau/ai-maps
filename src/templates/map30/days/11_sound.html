@@ -1,0 +1,67 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="map" class="map30-canvas"></div></div>
+<p class="mt-4 text-xs text-slate-500">Festivales de música más relevantes. El radio representa el aforo estimado.</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", { basemap: "dark_matter", center: [-2.0, 43.0], zoom: 7.4 });
+
+    map.on("load", function () {
+        map.addSource("f", { type:"geojson", data: "{% url 'map30:day11_festivales_geojson' %}" });
+        map.addLayer({
+            id:"f-pulse", type:"circle", source:"f",
+            paint:{
+                "circle-color":"#f472b6", "circle-opacity":0.15, "circle-blur":0.7,
+                "circle-radius":[
+                    "interpolate", ["linear"], ["coalesce", ["get","attendance"], 1000],
+                    1000, 10,
+                    50000, 32,
+                    200000, 70
+                ]
+            }
+        });
+        map.addLayer({
+            id:"f-pt", type:"circle", source:"f",
+            paint:{
+                "circle-color":[
+                    "interpolate", ["linear"], ["coalesce", ["get","attendance"], 1000],
+                    1000, "#c084fc",
+                    30000, "#f472b6",
+                    100000, "#ef4444",
+                    200000, "#991b1b"
+                ],
+                "circle-radius":[
+                    "interpolate", ["linear"], ["coalesce", ["get","attendance"], 1000],
+                    1000, 5, 50000, 14, 200000, 24
+                ],
+                "circle-stroke-color":"#fff", "circle-stroke-width":1.2
+            }
+        });
+        map.addLayer({
+            id:"f-lab", type:"symbol", source:"f",
+            layout:{ "text-field":["get","name"], "text-size":11, "text-offset":[0,1.4], "text-font":["Open Sans Semibold","Arial Unicode MS Bold"], "text-optional":true },
+            paint:{ "text-color":"#fff", "text-halo-color":"#0f172a", "text-halo-width":1.2 }
+        });
+        map.on("click", "f-pt", function(e){
+            const p = e.features[0].properties;
+            new maplibregl.Popup().setLngLat(e.lngLat)
+                .setHTML(`<strong>${p.name}</strong><br/><span style="color:#64748b">${Number(p.attendance).toLocaleString()} asistentes aprox.</span><br/><em>${p.city}</em>`).addTo(map);
+        });
+    });
+    Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>Aforo estimado</h4>
+        <div class="row"><span class="swatch" style="background:#c084fc"></span><span>&lt; 10&nbsp;000</span></div>
+        <div class="row"><span class="swatch" style="background:#f472b6"></span><span>10–50&nbsp;000</span></div>
+        <div class="row"><span class="swatch" style="background:#ef4444"></span><span>50–150&nbsp;000</span></div>
+        <div class="row"><span class="swatch" style="background:#991b1b"></span><span>&gt; 150&nbsp;000</span></div>
+    `);
+})();
+</script>
+{% endblock %}

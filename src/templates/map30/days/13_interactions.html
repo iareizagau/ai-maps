@@ -1,0 +1,69 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+    .d13-wrap { position: relative; display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    @media (min-width: 900px) { .d13-wrap { grid-template-columns: 1fr 280px; } }
+    #d13-map { height: calc(100vh - 220px); min-height: 420px; border-radius: 1rem; }
+    .d13-panel { background:#0f172a; color:#e2e8f0; padding:16px; border-radius:1rem; font-size:13px; min-height:200px; }
+    .d13-panel h3 { font-size:14px; letter-spacing:0.04em; color:#a5b4fc; margin:0 0 4px; }
+    .d13-panel p { margin:4px 0; color:#94a3b8; }
+    .d13-metric { display:flex; justify-content:space-between; border-top:1px solid rgba(255,255,255,0.08); padding:6px 0; }
+    .d13-metric span:last-child { font-family: ui-monospace, monospace; color:#fff; }
+</style>
+{% endblock %}
+
+{% block day_body %}
+<div class="d13-wrap">
+    <div id="d13-map"></div>
+    <aside class="d13-panel" id="d13-panel">
+        <h3>Pulsa una comarca</h3>
+        <p>Cada clic abre sus indicadores socio-económicos.</p>
+    </aside>
+</div>
+<p class="mt-4 text-xs text-slate-500">Leaflet, no MapLibre — para aprovechar su ergonomía de popups e interacciones del día.</p>
+{% endblock %}
+
+{% block day_js %}
+<script>
+(function () {
+    "use strict";
+    const map = L.map("d13-map", { zoomControl: true }).setView([43.0, -2.1], 8);
+    L.tileLayer("https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+        attribution: "© OpenStreetMap, © CARTO", subdomains: "abcd", maxZoom: 19
+    }).addTo(map);
+
+    const comarcas = { type:"FeatureCollection", features:[
+        {type:"Feature", properties:{name:"Donostialdea", pop:400000, gdp:14200, unemp:7.2}, geometry:{type:"Polygon", coordinates:[[[-2.10,43.25],[-1.78,43.25],[-1.78,43.40],[-2.10,43.40],[-2.10,43.25]]]}},
+        {type:"Feature", properties:{name:"Gran Bilbao", pop:910000, gdp:13800, unemp:9.1}, geometry:{type:"Polygon", coordinates:[[[-3.10,43.20],[-2.80,43.20],[-2.80,43.40],[-3.10,43.40],[-3.10,43.20]]]}},
+        {type:"Feature", properties:{name:"Llanada Alavesa", pop:265000, gdp:15600, unemp:6.4}, geometry:{type:"Polygon", coordinates:[[[-2.85,42.72],[-2.40,42.72],[-2.40,42.92],[-2.85,42.92],[-2.85,42.72]]]}},
+        {type:"Feature", properties:{name:"Debagoiena", pop:62000, gdp:16800, unemp:5.9}, geometry:{type:"Polygon", coordinates:[[[-2.55,42.98],[-2.30,42.98],[-2.30,43.12],[-2.55,43.12],[-2.55,42.98]]]}},
+        {type:"Feature", properties:{name:"Lea-Artibai", pop:27000, gdp:11400, unemp:8.3}, geometry:{type:"Polygon", coordinates:[[[-2.65,43.33],[-2.40,43.33],[-2.40,43.47],[-2.65,43.47],[-2.65,43.33]]]}},
+        {type:"Feature", properties:{name:"Goierri", pop:45000, gdp:17200, unemp:6.1}, geometry:{type:"Polygon", coordinates:[[[-2.27,42.95],[-1.99,42.95],[-1.99,43.10],[-2.27,43.10],[-2.27,42.95]]]}}
+    ]};
+
+    const panel = document.getElementById("d13-panel");
+    const layer = L.geoJSON(comarcas, {
+        style: f => ({ color:"#4f46e5", weight:1.5, fillColor:"#6366f1", fillOpacity:0.25 }),
+        onEachFeature: (f, lyr) => {
+            lyr.on("mouseover", () => lyr.setStyle({ fillOpacity:0.55 }));
+            lyr.on("mouseout",  () => lyr.setStyle({ fillOpacity:0.25 }));
+            lyr.on("click", () => {
+                const p = f.properties;
+                panel.innerHTML = `
+                    <h3>${p.name}</h3>
+                    <p>Pulsa otra comarca para comparar.</p>
+                    <div class="d13-metric"><span>Población</span><span>${p.pop.toLocaleString()}</span></div>
+                    <div class="d13-metric"><span>PIB per cápita</span><span>${p.gdp.toLocaleString()} €</span></div>
+                    <div class="d13-metric"><span>Paro</span><span>${p.unemp} %</span></div>
+                `;
+                map.fitBounds(lyr.getBounds(), { padding:[20,20] });
+            });
+        }
+    }).addTo(map);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_body %}
+<div class="map30-wrap">
+    <div id="map" class="map30-canvas"></div>
+</div>
+
+<div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+    <div class="p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/5">
+        <div class="text-slate-500">Fuente</div>
+        <div class="font-medium">OpenData Euskadi · MITECO · OCM</div>
+    </div>
+    <div class="p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/5">
+        <div class="text-slate-500">Estilo</div>
+        <div class="font-medium">Color por potencia (kW)</div>
+    </div>
+    <div class="p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/5">
+        <div class="text-slate-500">Basemap</div>
+        <div class="font-medium">CARTO Voyager</div>
+    </div>
+    <div class="p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/5">
+        <div class="text-slate-500">Lib</div>
+        <div class="font-medium">MapLibre GL JS 4.7</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", { basemap: "voyager", center: [-2.4, 43.1], zoom: 7.5 });
+    const geojsonUrl = "{% url 'map30:day01_points_geojson' %}";
+
+    map.on("load", function () {
+        map.addSource("evs", { type: "geojson", data: geojsonUrl });
+
+        map.addLayer({
+            id: "ev-circles",
+            type: "circle",
+            source: "evs",
+            paint: {
+                // Radio escalado con el zoom
+                "circle-radius": [
+                    "interpolate", ["linear"], ["zoom"],
+                    6, 2.5,
+                    10, 5,
+                    14, 8,
+                ],
+                // Color por potencia: azul (slow) → amarillo (medio) → rojo (fast / ultra-fast)
+                "circle-color": [
+                    "interpolate", ["linear"], ["coalesce", ["get", "kw"], 0],
+                    0,   "#3b82f6",
+                    22,  "#60a5fa",
+                    50,  "#f59e0b",
+                    150, "#ef4444",
+                    350, "#991b1b",
+                ],
+                "circle-stroke-color": "#0b0e14",
+                "circle-stroke-width": 0.6,
+                "circle-opacity": 0.9,
+            },
+        });
+
+        map.on("click", "ev-circles", function (e) {
+            const p = e.features[0].properties;
+            const kw = p.kw != null ? p.kw + " kW" : "sin dato";
+            new maplibregl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML(`<strong>${p.operator || "Cargador público"}</strong><br/><span style="color:#64748b">${kw}</span>`)
+                .addTo(map);
+        });
+        map.on("mouseenter", "ev-circles", () => (map.getCanvas().style.cursor = "pointer"));
+        map.on("mouseleave", "ev-circles", () => (map.getCanvas().style.cursor = ""));
+    });
+
+    Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>Potencia (kW)</h4>
+        <div class="row"><span class="swatch" style="background:#3b82f6"></span><span>&lt; 22 kW · AC lento</span></div>
+        <div class="row"><span class="swatch" style="background:#60a5fa"></span><span>22–50 kW · AC rápido</span></div>
+        <div class="row"><span class="swatch" style="background:#f59e0b"></span><span>50–150 kW · DC rápido</span></div>
+        <div class="row"><span class="swatch" style="background:#ef4444"></span><span>150–350 kW · ultra-rápido</span></div>
+        <div class="row"><span class="swatch" style="background:#991b1b"></span><span>&gt; 350 kW</span></div>
+    `);
+})();
+</script>
+{% endblock %}

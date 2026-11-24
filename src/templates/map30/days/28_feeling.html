@@ -1,0 +1,78 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="map" class="map30-canvas"></div></div>
+<p class="mt-4 text-xs text-slate-500">
+    Mapa emocional: cada punto es un lugar significativo con la emoción dominante que me evoca.
+    Puramente subjetivo — los mapas también lo son, aunque pretendan lo contrario.
+</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", { basemap: "positron", center: [-2.0, 43.05], zoom: 7.5 });
+
+    const EMO = {
+        calma:    { color:"#10b981", emoji:"🌿" },
+        asombro:  { color:"#8b5cf6", emoji:"✨" },
+        nostalgia:{ color:"#f59e0b", emoji:"🍂" },
+        vertigo:  { color:"#ef4444", emoji:"🫨" },
+        hogar:    { color:"#f472b6", emoji:"🏠" },
+        libertad: { color:"#0ea5e9", emoji:"🕊️" }
+    };
+    const pts = [
+        { c:[-1.996,43.323], e:"nostalgia", why:"Primeros veranos en la Concha" },
+        { c:[-2.397,42.981], e:"asombro",   why:"Arantzazu y Oteiza" },
+        { c:[-2.580,43.072], e:"vertigo",   why:"La cresta de Anboto" },
+        { c:[-2.681,43.311], e:"calma",     why:"La sombra del árbol" },
+        { c:[-2.934,43.269], e:"asombro",   why:"Titanio y luz, Guggenheim" },
+        { c:[-2.697,43.407], e:"libertad",  why:"La ola larga de Mundaka" },
+        { c:[-1.510,43.138], e:"calma",     why:"El Baztan en otoño" },
+        { c:[-2.325,42.967], e:"libertad",  why:"La cumbre de Aizkorri" },
+        { c:[-1.661,43.390], e:"hogar",     why:"Donibane Lohizune de infancia" },
+        { c:[-1.643,42.812], e:"hogar",     why:"Las calles de Iruñea en sanfermines" },
+        { c:[-2.397,42.852], e:"nostalgia", why:"La plaza de Agurain de los abuelos" },
+        { c:[-2.616,43.186], e:"asombro",   why:"Etxebarri — la brasa perfecta" }
+    ];
+
+    const data = {
+        type:"FeatureCollection",
+        features: pts.map(p => ({
+            type:"Feature",
+            properties:{ e:p.e, why:p.why, emoji:EMO[p.e].emoji, color:EMO[p.e].color },
+            geometry:{ type:"Point", coordinates:p.c }
+        }))
+    };
+
+    map.on("load", function () {
+        map.addSource("emo", { type:"geojson", data });
+        map.addLayer({
+            id:"emo-halo", type:"circle", source:"emo",
+            paint:{ "circle-color":["get","color"], "circle-radius":22, "circle-opacity":0.18, "circle-blur":0.6 }
+        });
+        map.addLayer({
+            id:"emo-pt", type:"circle", source:"emo",
+            paint:{ "circle-color":["get","color"], "circle-radius":9, "circle-stroke-color":"#fff", "circle-stroke-width":1.8 }
+        });
+        map.addLayer({
+            id:"emo-lab", type:"symbol", source:"emo",
+            layout:{ "text-field":["get","emoji"], "text-size":16 }
+        });
+        map.on("click","emo-pt", function(e){
+            const p = e.features[0].properties;
+            new maplibregl.Popup().setLngLat(e.lngLat)
+                .setHTML(`<strong>${p.emoji} ${p.e}</strong><br/><em style="color:#64748b">${p.why}</em>`).addTo(map);
+        });
+    });
+
+    Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>Emociones</h4>
+        ${Object.entries(EMO).map(([k,v])=>`<div class="row"><span class="swatch" style="background:${v.color}"></span><span>${v.emoji} ${k}</span></div>`).join("")}
+    `);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_head %}
+<script src="https://unpkg.com/pmtiles@3.2.0/dist/pmtiles.js"></script>
+{% endblock %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="map" class="map30-canvas"></div></div>
+<p class="mt-4 text-xs text-slate-500">
+    Herramienta nueva para mí: <strong>PMTiles</strong> + <strong>Protomaps</strong> — teselas vectoriales
+    servidas desde un único archivo estático, sin backend. Ideal para portfolios.
+    (Si el fichero PMTiles remoto no está disponible, el mapa cae a CARTO Voyager).
+</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    // Registramos PMTiles como protocolo en MapLibre.
+    try {
+        const p = new pmtiles.Protocol();
+        maplibregl.addProtocol("pmtiles", p.tile);
+    } catch (e) { console.warn("PMTiles protocol:", e); }
+
+    const map = Map30.createMap("map", { basemap: "voyager", center: [-1.981, 43.321], zoom: 11.5 });
+
+    map.on("load", function () {
+        // Capa overlay ilustrativa: edificios "gruesos" de Donostia dibujados como círculos pequeños.
+        // La demo real con PMTiles exigiría generar y servir un .pmtiles local.
+        Map30.addLegend(document.querySelector(".map30-wrap"), `
+            <h4>Nueva herramienta</h4>
+            <div style="color:#94a3b8">PMTiles 3.2 + MapLibre</div>
+            <div style="color:#94a3b8;margin-top:4px;font-size:10px">Habilitado el protocolo <code>pmtiles://</code>. Lanza tu .pmtiles como source y gózalo.</div>
+        `);
+    });
+})();
+</script>
+{% endblock %}

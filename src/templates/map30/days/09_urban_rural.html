@@ -1,0 +1,63 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="map" class="map30-canvas"></div></div>
+<p class="mt-4 text-xs text-slate-500">
+    Densidad aproximada de población por área (hab/km²).
+    De lo profundamente urbano (Gran Bilbao) a lo radicalmente rural (Pirineos de Zuberoa y Nafarroa Behera).
+</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", { basemap: "positron", center: [-2.0, 43.0], zoom: 7.5 });
+
+    // Zonas aproximadas con densidad media hab/km².
+    const zonas = {
+        type:"FeatureCollection", features:[
+            {type:"Feature", properties:{name:"Gran Bilbao", dens: 3200}, geometry:{type:"Polygon", coordinates:[[[-3.10,43.20],[-2.80,43.20],[-2.80,43.40],[-3.10,43.40],[-3.10,43.20]]]}},
+            {type:"Feature", properties:{name:"Donostialdea", dens: 1800}, geometry:{type:"Polygon", coordinates:[[[-2.10,43.25],[-1.78,43.25],[-1.78,43.40],[-2.10,43.40],[-2.10,43.25]]]}},
+            {type:"Feature", properties:{name:"Llanada Alavesa", dens: 420}, geometry:{type:"Polygon", coordinates:[[[-2.85,42.72],[-2.40,42.72],[-2.40,42.92],[-2.85,42.92],[-2.85,42.72]]]}},
+            {type:"Feature", properties:{name:"Cuenca de Pamplona", dens: 650}, geometry:{type:"Polygon", coordinates:[[[-1.85,42.70],[-1.45,42.70],[-1.45,42.90],[-1.85,42.90],[-1.85,42.70]]]}},
+            {type:"Feature", properties:{name:"Debagoiena industrial", dens: 320}, geometry:{type:"Polygon", coordinates:[[[-2.55,42.98],[-2.30,42.98],[-2.30,43.12],[-2.55,43.12],[-2.55,42.98]]]}},
+            {type:"Feature", properties:{name:"Lapurdi costa", dens: 480}, geometry:{type:"Polygon", coordinates:[[[-1.55,43.42],[-1.30,43.42],[-1.30,43.55],[-1.55,43.55],[-1.55,43.42]]]}},
+            {type:"Feature", properties:{name:"Pirineo navarro", dens: 15}, geometry:{type:"Polygon", coordinates:[[[-1.55,42.78],[-1.00,42.78],[-1.00,43.05],[-1.55,43.05],[-1.55,42.78]]]}},
+            {type:"Feature", properties:{name:"Zuberoa interior", dens: 10}, geometry:{type:"Polygon", coordinates:[[[-1.05,43.05],[-0.75,43.05],[-0.75,43.28],[-1.05,43.28],[-1.05,43.05]]]}},
+            {type:"Feature", properties:{name:"Montaña Alavesa", dens: 12}, geometry:{type:"Polygon", coordinates:[[[-2.45,42.58],[-2.15,42.58],[-2.15,42.75],[-2.45,42.75],[-2.45,42.58]]]}},
+            {type:"Feature", properties:{name:"Rioja Alavesa", dens: 75}, geometry:{type:"Polygon", coordinates:[[[-2.75,42.46],[-2.40,42.46],[-2.40,42.60],[-2.75,42.60],[-2.75,42.46]]]}}
+        ]
+    };
+
+    map.on("load", function () {
+        map.addSource("zz", { type:"geojson", data: zonas });
+        map.addLayer({
+            id:"z-fill", type:"fill", source:"zz",
+            paint:{
+                "fill-color":[
+                    "interpolate", ["linear"], ["get","dens"],
+                    0,"#e0f2fe", 100,"#7dd3fc", 500,"#6366f1", 1500,"#7e22ce", 3200,"#4a044e"
+                ],
+                "fill-opacity":0.72, "fill-outline-color":"#1e3a8a"
+            }
+        });
+        map.on("click","z-fill", function(e){
+            const p = e.features[0].properties;
+            new maplibregl.Popup().setLngLat(e.lngLat)
+                .setHTML(`<strong>${p.name}</strong><br/><span style="color:#64748b">${p.dens} hab/km²</span>`).addTo(map);
+        });
+    });
+    Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>Densidad (hab/km²)</h4>
+        <div class="row"><span class="swatch" style="background:#e0f2fe"></span><span>&lt; 50 · rural</span></div>
+        <div class="row"><span class="swatch" style="background:#7dd3fc"></span><span>50–300</span></div>
+        <div class="row"><span class="swatch" style="background:#6366f1"></span><span>300–800</span></div>
+        <div class="row"><span class="swatch" style="background:#7e22ce"></span><span>800–2000</span></div>
+        <div class="row"><span class="swatch" style="background:#4a044e"></span><span>&gt; 2000 · ultra-urbano</span></div>
+    `);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block title %}#30DayMapChallenge 2026 — Calendario{% endblock %}
+
+{% block day_body %}
+    <header class="mb-8">
+        <span class="text-[11px] uppercase tracking-wider text-indigo-500 font-mono">Noviembre 2026</span>
+        <h1 class="mt-1 text-3xl sm:text-4xl font-semibold tracking-tight">#30DayMapChallenge</h1>
+        <p class="mt-3 text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-2xl">
+            30 mapas de Euskal Herria, uno por cada día del challenge oficial.
+            Portfolio personal. MapLibre GL JS + CARTO + datos abiertos.
+        </p>
+    </header>
+
+    <ol class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        {% for e in entries %}
+            {% if e.status == 'published' %}
+                <li>
+                    <a href="{% url 'map30:day_detail' e.day %}"
+                       class="block h-full p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] hover:border-indigo-500/60 hover:shadow-md transition">
+                        <div class="flex items-baseline justify-between">
+                            <span class="font-mono text-xs text-indigo-500">{{ e.day|stringformat:"02d" }}</span>
+                            <span class="text-[10px] uppercase tracking-wider text-slate-400">{{ e.category_name }}</span>
+                        </div>
+                        <h2 class="mt-2 text-sm font-medium leading-snug line-clamp-3">{{ e.title }}</h2>
+                    </a>
+                </li>
+            {% else %}
+                <li>
+                    <div class="block h-full p-4 rounded-xl border border-dashed border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.01] opacity-60 cursor-not-allowed">
+                        <div class="flex items-baseline justify-between">
+                            <span class="font-mono text-xs text-slate-400">{{ e.day|stringformat:"02d" }}</span>
+                            <span class="text-[10px] uppercase tracking-wider text-slate-400">{{ e.category_name }}</span>
+                        </div>
+                        <h2 class="mt-2 text-sm font-medium leading-snug line-clamp-3 text-slate-500">{{ e.title }}</h2>
+                        <span class="mt-2 inline-block text-[10px] text-slate-400">Pendiente</span>
+                    </div>
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ol>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_head %}
+<style>
+    .null-stage {
+        height: calc(100vh - 220px);
+        min-height: 420px;
+        border-radius: 1rem;
+        background: #0b0e14;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        color: #475569;
+        font-family: ui-monospace, "SF Mono", monospace;
+        padding: 2rem;
+        text-align: center;
+    }
+    .null-stage h2 {
+        font-size: clamp(5rem, 15vw, 10rem);
+        letter-spacing: 0.1em;
+        margin: 0;
+        color: #1e293b;
+        font-weight: 300;
+    }
+    .null-stage p {
+        max-width: 42ch;
+        line-height: 1.6;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+    }
+    .null-stage code { color:#64748b; }
+</style>
+{% endblock %}
+
+{% block day_body %}
+<div class="null-stage">
+    <h2>NULL</h2>
+    <p>
+        Un mapa sin datos no es un mapa roto: es un mapa honesto.
+        En SQL, <code>NULL</code> no es cero ni vacío — es
+        <em>"no lo sé"</em>. Este día celebra lo que no se mide,
+        lo que no se declara, lo que escapa a la cuadrícula.
+    </p>
+    <p style="opacity:0.6">— — —</p>
+    <p>
+        <code>SELECT ST_AsGeoJSON(geom) FROM map WHERE truth IS NULL;</code>
+    </p>
+</div>
+{% endblock %}

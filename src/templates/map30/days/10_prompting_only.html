@@ -1,0 +1,115 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% comment %}
+    Este archivo fue generado íntegramente por un LLM (Claude) a partir de un único prompt,
+    sin edición humana, sin acceso a bases de datos y sin consultar fuentes externas durante
+    la generación. Las coordenadas vienen "de la memoria" del modelo, con los errores que
+    eso conlleva. Es el espíritu del día 10.
+{% endcomment %}
+
+{% block day_head %}
+<style>
+    .prompt-badge {
+        position: absolute; top: 12px; left: 12px; z-index: 5;
+        background: rgba(15, 23, 42, 0.85); color: #fef3c7;
+        padding: 8px 12px; border-radius: 10px;
+        font-family: ui-monospace, "SF Mono", monospace;
+        font-size: 10px; line-height: 1.5;
+        max-width: 280px; backdrop-filter: blur(6px);
+        border: 1px solid rgba(254, 243, 199, 0.2);
+    }
+    .prompt-badge strong { color:#fcd34d; font-weight:600; }
+</style>
+{% endblock %}
+
+{% block day_body %}
+<div class="map30-wrap">
+    <div id="map" class="map30-canvas"></div>
+    <div class="prompt-badge">
+        <strong>🤖 Pure prompt output</strong><br/>
+        Lugares evocados por un LLM al pensar en Euskal Herria, con las coordenadas que su memoria dio sin verificar. Los errores quedan.
+    </div>
+</div>
+
+<p class="mt-4 text-xs text-slate-500">
+    Este mapa, su copy y su diseño salieron de una sola pasada de un modelo de lenguaje
+    respondiendo al prompt <em>"haz un mapa evocador de Euskal Herria solo con lo que recuerdas,
+    sin consultar nada"</em>. Coordenadas y hechos sin verificar. La precisión no es el objetivo del día.
+</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", { basemap: "dark_matter", center: [-1.95, 43.05], zoom: 7.6 });
+
+    // Coordenadas y descripciones evocadas por el LLM. Pueden estar ligeramente
+    // desviadas respecto a la realidad: es lo que hace honesto el ejercicio.
+    const evocados = [
+        { n:"La Concha",              c:[-1.996, 43.323], ev:"La curva de arena perfecta" },
+        { n:"Guggenheim",             c:[-2.934, 43.269], ev:"Titanio ondulante en la ría" },
+        { n:"Arantzazu",              c:[-2.397, 42.981], ev:"Oteiza y Chillida en piedra" },
+        { n:"Gernika",                c:[-2.681, 43.311], ev:"El árbol, el cuadro, el eco" },
+        { n:"Monte Anboto",           c:[-2.580, 43.072], ev:"La casa de Mari" },
+        { n:"Zugarramurdi",           c:[-1.572, 43.286], ev:"Las cuevas, las akelarres" },
+        { n:"Roncesvalles",           c:[-1.320, 43.010], ev:"Donde Roldán sopló el cuerno" },
+        { n:"Ulia y Urgull",          c:[-1.971, 43.332], ev:"Dos colinas que abrazan la bahía" },
+        { n:"Mundaka",                c:[-2.697, 43.407], ev:"La ola izquierda más larga" },
+        { n:"Jaizkibel",              c:[-1.893, 43.370], ev:"La traviesa final del clásico" },
+        { n:"Loiola",                 c:[-2.273, 43.141], ev:"Nació Íñigo, nació un imperio espiritual" },
+        { n:"San Sebastián de Garabandal", c:[-4.401, 43.192], ev:"⚠️ ni es vasco ni está aquí" },
+        { n:"Olentzero",              c:[-1.800, 43.189], ev:"Baja de los montes el 24" },
+        { n:"Valle del Baztan",       c:[-1.510, 43.138], ev:"Ríos truchas niebla" },
+        { n:"Bardenas Reales",        c:[-1.470, 42.219], ev:"Un desierto en Navarra" },
+        { n:"Aizkorri",               c:[-2.325, 42.967], ev:"El techo histórico de Euskadi" },
+        { n:"Donibane Lohizune",      c:[-1.661, 43.390], ev:"Donde se casó el Rey Sol" },
+        { n:"Pico Tres Reyes",        c:[-0.812, 42.918], ev:"Castilla, Aragón, Navarra: tres coronas" },
+        { n:"Cueva de Santimamiñe",   c:[-2.640, 43.343], ev:"Bisontes en la roca, 14 000 años" },
+        { n:"Faro de la Plata",       c:[-1.922, 43.329], ev:"Blanco contra el Cantábrico" },
+        { n:"Monte Larrun",           c:[-1.620, 43.308], ev:"Un tren crema sube al pico fronterizo" },
+        { n:"Alto del Vivero",        c:[-2.948, 43.282], ev:"Siempre aparece en la Vuelta" },
+        { n:"Monte Adarra",           c:[-1.948, 43.233], ev:"El clásico desde Donostia" },
+        { n:"Salinas de Añana",       c:[-2.983, 42.800], ev:"Un valle blanco y cuadriculado" },
+        { n:"Castillo de Butrón",     c:[-2.941, 43.400], ev:"Como un dibujo de Disney" }
+    ];
+
+    const data = {
+        type:"FeatureCollection",
+        features: evocados.map(e => ({ type:"Feature", properties:{name:e.n, ev:e.ev}, geometry:{type:"Point", coordinates:e.c} }))
+    };
+
+    map.on("load", function () {
+        map.addSource("ev", { type:"geojson", data });
+        map.addLayer({
+            id:"ev-glow", type:"circle", source:"ev",
+            paint:{ "circle-radius":22, "circle-color":"#fde68a", "circle-opacity":0.08, "circle-blur":1 }
+        });
+        map.addLayer({
+            id:"ev-pt", type:"circle", source:"ev",
+            paint:{ "circle-color":"#fde047", "circle-radius":5, "circle-stroke-color":"#78350f", "circle-stroke-width":1 }
+        });
+        map.addLayer({
+            id:"ev-lab", type:"symbol", source:"ev",
+            layout:{
+                "text-field":["get","name"], "text-size":11, "text-offset":[0,1.2],
+                "text-font":["Open Sans Semibold","Arial Unicode MS Bold"], "text-optional":true
+            },
+            paint:{ "text-color":"#fef3c7", "text-halo-color":"#0f172a", "text-halo-width":1.5 }
+        });
+        map.on("click","ev-pt", function(e){
+            const p = e.features[0].properties;
+            new maplibregl.Popup().setLngLat(e.lngLat)
+                .setHTML(`<strong>${p.name}</strong><br/><em style="color:#64748b">${p.ev}</em>`).addTo(map);
+        });
+    });
+    Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>Generado por LLM</h4>
+        <div class="row"><span class="swatch" style="background:#fde047"></span><span>Lugar recordado</span></div>
+        <div style="margin-top:6px;font-size:10px;color:#94a3b8">Algunas coordenadas son aproximadas o directamente erróneas. Es el punto.</div>
+    `);
+})();
+</script>
+{% endblock %}

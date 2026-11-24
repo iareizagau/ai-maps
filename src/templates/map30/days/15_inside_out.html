@@ -1,0 +1,70 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="map" class="map30-canvas"></div></div>
+<p class="mt-4 text-xs text-slate-500">
+    Topología invertida: el agua es tierra y la tierra es agua. Donostia es ahora una bahía blanca
+    y el Cantábrico un continente verde. Cuesta mirar; ése es el punto.
+</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    // Usamos un estilo custom: todo verde, el "mar" es un polígono que cubre todo salvo
+    // una ventana rectangular aproximada sobre Euskal Herria (que queda "blanca" como si fuese agua).
+    const greenStyle = {
+        version: 8,
+        sources: {},
+        layers: [
+            { id:"land", type:"background", paint:{ "background-color":"#86efac" } }
+        ]
+    };
+    const map = new maplibregl.Map({
+        container:"map", style: greenStyle,
+        center:[-1.9, 43.1], zoom: 7.3, attributionControl: true
+    });
+    map.addControl(new maplibregl.NavigationControl({ showCompass:false }), "top-right");
+
+    // Mask: polígono enorme con un agujero del tamaño del bbox de EH.
+    const outer = [[-30,20],[10,20],[10,70],[-30,70],[-30,20]];
+    const hole  = [[-3.45,42.4],[-0.3,42.4],[-0.3,43.65],[-3.45,43.65],[-3.45,42.4]];
+
+    map.on("load", function () {
+        map.addSource("sea", { type:"geojson", data:{
+            type:"Feature", geometry:{ type:"Polygon", coordinates:[outer, hole] }
+        }});
+        // El "mar" (lo que antes era tierra) en azul/blanco.
+        map.addLayer({ id:"sea", type:"fill", source:"sea",
+            paint:{ "fill-color":"#e0f2fe" }});
+
+        // Dentro del agujero, el "antiguo mar Cantábrico" se mantiene en verde (background).
+        // Añadimos puntos para las 7 capitales pero rotuladas como islas.
+        map.addSource("cap", { type:"geojson", data:{
+            type:"FeatureCollection", features:[
+                { type:"Feature", properties:{name:"Isla de Donostia"}, geometry:{type:"Point", coordinates:[-1.98, 43.32]}},
+                { type:"Feature", properties:{name:"Isla de Bilbao"}, geometry:{type:"Point", coordinates:[-2.93, 43.26]}},
+                { type:"Feature", properties:{name:"Isla de Gasteiz"}, geometry:{type:"Point", coordinates:[-2.67, 42.85]}},
+                { type:"Feature", properties:{name:"Isla de Iruñea"}, geometry:{type:"Point", coordinates:[-1.64, 42.81]}},
+                { type:"Feature", properties:{name:"Isla de Baiona"}, geometry:{type:"Point", coordinates:[-1.48, 43.49]}}
+            ]
+        }});
+        map.addLayer({ id:"cap-p", type:"circle", source:"cap",
+            paint:{ "circle-color":"#0ea5e9", "circle-radius":6, "circle-stroke-color":"#fff", "circle-stroke-width":1.5 }});
+        map.addLayer({ id:"cap-l", type:"symbol", source:"cap",
+            layout:{ "text-field":["get","name"], "text-size":11, "text-offset":[0,1.3],
+                     "text-font":["Open Sans Semibold","Arial Unicode MS Bold"] },
+            paint:{ "text-color":"#0c4a6e", "text-halo-color":"#fff", "text-halo-width":1.5 }});
+    });
+
+    Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>Topología invertida</h4>
+        <div class="row"><span class="swatch" style="background:#e0f2fe"></span><span>Antigua tierra · ahora agua</span></div>
+        <div class="row"><span class="swatch" style="background:#86efac"></span><span>Antiguo mar · ahora tierra</span></div>
+    `);
+})();
+</script>
+{% endblock %}

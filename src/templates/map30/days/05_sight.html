@@ -1,0 +1,76 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="map" class="map30-canvas"></div></div>
+<p class="mt-4 text-xs text-slate-500">
+    Aproximación visual: el verdadero viewshed se calcularía con <code>gdal_viewshed</code> sobre el DEM de 25 m del IGN.
+    Aquí mostramos el radio máximo de visibilidad (~45 km) desde Aizkorri (1&nbsp;528&nbsp;m) sobre tierras sin obstáculo.
+</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const summit = [-2.325, 42.967]; // Aizkorri
+    const map = Map30.createMap("map", { basemap: "positron", center: summit, zoom: 8.5 });
+
+    function circle(center, km, steps) {
+        const [lng, lat] = center;
+        const coords = [];
+        const dLat = km / 111.32;
+        const dLng = km / (111.32 * Math.cos(lat * Math.PI / 180));
+        for (let i = 0; i <= steps; i++) {
+            const a = (2 * Math.PI * i) / steps;
+            coords.push([lng + dLng * Math.cos(a), lat + dLat * Math.sin(a)]);
+        }
+        return coords;
+    }
+
+    const rings = {
+        type:"FeatureCollection", features:[15,30,45].map((km,i)=>({
+            type:"Feature", properties:{km, idx:i}, geometry:{ type:"Polygon", coordinates:[circle(summit, km, 96)] }
+        }))
+    };
+
+    map.on("load", function () {
+        map.addSource("rings", { type:"geojson", data: rings });
+        map.addLayer({
+            id:"ring-fill", type:"fill", source:"rings",
+            paint:{
+                "fill-color":[
+                    "step", ["get","km"],
+                    "#fef08a", 15, "#fbbf24", 30, "#f97316"
+                ],
+                "fill-opacity":0.25
+            }
+        });
+        map.addLayer({
+            id:"ring-line", type:"line", source:"rings",
+            paint:{ "line-color":"#78350f", "line-width":1, "line-dasharray":[3,3] }
+        });
+        map.addSource("summit", { type:"geojson", data: {
+            type:"Feature", properties:{name:"Aizkorri 1528 m"}, geometry:{type:"Point", coordinates:summit}
+        }});
+        map.addLayer({
+            id:"summit-pt", type:"circle", source:"summit",
+            paint:{ "circle-color":"#dc2626", "circle-radius":7, "circle-stroke-color":"#fff", "circle-stroke-width":2 }
+        });
+        map.addLayer({
+            id:"summit-label", type:"symbol", source:"summit",
+            layout:{ "text-field":["get","name"], "text-size":13, "text-offset":[0,1.4], "text-font":["Open Sans Semibold","Arial Unicode MS Bold"] },
+            paint:{ "text-halo-color":"#fff", "text-halo-width":1.5 }
+        });
+    });
+
+    Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>Radio de visibilidad</h4>
+        <div class="row"><span class="swatch" style="background:#fef08a"></span><span>&lt; 15 km</span></div>
+        <div class="row"><span class="swatch" style="background:#fbbf24"></span><span>15–30 km</span></div>
+        <div class="row"><span class="swatch" style="background:#f97316"></span><span>30–45 km</span></div>
+    `);
+})();
+</script>
+{% endblock %}

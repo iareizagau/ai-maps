@@ -1,0 +1,78 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="map" class="map30-canvas"></div></div>
+<p class="mt-4 text-xs text-slate-500">
+    Subestaciones y líneas de alta tensión principales (REE) y autoconsumo fotovoltaico declarado en Euskadi.
+    Datos ilustrativos — para producción usar el GeoPortal de REE y los registros de autoconsumo de GOBIERNO VASCO.
+</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", { basemap: "dark_matter", center: [-2.5, 43.0], zoom: 7.6 });
+
+    // Subestaciones aproximadas (nombre, lng, lat, kV)
+    const subs = {
+        type:"FeatureCollection", features:[
+            {type:"Feature", properties:{name:"Güeñes", kv:400}, geometry:{type:"Point", coordinates:[-3.030, 43.197]}},
+            {type:"Feature", properties:{name:"Boroa", kv:400}, geometry:{type:"Point", coordinates:[-2.837, 43.216]}},
+            {type:"Feature", properties:{name:"Azpeitia", kv:220}, geometry:{type:"Point", coordinates:[-2.263, 43.183]}},
+            {type:"Feature", properties:{name:"Itxaso", kv:220}, geometry:{type:"Point", coordinates:[-2.202, 43.064]}},
+            {type:"Feature", properties:{name:"Hernani", kv:220}, geometry:{type:"Point", coordinates:[-1.966, 43.265]}},
+            {type:"Feature", properties:{name:"Vitoria", kv:400}, geometry:{type:"Point", coordinates:[-2.615, 42.869]}},
+            {type:"Feature", properties:{name:"Castejón", kv:400}, geometry:{type:"Point", coordinates:[-1.683, 42.167]}},
+            {type:"Feature", properties:{name:"Muskiz", kv:400}, geometry:{type:"Point", coordinates:[-3.100, 43.345]}},
+            {type:"Feature", properties:{name:"Cantegrit (Baiona)", kv:400}, geometry:{type:"Point", coordinates:[-1.337, 43.489]}}
+        ]
+    };
+    // Líneas simplificadas entre subestaciones.
+    const lines = {
+        type:"FeatureCollection", features:[
+            {type:"Feature", properties:{kv:400}, geometry:{type:"LineString", coordinates:[[-3.030,43.197],[-2.837,43.216],[-2.615,42.869]]}},
+            {type:"Feature", properties:{kv:400}, geometry:{type:"LineString", coordinates:[[-3.100,43.345],[-3.030,43.197]]}},
+            {type:"Feature", properties:{kv:220}, geometry:{type:"LineString", coordinates:[[-2.837,43.216],[-2.263,43.183],[-1.966,43.265]]}},
+            {type:"Feature", properties:{kv:220}, geometry:{type:"LineString", coordinates:[[-2.263,43.183],[-2.202,43.064]]}},
+            {type:"Feature", properties:{kv:400}, geometry:{type:"LineString", coordinates:[[-2.615,42.869],[-1.683,42.167]]}},
+            {type:"Feature", properties:{kv:400}, geometry:{type:"LineString", coordinates:[[-1.966,43.265],[-1.337,43.489]]}}
+        ]
+    };
+
+    map.on("load", function () {
+        map.addSource("lines", { type:"geojson", data: lines });
+        map.addLayer({
+            id:"lines", type:"line", source:"lines",
+            paint:{
+                "line-color":["case", ["==",["get","kv"],400], "#f97316", "#facc15"],
+                "line-width":["case", ["==",["get","kv"],400], 3, 2],
+                "line-opacity":0.9
+            },
+            layout:{"line-cap":"round","line-join":"round"}
+        });
+        map.addSource("subs", { type:"geojson", data: subs });
+        map.addLayer({
+            id:"subs", type:"circle", source:"subs",
+            paint:{
+                "circle-color":["case", ["==",["get","kv"],400], "#f97316", "#facc15"],
+                "circle-radius":7, "circle-stroke-color":"#fff", "circle-stroke-width":1.5
+            }
+        });
+        map.addLayer({
+            id:"sub-lab", type:"symbol", source:"subs",
+            layout:{ "text-field":["concat", ["get","name"], " · ", ["to-string",["get","kv"]], " kV"],
+                     "text-size":10, "text-offset":[0,1.3], "text-font":["Open Sans Semibold","Arial Unicode MS Bold"] },
+            paint:{ "text-color":"#fef3c7", "text-halo-color":"#0f172a", "text-halo-width":1.3 }
+        });
+    });
+    Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>Red eléctrica</h4>
+        <div class="row"><span class="swatch" style="background:#f97316"></span><span>400 kV</span></div>
+        <div class="row"><span class="swatch" style="background:#facc15"></span><span>220 kV</span></div>
+    `);
+})();
+</script>
+{% endblock %}

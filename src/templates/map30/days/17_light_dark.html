@@ -1,0 +1,81 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="map" class="map30-canvas"></div></div>
+<p class="mt-4 text-xs text-slate-500">
+    Luz vs. oscuridad: puntos brillantes sobre las ciudades, áreas oscuras sobre los montes.
+    Aproximación con un heatmap generado a partir de poblaciones conocidas.
+    Para producción: VIIRS Day/Night Band (NOAA).
+</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", { basemap: "dark_matter", center: [-2.0, 43.0], zoom: 7.3 });
+
+    // Puntos = ciudades y la "intensidad" lumínica ≈ log10(pop).
+    const places = [
+        ["Bilbao",-2.935,43.263, 345000],
+        ["Donostia",-1.981,43.318, 188000],
+        ["Vitoria-Gasteiz",-2.672,42.846, 253000],
+        ["Iruñea",-1.644,42.812, 203000],
+        ["Baiona",-1.479,43.493, 52000],
+        ["Barakaldo",-2.991,43.299, 100000],
+        ["Getxo",-3.010,43.355, 77000],
+        ["Portugalete",-3.019,43.323, 46000],
+        ["Irun",-1.790,43.337, 63000],
+        ["Errenteria",-1.900,43.313, 39000],
+        ["Durango",-2.634,43.172, 30000],
+        ["Eibar",-2.464,43.185, 27000],
+        ["Tudela",-1.602,42.062, 37000],
+        ["Tolosa",-2.078,43.134, 19000],
+        ["Zarautz",-2.168,43.283, 24000],
+        ["Hendaia",-1.772,43.371, 17000],
+        ["Donibane Lohizune",-1.661,43.390, 14000],
+        ["Agurain",-2.397,42.852, 5000],
+        ["Maule",-0.887,43.228, 3000],
+    ];
+    const data = { type:"FeatureCollection", features: places.map(p=>({
+        type:"Feature", properties:{name:p[0], pop:p[3], w: Math.log10(p[3])}, geometry:{type:"Point", coordinates:[p[1],p[2]]}
+    }))};
+
+    map.on("load", function () {
+        map.addSource("lp", { type:"geojson", data });
+        map.addLayer({
+            id:"heat", type:"heatmap", source:"lp",
+            paint:{
+                "heatmap-weight":["interpolate",["linear"],["get","w"], 3, 0.25, 5.5, 1.0],
+                "heatmap-intensity":["interpolate",["linear"],["zoom"], 6, 0.8, 11, 2.2],
+                "heatmap-color":[
+                    "interpolate",["linear"],["heatmap-density"],
+                    0,   "rgba(0,0,0,0)",
+                    0.1, "rgba(30,41,59,0.3)",
+                    0.3, "rgba(251,191,36,0.4)",
+                    0.6, "rgba(252,211,77,0.75)",
+                    1.0, "rgba(254,243,199,1)"
+                ],
+                "heatmap-radius":["interpolate",["linear"],["zoom"], 6, 20, 11, 70],
+                "heatmap-opacity":0.9
+            }
+        });
+        map.addLayer({
+            id:"lp-lab", type:"symbol", source:"lp",
+            minzoom: 8,
+            layout:{ "text-field":["get","name"], "text-size":11, "text-font":["Open Sans Semibold","Arial Unicode MS Bold"] },
+            paint:{ "text-color":"#fef3c7", "text-halo-color":"#0f172a", "text-halo-width":1.3 }
+        });
+    });
+
+    Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>Luz urbana</h4>
+        <div class="row"><span class="swatch" style="background:#fef3c7"></span><span>Alta</span></div>
+        <div class="row"><span class="swatch" style="background:#fbbf24"></span><span>Media</span></div>
+        <div class="row"><span class="swatch" style="background:#1e293b"></span><span>Oscuridad</span></div>
+    `);
+})();
+</script>
+{% endblock %}

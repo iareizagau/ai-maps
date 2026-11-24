@@ -1,0 +1,72 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_body %}
+<div class="map30-wrap">
+    <div id="map" class="map30-canvas"></div>
+</div>
+
+<div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+    <div class="p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/5">
+        <div class="text-slate-500">Fuente</div><div class="font-medium">OpenStreetMap (muestra)</div>
+    </div>
+    <div class="p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/5">
+        <div class="text-slate-500">Capa</div><div class="font-medium">highway=cycleway</div>
+    </div>
+    <div class="p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/5">
+        <div class="text-slate-500">Basemap</div><div class="font-medium">CARTO Positron</div>
+    </div>
+    <div class="p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/5">
+        <div class="text-slate-500">Nota</div><div class="font-medium">Trazas simplificadas</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", { basemap: "positron", center: [-2.1, 43.18], zoom: 9.3 });
+
+    // Muestra representativa de bidegorris de Gipuzkoa (coord. aproximadas).
+    const bidegorris = {
+        type: "FeatureCollection", features: [
+            { type:"Feature", properties:{name:"Donostia–Astigarraga"}, geometry:{type:"LineString", coordinates:[[-1.982,43.311],[-1.945,43.291],[-1.918,43.277],[-1.890,43.263]]}},
+            { type:"Feature", properties:{name:"Donostia–Hernani"}, geometry:{type:"LineString", coordinates:[[-1.981,43.309],[-1.980,43.293],[-1.976,43.278],[-1.972,43.264]]}},
+            { type:"Feature", properties:{name:"Irun–Hondarribia"}, geometry:{type:"LineString", coordinates:[[-1.790,43.337],[-1.797,43.353],[-1.800,43.366],[-1.800,43.376]]}},
+            { type:"Feature", properties:{name:"Zarautz–Getaria"}, geometry:{type:"LineString", coordinates:[[-2.169,43.283],[-2.191,43.284],[-2.207,43.290],[-2.217,43.299]]}},
+            { type:"Feature", properties:{name:"Bidegorri del Urola"}, geometry:{type:"LineString", coordinates:[[-2.187,43.282],[-2.202,43.244],[-2.208,43.205],[-2.258,43.146]]}},
+            { type:"Feature", properties:{name:"Deba–Mutriku"}, geometry:{type:"LineString", coordinates:[[-2.350,43.291],[-2.365,43.290],[-2.388,43.303],[-2.397,43.312]]}},
+            { type:"Feature", properties:{name:"Bidegorri del Oria"}, geometry:{type:"LineString", coordinates:[[-2.077,43.179],[-2.080,43.148],[-2.085,43.121],[-2.100,43.100]]}},
+            { type:"Feature", properties:{name:"Loiola–Martutene"}, geometry:{type:"LineString", coordinates:[[-1.976,43.301],[-1.970,43.293],[-1.961,43.284]]}},
+            { type:"Feature", properties:{name:"Beasain–Ordizia"}, geometry:{type:"LineString", coordinates:[[-2.179,43.049],[-2.170,43.054],[-2.158,43.057]]}},
+            { type:"Feature", properties:{name:"Zumaia–Zarautz"}, geometry:{type:"LineString", coordinates:[[-2.253,43.297],[-2.230,43.291],[-2.207,43.287],[-2.185,43.284]]}}
+        ]
+    };
+
+    map.on("load", function () {
+        map.addSource("bide", { type:"geojson", data: bidegorris });
+        map.addLayer({
+            id: "bide-casing", type:"line", source:"bide",
+            paint:{ "line-color":"#ffffff", "line-width":5, "line-opacity":0.9 },
+            layout:{ "line-join":"round", "line-cap":"round" }
+        });
+        map.addLayer({
+            id: "bide-line", type:"line", source:"bide",
+            paint:{ "line-color":"#059669", "line-width":2.5 },
+            layout:{ "line-join":"round", "line-cap":"round" }
+        });
+        map.on("click", "bide-line", function(e){
+            new maplibregl.Popup().setLngLat(e.lngLat).setHTML(`<strong>${e.features[0].properties.name}</strong>`).addTo(map);
+        });
+    });
+
+    Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>Bidegorris</h4>
+        <div class="row"><span class="swatch" style="background:#059669"></span><span>Vías ciclables</span></div>
+        <div class="row" style="color:#94a3b8;margin-top:6px;font-size:10px">Muestra representativa — para producción usar extract OSM.</div>
+    `);
+})();
+</script>
+{% endblock %}

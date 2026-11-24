@@ -1,0 +1,54 @@
+{% extends "map30/base.html" %}
+{% load static %}
+
+{% block day_body %}
+<div class="map30-wrap"><div id="map" class="map30-canvas"></div></div>
+<p class="mt-4 text-xs text-slate-500">
+    Cuadrícula hexagonal regular (~8 km) con el conteo de recargas EV por celda.
+    Para una producción con H3 real: usar <code>h3-py</code> en el backend y resolución 6 o 7.
+</p>
+{% endblock %}
+
+{% block day_js %}
+<script src="{% static 'map30/js/map-core.js' %}"></script>
+<script>
+(function () {
+    "use strict";
+    const map = Map30.createMap("map", { basemap: "dark_matter", center: [-2.0, 43.0], zoom: 7.4 });
+
+    map.on("load", function () {
+        map.addSource("hex", { type:"geojson", data: "{% url 'map30:day20_hexagons_geojson' %}" });
+        map.addLayer({
+            id:"hex-fill", type:"fill", source:"hex",
+            paint:{
+                "fill-color":[
+                    "interpolate", ["linear"], ["get","count"],
+                    1,   "#312e81",
+                    10,  "#6366f1",
+                    40,  "#8b5cf6",
+                    100, "#d946ef",
+                    400, "#f0abfc"
+                ],
+                "fill-opacity":0.75, "fill-outline-color":"#0f172a"
+            }
+        });
+        map.addLayer({
+            id:"hex-line", type:"line", source:"hex",
+            paint:{ "line-color":"#0f172a", "line-width":0.6, "line-opacity":0.5 }
+        });
+        map.on("click","hex-fill", function(e){
+            new maplibregl.Popup().setLngLat(e.lngLat)
+                .setHTML(`<strong>${e.features[0].properties.count}</strong> recargas EV`).addTo(map);
+        });
+    });
+    Map30.addLegend(document.querySelector(".map30-wrap"), `
+        <h4>Recargas EV por hex.</h4>
+        <div class="row"><span class="swatch" style="background:#312e81"></span><span>1–10</span></div>
+        <div class="row"><span class="swatch" style="background:#6366f1"></span><span>10–40</span></div>
+        <div class="row"><span class="swatch" style="background:#8b5cf6"></span><span>40–100</span></div>
+        <div class="row"><span class="swatch" style="background:#d946ef"></span><span>100–400</span></div>
+        <div class="row"><span class="swatch" style="background:#f0abfc"></span><span>&gt; 400</span></div>
+    `);
+})();
+</script>
+{% endblock %}
